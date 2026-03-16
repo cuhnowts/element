@@ -47,11 +47,12 @@ Plans:
   3. User can select a task and see its full context and execution diagram in the central panel
   4. User can see assigned agents, skills, and tools for any task in the central panel
   5. User can view task execution history, logs, and results in the output panel
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Layout shell, stores, types, hooks, and shared components
+- [ ] 02-02-PLAN.md — Left sidebar: calendar toggle, mini calendar, task list, workflow list
+- [ ] 02-03-PLAN.md — Center panel: task detail, execution diagram, output drawer with log viewer
 
 ### Phase 3: Workflows and Automation
 **Goal**: User can compose multi-step task workflows, schedule them on cron, and execute shell commands and HTTP calls as steps
@@ -108,7 +109,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Desktop Shell and Task Foundation | 0/3 | Not started | - |
-| 2. Task UI and Execution History | 0/2 | Not started | - |
+| 2. Task UI and Execution History | 0/3 | Not started | - |
 | 3. Workflows and Automation | 0/3 | Not started | - |
 | 4. Plugin System | 0/2 | Not started | - |
 | 5. AI and Smart Scheduling | 0/2 | Not started | - |
