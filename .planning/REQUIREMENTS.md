@@ -51,9 +51,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data & Storage
 
-- [ ] **DATA-01**: App metadata stored locally in SQLite (task state, execution history, credentials, preferences, calendar cache)
-- [ ] **DATA-02**: Workflow definitions stored as structured files (YAML/JSON)
-- [ ] **DATA-03**: Project work lives in external repos — Element orchestrates, doesn't store project files
+- [x] **DATA-01**: App metadata stored locally in SQLite (task state, execution history, credentials, preferences, calendar cache)
+- [x] **DATA-02**: Workflow definitions stored as structured files (YAML/JSON)
+- [x] **DATA-03**: Project work lives in external repos — Element orchestrates, doesn't store project files
 
 ## v2 Requirements
 
@@ -114,9 +114,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-04 | Phase 4 | Pending |
 | SCHED-01 | Phase 5 | Pending |
 | SCHED-02 | Phase 5 | Pending |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 27 total
