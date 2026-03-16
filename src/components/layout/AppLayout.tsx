@@ -15,18 +15,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useStore } from "@/stores";
-import { ProjectList } from "@/components/sidebar/ProjectList";
-import { NewTaskList } from "@/components/sidebar/NewTaskList";
-import { TaskDetail } from "@/components/detail/TaskDetail";
-import { EmptyState } from "@/components/detail/EmptyState";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { CenterPanel } from "@/components/layout/CenterPanel";
+import { OutputDrawer } from "@/components/layout/OutputDrawer";
 
 export function AppLayout() {
-  const projects = useStore((s) => s.projects);
-  const selectedProjectId = useStore((s) => s.selectedProjectId);
-  const selectedTaskId = useStore((s) => s.selectedTaskId);
-  const tasks = useStore((s) => s.tasks);
+  const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
+  const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
 
   // Create Project Dialog
   const createProjectDialogOpen = useStore((s) => s.createProjectDialogOpen);
@@ -68,37 +65,35 @@ export function AppLayout() {
     closeDeleteConfirm();
   };
 
-  // Determine empty state variant
-  const getMainContent = () => {
-    if (selectedTaskId) {
-      return <TaskDetail />;
-    }
-    if (projects.length === 0) {
-      return <EmptyState variant="no-projects" />;
-    }
-    if (selectedProjectId && tasks.length === 0) {
-      return <EmptyState variant="no-tasks" />;
-    }
-    return <EmptyState variant="no-selection" />;
-  };
-
   return (
-    <div className="h-screen">
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize="30%" minSize="20%" maxSize="40%">
-          <div className="flex flex-col h-full bg-card">
-            <ProjectList />
-            <Separator />
-            <NewTaskList />
-          </div>
-        </ResizablePanel>
+    <>
+      <div className="flex h-screen bg-background text-foreground">
+        {/* Fixed sidebar */}
+        <aside className="w-[280px] border-r border-border flex-shrink-0 overflow-hidden">
+          <Sidebar />
+        </aside>
 
-        <ResizableHandle withHandle />
+        {/* Center + Drawer split */}
+        <ResizablePanelGroup direction="vertical" className="flex-1">
+          <ResizablePanel
+            defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
+            minSize="30%"
+          >
+            <CenterPanel />
+          </ResizablePanel>
 
-        <ResizablePanel defaultSize="70%">
-          {getMainContent()}
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <ResizableHandle withHandle />
+
+          <ResizablePanel
+            defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
+            minSize="0%"
+            maxSize="60%"
+            collapsible
+          >
+            <OutputDrawer />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
 
       {/* Create Project Dialog */}
       <Dialog
@@ -168,6 +163,6 @@ export function AppLayout() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
