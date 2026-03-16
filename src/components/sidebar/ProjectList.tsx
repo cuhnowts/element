@@ -1,0 +1,85 @@
+import { useEffect } from "react";
+import { Plus } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { useStore } from "@/stores";
+
+export function ProjectList() {
+  const projects = useStore((s) => s.projects);
+  const selectedProjectId = useStore((s) => s.selectedProjectId);
+  const loadProjects = useStore((s) => s.loadProjects);
+  const selectProject = useStore((s) => s.selectProject);
+  const loadTasks = useStore((s) => s.loadTasks);
+  const openCreateProjectDialog = useStore((s) => s.openCreateProjectDialog);
+  const openDeleteConfirm = useStore((s) => s.openDeleteConfirm);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  const handleSelectProject = (projectId: string) => {
+    selectProject(projectId);
+    loadTasks(projectId);
+  };
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+          Projects
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-6"
+          onClick={() => openCreateProjectDialog()}
+        >
+          <Plus className="size-4" />
+        </Button>
+      </div>
+      <ScrollArea className="max-h-[200px]">
+        <div className="px-2">
+          {projects.map((project) => (
+            <DropdownMenu key={project.id}>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={() => handleSelectProject(project.id)}
+                    className={`flex items-center w-full px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-muted text-left ${
+                      selectedProjectId === project.id
+                        ? "text-primary font-medium"
+                        : ""
+                    }`}
+                  />
+                }
+              >
+                {project.name}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={4}>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() =>
+                    openDeleteConfirm({
+                      type: "project",
+                      id: project.id,
+                      name: project.name,
+                    })
+                  }
+                >
+                  Delete Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

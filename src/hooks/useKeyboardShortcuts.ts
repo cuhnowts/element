@@ -1,41 +1,94 @@
 import { useEffect } from "react";
+import { useStore } from "@/stores";
 
-interface Shortcut {
-  key: string;
-  meta?: boolean; // Cmd on mac
-  handler: () => void;
-  disabled?: boolean;
-}
+export function useKeyboardShortcuts() {
+  const toggleCommandPalette = useStore((s) => s.toggleCommandPalette);
+  const openCreateProjectDialog = useStore((s) => s.openCreateProjectDialog);
+  const selectedProjectId = useStore((s) => s.selectedProjectId);
+  const createTask = useStore((s) => s.createTask);
+  const selectTask = useStore((s) => s.selectTask);
+  const selectedTaskId = useStore((s) => s.selectedTaskId);
+  const selectedTask = useStore((s) => s.selectedTask);
+  const openDeleteConfirm = useStore((s) => s.openDeleteConfirm);
+  const closeDeleteConfirm = useStore((s) => s.closeDeleteConfirm);
+  const closeCreateProjectDialog = useStore((s) => s.closeCreateProjectDialog);
+  const deleteConfirmOpen = useStore((s) => s.deleteConfirmOpen);
+  const createProjectDialogOpen = useStore((s) => s.createProjectDialogOpen);
+  const commandPaletteOpen = useStore((s) => s.commandPaletteOpen);
 
-export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Skip if user is typing in an input or textarea
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.isContentEditable
-      ) {
+      const meta = e.metaKey || e.ctrlKey;
+
+      // Cmd+K: toggle command palette
+      if (meta && e.key === "k") {
+        e.preventDefault();
+        toggleCommandPalette();
         return;
       }
 
-      for (const shortcut of shortcuts) {
-        if (shortcut.disabled) continue;
+      // Cmd+Shift+N: new project
+      if (meta && e.shiftKey && e.key === "N") {
+        e.preventDefault();
+        openCreateProjectDialog();
+        return;
+      }
 
-        const metaMatch = shortcut.meta
-          ? e.metaKey || e.ctrlKey
-          : !e.metaKey && !e.ctrlKey;
-
-        if (e.key === shortcut.key && metaMatch) {
-          e.preventDefault();
-          shortcut.handler();
-          return;
+      // Cmd+N: new task in current project
+      if (meta && !e.shiftKey && e.key === "n") {
+        e.preventDefault();
+        if (selectedProjectId) {
+          createTask(selectedProjectId, "Untitled Task").then((task) => {
+            selectTask(task.id);
+          });
         }
+        return;
+      }
+
+      // Cmd+Backspace: delete selected task
+      if (meta && e.key === "Backspace") {
+        e.preventDefault();
+        if (selectedTaskId && selectedTask) {
+          openDeleteConfirm({
+            type: "task",
+            id: selectedTaskId,
+            name: selectedTask.title,
+          });
+        }
+        return;
+      }
+
+      // Escape: close dialogs / deselect task
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (deleteConfirmOpen) {
+          closeDeleteConfirm();
+        } else if (createProjectDialogOpen) {
+          closeCreateProjectDialog();
+        } else if (commandPaletteOpen) {
+          toggleCommandPalette();
+        } else if (selectedTaskId) {
+          selectTask(null);
+        }
+        return;
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [shortcuts]);
+  }, [
+    toggleCommandPalette,
+    openCreateProjectDialog,
+    selectedProjectId,
+    createTask,
+    selectTask,
+    selectedTaskId,
+    selectedTask,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    closeCreateProjectDialog,
+    deleteConfirmOpen,
+    createProjectDialogOpen,
+    commandPaletteOpen,
+  ]);
 }
