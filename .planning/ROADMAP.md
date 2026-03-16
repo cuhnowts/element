@@ -30,12 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can organize tasks by project, type, priority, or custom tags
   4. User can change task status (pending, in-progress, complete, blocked) and see it reflected immediately
   5. App data persists across restarts in local SQLite; workflow definitions are stored as structured files
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Scaffold Tauri project, SQLite data layer, Rust models, workflow file I/O
+- [ ] 01-02-PLAN.md — Tauri CRUD commands, desktop shell (menus, tray, event emission)
+- [ ] 01-03-PLAN.md — React UI (sidebar, task detail, stores, keyboard shortcuts, dark/light mode)
 
 ### Phase 2: Task UI and Execution History
 **Goal**: User has a full multi-panel workspace showing calendar, today's tasks, task details, and execution output
