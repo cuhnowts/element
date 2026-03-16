@@ -101,11 +101,14 @@ Plans:
   2. AI suggests task structure, steps, and context when the user creates or edits a task
   3. App automatically identifies open time blocks around calendar meetings and suggests work sessions
   4. App assigns tasks to suggested work sessions based on priority, with user override
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Rust data layer: migration 002, AI/scheduling types, AiProvider trait, task model extensions
+- [ ] 05-02-PLAN.md — AI Gateway: Anthropic/OpenAI/Ollama/compat provider implementations, gateway router, prompts, Tauri IPC commands
+- [ ] 05-03-PLAN.md — Scheduling algorithm: time block detection, task scoring, greedy assignment, Tauri IPC commands
+- [ ] 05-04-PLAN.md — AI frontend: types, store slice, settings UI, AI Assist button, streaming hook, suggestion panel
+- [ ] 05-05-PLAN.md — Scheduling frontend: types, store slice, work hours settings, schedule strip in sidebar
 
 ## Progress
 
@@ -118,4 +121,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Task UI and Execution History | 4/4 | Complete   | 2026-03-16 |
 | 3. Workflows and Automation | 0/5 | Not started | - |
 | 4. Plugin System | 0/5 | Not started | - |
-| 5. AI and Smart Scheduling | 0/2 | Not started | - |
+| 5. AI and Smart Scheduling | 0/5 | Not started | - |
