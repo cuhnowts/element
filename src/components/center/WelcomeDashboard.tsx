@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { StatusDot } from "@/components/shared/StatusDot";
@@ -13,6 +14,18 @@ function getGreeting(): string {
 export function WelcomeDashboard() {
   const todaysTasks = useTaskStore((s) => s.todaysTasks);
   const selectTask = useWorkspaceStore((s) => s.selectTask);
+
+  const selectedProjectId = useStore((s) => s.selectedProjectId);
+  const createTask = useStore((s) => s.createTask);
+  const phase1SelectTask = useStore((s) => s.selectTask);
+
+  const handleNewTask = async () => {
+    if (selectedProjectId) {
+      const task = await createTask(selectedProjectId, "Untitled Task");
+      phase1SelectTask(task.id);
+      selectTask(task.id);
+    }
+  };
   const recentTasks = todaysTasks.slice(0, 5);
 
   return (
@@ -23,7 +36,7 @@ export function WelcomeDashboard() {
       <p className="text-sm text-muted-foreground mb-6">
         Here's what's on your plate today.
       </p>
-      <Button className="mb-8">New Task</Button>
+      <Button className="mb-8" onClick={handleNewTask} disabled={!selectedProjectId}>New Task</Button>
 
       {recentTasks.length > 0 && (
         <div className="w-full text-left">
