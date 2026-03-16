@@ -47,14 +47,14 @@ Exceptions: Sidebar width fixed at 280px. Bottom drawer default height 30% of vi
 
 ## Typography
 
-| Role | Size | Weight | Line Height | Usage |
-|------|------|--------|-------------|-------|
-| Body | 14px | 400 (regular) | 1.5 | Task descriptions, log output, general content |
-| Label | 12px | 500 (medium) | 1.4 | Sidebar section headers, metadata labels, status badges, timestamps |
-| Heading | 18px | 600 (semibold) | 1.3 | Task title in detail view, panel titles, welcome dashboard headings |
-| Display | 24px | 600 (semibold) | 1.2 | Welcome dashboard greeting only |
+| Role | Size | Weight | Line Height | Extra | Usage |
+|------|------|--------|-------------|-------|-------|
+| Body | 14px | 400 (regular) | 1.5 | — | Task descriptions, log output, general content |
+| Label | 12px | 600 (semibold) | 1.4 | `letter-spacing: 0.05em` | Sidebar section headers, metadata labels, status badges, timestamps |
+| Heading | 18px | 600 (semibold) | 1.3 | — | Task title in detail view, panel titles, welcome dashboard headings |
+| Display | 24px | 600 (semibold) | 1.2 | — | Welcome dashboard greeting only |
 
-**Rationale:** 14px body (not 16px) matches Discord/Outlook information density for a desktop app. Two weights only: 400 for content, 600 for emphasis. Medium (500) used exclusively for small labels where semibold would look too heavy at 12px.
+**Rationale:** 14px body (not 16px) matches Discord/Outlook information density for a desktop app. Two weights only: 400 for content, 600 for emphasis. At 12px Label size, `letter-spacing: 0.05em` (tracking-wide) reduces visual density of semibold text, avoiding the need for a third weight.
 
 ---
 
@@ -133,7 +133,7 @@ Source: CONTEXT.md locked decisions.
 | Mini calendar | Custom component | Month grid, day/week/month tabs via `Tabs`. Today highlighted with accent. Clickable dates filter task list |
 | Task list | `ScrollArea` + custom list items | Scrollable list of today's tasks. Each item: status dot + title + time. Click selects task in center panel |
 | Workflow list | `ScrollArea` + custom list items | Upcoming scheduled workflows. Each item: icon + name + next run time |
-| Section headers | Label typography (12px/500) | "CALENDAR", "TODAY'S TASKS", "WORKFLOWS" |
+| Section headers | Label typography (12px/600, tracking-wide) | "CALENDAR", "TODAY'S TASKS", "WORKFLOWS" |
 
 ### Center Panel
 
