@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { usePanelRef } from "react-resizable-panels";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,17 @@ import { OutputDrawer } from "@/components/layout/OutputDrawer";
 export function AppLayout() {
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
+  const drawerPanelRef = usePanelRef();
+
+  useEffect(() => {
+    const panel = drawerPanelRef.current;
+    if (!panel) return;
+    if (drawerOpen) {
+      panel.expand();
+    } else {
+      panel.collapse();
+    }
+  }, [drawerOpen, drawerPanelRef]);
 
   // Create Project Dialog
   const createProjectDialogOpen = useStore((s) => s.createProjectDialogOpen);
@@ -89,6 +101,7 @@ export function AppLayout() {
             minSize="0%"
             maxSize="60%"
             collapsible
+            panelRef={drawerPanelRef}
           >
             <OutputDrawer />
           </ResizablePanel>
