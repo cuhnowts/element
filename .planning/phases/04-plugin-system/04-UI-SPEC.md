@@ -97,6 +97,8 @@ Source: CONTEXT.md -- multiple accounts, each color-coded.
 
 Phase 4 adds a **Settings page** accessible from the sidebar or menu. The settings page replaces the center panel content (not a separate window).
 
+**Primary focal point:** The content area (right side of settings layout). When the user opens Settings, focus lands on the first settings tab content heading. The settings nav is secondary navigation; the content area is where the user reads and acts.
+
 ### Settings Page Layout
 
 ```
@@ -107,7 +109,7 @@ Phase 4 adds a **Settings page** accessible from the sidebar or menu. The settin
 |                           |  +--------+------------------------+ |
 |  [Settings gear icon]     |  | NAV    |  CONTENT AREA          | |
 |                           |  | 200px  |  (flex-1)              | |
-|                           |  |        |                        | |
+|                           |  |        |  [PRIMARY FOCAL POINT] | |
 |                           |  | Plugins|  [Plugin List]         | |
 |                           |  | Creds  |  [Credential Vault]    | |
 |                           |  | Calendar|  [Calendar Accounts]  | |
@@ -134,7 +136,7 @@ Phase 4 adds a **Settings page** accessible from the sidebar or menu. The settin
 |-----------|-------------|----------|
 | Settings page | Custom layout | Replaces center panel when settings active. Back button returns to task view |
 | Settings nav | Custom vertical tabs | Left nav within settings. 200px wide. Active tab uses `--primary` left border (2px) |
-| Settings back button | `Button` variant="ghost" | Top-left of settings content. Lucide `ArrowLeft` + "Back" label |
+| Settings back button | `Button` variant="ghost" | Top-left of settings content. Lucide `ArrowLeft` icon + "Back to Tasks" label. Icon provides directional context |
 
 ### Plugin Management (PLUG-01)
 
@@ -144,7 +146,7 @@ Phase 4 adds a **Settings page** accessible from the sidebar or menu. The settin
 | Plugin card | `Card` (custom) | Background `--card`. 16px padding. Hover: background `--muted` |
 | Plugin status dot | Custom | 8px circle. Color per status table above. Pulsing animation for loading state |
 | Plugin error badge | `Badge` variant="destructive" | Shows "Error" text. Click/hover expands to show error message below card |
-| Plugin error detail | Custom expandable | Appears below plugin card on error badge click. Monospace error text. "Reload" button to retry |
+| Plugin error detail | Custom expandable | Appears below plugin card on error badge click. Monospace error text. "Reload Plugin" button to retry |
 | Plugin enable toggle | `Switch` | Toggles plugin active/disabled. Fires reload on enable |
 | Plugin capability badges | `Badge` variant="secondary" | Shows declared capabilities: "network", "fs:read", "credentials". Inline row below plugin description |
 | Plugin empty state | Custom | Centered in content area when no plugins installed |
@@ -155,11 +157,11 @@ Phase 4 adds a **Settings page** accessible from the sidebar or menu. The settin
 | Component | shadcn Base | Behavior |
 |-----------|-------------|----------|
 | Credential list | `ScrollArea` + custom rows | Vault-style list. Each row: lock icon + credential name + type label + actions |
-| Credential row | Custom | Background `--card`. 12px vertical / 16px horizontal padding. Hover: `--muted` |
+| Credential row | Custom | Background `--card`. 8px vertical / 16px horizontal padding (sm/md tokens). Hover: `--muted` |
 | Credential value (masked) | Custom | Shows "••••••••••••" by default. Monospace font |
-| Reveal button | `Button` variant="ghost" size="icon" | Lucide `Eye` icon. Toggles to `EyeOff` when revealed. Auto-re-masks after 10 seconds |
-| Copy button | `Button` variant="ghost" size="icon" | Lucide `Copy` icon. Copies value to clipboard. Shows `Check` icon for 2 seconds as confirmation |
-| Delete credential button | `Button` variant="ghost" size="icon" | Lucide `Trash2` icon. `--destructive-foreground` color. Triggers confirmation dialog |
+| Reveal button | `Button` variant="ghost" size="icon" | Lucide `Eye` icon. `aria-label="Reveal credential"`. Toggles to `EyeOff` (`aria-label="Hide credential"`) when revealed. Auto-re-masks after 10 seconds |
+| Copy button | `Button` variant="ghost" size="icon" | Lucide `Copy` icon. `aria-label="Copy credential to clipboard"`. Copies value to clipboard. Shows `Check` icon for 2 seconds as confirmation |
+| Delete credential button | `Button` variant="ghost" size="icon" | Lucide `Trash2` icon. `aria-label="Delete credential"`. `--destructive-foreground` color. Triggers confirmation dialog |
 | Add credential dialog | `Dialog` | Title: "Add Credential". Fields: Name (`Input`), Type (`Select`: API Key / Token / Secret / OAuth Token), Value (`Input` type="password"), Notes (`Textarea` optional). CTA: "Save Credential" |
 | Edit credential dialog | `Dialog` | Same as add but pre-filled. Title: "Edit Credential". CTA: "Update Credential" |
 | Add credential button | `Button` variant="default" | "Add Credential" label. Top-right of credential vault content area |
@@ -186,8 +188,8 @@ These appear inline within the workflow step editor (Phase 3 establishes the ste
 | Connect Outlook button | `Button` variant="outline" | Microsoft icon (inline SVG) + "Connect Outlook Calendar". Launches OAuth popup |
 | OAuth popup | Tauri WebView | 480x640px. Shows provider OAuth consent screen. Closes on success/failure |
 | Sync status label | Label typography | "Last synced 2 min ago" or "Syncing..." with spinner |
-| Manual refresh button | `Button` variant="ghost" size="icon" | Lucide `RefreshCw` icon. Triggers immediate sync |
-| Disconnect button | `Button` variant="ghost" size="icon" | Lucide `Unlink` icon. `--destructive-foreground` color. Triggers confirmation |
+| Manual refresh button | `Button` variant="ghost" size="icon" | Lucide `RefreshCw` icon. `aria-label="Refresh calendar sync"`. Triggers immediate sync |
+| Disconnect button | `Button` variant="ghost" size="icon" | Lucide `Unlink` icon. `aria-label="Disconnect calendar account"`. `--destructive-foreground` color. Triggers confirmation |
 | Calendar event (in sidebar) | Custom | Renders in existing Phase 2 mini calendar. Color-coded dot per account. Full event details in tooltip on hover |
 | Calendar event detail | `Tooltip` or popover | Shows: title, time range, location (if set), attendee count. Read-only |
 | Calendar empty state | Custom | Shown in Calendars settings tab when no accounts connected |
@@ -218,6 +220,8 @@ These appear inline within the workflow step editor (Phase 3 establishes the ste
 | Sync status (syncing) | "Syncing..." |
 | Sync status (success) | "Last synced {relative time}" |
 | Sync status (error) | "Sync failed -- retrying in {minutes}m" |
+| Plugin error retry | "Reload Plugin" |
+| Settings back navigation | "Back to Tasks" (with ArrowLeft icon) |
 
 ---
 
