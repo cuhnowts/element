@@ -24,6 +24,12 @@ impl Database {
         Ok(Database { conn })
     }
 
+    /// Create a Database from an existing connection (for testing with in-memory SQLite)
+    #[cfg(test)]
+    pub fn from_connection(conn: Connection) -> Self {
+        Database { conn }
+    }
+
     pub fn conn(&self) -> &Connection {
         &self.conn
     }
