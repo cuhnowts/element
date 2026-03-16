@@ -83,12 +83,13 @@ Plans:
   2. User can securely store and manage API keys, tokens, and secrets within the app
   3. Core plugins (shell command, HTTP request, file system operations) are available out of the box as workflow steps
   4. User can connect a Google or Outlook calendar and see events pulled into Element
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
+- [ ] 04-00-PLAN.md — Wave 0: frontend test stubs, Rust test fixtures for manifests and calendar responses
 - [ ] 04-01-PLAN.md — Plugin backend: manifest types, Plugin Host with FS watcher, credential manager with keychain, Tauri IPC commands
 - [ ] 04-02-PLAN.md — Settings UI: plugin management, credential vault, types/stores/API wrappers
-- [ ] 04-03-PLAN.md — Core plugins: shell command, HTTP request, file system step implementations and config UIs
+- [ ] 04-03-PLAN.md — Core plugins: shell command, HTTP request, file system step implementations, execute_step dispatch, config UIs
 - [ ] 04-04-PLAN.md — Calendar integration: OAuth PKCE for Google/Outlook, event sync, mini calendar display
 
 ### Phase 5: AI and Smart Scheduling
@@ -116,5 +117,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Desktop Shell and Task Foundation | 3/3 | Complete   | 2026-03-16 |
 | 2. Task UI and Execution History | 4/4 | Complete   | 2026-03-16 |
 | 3. Workflows and Automation | 0/5 | Not started | - |
-| 4. Plugin System | 0/4 | Not started | - |
+| 4. Plugin System | 0/5 | Not started | - |
 | 5. AI and Smart Scheduling | 0/2 | Not started | - |
