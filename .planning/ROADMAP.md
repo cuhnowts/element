@@ -65,12 +65,14 @@ Plans:
   3. User can schedule any task or workflow to run on a recurring cron schedule
   4. User can promote a manual task into an automated workflow with one action
   5. User can add shell command and HTTP/API call steps that execute and return results
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Rust data layer: typed workflow/schedule/execution models, SQLite migration, Tauri CRUD commands
+- [ ] 03-02-PLAN.md — Rust execution engine: PipelineExecutor, shell/HTTP step executors, run_workflow command
+- [ ] 03-03-PLAN.md — Cron scheduler with missed-run catch-up, frontend types/store/command wrappers
+- [ ] 03-04-PLAN.md — Workflow builder UI: step editor, ShellEditor, HttpStepForm, PromoteButton, WorkflowDetail
+- [ ] 03-05-PLAN.md — Scheduling UI, execution progress indicators, RetryButton, run history
 
 ### Phase 4: Plugin System
 **Goal**: User can extend Element with file-drop plugins, securely store credentials, and use core connectors for shell, HTTP, file system, and calendar
@@ -113,6 +115,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Desktop Shell and Task Foundation | 3/3 | Complete   | 2026-03-16 |
 | 2. Task UI and Execution History | 4/4 | Complete   | 2026-03-16 |
-| 3. Workflows and Automation | 0/3 | Not started | - |
+| 3. Workflows and Automation | 0/5 | Not started | - |
 | 4. Plugin System | 0/4 | Not started | - |
 | 5. AI and Smart Scheduling | 0/2 | Not started | - |
