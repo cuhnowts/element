@@ -1,4 +1,6 @@
+import { AppLayout } from "@/components/layout/AppLayout";
+
 function App() {
-  return <div className="h-screen bg-background text-foreground">Element</div>;
+  return <AppLayout />;
 }
 export default App;
