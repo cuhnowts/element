@@ -52,6 +52,7 @@ export function useKeyboardShortcuts() {
         if (selectedProjectId) {
           createTask(selectedProjectId, "Untitled Task").then((task) => {
             selectTask(task.id);
+            workspaceSelectTask(task.id);
           });
         }
         return;
