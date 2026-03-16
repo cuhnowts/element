@@ -48,15 +48,16 @@ Exceptions: Sidebar drag handle hit area is 12px wide (not on the 4px scale) to 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
 Notes:
 - Body at 14px matches Linear/Discord density for desktop apps (not 16px web default).
-- Label is used for sidebar section headers, badge text, status text, and metadata.
+- Label is used for sidebar section headers, badge text, status text, and metadata. Weight 400 (regular) is consistent with how Linear renders sidebar metadata — differentiation from Body comes from the smaller 12px size, not from weight.
 - Heading is used for task detail title and project names.
 - Display is used only for the empty state onboarding headline.
+- Exactly 2 weights used: 400 (regular) and 600 (semibold).
 
 ---
 
@@ -98,6 +99,12 @@ Accent color is a blue (hue ~264) chosen to match the productivity-tool aestheti
 
 ---
 
+## Visual Hierarchy
+
+**Primary focal point:** The selected task detail panel is the primary focal point. It occupies the largest screen area (right of sidebar), displays at Heading size (20px/600), and receives the user's attention after selecting a task from the sidebar list.
+
+---
+
 ## Copywriting Contract
 
 | Element | Copy |
@@ -110,8 +117,8 @@ Accent color is a blue (hue ~264) chosen to match the productivity-tool aestheti
 | Empty state body (project, no tasks) | "Create a task to start tracking your work in this project." |
 | Error state (data load failure) | "Could not load your data. Element stores everything locally — try restarting the app. If the problem persists, check that the database file is not locked by another process." |
 | Error state (task save failure) | "Changes could not be saved. Please try again." |
-| Destructive: Delete Task | "Delete task": "This task and its context will be permanently removed. This cannot be undone." |
-| Destructive: Delete Project | "Delete project": "This will permanently delete the project and all its tasks. This cannot be undone." |
+| Destructive: Delete Task | Dialog body: "This task and its context will be permanently removed. This cannot be undone." Confirmation button label: "Delete Task" |
+| Destructive: Delete Project | Dialog body: "This will permanently delete the project and all its tasks. This cannot be undone." Confirmation button label: "Delete Project" |
 | Sidebar section: Projects | "Projects" |
 | Sidebar section: Tasks | "Tasks" (changes to project name when a project is selected) |
 | Task status labels | "Pending", "In Progress", "Complete", "Blocked" |
