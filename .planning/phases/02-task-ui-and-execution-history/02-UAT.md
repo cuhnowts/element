@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-task-ui-and-execution-history
 source: [02-00-SUMMARY.md, 02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md]
 started: 2026-03-16T01:20:00Z
@@ -69,9 +69,12 @@ skipped: 4
   reason: "User reported: No welcome dashboard"
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "AppLayout.tsx was overwritten by Phase 1 plan 03 (commit b81a5d5). It renders Phase 1 components (ProjectList, NewTaskList, old TaskDetail) instead of Phase 2 Sidebar/CenterPanel/OutputDrawer. CenterPanel contains WelcomeDashboard but is never mounted."
+  artifacts:
+    - path: "src/components/layout/AppLayout.tsx"
+      issue: "Renders Phase 1 layout instead of Phase 2 layout components"
+  missing:
+    - "Restore AppLayout.tsx to import and render Sidebar, CenterPanel, OutputDrawer with useWorkspaceStore"
   debug_session: ""
 
 - truth: "Calendar toggle switch shows/hides mini calendar in sidebar"
@@ -79,9 +82,12 @@ skipped: 4
   reason: "User reported: No calendar toggle"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same root cause as test 2: AppLayout.tsx renders Phase 1 components. Sidebar.tsx (which contains CalendarToggle) is never mounted."
+  artifacts:
+    - path: "src/components/layout/AppLayout.tsx"
+      issue: "Does not import or render Phase 2 Sidebar component"
+  missing:
+    - "Restore AppLayout.tsx to render Phase 2 Sidebar"
   debug_session: ""
 
 - truth: "Sidebar shows Today's Tasks section with status dots and task items"
@@ -89,7 +95,10 @@ skipped: 4
   reason: "User reported: Not there"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same root cause as tests 2-3: AppLayout.tsx renders Phase 1 components. Sidebar.tsx (which contains TaskList) is never mounted."
+  artifacts:
+    - path: "src/components/layout/AppLayout.tsx"
+      issue: "Does not import or render Phase 2 Sidebar component"
+  missing:
+    - "Restore AppLayout.tsx to render Phase 2 Sidebar"
   debug_session: ""
