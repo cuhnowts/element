@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-16T01:04:10.990Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-16T01:08:18.702Z"
 last_activity: 2026-03-16 — Completed 02-00-PLAN.md
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 7
-  completed_plans: 2
+  completed_plans: 3
   percent: 14
 ---
 
@@ -52,6 +52,7 @@ Progress: [█░░░░░░░░░] 14%
 *Updated after each plan completion*
 | Phase 02 P00 | 2min | 2 tasks | 8 files |
 | Phase 01 P01 | 8min | 3 tasks | 31 files |
+| Phase 01 P02 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 01]: JSON for workflow definitions (not YAML) due to serde-yaml deprecation
 - [Phase 01]: Mutex<Connection> for SQLite thread safety, sufficient for Phase 1 CRUD
 - [Phase 01]: In-memory SQLite with PRAGMA foreign_keys = ON for unit tests
+- [Phase 01]: Used show_menu_on_left_click instead of deprecated menu_on_left_click for Tauri tray
+- [Phase 01]: TaskWithTags uses serde flatten for get_task response combining task fields and tags
+- [Phase 01]: add_tag_to_task uses get-or-create pattern via list_tags scan
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T01:04:10.987Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-16T01:08:18.700Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

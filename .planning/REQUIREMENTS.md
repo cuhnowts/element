@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Task Management
 
-- [ ] **TASK-01**: User can create tasks with title, description, and context
-- [ ] **TASK-02**: User can organize tasks by project, type, priority, or custom tags
-- [ ] **TASK-03**: User can track task status (pending, in-progress, complete, blocked)
+- [x] **TASK-01**: User can create tasks with title, description, and context
+- [x] **TASK-02**: User can organize tasks by project, type, priority, or custom tags
+- [x] **TASK-03**: User can track task status (pending, in-progress, complete, blocked)
 - [x] **TASK-04**: User can view task execution history and outcomes
 - [ ] **TASK-05**: User can define multi-step task workflows with execution diagrams
 - [ ] **TASK-06**: User can assign agents/tools/skills to task steps
@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **UI-03**: Central panel shows task context and execution diagram
 - [x] **UI-04**: Central panel shows assigned agents, skills, and tools
 - [x] **UI-05**: Output panel displays task execution logs and results
-- [ ] **UI-06**: App has native desktop feel (macOS primary, menus, shortcuts)
+- [x] **UI-06**: App has native desktop feel (macOS primary, menus, shortcuts)
 
 ### AI Integration
 
@@ -90,9 +90,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TASK-01 | Phase 1 | Pending |
-| TASK-02 | Phase 1 | Pending |
-| TASK-03 | Phase 1 | Pending |
+| TASK-01 | Phase 1 | Complete |
+| TASK-02 | Phase 1 | Complete |
+| TASK-03 | Phase 1 | Complete |
 | TASK-04 | Phase 2 | Complete |
 | TASK-05 | Phase 3 | Pending |
 | TASK-06 | Phase 3 | Pending |
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-03 | Phase 2 | Complete |
 | UI-04 | Phase 2 | Complete |
 | UI-05 | Phase 2 | Complete |
-| UI-06 | Phase 1 | Pending |
+| UI-06 | Phase 1 | Complete |
 | AI-01 | Phase 5 | Pending |
 | AI-02 | Phase 5 | Pending |
 | PLUG-01 | Phase 4 | Pending |
