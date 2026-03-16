@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "@/stores";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function useKeyboardShortcuts() {
   const toggleCommandPalette = useStore((s) => s.toggleCommandPalette);
@@ -16,6 +17,10 @@ export function useKeyboardShortcuts() {
   const createProjectDialogOpen = useStore((s) => s.createProjectDialogOpen);
   const commandPaletteOpen = useStore((s) => s.commandPaletteOpen);
 
+  const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
+  const workspaceSelectTask = useWorkspaceStore((s) => s.selectTask);
+  const workspaceSelectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const meta = e.metaKey || e.ctrlKey;
@@ -24,6 +29,13 @@ export function useKeyboardShortcuts() {
       if (meta && e.key === "k") {
         e.preventDefault();
         toggleCommandPalette();
+        return;
+      }
+
+      // Cmd+B: toggle output drawer
+      if (meta && e.key === "b") {
+        e.preventDefault();
+        toggleDrawer();
         return;
       }
 
@@ -69,6 +81,9 @@ export function useKeyboardShortcuts() {
           toggleCommandPalette();
         } else if (selectedTaskId) {
           selectTask(null);
+          workspaceSelectTask(null);
+        } else if (workspaceSelectedTaskId) {
+          workspaceSelectTask(null);
         }
         return;
       }
@@ -90,5 +105,8 @@ export function useKeyboardShortcuts() {
     deleteConfirmOpen,
     createProjectDialogOpen,
     commandPaletteOpen,
+    toggleDrawer,
+    workspaceSelectTask,
+    workspaceSelectedTaskId,
   ]);
 }
