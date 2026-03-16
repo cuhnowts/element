@@ -1,9 +1,23 @@
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { CalendarToggle } from "@/components/sidebar/CalendarToggle";
+import { MiniCalendar } from "@/components/sidebar/MiniCalendar";
+import { TaskList } from "@/components/sidebar/TaskList";
+import { WorkflowList } from "@/components/sidebar/WorkflowList";
+
 export function Sidebar() {
+  const calendarVisible = useWorkspaceStore((s) => s.calendarVisible);
+
   return (
     <div className="flex flex-col h-full bg-card">
-      <div className="p-4 text-sm text-muted-foreground">
-        {/* CalendarToggle, MiniCalendar, TaskList, WorkflowList go here (Plan 02) */}
-        Sidebar
+      <CalendarToggle />
+      {calendarVisible && <MiniCalendar />}
+      <div className="border-b border-border" />
+      <div className="flex-1 overflow-hidden">
+        <TaskList />
+      </div>
+      <div className="border-b border-border" />
+      <div className="max-h-[200px]">
+        <WorkflowList />
       </div>
     </div>
   );
