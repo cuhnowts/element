@@ -85,7 +85,7 @@ export function AppLayout() {
   return (
     <div className="h-screen">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+        <ResizablePanel defaultSize="30%" minSize="20%" maxSize="40%">
           <div className="flex flex-col h-full bg-card">
             <ProjectList />
             <Separator />
@@ -95,7 +95,7 @@ export function AppLayout() {
 
         <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={70}>
+        <ResizablePanel defaultSize="70%">
           {getMainContent()}
         </ResizablePanel>
       </ResizablePanelGroup>

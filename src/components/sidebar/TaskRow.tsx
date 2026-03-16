@@ -74,8 +74,19 @@ export function TaskRow({ task }: TaskRowProps) {
           </Badge>
         )}
         {task.priority === "medium" && (
-          <Badge variant="secondary" className="text-xs px-1 py-0 h-5 shrink-0">
+          <Badge
+            variant="outline"
+            className="text-xs px-1 py-0 h-5 shrink-0 border-amber-400 text-amber-500 dark:border-amber-500 dark:text-amber-400"
+          >
             Medium
+          </Badge>
+        )}
+        {task.priority === "low" && (
+          <Badge
+            variant="outline"
+            className="text-xs px-1 py-0 h-5 shrink-0 border-muted-foreground/30 text-muted-foreground/60"
+          >
+            Low
           </Badge>
         )}
       </DropdownMenuTrigger>
