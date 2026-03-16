@@ -48,11 +48,11 @@ Exceptions: Step insert buttons ("+" between steps) use 32px touch target height
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 18px | 600 (semibold) | 1.2 |
 | Display | 24px | 600 (semibold) | 1.2 |
 
-Source: Body size and line-height from existing `app.css` (`font-size: 14px; line-height: 1.5`). Label at 12px for step metadata, chip text, and cron schedule display. Heading at 18px for panel section titles. Display at 24px for workflow name in detail view.
+Source: Body size and line-height from existing `app.css` (`font-size: 14px; line-height: 1.5`). Label at 12px for step metadata, chip text, and cron schedule display. Heading at 18px for panel section titles. Display at 24px for workflow name in detail view. Two weights only: 400 (regular) for body text and labels, 600 (semibold) for headings and display.
 
 ---
 
@@ -177,6 +177,19 @@ Source: CONTEXT.md specifies "Monaco-style code editor" for shell steps. CodeMir
 
 ---
 
+## Accessibility
+
+### ARIA Labels for Icon-Only Elements
+
+| Element | `aria-label` Value |
+|---------|--------------------|
+| StepInsertButton ("+" icon between steps) | `"Insert step"` |
+| Step context menu (three-dot icon) | `"Step options"` |
+| Retry button (when icon-only variant) | `"Retry step"` |
+| Run Now button (when icon-only in compact view) | `"Run workflow"` |
+
+---
+
 ## Copywriting Contract
 
 | Element | Copy |
@@ -200,6 +213,8 @@ Source: CONTEXT.md specifies "Monaco-style code editor" for shell steps. CodeMir
 | Run now button | "Run Now" |
 | Retry button | "Retry Step" |
 | Step type labels | "Shell Command", "HTTP Request", "Manual Step" |
+
+Note: "Automate" as a single-word label is intentional per CONTEXT.md decisions. The button context (task detail header, next to task name) provides sufficient noun context.
 
 ---
 
@@ -237,6 +252,8 @@ Phase 3 UI integrates into the existing Phase 2 multi-panel layout:
 | Center panel — Task/Workflow Detail | Workflow builder (editable step list) replaces static execution diagram when in edit mode. CronScheduler appears below workflow metadata. "Run Now" and "Automate" buttons in header. |
 | Center panel — Execution Diagram | Enhanced with step progress indicators during execution. Retry button on failed steps. Remains read-only visualization. |
 | Bottom drawer — Output | Shows live execution output during workflow runs. Per-step output tabs or sections. Run history accessible as separate tab. |
+
+**Primary focal point:** The center panel workflow builder step list. The "Run Now" accent-colored button in the detail header and the step list with its insert-anywhere "+" buttons form the visual anchor. During execution, the focal point shifts to the execution diagram with its pulsing active-step indicator.
 
 ---
 
