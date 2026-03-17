@@ -10,6 +10,8 @@ export function WorkflowDetail() {
   const workflow = useWorkflowStore((s) => s.selectedWorkflow);
   const schedule = useWorkflowStore((s) => s.schedule);
   const isRunning = useWorkflowStore((s) => s.isRunning);
+  const stepStatuses = useWorkflowStore((s) => s.stepStatuses);
+  const runs = useWorkflowStore((s) => s.runs);
   const runWorkflow = useWorkflowStore((s) => s.runWorkflow);
 
   if (!workflow) {
@@ -28,6 +30,8 @@ export function WorkflowDetail() {
     status: "pending" as const,
     order: index,
   }));
+
+  const currentRunId = runs.find((r) => r.status === "running")?.id;
 
   return (
     <div className="space-y-6">
@@ -64,6 +68,10 @@ export function WorkflowDetail() {
         </span>
         <ExecutionDiagram
           steps={workflowSteps}
+          isExecuting={isRunning}
+          stepStatuses={stepStatuses}
+          workflowId={workflow.id}
+          runId={currentRunId}
         />
       </div>
     </div>

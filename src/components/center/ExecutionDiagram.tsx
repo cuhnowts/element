@@ -4,9 +4,18 @@ import { StepItem } from "./StepItem";
 
 interface ExecutionDiagramProps {
   steps: Step[];
+  isExecuting?: boolean;
+  stepStatuses?: Record<number, string>;
+  workflowId?: string;
+  runId?: string;
 }
 
-export function ExecutionDiagram({ steps }: ExecutionDiagramProps) {
+export function ExecutionDiagram({
+  steps,
+  stepStatuses,
+  workflowId,
+  runId,
+}: ExecutionDiagramProps) {
   if (steps.length === 0) {
     return (
       <EmptyState
@@ -24,6 +33,12 @@ export function ExecutionDiagram({ steps }: ExecutionDiagramProps) {
           step={step}
           index={index}
           isLast={index === steps.length - 1}
+          executionStatus={stepStatuses?.[index]}
+          workflowId={workflowId}
+          runId={runId}
+          onRetry={() => {
+            /* refresh handled by store event listeners */
+          }}
         />
       ))}
     </div>
