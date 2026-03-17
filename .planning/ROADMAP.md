@@ -61,7 +61,7 @@ Plans:
 **Goal:** User can quickly capture tasks via global hotkey, see a time-aware today view, and tasks carry duration/scheduling metadata for future scheduling features
 **Requirements**: DUX-01, DUX-02, DUX-03, DUX-04, DUX-05, DUX-06, DUX-07, DUX-08, DUX-09, DUX-10
 **Depends on:** Phase 2
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [ ] 02.1-01-PLAN.md — Backend: SQLite migration, Rust model/command scheduling fields, TypeScript type sync
