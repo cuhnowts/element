@@ -10,6 +10,7 @@ import type { ProjectSlice } from "./projectSlice";
 import type { UiSlice } from "./uiSlice";
 import type { PluginSlice } from "./pluginSlice";
 import type { CredentialSlice } from "./credentialSlice";
+import type { CalendarSlice } from "./calendarSlice";
 
 export interface TaskSlice {
   tasks: Task[];
@@ -40,7 +41,7 @@ export interface TaskSlice {
 }
 
 export const createTaskSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice,
+  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
   [],
   [],
   TaskSlice

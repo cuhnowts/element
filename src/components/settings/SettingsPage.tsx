@@ -5,6 +5,7 @@ import { useStore } from "@/stores";
 import { SettingsNav } from "./SettingsNav";
 import { PluginList } from "./PluginList";
 import { CredentialVault } from "./CredentialVault";
+import { CalendarAccounts } from "./CalendarAccounts";
 
 const tabHeadings: Record<string, string> = {
   plugins: "Plugins",
@@ -51,15 +52,7 @@ export function SettingsPage() {
       case "credentials":
         return <CredentialVault />;
       case "calendars":
-        return (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <h3 className="text-lg font-semibold">No calendars connected</h3>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-              Connect a Google or Outlook calendar to see your events in
-              Element.
-            </p>
-          </div>
-        );
+        return <CalendarAccounts />;
       default:
         return null;
     }

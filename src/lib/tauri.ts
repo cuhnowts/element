@@ -9,6 +9,8 @@ import type {
   TaskStatus,
   PluginInfo,
   Credential,
+  CalendarAccount,
+  CalendarEvent,
 } from "./types";
 
 export const api = {
@@ -85,4 +87,19 @@ export const api = {
     }),
   deleteCredential: (id: string) =>
     invoke<void>("delete_credential", { id }),
+
+  // Calendar
+  listCalendarAccounts: () =>
+    invoke<CalendarAccount[]>("list_calendar_accounts"),
+  connectGoogleCalendar: () =>
+    invoke<CalendarAccount>("connect_google_calendar"),
+  connectOutlookCalendar: () =>
+    invoke<CalendarAccount>("connect_outlook_calendar"),
+  syncCalendar: (accountId: string) =>
+    invoke<void>("sync_calendar", { accountId }),
+  syncAllCalendars: () => invoke<void>("sync_all_calendars"),
+  disconnectCalendar: (accountId: string) =>
+    invoke<void>("disconnect_calendar", { accountId }),
+  listCalendarEvents: (start: string, end: string) =>
+    invoke<CalendarEvent[]>("list_calendar_events", { start, end }),
 };

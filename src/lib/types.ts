@@ -135,5 +135,33 @@ export interface FsStepConfig {
   content?: string;
 }
 
+// Calendar types
+export interface CalendarAccount {
+  id: string;
+  provider: "google" | "outlook";
+  email: string;
+  displayName: string;
+  credentialId: string;
+  syncToken: string | null;
+  lastSyncedAt: string | null;
+  colorIndex: number;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  accountId: string;
+  title: string;
+  description: string;
+  location: string | null;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  attendees: string[];
+  status: string;
+  updatedAt: string;
+}
+
 // Settings navigation
 export type SettingsTab = "plugins" | "credentials" | "calendars";

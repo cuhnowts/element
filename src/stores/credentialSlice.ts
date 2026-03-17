@@ -5,6 +5,7 @@ import type { ProjectSlice } from "./projectSlice";
 import type { TaskSlice } from "./taskSlice";
 import type { UiSlice } from "./uiSlice";
 import type { PluginSlice } from "./pluginSlice";
+import type { CalendarSlice } from "./calendarSlice";
 
 export interface CredentialSlice {
   credentials: Credential[];
@@ -24,7 +25,7 @@ export interface CredentialSlice {
 }
 
 export const createCredentialSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice,
+  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
   [],
   [],
   CredentialSlice

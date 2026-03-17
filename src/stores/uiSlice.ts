@@ -3,6 +3,7 @@ import type { ProjectSlice } from "./projectSlice";
 import type { TaskSlice } from "./taskSlice";
 import type { PluginSlice } from "./pluginSlice";
 import type { CredentialSlice } from "./credentialSlice";
+import type { CalendarSlice } from "./calendarSlice";
 import type { SettingsTab } from "../lib/types";
 
 export interface UiSlice {
@@ -30,7 +31,7 @@ export interface UiSlice {
 }
 
 export const createUiSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice,
+  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
   [],
   [],
   UiSlice
