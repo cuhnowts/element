@@ -10,6 +10,8 @@ mod commands;
 mod db;
 mod engine;
 mod models;
+#[cfg(test)]
+mod test_fixtures;
 
 use db::connection::Database;
 use commands::execution_commands::*;
