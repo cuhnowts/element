@@ -16,7 +16,9 @@ mod plugins;
 mod test_fixtures;
 
 use db::connection::Database;
+use commands::credential_commands::*;
 use commands::execution_commands::*;
+use commands::plugin_commands::*;
 use commands::project_commands::*;
 use commands::schedule_commands::*;
 use commands::task_commands::*;
@@ -29,7 +31,27 @@ pub fn run() {
             // Initialize database
             let db = Database::new(app.handle())?;
             let db_arc = Arc::new(Mutex::new(db));
-            app.manage(db_arc);
+            app.manage(db_arc.clone());
+
+            // Initialize plugin host
+            let app_data_dir = app.handle().path().app_data_dir()
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+            let plugins_dir = app_data_dir.join("plugins");
+            std::fs::create_dir_all(&plugins_dir)?;
+
+            let mut plugin_host = plugins::PluginHost::new(plugins_dir);
+            plugin_host.scan_and_load();
+            if let Err(e) = plugin_host.start_watching() {
+                eprintln!("Failed to start plugin watcher: {}", e);
+            }
+            app.manage(Mutex::new(plugin_host));
+
+            // Initialize credential manager
+            let cred_manager = credentials::CredentialManager::new(
+                db_arc,
+                Box::new(credentials::keychain::KeychainStore),
+            );
+            app.manage(Mutex::new(cred_manager));
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -139,6 +161,18 @@ pub fn run() {
             toggle_schedule,
             delete_schedule,
             get_next_run_times,
+            list_plugins,
+            get_plugin,
+            enable_plugin,
+            disable_plugin,
+            reload_plugin,
+            scan_plugins,
+            open_plugins_directory,
+            list_credentials,
+            create_credential,
+            get_credential_secret,
+            update_credential,
+            delete_credential,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

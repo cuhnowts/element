@@ -1,4 +1,6 @@
+pub mod credential_commands;
 pub mod execution_commands;
+pub mod plugin_commands;
 pub mod project_commands;
 pub mod schedule_commands;
 pub mod task_commands;
