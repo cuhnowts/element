@@ -25,6 +25,11 @@ export interface TaskSlice {
       description?: string;
       context?: string;
       priority?: TaskPriority;
+      dueDate?: string;
+      scheduledDate?: string;
+      scheduledTime?: string;
+      durationMinutes?: number;
+      recurrenceRule?: string;
     },
   ) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;

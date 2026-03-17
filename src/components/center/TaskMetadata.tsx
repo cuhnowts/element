@@ -8,12 +8,12 @@ interface TaskMetadataProps {
 export function TaskMetadata({ task }: TaskMetadataProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {task.project && (
+      {task.projectId && (
         <div>
           <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-1">
             Project
           </span>
-          <span className="text-sm">{task.project}</span>
+          <span className="text-sm">{task.projectId}</span>
         </div>
       )}
       {task.tags.length > 0 && (

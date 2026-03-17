@@ -18,6 +18,11 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   externalPath: string | null;
+  dueDate: string | null;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  durationMinutes: number | null;
+  recurrenceRule: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +44,11 @@ export interface CreateTaskInput {
   context?: string;
   priority?: TaskPriority;
   externalPath?: string;
+  dueDate?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  durationMinutes?: number;
+  recurrenceRule?: string;
 }
 
 export interface CreateProjectInput {
@@ -52,4 +62,9 @@ export interface UpdateTaskInput {
   context?: string;
   priority?: TaskPriority;
   externalPath?: string;
+  dueDate?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  durationMinutes?: number;
+  recurrenceRule?: string;
 }
