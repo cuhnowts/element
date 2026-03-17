@@ -20,8 +20,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **AUTO-01**: User can schedule recurring tasks on cron schedules
 - [x] **AUTO-02**: User can promote a manual task to an automated workflow
-- [ ] **AUTO-03**: User can execute shell commands and CLI tools from tasks
-- [ ] **AUTO-04**: User can make HTTP/API calls as task steps
+- [x] **AUTO-03**: User can execute shell commands and CLI tools from tasks
+- [x] **AUTO-04**: User can make HTTP/API calls as task steps
 
 ### Desktop UI
 
@@ -98,8 +98,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TASK-06 | Phase 3 | Complete |
 | AUTO-01 | Phase 3 | Complete |
 | AUTO-02 | Phase 3 | Complete |
-| AUTO-03 | Phase 3 | Pending |
-| AUTO-04 | Phase 3 | Pending |
+| AUTO-03 | Phase 3 | Complete |
+| AUTO-04 | Phase 3 | Complete |
 | UI-01 | Phase 2 | Complete |
 | UI-02 | Phase 2 | Complete |
 | UI-03 | Phase 2 | Complete |
