@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 02.1-04-PLAN.md
-last_updated: "2026-03-17T02:29:13.259Z"
-last_activity: 2026-03-16 — Completed 02.1-04-PLAN.md (Quick Capture Window)
+status: in-progress
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-17T02:36:00Z"
+last_activity: 2026-03-17 — Completed 03-01-PLAN.md (Workflow Data Layer)
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 13
-  percent: 45
+  completed_plans: 14
+  percent: 48
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor tasks — everything else builds on top of it.
-**Current focus:** Phase 2.1: Daily UX Foundation
+**Current focus:** Phase 03: Workflows and Automation
 
 ## Current Position
 
-Phase: 2.1 (Daily UX Foundation)
-Plan: 4 of 4 in current phase
-Status: Phase Complete
-Last activity: 2026-03-16 — Completed 02.1-04-PLAN.md (Quick Capture Window)
+Phase: 03 (Workflows and Automation)
+Plan: 1 of 5 in current phase
+Status: In Progress
+Last activity: 2026-03-17 — Completed 03-01-PLAN.md (Workflow Data Layer)
 
-Progress: [█████░░░░░] 45%
+Progress: [█████░░░░░] 48%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [█████░░░░░] 45%
 | Phase 02.1 P02 | 3min | 2 tasks | 7 files |
 | Phase 02.1 P03 | 3min | 2 tasks | 6 files |
 | Phase 02.1 P04 | 8min | 3 tasks | 5 files |
+| Phase 03 P01 | 5min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Recent decisions affecting current work:
 - [Phase 02.1]: Multi-window routing via URL query param (?window=capture) with dynamic imports in main.tsx
 - [Phase 02.1]: Capture window uses direct invoke() instead of Zustand stores to avoid cross-window state sharing
 - [Phase 02.1]: Frameless window with decorations:false and CSS border-radius instead of transparent:true for macOS
+- [Phase 03]: Migration numbered 004 (not 002) because versions 1-3 already taken by prior phases
+- [Phase 03]: WorkflowRun/StepResult in execution.rs to co-locate all execution models
 
 ### Roadmap Evolution
 
@@ -114,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T02:30:00.000Z
-Stopped at: Completed 02.1-04-PLAN.md
+Last session: 2026-03-17T02:36:00Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

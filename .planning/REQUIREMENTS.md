@@ -13,13 +13,13 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **TASK-02**: User can organize tasks by project, type, priority, or custom tags
 - [x] **TASK-03**: User can track task status (pending, in-progress, complete, blocked)
 - [x] **TASK-04**: User can view task execution history and outcomes
-- [ ] **TASK-05**: User can define multi-step task workflows with execution diagrams
-- [ ] **TASK-06**: User can assign agents/tools/skills to task steps
+- [x] **TASK-05**: User can define multi-step task workflows with execution diagrams
+- [x] **TASK-06**: User can assign agents/tools/skills to task steps
 
 ### Automation
 
-- [ ] **AUTO-01**: User can schedule recurring tasks on cron schedules
-- [ ] **AUTO-02**: User can promote a manual task to an automated workflow
+- [x] **AUTO-01**: User can schedule recurring tasks on cron schedules
+- [x] **AUTO-02**: User can promote a manual task to an automated workflow
 - [ ] **AUTO-03**: User can execute shell commands and CLI tools from tasks
 - [ ] **AUTO-04**: User can make HTTP/API calls as task steps
 
@@ -94,10 +94,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TASK-02 | Phase 1 | Complete |
 | TASK-03 | Phase 1 | Complete |
 | TASK-04 | Phase 2 | Complete |
-| TASK-05 | Phase 3 | Pending |
-| TASK-06 | Phase 3 | Pending |
-| AUTO-01 | Phase 3 | Pending |
-| AUTO-02 | Phase 3 | Pending |
+| TASK-05 | Phase 3 | Complete |
+| TASK-06 | Phase 3 | Complete |
+| AUTO-01 | Phase 3 | Complete |
+| AUTO-02 | Phase 3 | Complete |
 | AUTO-03 | Phase 3 | Pending |
 | AUTO-04 | Phase 3 | Pending |
 | UI-01 | Phase 2 | Complete |
