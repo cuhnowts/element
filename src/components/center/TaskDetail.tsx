@@ -9,6 +9,7 @@ import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { ExecutionDiagram } from "./ExecutionDiagram";
+import { PromoteButton } from "./PromoteButton";
 import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
 import { DurationChips } from "@/components/shared/DurationChips";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
@@ -118,15 +119,18 @@ export function TaskDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={handleTitleBlur}
-        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-        className="text-lg font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent"
-        placeholder="Task title"
-      />
+      {/* Title + Automate */}
+      <div className="flex items-center gap-3">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleTitleBlur}
+          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          className="text-lg font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent flex-1"
+          placeholder="Task title"
+        />
+        <PromoteButton taskId={selectedTask.id} variant="button" />
+      </div>
 
       {/* Scheduling Badges - read-only display */}
       <SchedulingBadges

@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { PromoteButton } from "./PromoteButton";
 import type { TaskDetail } from "@/types/task";
 import { StatusDot } from "@/components/shared/StatusDot";
 
@@ -21,6 +22,7 @@ export function TaskHeader({ task }: TaskHeaderProps) {
         <h2 className="text-lg font-semibold leading-snug">{task.title}</h2>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
+        <PromoteButton taskId={task.id} variant="button" />
         <Badge variant={STATUS_BADGE_VARIANT[task.status] ?? "outline"}>
           {task.status}
         </Badge>
