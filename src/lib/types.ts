@@ -110,5 +110,30 @@ export interface CreateCredentialInput {
   notes?: string;
 }
 
+// Step configuration types
+export interface ShellStepConfig {
+  command: string;
+  workingDirectory?: string;
+  timeoutSeconds?: number;
+}
+
+export interface HttpStepConfig {
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  url: string;
+  headers?: Array<{ key: string; value: string }>;
+  body?: string;
+  auth?:
+    | { type: "none" }
+    | { type: "bearer"; credentialId: string }
+    | { type: "basic"; credentialId: string };
+  timeoutSeconds?: number;
+}
+
+export interface FsStepConfig {
+  operation: "read" | "write" | "list";
+  path: string;
+  content?: string;
+}
+
 // Settings navigation
 export type SettingsTab = "plugins" | "credentials" | "calendars";
