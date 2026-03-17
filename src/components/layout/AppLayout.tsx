@@ -22,9 +22,11 @@ import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
+import { SettingsPage } from "@/components/settings/SettingsPage";
 
 export function AppLayout() {
   useGlobalShortcut();
+  const settingsOpen = useStore((s) => s.settingsOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
   const drawerPanelRef = usePanelRef();
@@ -87,27 +89,33 @@ export function AppLayout() {
           <Sidebar />
         </aside>
 
-        {/* Center + Drawer split */}
-        <ResizablePanelGroup direction="vertical" className="flex-1">
-          <ResizablePanel
-            defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
-            minSize="30%"
-          >
-            <CenterPanel />
-          </ResizablePanel>
+        {/* Center + Drawer split (or Settings page) */}
+        {settingsOpen ? (
+          <div className="flex-1 overflow-hidden">
+            <SettingsPage />
+          </div>
+        ) : (
+          <ResizablePanelGroup direction="vertical" className="flex-1">
+            <ResizablePanel
+              defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
+              minSize="30%"
+            >
+              <CenterPanel />
+            </ResizablePanel>
 
-          <ResizableHandle withHandle />
+            <ResizableHandle withHandle />
 
-          <ResizablePanel
-            defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
-            minSize="0%"
-            maxSize="60%"
-            collapsible
-            panelRef={drawerPanelRef}
-          >
-            <OutputDrawer />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <ResizablePanel
+              defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
+              minSize="0%"
+              maxSize="60%"
+              collapsible
+              panelRef={drawerPanelRef}
+            >
+              <OutputDrawer />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
 
       {/* Create Project Dialog */}
