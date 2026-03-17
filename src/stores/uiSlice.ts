@@ -1,6 +1,9 @@
 import type { StateCreator } from "zustand";
 import type { ProjectSlice } from "./projectSlice";
 import type { TaskSlice } from "./taskSlice";
+import type { PluginSlice } from "./pluginSlice";
+import type { CredentialSlice } from "./credentialSlice";
+import type { SettingsTab } from "../lib/types";
 
 export interface UiSlice {
   commandPaletteOpen: boolean;
@@ -11,6 +14,8 @@ export interface UiSlice {
     id: string;
     name: string;
   } | null;
+  settingsOpen: boolean;
+  settingsTab: SettingsTab;
   toggleCommandPalette: () => void;
   openCreateProjectDialog: () => void;
   closeCreateProjectDialog: () => void;
@@ -20,10 +25,12 @@ export interface UiSlice {
     name: string;
   }) => void;
   closeDeleteConfirm: () => void;
+  openSettings: (tab?: SettingsTab) => void;
+  closeSettings: () => void;
 }
 
 export const createUiSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice,
+  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice,
   [],
   [],
   UiSlice
@@ -32,6 +39,8 @@ export const createUiSlice: StateCreator<
   createProjectDialogOpen: false,
   deleteConfirmOpen: false,
   deleteTarget: null,
+  settingsOpen: false,
+  settingsTab: "plugins",
   toggleCommandPalette: () =>
     set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
   openCreateProjectDialog: () => set({ createProjectDialogOpen: true }),
@@ -40,4 +49,7 @@ export const createUiSlice: StateCreator<
     set({ deleteConfirmOpen: true, deleteTarget: target }),
   closeDeleteConfirm: () =>
     set({ deleteConfirmOpen: false, deleteTarget: null }),
+  openSettings: (tab) =>
+    set({ settingsOpen: true, settingsTab: tab ?? "plugins" }),
+  closeSettings: () => set({ settingsOpen: false }),
 });

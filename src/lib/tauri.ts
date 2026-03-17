@@ -7,6 +7,8 @@ import type {
   CreateTaskInput,
   UpdateTaskInput,
   TaskStatus,
+  PluginInfo,
+  Credential,
 } from "./types";
 
 export const api = {
@@ -41,4 +43,46 @@ export const api = {
   removeTagFromTask: (taskId: string, tagId: string) =>
     invoke<void>("remove_tag_from_task", { taskId, tagId }),
   listTags: () => invoke<Tag[]>("list_tags"),
+
+  // Plugins
+  listPlugins: () => invoke<PluginInfo[]>("list_plugins"),
+  getPlugin: (name: string) => invoke<PluginInfo>("get_plugin", { name }),
+  enablePlugin: (name: string) => invoke<void>("enable_plugin", { name }),
+  disablePlugin: (name: string) => invoke<void>("disable_plugin", { name }),
+  reloadPlugin: (name: string) => invoke<PluginInfo>("reload_plugin", { name }),
+  scanPlugins: () => invoke<PluginInfo[]>("scan_plugins"),
+  openPluginsDirectory: () => invoke<string>("open_plugins_directory"),
+
+  // Credentials
+  listCredentials: () => invoke<Credential[]>("list_credentials"),
+  createCredential: (
+    name: string,
+    credentialType: string,
+    value: string,
+    notes?: string,
+  ) =>
+    invoke<Credential>("create_credential", {
+      name,
+      credentialType,
+      value,
+      notes,
+    }),
+  getCredentialSecret: (id: string) =>
+    invoke<string>("get_credential_secret", { id }),
+  updateCredential: (
+    id: string,
+    name?: string,
+    credentialType?: string,
+    notes?: string,
+    value?: string,
+  ) =>
+    invoke<Credential>("update_credential", {
+      id,
+      name,
+      credentialType,
+      notes,
+      value,
+    }),
+  deleteCredential: (id: string) =>
+    invoke<void>("delete_credential", { id }),
 };
