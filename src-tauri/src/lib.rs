@@ -168,6 +168,7 @@ pub fn run() {
             reload_plugin,
             scan_plugins,
             open_plugins_directory,
+            execute_step,
             list_credentials,
             create_credential,
             get_credential_secret,

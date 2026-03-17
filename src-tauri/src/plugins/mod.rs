@@ -1,4 +1,5 @@
 pub mod api;
+pub mod core;
 pub mod manifest;
 pub mod registry;
 
@@ -34,6 +35,11 @@ impl PluginHost {
 
     pub fn scan_and_load(&self) -> Vec<PluginLoadResult> {
         let mut results = Vec::new();
+
+        // Register core plugins first (built-in)
+        if let Ok(mut reg) = self.registry.write() {
+            core::register_core_plugins(&mut reg);
+        }
 
         let entries = match std::fs::read_dir(&self.plugins_dir) {
             Ok(entries) => entries,

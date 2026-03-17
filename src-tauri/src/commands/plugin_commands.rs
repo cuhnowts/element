@@ -1,6 +1,9 @@
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
+use crate::plugins::core::filesystem::{FilesystemPlugin, FsStepInput};
+use crate::plugins::core::http::{HttpPlugin, HttpStepInput};
+use crate::plugins::core::shell::{ShellPlugin, ShellStepInput};
 use crate::plugins::manifest::PluginCapability;
 use crate::plugins::registry::{LoadedPlugin, PluginStatus};
 use crate::plugins::PluginHost;
@@ -168,9 +171,62 @@ pub async fn open_plugins_directory(
     Ok(host.plugins_dir().to_string_lossy().to_string())
 }
 
+#[tauri::command]
+pub async fn execute_step(
+    step_type_id: String,
+    input: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    match step_type_id.as_str() {
+        "shell-command" => {
+            let shell_input: ShellStepInput =
+                serde_json::from_value(input).map_err(|e| format!("Invalid shell input: {}", e))?;
+            let output = ShellPlugin::execute(shell_input)
+                .await
+                .map_err(|e| e.to_string())?;
+            serde_json::to_value(output).map_err(|e| e.to_string())
+        }
+        "http-request" => {
+            let http_input: HttpStepInput =
+                serde_json::from_value(input).map_err(|e| format!("Invalid HTTP input: {}", e))?;
+            let output = HttpPlugin::execute(http_input)
+                .await
+                .map_err(|e| e.to_string())?;
+            serde_json::to_value(output).map_err(|e| e.to_string())
+        }
+        "file-operation" => {
+            let fs_input: FsStepInput =
+                serde_json::from_value(input).map_err(|e| format!("Invalid FS input: {}", e))?;
+            // For core filesystem plugin, allow all paths by default
+            // In production, this would be scoped by plugin configuration
+            let plugin = FilesystemPlugin::new(vec![std::path::PathBuf::from("/")]);
+            let output = plugin.execute(fs_input).await.map_err(|e| e.to_string())?;
+            serde_json::to_value(output).map_err(|e| e.to_string())
+        }
+        _ => Err(format!("Unknown step type: {}", step_type_id)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn test_execute_step_shell() {
+        let input = serde_json::json!({
+            "command": "echo test_output"
+        });
+        let result = execute_step("shell-command".to_string(), input).await.unwrap();
+        assert_eq!(result["exit_code"], 0);
+        assert!(result["stdout"].as_str().unwrap().contains("test_output"));
+    }
+
+    #[tokio::test]
+    async fn test_execute_step_unknown_type() {
+        let input = serde_json::json!({});
+        let result = execute_step("unknown-type".to_string(), input).await;
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Unknown step type: unknown-type"));
+    }
 
     #[test]
     fn test_plugin_info_serialization_camel_case() {
