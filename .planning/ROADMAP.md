@@ -14,6 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Desktop Shell and Task Foundation** - Native app with local data storage and basic task CRUD (completed 2026-03-16)
 - [x] **Phase 2: Task UI and Execution History** - Multi-panel layout with calendar view, task context, and output logs (completed 2026-03-16)
+- [ ] **Phase 2.1: Daily UX Foundation** - Task scheduling fields, global-hotkey quick-capture, today view upgrade (INSERTED)
 - [ ] **Phase 3: Workflows and Automation** - Multi-step task workflows with scheduling and shell/HTTP execution
 - [ ] **Phase 4: Plugin System** - File-drop plugins, credential management, and core connectors
 - [ ] **Phase 5: AI and Smart Scheduling** - Model-agnostic AI assistance and intelligent time-block scheduling
@@ -55,9 +56,22 @@ Plans:
 - [ ] 02-02-PLAN.md — Left sidebar: calendar toggle, mini calendar, task list, workflow list
 - [ ] 02-03-PLAN.md — Center panel: task detail, execution diagram, output drawer with log viewer
 
+### Phase 02.1: Daily UX Foundation (INSERTED)
+
+**Goal:** User can quickly capture tasks via global hotkey, see a time-aware today view, and tasks carry duration/scheduling metadata for future scheduling features
+**Requirements**: DUX-01, DUX-02, DUX-03, DUX-04, DUX-05, DUX-06, DUX-07, DUX-08, DUX-09, DUX-10
+**Depends on:** Phase 2
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02.1-01-PLAN.md — Backend: SQLite migration, Rust model/command scheduling fields, TypeScript type sync
+- [ ] 02.1-02-PLAN.md — Today View: TodayViewHeader, TimeGroupSection, TodayTaskRow, ProgressBar, CenterPanel wiring
+- [ ] 02.1-03-PLAN.md — Scheduling UI: DurationChips, RecurrenceIndicator, SchedulingBadges, TaskDetail integration
+- [ ] 02.1-04-PLAN.md — Quick-Capture: global hotkey, frameless floating window, capture form, cross-window events
+
 ### Phase 3: Workflows and Automation
 **Goal**: User can compose multi-step task workflows, schedule them on cron, and execute shell commands and HTTP calls as steps
-**Depends on**: Phase 2
+**Depends on**: Phase 2.1
 **Requirements**: TASK-05, TASK-06, AUTO-01, AUTO-02, AUTO-03, AUTO-04
 **Success Criteria** (what must be TRUE):
   1. User can define a multi-step task workflow with an execution diagram showing step order and flow
@@ -114,12 +128,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Desktop Shell and Task Foundation | 3/3 | Complete   | 2026-03-16 |
 | 2. Task UI and Execution History | 4/4 | Complete   | 2026-03-16 |
+| 2.1 Daily UX Foundation | 0/4 | Not started | - |
 | 3. Workflows and Automation | 0/5 | Not started | - |
 | 4. Plugin System | 0/5 | Not started | - |
 | 5. AI and Smart Scheduling | 0/6 | Not started | - |
