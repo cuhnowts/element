@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2.1 context gathered
-last_updated: "2026-03-17T01:21:15.682Z"
-last_activity: 2026-03-16 — Completed 02-05-PLAN.md (gap closure)
+status: in-progress
+stopped_at: Completed 02.1-01-PLAN.md (scheduling schema)
+last_updated: "2026-03-17T02:03:18Z"
+last_activity: 2026-03-16 — Completed 02.1-01-PLAN.md (scheduling schema)
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 25
-  completed_plans: 9
+  total_plans: 29
+  completed_plans: 10
   percent: 47
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor tasks — everything else builds on top of it.
-**Current focus:** Phase 3: Workflows and Automation
+**Current focus:** Phase 2.1: Daily UX Foundation
 
 ## Current Position
 
-Phase: 2 of 5 (Task UI and Execution History) -- COMPLETE
-Plan: 5 of 5 in current phase (all complete, including gap closure)
-Status: Phase 2 Complete (with gap closure)
-Last activity: 2026-03-16 — Completed 02-05-PLAN.md (gap closure)
+Phase: 2.1 (Daily UX Foundation)
+Plan: 2 of 4 in current phase
+Status: In Progress
+Last activity: 2026-03-16 — Completed 02.1-01-PLAN.md (scheduling schema)
 
-Progress: [█████░░░░░] 47%
+Progress: [███░░░░░░░] 34%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████░░░░░] 47%
 | Phase 01 P03 | 12 | 3 tasks | 18 files |
 | Phase 02 P04 | 3min | 2 tasks | 3 files |
 | Phase 02 P05 | 1min | 2 tasks | 2 files |
+| Phase 02.1 P01 | 6min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Priority badge colors differentiated: medium=amber, low=light grey
 - [Phase 02]: Kept Phase 1 dialogs inline in AppLayout rather than extracting to separate component
 - [Phase 02]: Merged Phase 2 task event listeners into existing Phase 1 listeners
+- [Phase 02.1]: TASK_COLUMNS constant centralizes column list to prevent index drift
+- [Phase 02.1]: Consolidated dual Task type system: types/task.ts re-exports from lib/types.ts
+- [Phase 02.1]: Recurrence rule validation in Rust model layer, not SQL CHECK constraint
 
 ### Roadmap Evolution
 
@@ -102,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T01:21:15.680Z
-Stopped at: Phase 2.1 context gathered
-Resume file: .planning/phases/02.1-daily-ux-foundation-add-scheduling-fields-to-task-schema-build-global-hotkey-quick-capture-input-and-upgrade-welcomedashboard-into-a-real-today-view/02.1-CONTEXT.md
+Last session: 2026-03-17T02:03:18Z
+Stopped at: Completed 02.1-01-PLAN.md (scheduling schema)
+Resume file: .planning/phases/02.1-daily-ux-foundation-add-scheduling-fields-to-task-schema-build-global-hotkey-quick-capture-input-and-upgrade-welcomedashboard-into-a-real-today-view/02.1-02-PLAN.md
