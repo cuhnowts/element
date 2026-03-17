@@ -30,6 +30,12 @@ keyring = { version = "3.6", features = ["apple-native", "windows-native", "sync
 notify = { version = "8", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.7"
 jsonschema = "0.28"
+tauri-plugin-oauth = "2"
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.22"
+open = "5"
+url = "2"
 
 [dev-dependencies]
 tempfile = "3"

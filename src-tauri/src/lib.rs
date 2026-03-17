@@ -16,6 +16,7 @@ mod plugins;
 mod test_fixtures;
 
 use db::connection::Database;
+use commands::calendar_commands::*;
 use commands::credential_commands::*;
 use commands::execution_commands::*;
 use commands::plugin_commands::*;
@@ -124,8 +125,13 @@ pub fn run() {
                 }
             });
 
+            // Start background calendar sync (every 5 minutes)
+            let sync_handle = app.handle().clone();
+            plugins::core::calendar::start_background_sync(sync_handle);
+
             Ok(())
         })
+        .plugin(tauri_plugin_oauth::init())
         .invoke_handler(tauri::generate_handler![
             create_project,
             list_projects,
@@ -174,6 +180,13 @@ pub fn run() {
             get_credential_secret,
             update_credential,
             delete_credential,
+            list_calendar_accounts,
+            connect_google_calendar,
+            connect_outlook_calendar,
+            sync_calendar,
+            sync_all_calendars,
+            disconnect_calendar,
+            list_calendar_events,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
