@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-03-16T02:22:08.830Z"
-last_activity: 2026-03-16 — Completed 02-05-PLAN.md
+stopped_at: Phase 2.1 context gathered
+last_updated: "2026-03-17T01:21:15.682Z"
+last_activity: 2026-03-16 — Completed 02-05-PLAN.md (gap closure)
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 2
-  total_plans: 19
+  total_plans: 25
   completed_plans: 9
-  percent: 100
+  percent: 47
 ---
 
 # Project State
@@ -88,6 +88,10 @@ Recent decisions affecting current work:
 - [Phase 02]: Kept Phase 1 dialogs inline in AppLayout rather than extracting to separate component
 - [Phase 02]: Merged Phase 2 task event listeners into existing Phase 1 listeners
 
+### Roadmap Evolution
+
+- Phase 02.1 inserted after Phase 2: Daily UX Foundation — task scheduling fields, global-hotkey quick-capture, today view upgrade (URGENT)
+
 ### Pending Todos
 
 None yet.
@@ -98,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16T02:22:08.828Z
-Stopped at: Completed 02-05-PLAN.md
-Resume file: None
+Last session: 2026-03-17T01:21:15.680Z
+Stopped at: Phase 2.1 context gathered
+Resume file: .planning/phases/02.1-daily-ux-foundation-add-scheduling-fields-to-task-schema-build-global-hotkey-quick-capture-input-and-upgrade-welcomedashboard-into-a-real-today-view/02.1-CONTEXT.md
