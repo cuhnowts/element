@@ -18,11 +18,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
 
 export function AppLayout() {
+  useGlobalShortcut();
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
   const drawerPanelRef = usePanelRef();
