@@ -26,3 +26,42 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
 }
+
+// Workflow execution types
+
+export interface WorkflowRun {
+  id: string;
+  workflowId: string;
+  triggerType: "manual" | "scheduled" | "catch-up";
+  status: "running" | "completed" | "failed" | "cancelled";
+  startedAt: string;
+  completedAt?: string;
+  errorMessage?: string;
+}
+
+export interface WorkflowStepResult {
+  id: string;
+  runId: string;
+  stepIndex: number;
+  stepName: string;
+  stepType: string;
+  status: "pending" | "running" | "completed" | "failed" | "skipped";
+  inputPreview?: string;
+  outputPreview?: string;
+  outputFull?: string;
+  errorMessage?: string;
+  durationMs?: number;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface StepProgress {
+  workflowId: string;
+  runId: string;
+  stepIndex: number;
+  stepName: string;
+  status: "running" | "completed" | "failed";
+  outputPreview?: string;
+  errorMessage?: string;
+  durationMs?: number;
+}
