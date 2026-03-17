@@ -7,9 +7,11 @@ use std::sync::{Arc, Mutex};
 use tokio_cron_scheduler::JobScheduler;
 
 mod commands;
+mod credentials;
 mod db;
 mod engine;
 mod models;
+mod plugins;
 #[cfg(test)]
 mod test_fixtures;
 

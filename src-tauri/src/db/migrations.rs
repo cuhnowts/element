@@ -23,5 +23,10 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.pragma_update(None, "user_version", 4)?;
     }
 
+    if version < 5 {
+        conn.execute_batch(include_str!("sql/005_plugins_credentials_calendar.sql"))?;
+        conn.pragma_update(None, "user_version", 5)?;
+    }
+
     Ok(())
 }
