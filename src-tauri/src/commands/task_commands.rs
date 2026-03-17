@@ -18,7 +18,7 @@ pub struct TaskWithTags {
 #[tauri::command]
 pub async fn create_task(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
     title: String,
     description: Option<String>,
@@ -53,7 +53,7 @@ pub async fn create_task(
 
 #[tauri::command]
 pub async fn list_tasks(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
 ) -> Result<Vec<Task>, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -62,7 +62,7 @@ pub async fn list_tasks(
 
 #[tauri::command]
 pub async fn get_task(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
 ) -> Result<TaskWithTags, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -76,7 +76,7 @@ pub async fn get_task(
 #[tauri::command]
 pub async fn update_task(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
     title: Option<String>,
     description: Option<String>,
@@ -113,7 +113,7 @@ pub async fn update_task(
 #[tauri::command]
 pub async fn update_task_status(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
     status: String,
 ) -> Result<Task, String> {
@@ -131,7 +131,7 @@ pub async fn update_task_status(
 #[tauri::command]
 pub async fn delete_task(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -144,7 +144,7 @@ pub async fn delete_task(
 #[tauri::command]
 pub async fn add_tag_to_task(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
     tag_name: String,
 ) -> Result<Tag, String> {
@@ -171,7 +171,7 @@ pub async fn add_tag_to_task(
 #[tauri::command]
 pub async fn remove_tag_from_task(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     task_id: String,
     tag_id: String,
 ) -> Result<(), String> {
@@ -185,7 +185,7 @@ pub async fn remove_tag_from_task(
 
 #[tauri::command]
 pub async fn list_tags(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
 ) -> Result<Vec<Tag>, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     db.list_tags().map_err(|e| e.to_string())

@@ -99,17 +99,32 @@ impl PipelineExecutor {
         db: &Arc<Mutex<Database>>,
         trigger_type: &str,
     ) -> Result<String, EngineError> {
-        // Create workflow run
-        let run = {
-            let db_lock = db
-                .lock()
-                .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?;
-            db_lock
-                .create_workflow_run(&workflow.id, trigger_type)
-                .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?
-        };
+        self.execute_with_run(workflow, app, db, trigger_type, None).await
+    }
 
-        let run_id = run.id.clone();
+    pub async fn execute_with_run(
+        &mut self,
+        workflow: &Workflow,
+        app: &tauri::AppHandle,
+        db: &Arc<Mutex<Database>>,
+        trigger_type: &str,
+        existing_run_id: Option<String>,
+    ) -> Result<String, EngineError> {
+        // Use existing run or create a new one
+        let run_id = match existing_run_id {
+            Some(id) => id,
+            None => {
+                let run = {
+                    let db_lock = db
+                        .lock()
+                        .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?;
+                    db_lock
+                        .create_workflow_run(&workflow.id, trigger_type)
+                        .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?
+                };
+                run.id
+            }
+        };
 
         for (index, step) in workflow.steps.iter().enumerate() {
             let step_name = step.name().to_string();

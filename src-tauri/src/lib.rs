@@ -24,8 +24,8 @@ pub fn run() {
         .setup(|app| {
             // Initialize database
             let db = Database::new(app.handle())?;
-            let db_mutex = Mutex::new(db);
-            app.manage(db_mutex);
+            let db_arc = Arc::new(Mutex::new(db));
+            app.manage(db_arc);
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -127,6 +127,8 @@ pub fn run() {
             promote_task_to_workflow,
             get_workflow_runs,
             get_step_results,
+            run_workflow,
+            retry_workflow_step,
             create_schedule,
             get_schedule_for_workflow,
             update_schedule,

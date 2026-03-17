@@ -6,7 +6,7 @@ use crate::models::project::{CreateProjectInput, Project};
 #[tauri::command]
 pub async fn create_project(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     name: String,
     description: Option<String>,
 ) -> Result<Project, String> {
@@ -20,7 +20,7 @@ pub async fn create_project(
 
 #[tauri::command]
 pub async fn list_projects(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
 ) -> Result<Vec<Project>, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     db.list_projects().map_err(|e| e.to_string())
@@ -28,7 +28,7 @@ pub async fn list_projects(
 
 #[tauri::command]
 pub async fn get_project(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
 ) -> Result<Project, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -38,7 +38,7 @@ pub async fn get_project(
 #[tauri::command]
 pub async fn update_project(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
     name: String,
     description: String,
@@ -55,7 +55,7 @@ pub async fn update_project(
 #[tauri::command]
 pub async fn delete_project(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;

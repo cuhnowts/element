@@ -12,7 +12,7 @@ pub async fn init_scheduler(
 
     // Load active schedules from DB via managed state
     let schedules = {
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .list_active_schedules()
@@ -92,7 +92,7 @@ async fn catch_up_run(
     workflow_id: &str,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let run = {
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         let _workflow = db_lock
             .get_workflow(workflow_id)
@@ -107,7 +107,7 @@ async fn catch_up_run(
 
     // Mark as completed (actual step execution will be handled by the pipeline executor)
     {
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .complete_workflow_run(&run.id, "completed", None)
@@ -126,7 +126,7 @@ async fn scheduled_run(
     schedule_id: &str,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let run = {
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         let _workflow = db_lock
             .get_workflow(workflow_id)
@@ -141,7 +141,7 @@ async fn scheduled_run(
 
     // Mark as completed (actual step execution will be handled by the pipeline executor)
     {
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .complete_workflow_run(&run.id, "completed", None)
@@ -151,7 +151,7 @@ async fn scheduled_run(
     // Update schedule last_run_at
     {
         let cron_expr = {
-            let db_state = app.state::<Mutex<Database>>();
+            let db_state = app.state::<Arc<Mutex<Database>>>();
             let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
             let schedule = db_lock
                 .get_schedule(schedule_id)
@@ -164,7 +164,7 @@ async fn scheduled_run(
             .ok()
             .and_then(|v| v.into_iter().next());
 
-        let db_state = app.state::<Mutex<Database>>();
+        let db_state = app.state::<Arc<Mutex<Database>>>();
         let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .update_schedule_last_run(schedule_id, &now, next_runs.as_deref())

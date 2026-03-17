@@ -6,7 +6,7 @@ use crate::models::schedule::Schedule;
 #[tauri::command]
 pub async fn create_schedule(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     workflow_id: String,
     cron_expression: String,
 ) -> Result<Schedule, String> {
@@ -21,7 +21,7 @@ pub async fn create_schedule(
 
 #[tauri::command]
 pub async fn get_schedule_for_workflow(
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     workflow_id: String,
 ) -> Result<Option<Schedule>, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -32,7 +32,7 @@ pub async fn get_schedule_for_workflow(
 #[tauri::command]
 pub async fn update_schedule(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     schedule_id: String,
     cron_expression: String,
 ) -> Result<Schedule, String> {
@@ -48,7 +48,7 @@ pub async fn update_schedule(
 #[tauri::command]
 pub async fn toggle_schedule(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     schedule_id: String,
     is_active: bool,
 ) -> Result<Schedule, String> {
@@ -64,7 +64,7 @@ pub async fn toggle_schedule(
 #[tauri::command]
 pub async fn delete_schedule(
     app: AppHandle,
-    state: State<'_, std::sync::Mutex<Database>>,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     schedule_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
