@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02.1-03-PLAN.md
-last_updated: "2026-03-17T02:10:48.799Z"
-last_activity: 2026-03-16 — Completed 02.1-03-PLAN.md (Scheduling Display Components)
+stopped_at: Completed 02.1-04-PLAN.md
+last_updated: "2026-03-17T02:30:00.000Z"
+last_activity: 2026-03-16 — Completed 02.1-04-PLAN.md (Quick Capture Window)
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 29
-  completed_plans: 12
-  percent: 41
+  completed_plans: 14
+  percent: 45
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 
 Phase: 2.1 (Daily UX Foundation)
 Plan: 4 of 4 in current phase
-Status: In Progress
-Last activity: 2026-03-16 — Completed 02.1-03-PLAN.md (Scheduling Display Components)
+Status: Phase Complete
+Last activity: 2026-03-16 — Completed 02.1-04-PLAN.md (Quick Capture Window)
 
-Progress: [████░░░░░░] 41%
+Progress: [█████░░░░░] 45%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████░░░░░░] 41%
 | Phase 02.1 P01 | 6min | 2 tasks | 11 files |
 | Phase 02.1 P02 | 3min | 2 tasks | 7 files |
 | Phase 02.1 P03 | 3min | 2 tasks | 6 files |
+| Phase 02.1 P04 | 8min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Recent decisions affecting current work:
 - [Phase 02.1]: Recurrence rule validation in Rust model layer, not SQL CHECK constraint
 - [Phase 02.1]: Exported getTimeGroup as named export for direct unit testing of pure logic
 - [Phase 02.1]: Duration deselect does not clear backend value -- only positive selections persist
+- [Phase 02.1]: Multi-window routing via URL query param (?window=capture) with dynamic imports in main.tsx
+- [Phase 02.1]: Capture window uses direct invoke() instead of Zustand stores to avoid cross-window state sharing
+- [Phase 02.1]: Frameless window with decorations:false and CSS border-radius instead of transparent:true for macOS
 
 ### Roadmap Evolution
 
@@ -110,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T02:10:48.796Z
-Stopped at: Completed 02.1-03-PLAN.md
+Last session: 2026-03-17T02:30:00.000Z
+Stopped at: Completed 02.1-04-PLAN.md
 Resume file: None
