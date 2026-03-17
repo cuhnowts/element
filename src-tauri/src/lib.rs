@@ -10,8 +10,11 @@ mod db;
 mod models;
 
 use db::connection::Database;
+use commands::execution_commands::*;
 use commands::project_commands::*;
+use commands::schedule_commands::*;
 use commands::task_commands::*;
+use commands::workflow_commands::*;
 
 pub fn run() {
     tauri::Builder::default()
@@ -97,6 +100,23 @@ pub fn run() {
             add_tag_to_task,
             remove_tag_from_task,
             list_tags,
+            get_todays_tasks,
+            get_task_detail,
+            get_execution_history,
+            get_execution_logs,
+            create_workflow,
+            list_workflows,
+            get_workflow,
+            update_workflow,
+            delete_workflow,
+            promote_task_to_workflow,
+            get_workflow_runs,
+            get_step_results,
+            create_schedule,
+            get_schedule_for_workflow,
+            update_schedule,
+            toggle_schedule,
+            delete_schedule,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
