@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 02.1-03-PLAN.md
-last_updated: "2026-03-17T02:10:24.148Z"
+last_updated: "2026-03-17T02:10:48.799Z"
 last_activity: 2026-03-16 — Completed 02.1-03-PLAN.md (Scheduling Display Components)
 progress:
   total_phases: 6
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 2.1 (Daily UX Foundation)
-Plan: 3 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-16 — Completed 02.1-02-PLAN.md (Today View)
+Last activity: 2026-03-16 — Completed 02.1-03-PLAN.md (Scheduling Display Components)
 
-Progress: [████░░░░░░] 38%
+Progress: [████░░░░░░] 41%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████░░░░░░] 38%
 | Phase 02 P05 | 1min | 2 tasks | 2 files |
 | Phase 02.1 P01 | 6min | 2 tasks | 11 files |
 | Phase 02.1 P02 | 3min | 2 tasks | 7 files |
+| Phase 02.1 P03 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,7 @@ Recent decisions affecting current work:
 - [Phase 02.1]: Consolidated dual Task type system: types/task.ts re-exports from lib/types.ts
 - [Phase 02.1]: Recurrence rule validation in Rust model layer, not SQL CHECK constraint
 - [Phase 02.1]: Exported getTimeGroup as named export for direct unit testing of pure logic
+- [Phase 02.1]: Duration deselect does not clear backend value -- only positive selections persist
 
 ### Roadmap Evolution
 
@@ -108,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T02:10:24.145Z
-Stopped at: Completed 02.1-02-PLAN.md
+Last session: 2026-03-17T02:10:48.796Z
+Stopped at: Completed 02.1-03-PLAN.md
 Resume file: None
