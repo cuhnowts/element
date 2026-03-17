@@ -210,6 +210,11 @@ mod tests {
             context: None,
             priority: None,
             external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
         })
         .unwrap();
 

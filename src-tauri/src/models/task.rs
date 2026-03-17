@@ -79,6 +79,11 @@ pub struct Task {
     pub status: TaskStatus,
     pub priority: TaskPriority,
     pub external_path: Option<String>,
+    pub due_date: Option<String>,
+    pub scheduled_date: Option<String>,
+    pub scheduled_time: Option<String>,
+    pub duration_minutes: Option<i32>,
+    pub recurrence_rule: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -92,6 +97,11 @@ pub struct CreateTaskInput {
     pub context: Option<String>,
     pub priority: Option<TaskPriority>,
     pub external_path: Option<String>,
+    pub due_date: Option<String>,
+    pub scheduled_date: Option<String>,
+    pub scheduled_time: Option<String>,
+    pub duration_minutes: Option<i32>,
+    pub recurrence_rule: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -102,9 +112,16 @@ pub struct UpdateTaskInput {
     pub context: Option<String>,
     pub priority: Option<TaskPriority>,
     pub external_path: Option<String>,
+    pub due_date: Option<String>,
+    pub scheduled_date: Option<String>,
+    pub scheduled_time: Option<String>,
+    pub duration_minutes: Option<i32>,
+    pub recurrence_rule: Option<String>,
 }
 
-fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
+pub const TASK_COLUMNS: &str = "id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, created_at, updated_at";
+
+pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
     let status_str: String = row.get(5)?;
     let priority_str: String = row.get(6)?;
 
@@ -119,8 +136,13 @@ fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
         priority: TaskPriority::from_db_str(&priority_str)
             .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
         external_path: row.get(7)?,
-        created_at: row.get(8)?,
-        updated_at: row.get(9)?,
+        due_date: row.get(8)?,
+        scheduled_date: row.get(9)?,
+        scheduled_time: row.get(10)?,
+        duration_minutes: row.get(11)?,
+        recurrence_rule: row.get(12)?,
+        created_at: row.get(13)?,
+        updated_at: row.get(14)?,
     })
 }
 
@@ -133,8 +155,21 @@ impl Database {
         let priority = input.priority.unwrap_or(TaskPriority::Medium);
         let status = TaskStatus::Pending;
 
+        // Validate recurrence_rule if present
+        if let Some(ref rule) = input.recurrence_rule {
+            match rule.as_str() {
+                "daily" | "weekdays" | "weekly" | "monthly" => {}
+                _ => {
+                    return Err(rusqlite::Error::InvalidParameterName(format!(
+                        "Invalid recurrence rule: {}",
+                        rule
+                    )))
+                }
+            }
+        }
+
         self.conn().execute(
-            "INSERT INTO tasks (id, project_id, title, description, context, status, priority, external_path, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO tasks (id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             rusqlite::params![
                 id,
                 input.project_id,
@@ -144,6 +179,11 @@ impl Database {
                 status.to_string(),
                 priority.to_string(),
                 input.external_path,
+                input.due_date,
+                input.scheduled_date,
+                input.scheduled_time,
+                input.duration_minutes,
+                input.recurrence_rule,
                 now,
                 now,
             ],
@@ -158,26 +198,31 @@ impl Database {
             status,
             priority,
             external_path: input.external_path,
+            due_date: input.due_date,
+            scheduled_date: input.scheduled_date,
+            scheduled_time: input.scheduled_time,
+            duration_minutes: input.duration_minutes,
+            recurrence_rule: input.recurrence_rule,
             created_at: now.clone(),
             updated_at: now,
         })
     }
 
     pub fn list_tasks(&self, project_id: &str) -> Result<Vec<Task>, rusqlite::Error> {
-        let mut stmt = self.conn().prepare(
-            "SELECT id, project_id, title, description, context, status, priority, external_path, created_at, updated_at FROM tasks WHERE project_id = ?1 ORDER BY created_at DESC",
-        )?;
+        let query = format!(
+            "SELECT {} FROM tasks WHERE project_id = ?1 ORDER BY created_at DESC",
+            TASK_COLUMNS
+        );
+        let mut stmt = self.conn().prepare(&query)?;
 
         let tasks = stmt.query_map(rusqlite::params![project_id], |row| row_to_task(row))?;
         tasks.collect()
     }
 
     pub fn get_task(&self, id: &str) -> Result<Task, rusqlite::Error> {
-        self.conn().query_row(
-            "SELECT id, project_id, title, description, context, status, priority, external_path, created_at, updated_at FROM tasks WHERE id = ?1",
-            rusqlite::params![id],
-            |row| row_to_task(row),
-        )
+        let query = format!("SELECT {} FROM tasks WHERE id = ?1", TASK_COLUMNS);
+        self.conn()
+            .query_row(&query, rusqlite::params![id], |row| row_to_task(row))
     }
 
     pub fn update_task(&self, id: &str, input: UpdateTaskInput) -> Result<Task, rusqlite::Error> {
@@ -189,15 +234,38 @@ impl Database {
         let context = input.context.unwrap_or(existing.context);
         let priority = input.priority.unwrap_or(existing.priority);
         let external_path = input.external_path.or(existing.external_path);
+        let due_date = input.due_date.or(existing.due_date);
+        let scheduled_date = input.scheduled_date.or(existing.scheduled_date);
+        let scheduled_time = input.scheduled_time.or(existing.scheduled_time);
+        let duration_minutes = input.duration_minutes.or(existing.duration_minutes);
+        let recurrence_rule = input.recurrence_rule.or(existing.recurrence_rule);
+
+        // Validate recurrence_rule if present
+        if let Some(ref rule) = recurrence_rule {
+            match rule.as_str() {
+                "daily" | "weekdays" | "weekly" | "monthly" => {}
+                _ => {
+                    return Err(rusqlite::Error::InvalidParameterName(format!(
+                        "Invalid recurrence rule: {}",
+                        rule
+                    )))
+                }
+            }
+        }
 
         self.conn().execute(
-            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, updated_at = ?6 WHERE id = ?7",
+            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, due_date = ?6, scheduled_date = ?7, scheduled_time = ?8, duration_minutes = ?9, recurrence_rule = ?10, updated_at = ?11 WHERE id = ?12",
             rusqlite::params![
                 title,
                 description,
                 context,
                 priority.to_string(),
                 external_path,
+                due_date,
+                scheduled_date,
+                scheduled_time,
+                duration_minutes,
+                recurrence_rule,
                 now,
                 id,
             ],
@@ -265,6 +333,11 @@ mod tests {
                 context: None,
                 priority: None,
                 external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
             })
             .unwrap();
 
@@ -289,6 +362,11 @@ mod tests {
                 context: Some("Some context notes".into()),
                 priority: Some(TaskPriority::High),
                 external_path: Some("/home/user/repo".into()),
+                due_date: Some("2026-03-20".into()),
+                scheduled_date: Some("2026-03-20".into()),
+                scheduled_time: Some("14:00".into()),
+                duration_minutes: Some(60),
+                recurrence_rule: Some("weekly".into()),
             })
             .unwrap();
 
@@ -297,6 +375,11 @@ mod tests {
         assert_eq!(task.context, "Some context notes");
         assert_eq!(task.priority, TaskPriority::High);
         assert_eq!(task.external_path, Some("/home/user/repo".into()));
+        assert_eq!(task.due_date, Some("2026-03-20".into()));
+        assert_eq!(task.scheduled_date, Some("2026-03-20".into()));
+        assert_eq!(task.scheduled_time, Some("14:00".into()));
+        assert_eq!(task.duration_minutes, Some(60));
+        assert_eq!(task.recurrence_rule, Some("weekly".into()));
     }
 
     #[test]
@@ -311,6 +394,11 @@ mod tests {
             context: None,
             priority: None,
             external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
         })
         .unwrap();
         db.create_task(CreateTaskInput {
@@ -320,6 +408,11 @@ mod tests {
             context: None,
             priority: None,
             external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
         })
         .unwrap();
 
@@ -340,6 +433,11 @@ mod tests {
                 context: None,
                 priority: None,
                 external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
             })
             .unwrap();
 
@@ -352,6 +450,11 @@ mod tests {
                     context: None,
                     priority: Some(TaskPriority::Urgent),
                     external_path: None,
+                    due_date: None,
+                    scheduled_date: None,
+                    scheduled_time: None,
+                    duration_minutes: None,
+                    recurrence_rule: None,
                 },
             )
             .unwrap();
@@ -374,6 +477,11 @@ mod tests {
                 context: None,
                 priority: None,
                 external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
             })
             .unwrap();
 
@@ -403,6 +511,11 @@ mod tests {
                 context: None,
                 priority: None,
                 external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
             })
             .unwrap();
 
@@ -424,10 +537,121 @@ mod tests {
                 context: None,
                 priority: None,
                 external_path: Some("/path/to/repo".into()),
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
             })
             .unwrap();
 
         let fetched = db.get_task(&task.id).unwrap();
         assert_eq!(fetched.external_path, Some("/path/to/repo".into()));
+    }
+
+    #[test]
+    fn test_create_task_with_scheduling_fields() {
+        let db = setup_test_db();
+        let project_id = create_test_project(&db);
+
+        let task = db
+            .create_task(CreateTaskInput {
+                project_id,
+                title: "Scheduled Task".into(),
+                description: None,
+                context: None,
+                priority: None,
+                external_path: None,
+                due_date: Some("2026-03-25".into()),
+                scheduled_date: Some("2026-03-20".into()),
+                scheduled_time: Some("09:30".into()),
+                duration_minutes: Some(45),
+                recurrence_rule: Some("daily".into()),
+            })
+            .unwrap();
+
+        assert_eq!(task.due_date, Some("2026-03-25".into()));
+        assert_eq!(task.scheduled_date, Some("2026-03-20".into()));
+        assert_eq!(task.scheduled_time, Some("09:30".into()));
+        assert_eq!(task.duration_minutes, Some(45));
+        assert_eq!(task.recurrence_rule, Some("daily".into()));
+
+        // Verify round-trip through database
+        let fetched = db.get_task(&task.id).unwrap();
+        assert_eq!(fetched.due_date, Some("2026-03-25".into()));
+        assert_eq!(fetched.scheduled_date, Some("2026-03-20".into()));
+        assert_eq!(fetched.scheduled_time, Some("09:30".into()));
+        assert_eq!(fetched.duration_minutes, Some(45));
+        assert_eq!(fetched.recurrence_rule, Some("daily".into()));
+    }
+
+    #[test]
+    fn test_update_task_scheduling_fields() {
+        let db = setup_test_db();
+        let project_id = create_test_project(&db);
+
+        let task = db
+            .create_task(CreateTaskInput {
+                project_id,
+                title: "To Schedule".into(),
+                description: None,
+                context: None,
+                priority: None,
+                external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
+            })
+            .unwrap();
+
+        assert!(task.due_date.is_none());
+
+        let updated = db
+            .update_task(
+                &task.id,
+                UpdateTaskInput {
+                    title: None,
+                    description: None,
+                    context: None,
+                    priority: None,
+                    external_path: None,
+                    due_date: Some("2026-04-01".into()),
+                    scheduled_date: Some("2026-03-28".into()),
+                    scheduled_time: Some("10:00".into()),
+                    duration_minutes: Some(30),
+                    recurrence_rule: Some("weekdays".into()),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(updated.due_date, Some("2026-04-01".into()));
+        assert_eq!(updated.scheduled_date, Some("2026-03-28".into()));
+        assert_eq!(updated.scheduled_time, Some("10:00".into()));
+        assert_eq!(updated.duration_minutes, Some(30));
+        assert_eq!(updated.recurrence_rule, Some("weekdays".into()));
+    }
+
+    #[test]
+    fn test_invalid_recurrence_rule_rejected() {
+        let db = setup_test_db();
+        let project_id = create_test_project(&db);
+
+        let result = db.create_task(CreateTaskInput {
+            project_id,
+            title: "Bad Recurrence".into(),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: Some("every-other-tuesday".into()),
+        });
+
+        assert!(result.is_err());
     }
 }

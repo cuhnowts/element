@@ -25,6 +25,11 @@ pub async fn create_task(
     context: Option<String>,
     priority: Option<TaskPriority>,
     external_path: Option<String>,
+    due_date: Option<String>,
+    scheduled_date: Option<String>,
+    scheduled_time: Option<String>,
+    duration_minutes: Option<i32>,
+    recurrence_rule: Option<String>,
 ) -> Result<Task, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let input = CreateTaskInput {
@@ -34,6 +39,11 @@ pub async fn create_task(
         context,
         priority,
         external_path,
+        due_date,
+        scheduled_date,
+        scheduled_time,
+        duration_minutes,
+        recurrence_rule,
     };
     let task = db.create_task(input).map_err(|e| e.to_string())?;
     app.emit("task-created", &task)
@@ -73,6 +83,11 @@ pub async fn update_task(
     context: Option<String>,
     priority: Option<TaskPriority>,
     external_path: Option<String>,
+    due_date: Option<String>,
+    scheduled_date: Option<String>,
+    scheduled_time: Option<String>,
+    duration_minutes: Option<i32>,
+    recurrence_rule: Option<String>,
 ) -> Result<Task, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let input = UpdateTaskInput {
@@ -81,6 +96,11 @@ pub async fn update_task(
         context,
         priority,
         external_path,
+        due_date,
+        scheduled_date,
+        scheduled_time,
+        duration_minutes,
+        recurrence_rule,
     };
     let task = db
         .update_task(&task_id, input)
