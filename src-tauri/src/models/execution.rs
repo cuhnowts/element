@@ -66,6 +66,36 @@ pub struct LogEntry {
     pub message: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkflowRun {
+    pub id: String,
+    pub workflow_id: String,
+    pub trigger_type: String,
+    pub status: String,
+    pub started_at: String,
+    pub completed_at: Option<String>,
+    pub error_message: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct StepResult {
+    pub id: String,
+    pub run_id: String,
+    pub step_index: i32,
+    pub step_name: String,
+    pub step_type: String,
+    pub status: String,
+    pub input_preview: Option<String>,
+    pub output_preview: Option<String>,
+    pub output_full: Option<String>,
+    pub error_message: Option<String>,
+    pub duration_ms: Option<i64>,
+    pub started_at: Option<String>,
+    pub completed_at: Option<String>,
+}
+
 impl Database {
     pub fn create_execution_record(
         &self,
@@ -162,6 +192,177 @@ impl Database {
         })?;
 
         logs.collect()
+    }
+
+    // --- Workflow execution models ---
+
+    pub fn create_workflow_run(
+        &self,
+        workflow_id: &str,
+        trigger_type: &str,
+    ) -> Result<WorkflowRun, rusqlite::Error> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        self.conn().execute(
+            "INSERT INTO workflow_runs (id, workflow_id, trigger_type, status, started_at) VALUES (?1, ?2, ?3, 'running', ?4)",
+            rusqlite::params![id, workflow_id, trigger_type, now],
+        )?;
+
+        Ok(WorkflowRun {
+            id,
+            workflow_id: workflow_id.to_string(),
+            trigger_type: trigger_type.to_string(),
+            status: "running".to_string(),
+            started_at: now,
+            completed_at: None,
+            error_message: None,
+        })
+    }
+
+    pub fn complete_workflow_run(
+        &self,
+        run_id: &str,
+        status: &str,
+        error_message: Option<&str>,
+    ) -> Result<(), rusqlite::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+
+        self.conn().execute(
+            "UPDATE workflow_runs SET status = ?1, completed_at = ?2, error_message = ?3 WHERE id = ?4",
+            rusqlite::params![status, now, error_message, run_id],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn list_workflow_runs(
+        &self,
+        workflow_id: &str,
+    ) -> Result<Vec<WorkflowRun>, rusqlite::Error> {
+        let mut stmt = self.conn().prepare(
+            "SELECT id, workflow_id, trigger_type, status, started_at, completed_at, error_message FROM workflow_runs WHERE workflow_id = ?1 ORDER BY started_at DESC",
+        )?;
+
+        let runs = stmt.query_map(rusqlite::params![workflow_id], |row| {
+            Ok(WorkflowRun {
+                id: row.get(0)?,
+                workflow_id: row.get(1)?,
+                trigger_type: row.get(2)?,
+                status: row.get(3)?,
+                started_at: row.get(4)?,
+                completed_at: row.get(5)?,
+                error_message: row.get(6)?,
+            })
+        })?;
+
+        runs.collect()
+    }
+
+    pub fn get_workflow_run(&self, run_id: &str) -> Result<WorkflowRun, rusqlite::Error> {
+        self.conn().query_row(
+            "SELECT id, workflow_id, trigger_type, status, started_at, completed_at, error_message FROM workflow_runs WHERE id = ?1",
+            rusqlite::params![run_id],
+            |row| {
+                Ok(WorkflowRun {
+                    id: row.get(0)?,
+                    workflow_id: row.get(1)?,
+                    trigger_type: row.get(2)?,
+                    status: row.get(3)?,
+                    started_at: row.get(4)?,
+                    completed_at: row.get(5)?,
+                    error_message: row.get(6)?,
+                })
+            },
+        )
+    }
+
+    pub fn create_step_result(
+        &self,
+        run_id: &str,
+        step_index: i32,
+        step_name: &str,
+        step_type: &str,
+    ) -> Result<StepResult, rusqlite::Error> {
+        let id = uuid::Uuid::new_v4().to_string();
+
+        self.conn().execute(
+            "INSERT INTO step_results (id, run_id, step_index, step_name, step_type, status) VALUES (?1, ?2, ?3, ?4, ?5, 'pending')",
+            rusqlite::params![id, run_id, step_index, step_name, step_type],
+        )?;
+
+        Ok(StepResult {
+            id,
+            run_id: run_id.to_string(),
+            step_index,
+            step_name: step_name.to_string(),
+            step_type: step_type.to_string(),
+            status: "pending".to_string(),
+            input_preview: None,
+            output_preview: None,
+            output_full: None,
+            error_message: None,
+            duration_ms: None,
+            started_at: None,
+            completed_at: None,
+        })
+    }
+
+    pub fn update_step_result(
+        &self,
+        id: &str,
+        status: &str,
+        output_preview: Option<&str>,
+        output_full: Option<&str>,
+        error_message: Option<&str>,
+        duration_ms: Option<i64>,
+    ) -> Result<(), rusqlite::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+
+        // Set started_at if transitioning to running, completed_at if terminal
+        let started_at = if status == "running" {
+            Some(now.clone())
+        } else {
+            None
+        };
+        let completed_at = if status == "completed" || status == "failed" || status == "skipped" {
+            Some(now)
+        } else {
+            None
+        };
+
+        self.conn().execute(
+            "UPDATE step_results SET status = ?1, output_preview = ?2, output_full = ?3, error_message = ?4, duration_ms = ?5, started_at = COALESCE(?6, started_at), completed_at = COALESCE(?7, completed_at) WHERE id = ?8",
+            rusqlite::params![status, output_preview, output_full, error_message, duration_ms, started_at, completed_at, id],
+        )?;
+
+        Ok(())
+    }
+
+    pub fn get_step_results(&self, run_id: &str) -> Result<Vec<StepResult>, rusqlite::Error> {
+        let mut stmt = self.conn().prepare(
+            "SELECT id, run_id, step_index, step_name, step_type, status, input_preview, output_preview, output_full, error_message, duration_ms, started_at, completed_at FROM step_results WHERE run_id = ?1 ORDER BY step_index",
+        )?;
+
+        let results = stmt.query_map(rusqlite::params![run_id], |row| {
+            Ok(StepResult {
+                id: row.get(0)?,
+                run_id: row.get(1)?,
+                step_index: row.get(2)?,
+                step_name: row.get(3)?,
+                step_type: row.get(4)?,
+                status: row.get(5)?,
+                input_preview: row.get(6)?,
+                output_preview: row.get(7)?,
+                output_full: row.get(8)?,
+                error_message: row.get(9)?,
+                duration_ms: row.get(10)?,
+                started_at: row.get(11)?,
+                completed_at: row.get(12)?,
+            })
+        })?;
+
+        results.collect()
     }
 
     pub fn get_todays_tasks(
@@ -320,6 +521,76 @@ mod tests {
         let todays = db.get_todays_tasks().unwrap();
         assert_eq!(todays.len(), 1);
         assert_eq!(todays[0].title, "Active Task");
+    }
+
+    #[test]
+    fn test_create_and_complete_workflow_run() {
+        let db = setup_test_db();
+        let workflow = db
+            .create_workflow(crate::models::workflow::CreateWorkflowInput {
+                task_id: None,
+                name: "Test WF".into(),
+                description: "".into(),
+                steps: vec![],
+            })
+            .unwrap();
+
+        let run = db
+            .create_workflow_run(&workflow.id, "manual")
+            .unwrap();
+        assert_eq!(run.workflow_id, workflow.id);
+        assert_eq!(run.trigger_type, "manual");
+        assert_eq!(run.status, "running");
+        assert!(run.completed_at.is_none());
+
+        db.complete_workflow_run(&run.id, "completed", None)
+            .unwrap();
+        let fetched = db.get_workflow_run(&run.id).unwrap();
+        assert_eq!(fetched.status, "completed");
+        assert!(fetched.completed_at.is_some());
+    }
+
+    #[test]
+    fn test_workflow_step_results() {
+        let db = setup_test_db();
+        let workflow = db
+            .create_workflow(crate::models::workflow::CreateWorkflowInput {
+                task_id: None,
+                name: "Test WF".into(),
+                description: "".into(),
+                steps: vec![],
+            })
+            .unwrap();
+
+        let run = db
+            .create_workflow_run(&workflow.id, "manual")
+            .unwrap();
+
+        let s1 = db
+            .create_step_result(&run.id, 0, "Build", "shell")
+            .unwrap();
+        let s2 = db
+            .create_step_result(&run.id, 1, "Deploy", "shell")
+            .unwrap();
+        assert_eq!(s1.status, "pending");
+        assert_eq!(s2.status, "pending");
+
+        db.update_step_result(
+            &s1.id,
+            "completed",
+            Some("build output..."),
+            Some("full build output here"),
+            None,
+            Some(1500),
+        )
+        .unwrap();
+
+        let results = db.get_step_results(&run.id).unwrap();
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].status, "completed");
+        assert_eq!(results[0].output_preview, Some("build output...".into()));
+        assert_eq!(results[0].duration_ms, Some(1500));
+        assert_eq!(results[1].status, "pending");
     }
 
     #[test]
