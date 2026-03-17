@@ -3,10 +3,12 @@ use tauri::{
     tray::TrayIconBuilder,
     Emitter, Manager,
 };
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use tokio_cron_scheduler::JobScheduler;
 
 mod commands;
 mod db;
+mod engine;
 mod models;
 
 use db::connection::Database;
@@ -22,7 +24,20 @@ pub fn run() {
         .setup(|app| {
             // Initialize database
             let db = Database::new(app.handle())?;
-            app.manage(Mutex::new(db));
+            let db_mutex = Mutex::new(db);
+            app.manage(db_mutex);
+
+            // Initialize scheduler state (will be populated after async init)
+            app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
+
+            // Spawn scheduler initialization
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                match engine::scheduler::init_scheduler(app_handle).await {
+                    Ok(_sched) => { /* Scheduler stored in app state by init_scheduler */ }
+                    Err(e) => eprintln!("Failed to init scheduler: {}", e),
+                }
+            });
 
             // System tray
             let quit = MenuItem::with_id(app, "quit", "Quit Element", true, None::<&str>)?;
@@ -117,6 +132,7 @@ pub fn run() {
             update_schedule,
             toggle_schedule,
             delete_schedule,
+            get_next_run_times,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

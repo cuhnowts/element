@@ -74,3 +74,11 @@ pub async fn delete_schedule(
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_next_run_times(
+    cron_expression: String,
+    count: usize,
+) -> Result<Vec<String>, String> {
+    crate::engine::scheduler::compute_next_runs(&cron_expression, count)
+}

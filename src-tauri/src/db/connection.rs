@@ -30,6 +30,23 @@ impl Database {
         Database { conn }
     }
 
+    /// Open a new connection to the same database file as an existing Database.
+    /// Used for spawned async tasks that need their own connection.
+    pub fn clone_connection(
+        existing: &std::sync::Mutex<Database>,
+    ) -> Result<Database, Box<dyn std::error::Error>> {
+        let locked = existing
+            .lock()
+            .map_err(|e| format!("Failed to lock database: {}", e))?;
+        let path = locked.conn.path().unwrap_or("").to_string();
+        if path.is_empty() {
+            return Err("Cannot clone in-memory database connection".into());
+        }
+        let conn = Connection::open(&path)?;
+        conn.execute_batch("PRAGMA foreign_keys = ON;")?;
+        Ok(Database { conn })
+    }
+
     pub fn conn(&self) -> &Connection {
         &self.conn
     }
