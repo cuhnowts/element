@@ -41,7 +41,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PLUG-01**: User can add plugins by dropping files into a directory
 - [x] **PLUG-02**: App securely stores credentials (API keys, tokens, secrets)
-- [ ] **PLUG-03**: Core plugins: shell command, HTTP request, file system operations
+- [x] **PLUG-03**: Core plugins: shell command, HTTP request, file system operations
 - [x] **PLUG-04**: Calendar integration plugin reads Google/Outlook events
 
 ### Scheduling
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-02 | Phase 5 | Pending |
 | PLUG-01 | Phase 4 | Complete |
 | PLUG-02 | Phase 4 | Complete |
-| PLUG-03 | Phase 4 | Pending |
+| PLUG-03 | Phase 4 | Complete |
 | PLUG-04 | Phase 4 | Complete |
 | SCHED-01 | Phase 5 | Pending |
 | SCHED-02 | Phase 5 | Pending |

@@ -1,3 +1,4 @@
+pub mod calendar;
 pub mod filesystem;
 pub mod http;
 pub mod shell;
@@ -136,8 +137,36 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
         manifest: fs_manifest,
         status: PluginStatus::Active,
         error_message: None,
-        loaded_at: now,
+        loaded_at: now.clone(),
         plugin_path: PathBuf::from("core://filesystem"),
+    });
+
+    // Calendar plugin manifest
+    let calendar_manifest = PluginManifest {
+        name: "core-calendar".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        display_name: "Calendar".to_string(),
+        description: "Google and Outlook calendar integration with OAuth and event syncing"
+            .to_string(),
+        author: Some("Element".to_string()),
+        capabilities: vec![PluginCapability::Network, PluginCapability::Credentials],
+        credentials: vec![],
+        entry: None,
+        step_types: vec![StepTypeDefinition {
+            id: "calendar-sync".to_string(),
+            name: "Calendar Sync".to_string(),
+            description: "Sync calendar events from connected accounts".to_string(),
+            input_schema: serde_json::json!({}),
+            output_schema: serde_json::json!({}),
+        }],
+    };
+
+    registry.register(LoadedPlugin {
+        manifest: calendar_manifest,
+        status: PluginStatus::Active,
+        error_message: None,
+        loaded_at: now,
+        plugin_path: PathBuf::from("core://calendar"),
     });
 }
 
@@ -146,16 +175,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_register_core_plugins_adds_three() {
+    fn test_register_core_plugins_adds_four() {
         let mut registry = PluginRegistry::new();
         register_core_plugins(&mut registry);
 
         let plugins = registry.list();
-        assert_eq!(plugins.len(), 3);
+        assert_eq!(plugins.len(), 4);
 
         assert!(registry.get("core-shell").is_some());
         assert!(registry.get("core-http").is_some());
         assert!(registry.get("core-filesystem").is_some());
+        assert!(registry.get("core-calendar").is_some());
     }
 
     #[test]

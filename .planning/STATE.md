@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-17T10:56:21.231Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-17T11:12:01.252Z"
 last_activity: 2026-03-17 — Completed 04-02-PLAN.md (Settings UI, Plugin Management, Credential Vault)
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 29
-  completed_plans: 21
-  percent: 69
+  completed_plans: 22
+  percent: 76
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 04 (Plugin System)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In Progress
-Last activity: 2026-03-17 — Completed 04-02-PLAN.md (Settings UI, Plugin Management, Credential Vault)
+Last activity: 2026-03-17 — Completed 04-03-PLAN.md (Core Plugin Implementations)
 
-Progress: [███████░░░] 69%
+Progress: [████████░░] 76%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [███████░░░] 69%
 | Phase 04 P00 | 2min | 2 tasks | 7 files |
 | Phase 04 P02 | 5min | 2 tasks | 16 files |
 | Phase 04 P01 | 7min | 2 tasks | 14 files |
+| Phase 04 P03 | 4min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Migration numbered 005 (not 002) because versions 1-4 already taken by prior phases
 - [Phase 04]: notify-debouncer-mini 0.7 for notify v8 compatibility; PluginHost uses Arc<RwLock<PluginRegistry>>
 - [Phase 04]: CredentialManager as Mutex<CredentialManager> Tauri state sharing Arc<Mutex<Database>> with existing commands
+- [Phase 04]: Core plugins registered in scan_and_load to ensure always present
+- [Phase 04]: FilesystemPlugin uses allowed_paths with canonicalize+starts_with for path scoping
+- [Phase 04]: execute_step uses flat match on step_type_id string for dispatch simplicity
 
 ### Roadmap Evolution
 
@@ -140,6 +144,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-17T10:56:21.228Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-17T11:12:01.250Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
