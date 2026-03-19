@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-19T01:28:05.093Z"
-last_activity: 2026-03-19 — Completed 05-01-PLAN.md (AI & Scheduling Data Layer)
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-19T01:35:22.769Z"
+last_activity: 2026-03-19 — Completed 05-02-PLAN.md (AI Gateway Implementation)
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 29
-  completed_plans: 24
+  completed_plans: 26
   percent: 79
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 05 (AI and Smart Scheduling)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In Progress
-Last activity: 2026-03-19 — Completed 05-01-PLAN.md (AI & Scheduling Data Layer)
+Last activity: 2026-03-19 — Completed 05-02-PLAN.md (AI Gateway Implementation)
 
 Progress: [████████░░] 79%
 
@@ -74,6 +74,8 @@ Progress: [████████░░] 79%
 | Phase 04 P03 | 4min | 2 tasks | 11 files |
 | Phase 04 P04 | 20min | 3 tasks | 18 files |
 | Phase 05 P01 | 8min | 2 tasks | 17 files |
+| Phase 05 P02 | 5min | 2 tasks | 10 files |
+| Phase 05 P03 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -135,6 +137,10 @@ Recent decisions affecting current work:
 - [Phase 05]: Migration numbered 006 (not 002) because versions 1-5 already taken by prior phases
 - [Phase 05]: estimated_minutes as separate field from duration_minutes (AI estimation vs user-set)
 - [Phase 05]: AI credential module uses separate service name com.element.ai-providers from main keychain
+- [Phase 05]: AiGateway holds only reqwest::Client, managed as Tauri state without Mutex
+- [Phase 05]: Ollama test_connection uses 2-second timeout to avoid hanging
+- [Phase 05]: OpenAI-compatible provider supports optional API key for local servers
+- [Phase 05]: Buffer time applied symmetrically before/after events, clamped to work hours bounds
 
 ### Roadmap Evolution
 
@@ -150,6 +156,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T01:28:05.090Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-19T01:35:09.288Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

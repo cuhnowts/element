@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### AI Integration
 
 - [x] **AI-01**: App supports model-agnostic AI layer (Claude, GPT, local models)
-- [ ] **AI-02**: AI assists task creation (suggests structure, steps, context)
+- [x] **AI-02**: AI assists task creation (suggests structure, steps, context)
 
 ### Plugins & Integrations
 
@@ -107,7 +107,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 1 | Complete |
 | AI-01 | Phase 5 | Complete |
-| AI-02 | Phase 5 | Pending |
+| AI-02 | Phase 5 | Complete |
 | PLUG-01 | Phase 4 | Complete |
 | PLUG-02 | Phase 4 | Complete |
 | PLUG-03 | Phase 4 | Complete |
