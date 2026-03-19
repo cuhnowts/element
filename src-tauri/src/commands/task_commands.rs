@@ -30,6 +30,7 @@ pub async fn create_task(
     scheduled_time: Option<String>,
     duration_minutes: Option<i32>,
     recurrence_rule: Option<String>,
+    estimated_minutes: Option<i32>,
 ) -> Result<Task, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let input = CreateTaskInput {
@@ -44,6 +45,7 @@ pub async fn create_task(
         scheduled_time,
         duration_minutes,
         recurrence_rule,
+        estimated_minutes,
     };
     let task = db.create_task(input).map_err(|e| e.to_string())?;
     app.emit("task-created", &task)
@@ -88,6 +90,7 @@ pub async fn update_task(
     scheduled_time: Option<String>,
     duration_minutes: Option<i32>,
     recurrence_rule: Option<String>,
+    estimated_minutes: Option<i32>,
 ) -> Result<Task, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let input = UpdateTaskInput {
@@ -101,6 +104,7 @@ pub async fn update_task(
         scheduled_time,
         duration_minutes,
         recurrence_rule,
+        estimated_minutes,
     };
     let task = db
         .update_task(&task_id, input)

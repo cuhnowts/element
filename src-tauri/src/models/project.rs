@@ -215,6 +215,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 

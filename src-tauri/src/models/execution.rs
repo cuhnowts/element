@@ -426,6 +426,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -496,6 +497,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 
@@ -512,6 +514,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -624,6 +627,7 @@ mod tests {
             scheduled_time: Some("10:00".into()),
             duration_minutes: Some(30),
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 
@@ -640,6 +644,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 
@@ -656,6 +661,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 
@@ -672,6 +678,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 

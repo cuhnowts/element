@@ -84,6 +84,7 @@ pub struct Task {
     pub scheduled_time: Option<String>,
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
+    pub estimated_minutes: Option<i32>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -102,6 +103,7 @@ pub struct CreateTaskInput {
     pub scheduled_time: Option<String>,
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
+    pub estimated_minutes: Option<i32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -117,9 +119,10 @@ pub struct UpdateTaskInput {
     pub scheduled_time: Option<String>,
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
+    pub estimated_minutes: Option<i32>,
 }
 
-pub const TASK_COLUMNS: &str = "id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, created_at, updated_at";
+pub const TASK_COLUMNS: &str = "id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at";
 
 pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
     let status_str: String = row.get(5)?;
@@ -141,8 +144,9 @@ pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
         scheduled_time: row.get(10)?,
         duration_minutes: row.get(11)?,
         recurrence_rule: row.get(12)?,
-        created_at: row.get(13)?,
-        updated_at: row.get(14)?,
+        estimated_minutes: row.get(13)?,
+        created_at: row.get(14)?,
+        updated_at: row.get(15)?,
     })
 }
 
@@ -169,7 +173,7 @@ impl Database {
         }
 
         self.conn().execute(
-            "INSERT INTO tasks (id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+            "INSERT INTO tasks (id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
             rusqlite::params![
                 id,
                 input.project_id,
@@ -184,6 +188,7 @@ impl Database {
                 input.scheduled_time,
                 input.duration_minutes,
                 input.recurrence_rule,
+                input.estimated_minutes,
                 now,
                 now,
             ],
@@ -203,6 +208,7 @@ impl Database {
             scheduled_time: input.scheduled_time,
             duration_minutes: input.duration_minutes,
             recurrence_rule: input.recurrence_rule,
+            estimated_minutes: input.estimated_minutes,
             created_at: now.clone(),
             updated_at: now,
         })
@@ -239,6 +245,7 @@ impl Database {
         let scheduled_time = input.scheduled_time.or(existing.scheduled_time);
         let duration_minutes = input.duration_minutes.or(existing.duration_minutes);
         let recurrence_rule = input.recurrence_rule.or(existing.recurrence_rule);
+        let estimated_minutes = input.estimated_minutes.or(existing.estimated_minutes);
 
         // Validate recurrence_rule if present
         if let Some(ref rule) = recurrence_rule {
@@ -254,7 +261,7 @@ impl Database {
         }
 
         self.conn().execute(
-            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, due_date = ?6, scheduled_date = ?7, scheduled_time = ?8, duration_minutes = ?9, recurrence_rule = ?10, updated_at = ?11 WHERE id = ?12",
+            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, due_date = ?6, scheduled_date = ?7, scheduled_time = ?8, duration_minutes = ?9, recurrence_rule = ?10, estimated_minutes = ?11, updated_at = ?12 WHERE id = ?13",
             rusqlite::params![
                 title,
                 description,
@@ -266,6 +273,7 @@ impl Database {
                 scheduled_time,
                 duration_minutes,
                 recurrence_rule,
+                estimated_minutes,
                 now,
                 id,
             ],
@@ -338,6 +346,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -367,6 +376,7 @@ mod tests {
                 scheduled_time: Some("14:00".into()),
                 duration_minutes: Some(60),
                 recurrence_rule: Some("weekly".into()),
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -399,6 +409,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
         db.create_task(CreateTaskInput {
@@ -413,6 +424,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: None,
+            estimated_minutes: None,
         })
         .unwrap();
 
@@ -438,6 +450,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -455,6 +468,7 @@ mod tests {
                     scheduled_time: None,
                     duration_minutes: None,
                     recurrence_rule: None,
+                    estimated_minutes: None,
                 },
             )
             .unwrap();
@@ -482,6 +496,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -516,6 +531,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -542,6 +558,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -567,6 +584,7 @@ mod tests {
                 scheduled_time: Some("09:30".into()),
                 duration_minutes: Some(45),
                 recurrence_rule: Some("daily".into()),
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -603,6 +621,7 @@ mod tests {
                 scheduled_time: None,
                 duration_minutes: None,
                 recurrence_rule: None,
+                estimated_minutes: None,
             })
             .unwrap();
 
@@ -622,6 +641,7 @@ mod tests {
                     scheduled_time: Some("10:00".into()),
                     duration_minutes: Some(30),
                     recurrence_rule: Some("weekdays".into()),
+                    estimated_minutes: None,
                 },
             )
             .unwrap();
@@ -650,6 +670,7 @@ mod tests {
             scheduled_time: None,
             duration_minutes: None,
             recurrence_rule: Some("every-other-tuesday".into()),
+            estimated_minutes: None,
         });
 
         assert!(result.is_err());
