@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-19T01:35:22.769Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-19T01:35:29.510Z"
 last_activity: 2026-03-19 — Completed 05-02-PLAN.md (AI Gateway Implementation)
 progress:
   total_phases: 6
@@ -141,6 +141,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Ollama test_connection uses 2-second timeout to avoid hanging
 - [Phase 05]: OpenAI-compatible provider supports optional API key for local servers
 - [Phase 05]: Buffer time applied symmetrically before/after events, clamped to work hours bounds
+- [Phase 05]: Task scoring uses integer day boundaries for due-date urgency tiers
+- [Phase 05]: Calendar events placeholder returns empty vec until Phase 4 integration is wired
 
 ### Roadmap Evolution
 
@@ -156,6 +158,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T01:35:09.288Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-19T01:35:29.508Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
