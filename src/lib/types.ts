@@ -164,4 +164,8 @@ export interface CalendarEvent {
 }
 
 // Settings navigation
-export type SettingsTab = "plugins" | "credentials" | "calendars";
+export type SettingsTab =
+  | "plugins"
+  | "credentials"
+  | "calendars"
+  | "schedule";

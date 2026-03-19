@@ -1,4 +1,4 @@
-import { Puzzle, KeyRound, Calendar } from "lucide-react";
+import { Puzzle, KeyRound, Calendar, Clock } from "lucide-react";
 import type { SettingsTab } from "@/lib/types";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
@@ -12,6 +12,11 @@ const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     id: "calendars",
     label: "Calendars",
     icon: <Calendar className="size-4" />,
+  },
+  {
+    id: "schedule",
+    label: "Schedule",
+    icon: <Clock className="size-4" />,
   },
 ];
 

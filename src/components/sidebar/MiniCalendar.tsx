@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Calendar } from "@/components/ui/calendar";
 import { useStore } from "@/stores";
+import { CalendarScheduleOverlay } from "./CalendarScheduleOverlay";
 
 const CALENDAR_COLORS = [
   "var(--chart-2)", // teal (Account 1)
@@ -121,7 +122,7 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
   }, [calendarEvents]);
 
   return (
-    <div className="px-2">
+    <div className="relative px-2">
       <Calendar
         mode="single"
         selected={selectedDate}
@@ -176,6 +177,7 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
           },
         }}
       />
+      <CalendarScheduleOverlay />
     </div>
   );
 }

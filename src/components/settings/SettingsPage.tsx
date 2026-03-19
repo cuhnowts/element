@@ -6,11 +6,13 @@ import { SettingsNav } from "./SettingsNav";
 import { PluginList } from "./PluginList";
 import { CredentialVault } from "./CredentialVault";
 import { CalendarAccounts } from "./CalendarAccounts";
+import { ScheduleSettings } from "./ScheduleSettings";
 
 const tabHeadings: Record<string, string> = {
   plugins: "Plugins",
   credentials: "Credentials",
   calendars: "Calendars",
+  schedule: "Schedule",
 };
 
 export function SettingsPage() {
@@ -53,6 +55,8 @@ export function SettingsPage() {
         return <CredentialVault />;
       case "calendars":
         return <CalendarAccounts />;
+      case "schedule":
+        return <ScheduleSettings />;
       default:
         return null;
     }
