@@ -8,13 +8,101 @@ pub struct OpenBlock {
     pub duration_minutes: i32,
 }
 
+fn parse_time(s: &str) -> NaiveTime {
+    NaiveTime::parse_from_str(s, "%H:%M").unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+}
+
 pub fn find_open_blocks(
-    _work_hours: &WorkHoursConfig,
-    _events: &[CalendarEvent],
-    _buffer_minutes: i32,
-    _min_block_minutes: i32,
+    work_hours: &WorkHoursConfig,
+    events: &[CalendarEvent],
+    buffer_minutes: i32,
+    min_block_minutes: i32,
 ) -> Vec<OpenBlock> {
-    todo!("Not yet implemented")
+    let work_start = parse_time(&work_hours.start_time);
+    let work_end = parse_time(&work_hours.end_time);
+    let buffer = chrono::Duration::minutes(buffer_minutes as i64);
+
+    if work_start >= work_end {
+        return vec![];
+    }
+
+    // Parse events, clamp to work hours, collect occupied ranges
+    let mut occupied: Vec<(NaiveTime, NaiveTime)> = events
+        .iter()
+        .filter_map(|e| {
+            let e_start = parse_time(&e.start_time);
+            let e_end = parse_time(&e.end_time);
+            // Skip events entirely outside work hours
+            if e_end <= work_start || e_start >= work_end {
+                return None;
+            }
+            // Clamp to work hours
+            let clamped_start = e_start.max(work_start);
+            let clamped_end = e_end.min(work_end);
+            if clamped_start >= clamped_end {
+                return None;
+            }
+            // Apply buffer: expand the occupied range
+            let buffered_start = if clamped_start - buffer > work_start {
+                clamped_start - buffer
+            } else {
+                work_start
+            };
+            let buffered_end = if clamped_end + buffer < work_end {
+                clamped_end + buffer
+            } else {
+                work_end
+            };
+            Some((buffered_start, buffered_end))
+        })
+        .collect();
+
+    // Sort by start time
+    occupied.sort_by_key(|&(s, _)| s);
+
+    // Merge overlapping occupied ranges
+    let mut merged: Vec<(NaiveTime, NaiveTime)> = Vec::new();
+    for (s, e) in occupied {
+        if let Some(last) = merged.last_mut() {
+            if s <= last.1 {
+                last.1 = last.1.max(e);
+                continue;
+            }
+        }
+        merged.push((s, e));
+    }
+
+    // Walk timeline from work_start to work_end, collect gaps
+    let mut blocks = Vec::new();
+    let mut cursor = work_start;
+
+    for (occ_start, occ_end) in &merged {
+        if cursor < *occ_start {
+            let duration = (*occ_start - cursor).num_minutes() as i32;
+            if duration >= min_block_minutes {
+                blocks.push(OpenBlock {
+                    start: cursor,
+                    end: *occ_start,
+                    duration_minutes: duration,
+                });
+            }
+        }
+        cursor = cursor.max(*occ_end);
+    }
+
+    // Final gap after last occupied range
+    if cursor < work_end {
+        let duration = (work_end - cursor).num_minutes() as i32;
+        if duration >= min_block_minutes {
+            blocks.push(OpenBlock {
+                start: cursor,
+                end: work_end,
+                duration_minutes: duration,
+            });
+        }
+    }
+
+    blocks
 }
 
 #[cfg(test)]

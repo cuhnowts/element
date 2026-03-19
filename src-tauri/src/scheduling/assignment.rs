@@ -3,17 +3,97 @@ use crate::scheduling::types::{ScheduleBlock, BlockType, TaskWithPriority};
 use crate::scheduling::time_blocks::OpenBlock;
 use crate::models::task::TaskPriority;
 
-pub fn score_task(_task: &TaskWithPriority, _today: NaiveDate) -> f64 {
-    todo!("Not yet implemented")
+pub fn score_task(task: &TaskWithPriority, today: NaiveDate) -> f64 {
+    let priority_weight = match task.priority {
+        TaskPriority::Urgent => 100.0,
+        TaskPriority::High => 75.0,
+        TaskPriority::Medium => 50.0,
+        TaskPriority::Low => 25.0,
+    };
+
+    let due_date_urgency = task.due_date.map_or(0.0, |due| {
+        let days_until = (due - today).num_days();
+        if days_until < 0 {
+            50.0
+        } else if days_until == 0 {
+            40.0
+        } else if days_until <= 3 {
+            25.0
+        } else if days_until <= 7 {
+            10.0
+        } else {
+            0.0
+        }
+    });
+
+    priority_weight + due_date_urgency
 }
 
 pub fn assign_tasks_to_blocks(
-    _open_blocks: &[OpenBlock],
-    _tasks: &[TaskWithPriority],
-    _schedule_date: &str,
-    _today: NaiveDate,
+    open_blocks: &[OpenBlock],
+    tasks: &[TaskWithPriority],
+    schedule_date: &str,
+    today: NaiveDate,
 ) -> Vec<ScheduleBlock> {
-    todo!("Not yet implemented")
+    if tasks.is_empty() {
+        return vec![];
+    }
+
+    // Score and sort tasks descending
+    let mut scored: Vec<(&TaskWithPriority, f64)> = tasks
+        .iter()
+        .map(|t| (t, score_task(t, today)))
+        .collect();
+    scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Track remaining capacity per block: (start_cursor, end, original_index)
+    let mut block_capacities: Vec<(chrono::NaiveTime, chrono::NaiveTime)> = open_blocks
+        .iter()
+        .map(|b| (b.start, b.end))
+        .collect();
+
+    let mut result: Vec<ScheduleBlock> = Vec::new();
+
+    for (task, _score) in &scored {
+        let estimated = task.estimated_minutes.unwrap_or(30);
+        let mut remaining = estimated;
+        let mut is_first = true;
+
+        for cap in block_capacities.iter_mut() {
+            if remaining <= 0 {
+                break;
+            }
+
+            let available = (cap.1 - cap.0).num_minutes() as i32;
+            if available <= 0 {
+                continue;
+            }
+
+            let use_minutes = remaining.min(available);
+            let block_start = cap.0;
+            let block_end = cap.0 + chrono::Duration::minutes(use_minutes as i64);
+
+            result.push(ScheduleBlock {
+                id: uuid::Uuid::new_v4().to_string(),
+                schedule_date: schedule_date.to_string(),
+                block_type: BlockType::Work,
+                start_time: block_start.format("%H:%M").to_string(),
+                end_time: block_end.format("%H:%M").to_string(),
+                task_id: Some(task.id.clone()),
+                task_title: Some(task.title.clone()),
+                task_priority: Some(task.priority.to_string()),
+                event_title: None,
+                is_confirmed: false,
+                is_continuation: !is_first,
+            });
+
+            cap.0 = block_end;
+            remaining -= use_minutes;
+            is_first = false;
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
