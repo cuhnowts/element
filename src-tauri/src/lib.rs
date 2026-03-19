@@ -18,12 +18,14 @@ mod scheduling;
 mod test_fixtures;
 
 use db::connection::Database;
+use commands::ai_commands::*;
 use commands::calendar_commands::*;
 use commands::credential_commands::*;
 use commands::execution_commands::*;
 use commands::plugin_commands::*;
 use commands::project_commands::*;
 use commands::schedule_commands::*;
+use commands::scheduling_commands::*;
 use commands::task_commands::*;
 use commands::workflow_commands::*;
 
@@ -55,6 +57,9 @@ pub fn run() {
                 Box::new(credentials::keychain::KeychainStore),
             );
             app.manage(Mutex::new(cred_manager));
+
+            // Initialize AI gateway
+            app.manage(ai::gateway::AiGateway::new());
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -189,6 +194,17 @@ pub fn run() {
             sync_all_calendars,
             disconnect_calendar,
             list_calendar_events,
+            list_ai_providers,
+            add_ai_provider,
+            remove_ai_provider,
+            set_default_provider,
+            test_provider_connection,
+            list_provider_models,
+            ai_assist_task,
+            get_work_hours,
+            save_work_hours,
+            generate_schedule,
+            apply_schedule,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
