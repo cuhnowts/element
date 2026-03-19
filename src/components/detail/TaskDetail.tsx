@@ -13,7 +13,11 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useStore } from "@/stores";
+import { api } from "@/lib/tauri";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
+import { AiAssistButton } from "./AiAssistButton";
+import { AiSuggestionPanel } from "./AiSuggestionPanel";
+import { useAiStream } from "@/hooks/useAiStream";
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "pending", label: "Pending" },
@@ -35,6 +39,10 @@ export function TaskDetail() {
   const updateTaskStatus = useStore((s) => s.updateTaskStatus);
   const addTagToTask = useStore((s) => s.addTagToTask);
   const removeTagFromTask = useStore((s) => s.removeTagFromTask);
+  const acceptedFields = useStore((s) => s.acceptedFields);
+  const clearAcceptedFields = useStore((s) => s.clearAcceptedFields);
+
+  useAiStream();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -151,6 +159,28 @@ export function TaskDetail() {
     };
   }, []);
 
+  // Persist accepted AI suggestion fields
+  useEffect(() => {
+    if (!selectedTask || Object.keys(acceptedFields).length === 0) return;
+
+    const update: Record<string, unknown> = {};
+    if (acceptedFields.description !== undefined)
+      update.description = acceptedFields.description;
+    if (acceptedFields.priority !== undefined)
+      update.priority = acceptedFields.priority;
+    if (acceptedFields.estimatedMinutes !== undefined)
+      update.durationMinutes = acceptedFields.estimatedMinutes;
+
+    if (Object.keys(update).length > 0) {
+      api.updateTask(selectedTask.id, update).then(() => {
+        clearAcceptedFields();
+      });
+    } else {
+      // Fields like steps, tags, relatedTasks need separate handling
+      clearAcceptedFields();
+    }
+  }, [acceptedFields, selectedTask, clearAcceptedFields]);
+
   if (!selectedTask) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -162,14 +192,20 @@ export function TaskDetail() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Title */}
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={handleTitleBlur}
-          className="text-[20px] font-semibold leading-[1.2] border-none shadow-none bg-transparent px-0 h-auto focus-visible:ring-0"
-          placeholder="Task title"
-        />
+        {/* Title + AI Assist */}
+        <div className="flex items-start gap-2">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleTitleBlur}
+            className="flex-1 text-[20px] font-semibold leading-[1.2] border-none shadow-none bg-transparent px-0 h-auto focus-visible:ring-0"
+            placeholder="Task title"
+          />
+          <AiAssistButton taskId={selectedTask.id} />
+        </div>
+
+        {/* AI Suggestion Panel */}
+        <AiSuggestionPanel />
 
         {/* Status */}
         <div className="space-y-1.5">

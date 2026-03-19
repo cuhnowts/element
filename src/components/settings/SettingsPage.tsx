@@ -7,12 +7,14 @@ import { PluginList } from "./PluginList";
 import { CredentialVault } from "./CredentialVault";
 import { CalendarAccounts } from "./CalendarAccounts";
 import { ScheduleSettings } from "./ScheduleSettings";
+import { AiSettings } from "./AiSettings";
 
 const tabHeadings: Record<string, string> = {
   plugins: "Plugins",
   credentials: "Credentials",
   calendars: "Calendars",
   schedule: "Schedule",
+  ai: "AI Providers",
 };
 
 export function SettingsPage() {
@@ -57,6 +59,8 @@ export function SettingsPage() {
         return <CalendarAccounts />;
       case "schedule":
         return <ScheduleSettings />;
+      case "ai":
+        return <AiSettings />;
       default:
         return null;
     }
