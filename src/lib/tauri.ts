@@ -132,4 +132,8 @@ export const api = {
     invoke<ModelInfo[]>("list_provider_models", { id }),
   aiAssistTask: (taskId: string) =>
     invoke<void>("ai_assist_task", { taskId }),
+
+  // CLI
+  runCliTool: (command: string, args: string[], workingDir?: string) =>
+    invoke<number>("run_cli_tool", { command, args, workingDir }),
 };

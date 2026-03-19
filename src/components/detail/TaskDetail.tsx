@@ -17,6 +17,7 @@ import { api } from "@/lib/tauri";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
 import { AiAssistButton } from "./AiAssistButton";
 import { AiSuggestionPanel } from "./AiSuggestionPanel";
+import { CliInvokePanel } from "./CliInvokePanel";
 import { useAiStream } from "@/hooks/useAiStream";
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
@@ -206,6 +207,9 @@ export function TaskDetail() {
 
         {/* AI Suggestion Panel */}
         <AiSuggestionPanel />
+
+        {/* CLI Tool Invocation */}
+        <CliInvokePanel taskId={selectedTask.id} />
 
         {/* Status */}
         <div className="space-y-1.5">

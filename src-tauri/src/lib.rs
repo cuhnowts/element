@@ -20,6 +20,7 @@ mod test_fixtures;
 use db::connection::Database;
 use commands::ai_commands::*;
 use commands::calendar_commands::*;
+use commands::cli_commands::*;
 use commands::credential_commands::*;
 use commands::execution_commands::*;
 use commands::plugin_commands::*;
@@ -205,6 +206,7 @@ pub fn run() {
             save_work_hours,
             generate_schedule,
             apply_schedule,
+            run_cli_tool,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
