@@ -1,3 +1,9 @@
+pub mod anthropic;
 pub mod credentials;
+pub mod gateway;
+pub mod ollama;
+pub mod openai;
+pub mod openai_compat;
+pub mod prompts;
 pub mod provider;
 pub mod types;
