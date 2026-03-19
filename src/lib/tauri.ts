@@ -12,6 +12,12 @@ import type {
   CalendarAccount,
   CalendarEvent,
 } from "./types";
+import type {
+  AiProvider,
+  CreateProviderInput,
+  ModelInfo,
+} from "../types/ai";
+import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
 
 export const api = {
   // Projects
@@ -102,4 +108,28 @@ export const api = {
     invoke<void>("disconnect_calendar", { accountId }),
   listCalendarEvents: (start: string, end: string) =>
     invoke<CalendarEvent[]>("list_calendar_events", { start, end }),
+
+  // Scheduling
+  getWorkHours: () => invoke<WorkHoursConfig | null>("get_work_hours"),
+  saveWorkHours: (config: WorkHoursConfig) =>
+    invoke<WorkHoursConfig>("save_work_hours", { config }),
+  generateSchedule: (date: string) =>
+    invoke<ScheduleBlock[]>("generate_schedule", { date }),
+  applySchedule: (blocks: ScheduleBlock[]) =>
+    invoke<void>("apply_schedule", { blocks }),
+
+  // AI Providers
+  listAiProviders: () => invoke<AiProvider[]>("list_ai_providers"),
+  addAiProvider: (input: CreateProviderInput) =>
+    invoke<AiProvider>("add_ai_provider", { ...input }),
+  removeAiProvider: (id: string) =>
+    invoke<void>("remove_ai_provider", { id }),
+  setDefaultProvider: (id: string) =>
+    invoke<void>("set_default_provider", { id }),
+  testProviderConnection: (id: string) =>
+    invoke<boolean>("test_provider_connection", { id }),
+  listProviderModels: (id: string) =>
+    invoke<ModelInfo[]>("list_provider_models", { id }),
+  aiAssistTask: (taskId: string) =>
+    invoke<void>("ai_assist_task", { taskId }),
 };

@@ -5,13 +5,20 @@ import { createUiSlice, type UiSlice } from "./uiSlice";
 import { createPluginSlice, type PluginSlice } from "./pluginSlice";
 import { createCredentialSlice, type CredentialSlice } from "./credentialSlice";
 import { createCalendarSlice, type CalendarSlice } from "./calendarSlice";
+import {
+  createSchedulingSlice,
+  type SchedulingSlice,
+} from "./schedulingSlice";
+import { createAiSlice, type AiSlice } from "./aiSlice";
 
 export type AppStore = ProjectSlice &
   TaskSlice &
   UiSlice &
   PluginSlice &
   CredentialSlice &
-  CalendarSlice;
+  CalendarSlice &
+  SchedulingSlice &
+  AiSlice;
 
 export const useStore = create<AppStore>()((...a) => ({
   ...createProjectSlice(...a),
@@ -20,4 +27,6 @@ export const useStore = create<AppStore>()((...a) => ({
   ...createPluginSlice(...a),
   ...createCredentialSlice(...a),
   ...createCalendarSlice(...a),
+  ...createSchedulingSlice(...a),
+  ...createAiSlice(...a),
 }));
