@@ -1,11 +1,7 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
 import type { CalendarAccount, CalendarEvent } from "../lib/types";
-import type { ProjectSlice } from "./projectSlice";
-import type { TaskSlice } from "./taskSlice";
-import type { UiSlice } from "./uiSlice";
-import type { PluginSlice } from "./pluginSlice";
-import type { CredentialSlice } from "./credentialSlice";
+import type { AppStore } from "./index";
 
 export interface CalendarSlice {
   calendarAccounts: CalendarAccount[];
@@ -22,12 +18,7 @@ export interface CalendarSlice {
 }
 
 export const createCalendarSlice: StateCreator<
-  ProjectSlice &
-    TaskSlice &
-    UiSlice &
-    PluginSlice &
-    CredentialSlice &
-    CalendarSlice,
+  AppStore,
   [],
   [],
   CalendarSlice

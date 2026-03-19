@@ -6,11 +6,7 @@ import type {
   TaskStatus,
   TaskPriority,
 } from "../lib/types";
-import type { ProjectSlice } from "./projectSlice";
-import type { UiSlice } from "./uiSlice";
-import type { PluginSlice } from "./pluginSlice";
-import type { CredentialSlice } from "./credentialSlice";
-import type { CalendarSlice } from "./calendarSlice";
+import type { AppStore } from "./index";
 
 export interface TaskSlice {
   tasks: Task[];
@@ -40,12 +36,10 @@ export interface TaskSlice {
   removeTagFromTask: (taskId: string, tagId: string) => Promise<void>;
 }
 
-export const createTaskSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
-  [],
-  [],
-  TaskSlice
-> = (set, _get) => ({
+export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
+  set,
+  _get,
+) => ({
   tasks: [],
   selectedTaskId: null,
   selectedTask: null,

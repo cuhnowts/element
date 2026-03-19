@@ -1,11 +1,7 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
 import type { Credential, CreateCredentialInput } from "../lib/types";
-import type { ProjectSlice } from "./projectSlice";
-import type { TaskSlice } from "./taskSlice";
-import type { UiSlice } from "./uiSlice";
-import type { PluginSlice } from "./pluginSlice";
-import type { CalendarSlice } from "./calendarSlice";
+import type { AppStore } from "./index";
 
 export interface CredentialSlice {
   credentials: Credential[];
@@ -25,7 +21,7 @@ export interface CredentialSlice {
 }
 
 export const createCredentialSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
+  AppStore,
   [],
   [],
   CredentialSlice

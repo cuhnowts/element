@@ -1,11 +1,7 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
 import type { PluginInfo } from "../lib/types";
-import type { ProjectSlice } from "./projectSlice";
-import type { TaskSlice } from "./taskSlice";
-import type { UiSlice } from "./uiSlice";
-import type { CredentialSlice } from "./credentialSlice";
-import type { CalendarSlice } from "./calendarSlice";
+import type { AppStore } from "./index";
 
 export interface PluginSlice {
   plugins: PluginInfo[];
@@ -19,7 +15,7 @@ export interface PluginSlice {
 }
 
 export const createPluginSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
+  AppStore,
   [],
   [],
   PluginSlice

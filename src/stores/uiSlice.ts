@@ -1,9 +1,5 @@
 import type { StateCreator } from "zustand";
-import type { ProjectSlice } from "./projectSlice";
-import type { TaskSlice } from "./taskSlice";
-import type { PluginSlice } from "./pluginSlice";
-import type { CredentialSlice } from "./credentialSlice";
-import type { CalendarSlice } from "./calendarSlice";
+import type { AppStore } from "./index";
 import type { SettingsTab } from "../lib/types";
 
 export interface UiSlice {
@@ -30,12 +26,9 @@ export interface UiSlice {
   closeSettings: () => void;
 }
 
-export const createUiSlice: StateCreator<
-  ProjectSlice & TaskSlice & UiSlice & PluginSlice & CredentialSlice & CalendarSlice,
-  [],
-  [],
-  UiSlice
-> = (set) => ({
+export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (
+  set,
+) => ({
   commandPaletteOpen: false,
   createProjectDialogOpen: false,
   deleteConfirmOpen: false,
