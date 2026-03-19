@@ -6,12 +6,14 @@ use tauri::{
 use std::sync::{Arc, Mutex};
 use tokio_cron_scheduler::JobScheduler;
 
+mod ai;
 mod commands;
 mod credentials;
 mod db;
 mod engine;
 mod models;
 mod plugins;
+mod scheduling;
 #[cfg(test)]
 mod test_fixtures;
 
