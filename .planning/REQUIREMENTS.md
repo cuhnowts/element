@@ -34,7 +34,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### AI Integration
 
-- [ ] **AI-01**: App supports model-agnostic AI layer (Claude, GPT, local models)
+- [x] **AI-01**: App supports model-agnostic AI layer (Claude, GPT, local models)
 - [ ] **AI-02**: AI assists task creation (suggests structure, steps, context)
 
 ### Plugins & Integrations
@@ -46,8 +46,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Scheduling
 
-- [ ] **SCHED-01**: App auto-fills open time blocks with work sessions around meetings
-- [ ] **SCHED-02**: App assigns tasks to work sessions based on priority
+- [x] **SCHED-01**: App auto-fills open time blocks with work sessions around meetings
+- [x] **SCHED-02**: App assigns tasks to work sessions based on priority
 
 ### Data & Storage
 
@@ -106,14 +106,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-04 | Phase 2 | Complete |
 | UI-05 | Phase 2 | Complete |
 | UI-06 | Phase 1 | Complete |
-| AI-01 | Phase 5 | Pending |
+| AI-01 | Phase 5 | Complete |
 | AI-02 | Phase 5 | Pending |
 | PLUG-01 | Phase 4 | Complete |
 | PLUG-02 | Phase 4 | Complete |
 | PLUG-03 | Phase 4 | Complete |
 | PLUG-04 | Phase 4 | Complete |
-| SCHED-01 | Phase 5 | Pending |
-| SCHED-02 | Phase 5 | Pending |
+| SCHED-01 | Phase 5 | Complete |
+| SCHED-02 | Phase 5 | Complete |
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |
