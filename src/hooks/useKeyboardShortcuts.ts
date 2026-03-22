@@ -50,7 +50,7 @@ export function useKeyboardShortcuts() {
       if (meta && !e.shiftKey && e.key === "n") {
         e.preventDefault();
         if (selectedProjectId) {
-          createTask(selectedProjectId, "Untitled Task").then((task) => {
+          createTask("Untitled Task", selectedProjectId).then((task) => {
             selectTask(task.id);
             workspaceSelectTask(task.id);
           });

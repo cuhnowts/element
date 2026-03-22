@@ -4,8 +4,7 @@ import { useStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { CalendarToggle } from "@/components/sidebar/CalendarToggle";
 import { MiniCalendar } from "@/components/sidebar/MiniCalendar";
-import { ProjectList } from "@/components/sidebar/ProjectList";
-import { TaskList } from "@/components/sidebar/TaskList";
+import { ThemeSidebar } from "@/components/sidebar/ThemeSidebar";
 import { WorkflowList } from "@/components/sidebar/WorkflowList";
 
 export function Sidebar() {
@@ -17,10 +16,8 @@ export function Sidebar() {
       <CalendarToggle />
       {calendarVisible && <MiniCalendar />}
       <div className="border-b border-border" />
-      <ProjectList />
-      <div className="border-b border-border" />
       <div className="flex-1 overflow-hidden">
-        <TaskList />
+        <ThemeSidebar />
       </div>
       <div className="border-b border-border" />
       <div className="max-h-[200px]">

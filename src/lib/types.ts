@@ -5,13 +5,15 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  themeId: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Task {
   id: string;
-  projectId: string;
+  projectId: string | null;
+  themeId: string | null;
   title: string;
   description: string;
   context: string;
@@ -38,7 +40,8 @@ export interface Tag {
 }
 
 export interface CreateTaskInput {
-  projectId: string;
+  projectId?: string;
+  themeId?: string;
   title: string;
   description?: string;
   context?: string;
@@ -162,6 +165,29 @@ export interface CalendarEvent {
   status: string;
   updatedAt: string;
 }
+
+// Theme types
+export interface Theme {
+  id: string;
+  name: string;
+  color: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const THEME_COLORS = [
+  '#6366f1', // indigo (default)
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#ef4444', // red
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#22c55e', // green
+  '#14b8a6', // teal
+  '#3b82f6', // blue
+  '#6b7280', // gray
+] as const;
 
 // Settings navigation
 export type SettingsTab =

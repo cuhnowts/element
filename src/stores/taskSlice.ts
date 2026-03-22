@@ -14,7 +14,7 @@ export interface TaskSlice {
   selectedTask: TaskWithTags | null;
   tasksLoading: boolean;
   loadTasks: (projectId: string) => Promise<void>;
-  createTask: (projectId: string, title: string) => Promise<Task>;
+  createTask: (title: string, projectId?: string, themeId?: string) => Promise<Task>;
   selectTask: (taskId: string | null) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   updateTask: (
@@ -49,8 +49,8 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
     const tasks = await api.listTasks(projectId);
     set({ tasks, tasksLoading: false });
   },
-  createTask: async (projectId, title) => {
-    const task = await api.createTask({ projectId, title });
+  createTask: async (title, projectId, themeId) => {
+    const task = await api.createTask({ projectId, themeId, title });
     set((s) => ({ tasks: [task, ...s.tasks] }));
     return task;
   },

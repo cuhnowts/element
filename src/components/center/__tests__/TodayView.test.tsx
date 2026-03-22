@@ -6,6 +6,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "test-1",
     projectId: "proj-1",
+    themeId: null,
     title: "Test task",
     description: "",
     context: "",
