@@ -196,3 +196,20 @@ pub async fn list_tags(
     let db = state.lock().map_err(|e| e.to_string())?;
     db.list_tags().map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn list_standalone_tasks(
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+) -> Result<Vec<Task>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    db.list_standalone_tasks().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn list_tasks_by_theme(
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    theme_id: String,
+) -> Result<Vec<Task>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    db.list_tasks_by_theme(&theme_id).map_err(|e| e.to_string())
+}

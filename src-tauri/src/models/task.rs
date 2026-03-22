@@ -307,6 +307,26 @@ impl Database {
             .execute("DELETE FROM tasks WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
+
+    pub fn list_standalone_tasks(&self) -> Result<Vec<Task>, rusqlite::Error> {
+        let query = format!(
+            "SELECT {} FROM tasks WHERE project_id IS NULL ORDER BY created_at DESC",
+            TASK_COLUMNS
+        );
+        let mut stmt = self.conn().prepare(&query)?;
+        let tasks = stmt.query_map([], |row| row_to_task(row))?;
+        tasks.collect()
+    }
+
+    pub fn list_tasks_by_theme(&self, theme_id: &str) -> Result<Vec<Task>, rusqlite::Error> {
+        let query = format!(
+            "SELECT {} FROM tasks WHERE theme_id = ?1 ORDER BY created_at DESC",
+            TASK_COLUMNS
+        );
+        let mut stmt = self.conn().prepare(&query)?;
+        let tasks = stmt.query_map(rusqlite::params![theme_id], |row| row_to_task(row))?;
+        tasks.collect()
+    }
 }
 
 #[cfg(test)]
@@ -690,5 +710,82 @@ mod tests {
         });
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_create_standalone_task() {
+        let db = setup_test_db();
+
+        let task = db
+            .create_task(CreateTaskInput {
+                project_id: None,
+                theme_id: None,
+                title: "Standalone Task".into(),
+                description: None,
+                context: None,
+                priority: None,
+                external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
+                estimated_minutes: None,
+            })
+            .unwrap();
+
+        assert_eq!(task.title, "Standalone Task");
+        assert!(task.project_id.is_none());
+        assert!(task.theme_id.is_none());
+
+        // Verify round-trip
+        let fetched = db.get_task(&task.id).unwrap();
+        assert!(fetched.project_id.is_none());
+    }
+
+    #[test]
+    fn test_list_standalone_tasks() {
+        let db = setup_test_db();
+        let project_id = create_test_project(&db);
+
+        // Create a project task
+        db.create_task(CreateTaskInput {
+            project_id: Some(project_id),
+            theme_id: None,
+            title: "Project Task".into(),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+        })
+        .unwrap();
+
+        // Create a standalone task
+        db.create_task(CreateTaskInput {
+            project_id: None,
+            theme_id: None,
+            title: "Standalone".into(),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+        })
+        .unwrap();
+
+        let standalone = db.list_standalone_tasks().unwrap();
+        assert_eq!(standalone.len(), 1);
+        assert_eq!(standalone[0].title, "Standalone");
     }
 }

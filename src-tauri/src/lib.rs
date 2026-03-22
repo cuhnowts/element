@@ -216,6 +216,8 @@ pub fn run() {
             get_theme_item_counts,
             assign_project_theme,
             assign_task_theme,
+            list_standalone_tasks,
+            list_tasks_by_theme,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
