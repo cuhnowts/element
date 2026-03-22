@@ -32,3 +32,14 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 | 3. Workflows and Automation | v1.0 | 5/5 | Complete | 2026-03-17 |
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
+
+## Backlog
+
+### Phase 999.1: Windows Cross-Platform Compatibility Fixes (BACKLOG)
+
+**Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
