@@ -1,7 +1,7 @@
 # Requirements: Element
 
 **Defined:** 2026-03-22
-**Core Value:** The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else builds on top of it.
+**Core Value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
 
 ## v1.1 Requirements
 
@@ -73,13 +73,13 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Built-in code editor | Element orchestrates, external tools edit — multi-year effort for marginal value |
+| Built-in code editor | Element orchestrates, external tools edit -- multi-year effort for marginal value |
 | Gantt chart / timeline view | Phases with progress bars convey the same info at 5% complexity |
 | Kanban board per project | Task list with status grouping is equivalent for single-user |
-| Nested sub-projects | Two levels (theme > project) sufficient — recursion adds complexity |
+| Nested sub-projects | Two levels (theme > project) sufficient -- recursion adds complexity |
 | AI auto-creating tasks without review | Users lose trust when AI makes unreviewed changes |
-| Template library for project types | AI onboarding replaces templates — personalized and current |
-| Real-time file content preview | Opens in external editor — keep Element focused on orchestration |
+| Template library for project types | AI onboarding replaces templates -- personalized and current |
+| Real-time file content preview | Opens in external editor -- keep Element focused on orchestration |
 | Calendar/scheduling improvements | Deferred to separate milestone |
 
 ## Traceability
@@ -88,35 +88,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| THEME-01 | — | Pending |
-| THEME-02 | — | Pending |
-| THEME-03 | — | Pending |
-| THEME-04 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| PROJ-04 | — | Pending |
-| PROJ-05 | — | Pending |
-| FILE-01 | — | Pending |
-| FILE-02 | — | Pending |
-| FILE-03 | — | Pending |
-| FILE-04 | — | Pending |
-| TERM-01 | — | Pending |
-| TERM-02 | — | Pending |
-| TERM-03 | — | Pending |
-| AIOB-01 | — | Pending |
-| AIOB-02 | — | Pending |
-| AIOB-03 | — | Pending |
-| AIOB-04 | — | Pending |
-| AIAS-01 | — | Pending |
-| AIAS-02 | — | Pending |
-| AIAS-03 | — | Pending |
+| THEME-01 | Phase 6 | Pending |
+| THEME-02 | Phase 6 | Pending |
+| THEME-03 | Phase 6 | Pending |
+| THEME-04 | Phase 6 | Pending |
+| PROJ-01 | Phase 7 | Pending |
+| PROJ-02 | Phase 7 | Pending |
+| PROJ-03 | Phase 7 | Pending |
+| PROJ-04 | Phase 7 | Pending |
+| PROJ-05 | Phase 7 | Pending |
+| FILE-01 | Phase 8 | Pending |
+| FILE-02 | Phase 8 | Pending |
+| FILE-03 | Phase 8 | Pending |
+| FILE-04 | Phase 8 | Pending |
+| TERM-01 | Phase 9 | Pending |
+| TERM-02 | Phase 9 | Pending |
+| TERM-03 | Phase 9 | Pending |
+| AIOB-01 | Phase 10 | Pending |
+| AIOB-02 | Phase 10 | Pending |
+| AIOB-03 | Phase 10 | Pending |
+| AIOB-04 | Phase 10 | Pending |
+| AIAS-01 | Phase 10 | Pending |
+| AIAS-02 | Phase 11 | Pending |
+| AIAS-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*

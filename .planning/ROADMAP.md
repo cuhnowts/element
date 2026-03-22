@@ -6,23 +6,135 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 ## Milestones
 
-- ✅ **v1.0 MVP** — Phases 1-5 (shipped 2026-03-22) — [archive](milestones/v1.0-ROADMAP.md)
+- ✅ **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-22) -- [archive](milestones/v1.0-ROADMAP.md)
+- 🚧 **v1.1 Project Manager** -- Phases 6-11 (in progress)
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 MVP (Phases 1-5) — SHIPPED 2026-03-22</summary>
+<summary>v1.0 MVP (Phases 1-5) -- SHIPPED 2026-03-22</summary>
 
-- [x] Phase 1: Desktop Shell and Task Foundation (3/3 plans) — completed 2026-03-16
-- [x] Phase 2: Task UI and Execution History (6/6 plans) — completed 2026-03-16
-- [x] Phase 2.1: Daily UX Foundation (4/4 plans, INSERTED) — completed 2026-03-16
-- [x] Phase 3: Workflows and Automation (5/5 plans) — completed 2026-03-17
-- [x] Phase 4: Plugin System (5/5 plans) — completed 2026-03-18
-- [x] Phase 5: AI and Smart Scheduling (6/6 plans) — completed 2026-03-19
+- [x] Phase 1: Desktop Shell and Task Foundation (3/3 plans) -- completed 2026-03-16
+- [x] Phase 2: Task UI and Execution History (6/6 plans) -- completed 2026-03-16
+- [x] Phase 2.1: Daily UX Foundation (4/4 plans, INSERTED) -- completed 2026-03-16
+- [x] Phase 3: Workflows and Automation (5/5 plans) -- completed 2026-03-17
+- [x] Phase 4: Plugin System (5/5 plans) -- completed 2026-03-18
+- [x] Phase 5: AI and Smart Scheduling (6/6 plans) -- completed 2026-03-19
 
 </details>
 
+### v1.1 Project Manager (In Progress)
+
+**Milestone Goal:** Transform Element into a full project management platform with themed categories, AI-driven project setup, and an integrated workspace with file explorer and terminal.
+
+- [ ] **Phase 6: Data Foundation and Theme System** - Schema migration + theme CRUD + themed sidebar navigation
+- [ ] **Phase 7: Project Phases and Directory Linking** - Phase management within projects + directory picker + progress tracking
+- [ ] **Phase 8: File Explorer** - Project file tree with gitignore filtering, external editor launch, and live updates
+- [ ] **Phase 9: Embedded Terminal** - PTY-backed terminal in workspace, auto-opening in project directory
+- [ ] **Phase 10: AI Project Onboarding** - Structured project entry + AI questioning + generated phases/tasks + per-project AI mode
+- [ ] **Phase 11: Workspace Integration and AI Context** - Unified project workspace + context switching summaries + AI progress suggestions
+
+## Phase Details
+
+### Phase 6: Data Foundation and Theme System
+**Goal**: Users can organize their projects and tasks under themed categories with a restructured sidebar
+**Depends on**: Phase 5 (v1.0 complete)
+**Requirements**: THEME-01, THEME-02, THEME-03, THEME-04
+**Success Criteria** (what must be TRUE):
+  1. User can create, rename, and delete themes from the sidebar
+  2. User can assign projects and standalone tasks to themes
+  3. Sidebar displays items grouped by theme with collapsible sections; uncategorized items appear in a default bucket
+  4. User can create a task without assigning it to any project (standalone task)
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 06-01: TBD
+- [ ] 06-02: TBD
+
+### Phase 7: Project Phases and Directory Linking
+**Goal**: Users can structure projects into ordered phases, track progress, and link projects to filesystem directories
+**Depends on**: Phase 6
+**Requirements**: PROJ-01, PROJ-02, PROJ-03, PROJ-04, PROJ-05
+**Success Criteria** (what must be TRUE):
+  1. User can link a project to a filesystem directory using a native directory picker
+  2. User can create, reorder, and manage phases within a project
+  3. User can assign tasks to specific phases within a project
+  4. User can see phase-level progress showing tasks complete out of total
+  5. Project detail view displays the phase list, overall progress bar, and status overview
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 07-01: TBD
+- [ ] 07-02: TBD
+
+### Phase 8: File Explorer
+**Goal**: Users can browse and interact with project files directly within the Element workspace
+**Depends on**: Phase 7 (requires project directory linking)
+**Requirements**: FILE-01, FILE-02, FILE-03, FILE-04
+**Success Criteria** (what must be TRUE):
+  1. User can browse project files in a tree view within the workspace panel
+  2. User can open any file in their default external editor from the tree
+  3. File tree automatically hides .gitignore entries and common excludes (node_modules, .git, target)
+  4. File tree updates in real time when files are added, removed, or renamed on disk
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: TBD
+- [ ] 08-02: TBD
+
+### Phase 9: Embedded Terminal
+**Goal**: Users can run commands in an embedded terminal without leaving Element
+**Depends on**: Phase 7 (requires project directory linking)
+**Requirements**: TERM-01, TERM-02, TERM-03
+**Success Criteria** (what must be TRUE):
+  1. User can open an embedded terminal in the workspace output panel
+  2. Terminal automatically starts in the project's linked directory
+  3. Terminal supports standard interaction: typing commands, copy/paste, scrollback, and resize
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD
+- [ ] 09-02: TBD
+
+### Phase 10: AI Project Onboarding
+**Goal**: Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown
+**Depends on**: Phase 7 (requires phases schema and CRUD)
+**Requirements**: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
+**Success Criteria** (what must be TRUE):
+  1. User can enter project scope, goals, and constraints in a structured onboarding form
+  2. AI asks clarifying questions to refine understanding of the project before generating a breakdown
+  3. AI generates a set of phases and tasks based on the conversation
+  4. User can review, edit, and confirm the AI-generated breakdown before it is saved to the project
+  5. User can set the AI assistance mode per project (Track+Suggest, Track+Auto-execute, or On-demand)
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 10-01: TBD
+- [ ] 10-02: TBD
+
+### Phase 11: Workspace Integration and AI Context
+**Goal**: Users experience a unified project workspace with intelligent context switching and AI-driven progress awareness
+**Depends on**: Phase 8, Phase 9, Phase 10 (requires file explorer, terminal, and AI mode)
+**Requirements**: AIAS-02, AIAS-03
+**Success Criteria** (what must be TRUE):
+  1. When switching to a project, AI generates a "where was I?" summary of recent progress and next steps
+  2. In Track+Suggest mode, AI surfaces relevant suggestions based on project progress
+  3. Workspace assembles file explorer, terminal, phase overview, and task list into a cohesive project view with remembered layout
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 11-01: TBD
+- [ ] 11-02: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
+(Phases 8 and 9 both depend on Phase 7 but not on each other; sequential order is safer for solo development.)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -32,6 +144,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 | 3. Workflows and Automation | v1.0 | 5/5 | Complete | 2026-03-17 |
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
+| 6. Data Foundation and Theme System | v1.1 | 0/0 | Not started | - |
+| 7. Project Phases and Directory Linking | v1.1 | 0/0 | Not started | - |
+| 8. File Explorer | v1.1 | 0/0 | Not started | - |
+| 9. Embedded Terminal | v1.1 | 0/0 | Not started | - |
+| 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
+| 11. Workspace Integration and AI Context | v1.1 | 0/0 | Not started | - |
 
 ## Backlog
 
@@ -46,7 +164,7 @@ Plans:
 
 ### Phase 999.2: Wire Calendar Events to Smart Scheduler and OAuth Setup (BACKLOG)
 
-**Goal:** Close two v1.0 tech debt items: (1) `scheduling_commands.rs:94-97` passes an empty `Vec<CalendarEvent>` to `find_open_blocks` — replace with a query against `calendar_events` table so meetings are factored into scheduling. (2) Add runtime guard in `connect_google_calendar`/`connect_outlook_calendar` that detects placeholder OAuth client IDs and returns an actionable error, plus create `.env.example` and setup docs for registering Google/Microsoft OAuth apps.
+**Goal:** Close two v1.0 tech debt items: (1) `scheduling_commands.rs:94-97` passes an empty `Vec<CalendarEvent>` to `find_open_blocks` -- replace with a query against `calendar_events` table so meetings are factored into scheduling. (2) Add runtime guard in `connect_google_calendar`/`connect_outlook_calendar` that detects placeholder OAuth client IDs and returns an actionable error, plus create `.env.example` and setup docs for registering Google/Microsoft OAuth apps.
 **Requirements:** TBD
 **Plans:** 0 plans
 
