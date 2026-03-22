@@ -2,39 +2,49 @@
 
 ## What This Is
 
-Element is a desktop workflow orchestration platform — a personal work OS that ingests signals (calendar, email, tasks), structures them into organized workflows, and learns user behavior over time. It's the brain that decides what needs to happen, when, and tracks outcomes — while actual work execution happens through external tools (Claude Code, CLIs, agents).
+Element is a desktop workflow orchestration platform — a personal work OS that ingests signals (calendar, email, tasks), structures them into organized workflows, and learns user behavior over time. Built with Tauri 2.x (Rust backend) + React 19 (TypeScript frontend) + SQLite (local-first storage), it orchestrates work through external tools (Claude Code, CLIs, agents) rather than executing it directly.
 
 ## Core Value
 
 The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
 
+## Current State
+
+**Shipped:** v1.0 MVP (2026-03-22)
+**Codebase:** 310 files, 60K+ lines (Rust + TypeScript)
+**Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, reqwest, tokio, keyring
+
+v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, global-hotkey quick-capture, multi-step workflows with cron scheduling, plugin system with credential vault, calendar integration (Google/Outlook OAuth), model-agnostic AI assistance, and intelligent time-block scheduling.
+
 ## Requirements
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Workflow engine: define, run, monitor, and compose workflows — v1.0
+- ✓ Structured list-based workflow editor (step-by-step builder) — v1.0
+- ✓ Plugin system: local file drop-in workflow packages — v1.0
+- ✓ Model-agnostic AI layer (Claude, GPT, local models) — v1.0
+- ✓ Status panel, output panel, and tools panel in the UI — v1.0
+- ✓ CRON-scheduled report delivery — v1.0
 
 ### Active
 
-- [ ] Workflow engine: define, run, monitor, and compose workflows
-- [ ] Structured list-based workflow editor (step-by-step builder)
-- [ ] Plugin system: local file drop-in workflow packages
 - [ ] Pulse system: ingest calendar/email signals into structured daily work
 - [ ] Reporting pipelines on cron schedules (news, spending, analytics)
 - [ ] Ad-hoc workflow creation with pattern detection for automation suggestions
 - [ ] Memory system: full context model that learns user preferences, habits, and patterns
-- [ ] Model-agnostic AI layer (Claude, GPT, local models)
 - [ ] Code + GUI workflow definition (developers write code, GUI for visual building)
 - [ ] Daily briefing: wake up to a structured workday ready to go
-- [ ] Status panel, output panel, and tools panel in the UI
-- [ ] CRON-scheduled report delivery
+- [ ] Windows support
+- [ ] Plugin marketplace with paid workflow plugins
 
 ### Out of Scope
 
-- Full node-graph visual editor — structured list approach instead, simpler and more focused
+- Full node-graph visual editor — structured list covers 90% of use cases at 20% engineering cost
 - Built-in work execution runtime — Element orchestrates, external tools execute
-- Mobile app — desktop first (macOS primary, Windows secondary)
-- Real-time collaboration — single-user focus for v1
+- Mobile app — desktop-first, mobile notifications via existing channels
+- Real-time collaboration — personal work OS is personal, single-user focus
+- Built-in calendar/email clients — ingest signals via plugins, don't replicate source apps
 
 ## Context
 
@@ -42,10 +52,10 @@ The workflow engine must reliably define, organize, schedule, and monitor workfl
 - Comparable to n8n conceptually but AI-native and focused on personal work orchestration
 - Execution model inspired by BSD-style piping: workflows compose by passing documents between stages
 - The app should feel like Discord or Outlook — a native desktop experience, not a web page
-- C# was considered but the best tech stack should be determined by research
 - Business model: open source core + paid workflow plugins (marketplace)
 - Signals to ingest are flexible/plugin-based — Outlook calendar, Gmail, Slack, GitHub, etc.
 - Data is local-first — user owns all their data, stored on device
+- v1.0 shipped in 7 days with 155 commits across 6 phases
 
 ## Constraints
 
@@ -59,13 +69,25 @@ The workflow engine must reliably define, organize, schedule, and monitor workfl
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Structured list over node graph | Simpler, more focused UX — not building a visual programming tool | — Pending |
-| Local-first data | User data sovereignty, no cloud dependency | — Pending |
-| Model-agnostic AI layer | Avoid vendor lock-in, let users choose their AI provider | — Pending |
-| Workflow engine as core (not Pulse) | Everything else depends on the engine working — it's the foundation | — Pending |
-| Desktop app (not web) | Native experience like Discord/Outlook, local-first aligns with desktop | — Pending |
+| Structured list over node graph | Simpler, more focused UX — not building a visual programming tool | ✓ Good — WorkflowBuilder works well |
+| Local-first data | User data sovereignty, no cloud dependency | ✓ Good — SQLite performs well |
+| Model-agnostic AI layer | Avoid vendor lock-in, let users choose their AI provider | ✓ Good — 4 providers implemented |
+| Workflow engine as core (not Pulse) | Everything else depends on the engine working — it's the foundation | ✓ Good — engine is solid |
+| Desktop app (not web) | Native experience like Discord/Outlook, local-first aligns with desktop | ✓ Good — Tauri delivers |
 | Open source + paid plugins | Community builds the ecosystem, revenue from premium workflows | — Pending |
 | Code + GUI workflow definition | Power users write code, others use the GUI builder | — Pending |
+| Tauri 2.x + Rust + React 19 | Research recommended for cross-platform native desktop | ✓ Good |
+| JSON over YAML for workflows | serde-yaml deprecated; serde_json is stable | ✓ Good |
+| Arc<Mutex<Database>> for async | Required for tokio::spawn in workflow execution | ✓ Good |
+| SecretStore trait for keychain | KeychainStore for prod, InMemoryStore for tests | ✓ Good |
+| OAuth client IDs via option_env! | Users supply their own OAuth apps | ⚠️ Revisit — needs better UX |
+
+## Known Tech Debt
+
+- Calendar events not wired to scheduler (`scheduling_commands.rs:94-97` passes empty vec)
+- OAuth placeholder client IDs need runtime guard or setup documentation
+- Phase 2 sidebar removed ProjectList — projects not loaded on startup
+- File > New Task menu event handler is empty (Cmd+N works)
 
 ---
-*Last updated: 2026-03-15 after initialization*
+*Last updated: 2026-03-22 after v1.0 milestone*
