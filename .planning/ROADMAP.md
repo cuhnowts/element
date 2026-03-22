@@ -45,12 +45,13 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   2. User can assign projects and standalone tasks to themes
   3. Sidebar displays items grouped by theme with collapsible sections; uncategorized items appear in a default bucket
   4. User can create a task without assigning it to any project (standalone task)
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md -- Backend: migration, theme model, theme commands, task/project modifications
+- [ ] 06-02-PLAN.md -- Frontend: types, API, store, sidebar components, sidebar restructure
+- [ ] 06-03-PLAN.md -- Checkpoint: end-to-end theme system verification
 
 ### Phase 7: Project Phases and Directory Linking
 **Goal**: Users can structure projects into ordered phases, track progress, and link projects to filesystem directories
@@ -144,7 +145,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 3. Workflows and Automation | v1.0 | 5/5 | Complete | 2026-03-17 |
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
-| 6. Data Foundation and Theme System | v1.1 | 0/0 | Not started | - |
+| 6. Data Foundation and Theme System | v1.1 | 0/3 | Planning complete | - |
 | 7. Project Phases and Directory Linking | v1.1 | 0/0 | Not started | - |
 | 8. File Explorer | v1.1 | 0/0 | Not started | - |
 | 9. Embedded Terminal | v1.1 | 0/0 | Not started | - |
@@ -173,7 +174,7 @@ Plans:
 
 ### Phase 999.3: Plugin Skills and MCP Server Support (BACKLOG)
 
-**Goal:** Extend the plugin system so plugins can expose skills (slash-command-like capabilities) and register MCP server connections, similar to Claude Code's skill/MCP architecture. Plugins would declare skills in their manifest that appear in the workflow step picker and UI command palette. MCP server plugins would provide tool access for AI-assisted task execution — the AI gateway routes tool calls to the appropriate MCP server based on plugin registration.
+**Goal:** Extend the plugin system so plugins can expose skills (slash-command-like capabilities) and register MCP server connections, similar to Claude Code's skill/MCP architecture. Plugins would declare skills in their manifest that appear in the workflow step picker and UI command palette. MCP server plugins would provide tool access for AI-assisted task execution -- the AI gateway routes tool calls to the appropriate MCP server based on plugin registration.
 **Requirements:** TBD
 **Plans:** 0 plans
 
