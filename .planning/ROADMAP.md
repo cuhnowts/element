@@ -45,7 +45,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   2. User can assign projects and standalone tasks to themes
   3. Sidebar displays items grouped by theme with collapsible sections; uncategorized items appear in a default bucket
   4. User can create a task without assigning it to any project (standalone task)
-**Plans**: 3 plans
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
@@ -63,7 +63,7 @@ Plans:
   3. User can assign tasks to specific phases within a project
   4. User can see phase-level progress showing tasks complete out of total
   5. Project detail view displays the phase list, overall progress bar, and status overview
-**Plans**: 3 plans
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
@@ -80,7 +80,7 @@ Plans:
   2. User can open any file in their default external editor from the tree
   3. File tree automatically hides .gitignore entries and common excludes (node_modules, .git, target)
   4. File tree updates in real time when files are added, removed, or renamed on disk
-**Plans**: 3 plans
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
@@ -127,10 +127,11 @@ Plans:
   1. When switching to a project, AI generates a "where was I?" summary of recent progress and next steps
   2. In Track+Suggest mode, AI surfaces relevant suggestions based on project progress
   3. Workspace assembles file explorer, terminal, phase overview, and task list into a cohesive project view with remembered layout
-**Plans**: 3 plans
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
+- [ ] 11-00-PLAN.md -- Wave 0: Test stubs for workspace state, context slice, and UI components
 - [ ] 11-01-PLAN.md -- Backend: Rust types, context aggregation, prompt builders, Tauri commands, frontend API bindings
 - [ ] 11-02-PLAN.md -- Frontend state: per-project workspace store extension, context summary/suggestion slice
 - [ ] 11-03-PLAN.md -- UI: ContextSummaryCard, AiSuggestionCard, ProjectDetail integration, checkpoint
