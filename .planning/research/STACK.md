@@ -1,190 +1,215 @@
-# Technology Stack
+# Stack Research
 
-**Project:** Element — Desktop Workflow Orchestration Platform
-**Researched:** 2026-03-15
+**Domain:** Desktop app feature additions (terminal, file tree, AI onboarding, themes)
+**Researched:** 2026-03-22
+**Confidence:** HIGH
 
-## Recommended Stack
+## Scope
 
-### Application Shell
+This document covers ONLY new library additions for v1.1 features. The existing stack (Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, reqwest, tokio, keyring, etc.) is validated from v1.0 and unchanged.
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Tauri | 2.10.x | Desktop app shell | 10x smaller bundles (~5MB vs 100MB+), 30-40MB memory vs Electron's 200-300MB, 40% faster startup, Rust backend for performance-critical workflow engine, native OS webview for "Discord-like" feel, built-in plugin architecture aligns with Element's plugin model, security-first with opt-in permissions | HIGH |
-| Rust (via Tauri) | stable | Backend logic, workflow engine core, IPC | Type-safe, memory-safe without GC, excellent concurrency for running parallel workflows, natural fit for Tauri's command system | HIGH |
+---
 
-### Frontend Framework
+## Recommended Stack Additions
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| React | 19.x | UI framework | Largest ecosystem for complex desktop-style UIs, shadcn/ui component library, resizable panels, sidebar layouts all built for React. Element's UI (status panel, output panel, tools panel, sidebar) maps directly to shadcn's resizable panel components | HIGH |
-| TypeScript | 5.7+ | Type safety | Non-negotiable for a project this complex. Type-safe IPC with Tauri commands | HIGH |
-| Vite | 6.x | Build tool / dev server | Tauri's recommended bundler, fast HMR, first-class TypeScript support | HIGH |
+### Embedded Terminal
 
-### UI Component Library
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `portable-pty` (Rust) | 0.9.0 | Cross-platform PTY spawning | Industry standard from the wezterm project. Handles macOS/Windows PTY differences. Direct integration gives full control over shell lifecycle, env vars, and per-project working directories. |
+| `@xterm/xterm` (JS) | 6.0.0 | Terminal rendering in webview | The only production-grade terminal emulator for the web. v6 has 30% smaller bundle (265kb). Scoped package replaces deprecated `xterm`. |
+| `@xterm/addon-fit` (JS) | 0.11.0 | Auto-resize terminal to container | Required for responsive layout within react-resizable-panels. |
+| `@xterm/addon-web-links` (JS) | 0.12.0 | Clickable URLs in terminal output | Expected UX for any terminal. Low effort, high value. |
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| shadcn/ui | latest (CLI v4) | Component library | Copy-paste model means full control — critical for a desktop app that needs custom behavior. Resizable panels, sidebar, command palette, dialog, sheet all ship out of the box. Tailwind v4 + OKLCH colors supported | HIGH |
-| Tailwind CSS | 4.x | Styling | shadcn/ui foundation, @theme directive for theming (dark/light mode critical for desktop apps), zero runtime CSS overhead | HIGH |
-| react-resizable-panels | latest | Panel layout | Powers shadcn's resizable component. Provides VS Code-style adjustable panel groups — exactly what Element's multi-panel UI needs | HIGH |
+**Why `portable-pty` directly instead of `tauri-plugin-pty`:** The plugin (v0.1.1) is a thin community wrapper with ~50 GitHub stars. Element already has the pattern for Rust backend commands with event streaming (see `cli_commands.rs` and `ai_commands.rs` -- both use `tauri::Emitter` for output streaming). Building directly on `portable-pty` gives full control over shell lifecycle and avoids coupling to a low-maturity plugin.
 
-### Routing & State
+**Why NOT a React xterm wrapper:** All React wrappers (`xterm-for-react`, `@pablo-lion/xterm-react`, etc.) are either abandoned or trivial wrappers. xterm.js has a simple imperative API: mount a div, call `terminal.open(element)`. A 30-line React component with `useRef` + `useEffect` is sufficient. This matches the existing CodeMirror integration pattern (`@uiw/react-codemirror`).
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| TanStack Router | latest | Client-side routing | Type-safe file-based routing, SPA-only (correct for Tauri — no SSR), search params as state. Multiple community templates prove Tauri + TanStack Router works well | MEDIUM |
-| Zustand | 5.x | Client state management | Centralized store pattern fits Element's interconnected state (active workflow, panel states, notifications, AI responses). Middleware for persistence (localStorage), devtools, immer. Simpler than Redux, more structured than Jotai for a desktop app with many related state slices | HIGH |
+### File System Tree Browser
 
-### Database & Storage
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `tauri-plugin-fs` (Rust) | 2.x | Scoped filesystem access | Official Tauri plugin. Provides `readDir` with security scoping, path traversal prevention, and permission-based access control. |
+| `@tauri-apps/plugin-fs` (JS) | 2.x | Frontend FS bindings | Official companion to the Rust plugin. Typed `readDir`, `stat`, `exists` APIs. |
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| SQLite (via rusqlite) | 3.x | Local-first data storage | Zero-config, single-file database, perfect for local-first architecture. rusqlite gives native Rust access — no serialization overhead for backend operations. Workflows, schedules, memory, user preferences all stored locally | HIGH |
-| tauri-plugin-sql | official | Frontend DB access | Official Tauri plugin using sqlx under the hood, provides IPC bridge for frontend to query SQLite when needed | HIGH |
-| Drizzle ORM | 0.45.x | TypeScript schema/queries | Type-safe SQL with zero dependencies (7.4kb), SQLite support, migration system via drizzle-kit. Used on the frontend/TypeScript side for type-safe queries through Tauri IPC | MEDIUM |
+**File watching:** Already available. The codebase uses `notify` v8 + `notify-debouncer-mini` v0.7 for plugin directory watching. Reuse the same crates to watch project directories and push tree updates to the frontend via Tauri events.
 
-**Architecture note:** The Rust backend owns the database via rusqlite for performance-critical operations (workflow execution, scheduling). The frontend uses Drizzle for type definitions and lighter queries routed through Tauri commands. This dual approach avoids the overhead of routing every DB call through IPC while keeping TypeScript types in sync.
+**Why NOT react-arborist or react-complex-tree:** The file tree for a project workspace is a simple recursive structure (folders + files, expand/collapse, click to select). Element uses shadcn/ui + Tailwind for all UI. Building a custom `<FileTree>` component with recursive rendering and `lucide-react` icons produces better design system integration than adapting a third-party tree library. React-arborist (v3.4.3) brings `react-window` for virtualisation -- unnecessary for project trees under 10K nodes.
 
-### AI Integration
+### AI-Driven Project Onboarding
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Vercel AI SDK | 6.x | Model-agnostic AI abstraction | Unified API across providers (Anthropic, OpenAI, Google), streaming support, tool calling, agent capabilities via v3 Language Model Spec. Community provider for Ollama enables local model support. Used by the Rust backend via sidecar Node process or directly from frontend | HIGH |
-| @ai-sdk/anthropic | latest | Claude provider | First-class Claude support including Claude 4 | HIGH |
-| @ai-sdk/openai | latest | OpenAI provider | GPT-4o, o1, o3 support | HIGH |
-| ai-sdk-ollama | 3.x | Local model provider | Ollama integration for local LLMs, tool calling support, works offline — critical for local-first philosophy | MEDIUM |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| No new libraries | -- | -- | Existing AI streaming infrastructure handles this entirely. |
 
-**Architecture note:** AI calls originate from the TypeScript layer (not Rust) because the AI SDK ecosystem is JavaScript-native. Rust handles workflow orchestration and scheduling; when a workflow step needs AI, it delegates to the TypeScript AI layer via Tauri's event system.
+**Rationale:** The codebase already has:
+- `AiGateway` with provider abstraction (4 providers configured)
+- `complete_stream()` with `tokio::sync::mpsc` channel streaming to frontend
+- Event listeners: `ai-stream-chunk`, `ai-stream-complete`, `ai-stream-error`
+- `prompts` module for structured prompt building and response parsing
 
-### Workflow Engine
+Conversational onboarding = new prompt template + new Tauri command + React chat UI component. The chat UI is a scrollable message list -- basic React + Tailwind, no library needed. The structured entry form (project name, scope, goals, constraints) uses existing shadcn/ui form components.
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Custom Rust engine | — | Workflow execution core | No existing TypeScript workflow engine fits Element's model (BSD-style piping, document passing between stages, local-first). Build on Rust's tokio for async execution, channels for step-to-step data flow. This is Element's core IP — it should not depend on an external library | HIGH |
-| tokio | 1.x | Async runtime | Tauri already uses tokio. Provides async task spawning, timers, channels for workflow step orchestration | HIGH |
-| tauri-plugin-schedule-task | latest | CRON scheduling | Cron-like task scheduling in Rust, runs even when app is not in foreground — required for CRON report delivery and scheduled workflows | MEDIUM |
-| serde / serde_json | 1.x | Serialization | Workflow definitions, plugin manifests, IPC payloads all need JSON serialization. serde is the Rust standard | HIGH |
+### Theme/Category System
 
-### Plugin System
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| No new libraries | -- | -- | Pure data model change (SQLite migration + Zustand store + UI). |
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| File-based plugin loader (custom) | — | Plugin discovery & loading | Scan a directory for plugin manifests (TOML/JSON), validate schema, register workflow steps. Aligns with Tauri 2's own plugin architecture philosophy but at the application level | HIGH |
-| JSON Schema | draft-07 | Plugin manifest validation | Validate plugin.json manifests declaratively. Well-understood, tooling exists | HIGH |
+**Rationale:** Themes are a data entity (id, name, color, icon, sort_order) with a one-to-many relationship to projects and tasks. This requires:
+- New SQLite migration adding a `themes` table
+- New Zustand store slice
+- New UI components using existing shadcn/ui + `lucide-react` icons
+- Color selection via preset swatches from Tailwind's palette (no color picker library needed)
 
-**Plugin architecture:** Plugins are directories dropped into `~/.element/plugins/` containing a `plugin.json` manifest and either TypeScript workflow definitions (interpreted) or compiled Rust shared libraries (for performance plugins). The manifest declares capabilities, required permissions, and workflow step definitions. This mirrors Tauri's own capability-based security model.
+Note: The existing `next-themes` package (v0.4.6, in package.json but unused) is for light/dark mode switching, NOT for the "theme/category" concept. Keep it for future dark mode but it is unrelated to this feature.
 
-### Dev Tooling
+### Per-Project AI Mode Configuration
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| Biome | 1.x | Linting + formatting | Single tool replaces ESLint + Prettier, 10-100x faster, consistent formatting | HIGH |
-| Vitest | 2.x | Frontend testing | Vite-native, fast, compatible with Testing Library | HIGH |
-| cargo test | — | Rust testing | Built-in, no setup needed | HIGH |
-| Playwright | latest | E2E testing | Tauri has Playwright integration for testing desktop app flows | MEDIUM |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| No new libraries | -- | -- | Schema field on project entity + UI radio group. |
 
-### Build & Distribution
+**Rationale:** AI mode (Track+Suggest, Track+Auto-execute, On-demand) is a single enum field on the project record. The UI is a radio group or segmented control, both available in shadcn/ui.
 
-| Technology | Version | Purpose | Why | Confidence |
-|------------|---------|---------|-----|------------|
-| tauri-cli | 2.x | Build & bundle | Produces .dmg (macOS), .msi/.exe (Windows), .AppImage (Linux). Auto-updater plugin available | HIGH |
-| GitHub Actions | — | CI/CD | Tauri has official GitHub Actions for cross-platform builds | HIGH |
-| tauri-plugin-updater | official | Auto-update | Built-in update mechanism, no external service needed | HIGH |
+---
 
-## Alternatives Considered
+## Summary of New Dependencies
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| App shell | Tauri 2 | Electron | 10x larger bundles, 5-7x more memory, slower startup. Electron's Node.js integration is unnecessary — Rust is better for the workflow engine. Electron remains viable for JS-heavy teams, but Element benefits from Rust's performance for workflow execution |
-| App shell | Tauri 2 | .NET MAUI (C# route) | Weaker web UI ecosystem, no equivalent to shadcn/react-resizable-panels for complex panel layouts. Cross-platform story is shakier than Tauri's. C# was considered per PROJECT.md but TypeScript + Rust is a stronger combination for this use case |
-| Frontend | React | SolidJS | SolidJS has better raw performance via fine-grained reactivity, but smaller ecosystem. shadcn/ui, TanStack Router, and the broader component library ecosystem all favor React. For a complex desktop UI with many panels, the ecosystem advantage outweighs SolidJS's perf edge |
-| Frontend | React | Svelte 5 | Svelte 5 with runes is excellent, but component library ecosystem is thinner. No shadcn/ui equivalent with the same breadth. For Element's complex multi-panel UI, React's ecosystem wins |
-| State | Zustand | Jotai | Jotai's atomic model is better for fine-grained reactivity but worse for interconnected state. Element's state (active workflow, panel layout, AI responses, notifications) is highly interconnected — Zustand's centralized store is a better mental model |
-| State | Zustand | Redux Toolkit | Unnecessary complexity for this use case. Zustand provides the same centralized pattern with 1/10th the boilerplate |
-| Database | SQLite (rusqlite) | libSQL | libSQL adds cloud sync which is unnecessary for local-first v1. Adds complexity without benefit. Can migrate to libSQL later if cloud sync becomes a feature |
-| Database | SQLite (rusqlite) | better-sqlite3 | better-sqlite3 is Node.js-only. Element's backend is Rust, so rusqlite is the natural choice. No IPC overhead for backend DB operations |
-| ORM | Drizzle | Prisma | Prisma's engine binary adds bloat and complexity in a Tauri app. Drizzle is lightweight (7.4kb), zero dependencies, SQL-first approach is more transparent |
-| AI SDK | Vercel AI SDK | LangChain.js | LangChain is heavier, more opinionated, and adds abstractions Element doesn't need. The AI SDK's provider model is cleaner and the unified streaming API is exactly what Element needs for AI workflow steps |
-| Workflow | Custom Rust | Temporal/ts-edge | Temporal is server-oriented (overkill for desktop). ts-edge is too simple. Element's BSD-pipe workflow model is unique enough to warrant a custom engine — and it's core IP |
-| Scheduling | tauri-plugin-schedule-task | node-cron | Runs in Rust's async runtime, works when app is backgrounded, no Node.js dependency |
+### Rust (Cargo.toml additions)
+
+```toml
+portable-pty = "0.9"
+tauri-plugin-fs = "2"
+```
+
+### JavaScript (package.json additions)
+
+```bash
+npm install @xterm/xterm@^6.0.0 @xterm/addon-fit@^0.11.0 @xterm/addon-web-links@^0.12.0 @tauri-apps/plugin-fs
+```
+
+### Total: 6 new dependencies (2 Rust, 4 npm)
+
+---
 
 ## Installation
 
 ```bash
-# Prerequisites
-# Install Rust: https://rustup.rs
-# Install Node.js 20+ (via fnm or nvm)
+# Terminal (frontend)
+npm install @xterm/xterm@^6.0.0 @xterm/addon-fit@^0.11.0 @xterm/addon-web-links@^0.12.0
 
-# Create Tauri project
-npm create tauri-app@latest element -- --template react-ts
+# File system plugin (frontend bindings)
+npm install @tauri-apps/plugin-fs
 
-# Frontend dependencies
-npm install react@19 react-dom@19
-npm install @tanstack/react-router
-npm install zustand
-npm install tailwindcss@4 @tailwindcss/vite
-npm install drizzle-orm
+# Rust dependencies -- add to src-tauri/Cargo.toml:
+# portable-pty = "0.9"
+# tauri-plugin-fs = "2"
 
-# shadcn/ui (CLI adds components individually)
-npx shadcn@latest init
+# Tauri plugin registration -- add to src-tauri/src/lib.rs:
+# .plugin(tauri_plugin_fs::init())
 
-# AI SDK
-npm install ai @ai-sdk/anthropic @ai-sdk/openai
-npm install ai-sdk-ollama
-
-# Dev dependencies
-npm install -D typescript @types/react @types/react-dom
-npm install -D vite @vitejs/plugin-react
-npm install -D @biomejs/biome
-npm install -D vitest @testing-library/react
-npm install -D drizzle-kit
-
-# Rust dependencies (in src-tauri/Cargo.toml)
-# rusqlite = { version = "0.32", features = ["bundled"] }
-# serde = { version = "1", features = ["derive"] }
-# serde_json = "1"
-# tokio = { version = "1", features = ["full"] }
-# tauri-plugin-sql = "2"
-# tauri-plugin-schedule-task = "0.1"
+# Tauri capability -- add fs permissions to capabilities config
 ```
 
-## Version Pinning Strategy
+---
 
-Pin major versions, allow patch updates:
-- Tauri: `~2.10` (patch updates only, Tauri is still maturing)
-- React: `^19.0` (stable, minor updates safe)
-- AI SDK: `^6.0` (active development, pin to major)
-- Drizzle: `^0.45` (pre-1.0, pin to minor)
-- rusqlite: `0.32` (Rust convention, pin to minor)
+## Alternatives Considered
 
-## Architecture Decision: Why TypeScript + Rust (not pure TypeScript or pure Rust)
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `portable-pty` directly | `tauri-plugin-pty` v0.1.1 | Low maturity (0.1.x), thin wrapper, adds plugin coupling. Element's existing command+event pattern is cleaner and proven. |
+| Custom `<FileTree>` | `react-arborist` v3.4.3 | Brings `react-window` dep. Harder to match shadcn/ui design system. Over-engineered for project-scale trees. |
+| Custom `<FileTree>` | `react-complex-tree` | Same concern. Better for apps where the tree IS the product (IDEs). |
+| Direct xterm.js | `xterm-for-react-18` | Thin wrapper, adds indirection. xterm.js imperative API is simpler than any wrapper. |
+| Custom chat UI | `@chatscope/chat-ui-kit-react` | Heavy dependency for a simple message list. Clashes with shadcn/ui design system. |
+| Preset color swatches | `react-colorful` | Themes need a curated palette (8-12 colors), not arbitrary color selection. Simpler UX, no dependency. |
 
-Element needs two things that pull in opposite directions:
-1. **Rich, complex UI** with panels, sidebars, drag-and-drop, real-time updates (favors TypeScript/React ecosystem)
-2. **High-performance workflow engine** with concurrent execution, scheduling, file system access (favors Rust)
+## What NOT to Add
 
-Tauri 2 bridges these naturally: React renders the UI in the system webview, Rust handles the engine. IPC is the bridge — Tauri's command system provides type-safe async communication between them.
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `tauri-plugin-shell` | Element already has `tokio::process::Command` for CLI execution and will use `portable-pty` for interactive terminals | Existing `cli_commands.rs` + `portable-pty` |
+| Any React terminal wrapper lib | All are thin/abandoned wrappers around xterm.js | Direct `@xterm/xterm` with custom 30-line React component |
+| `monaco-editor` | Massive bundle. Element is not an IDE. CodeMirror already handles code display. | Existing `@uiw/react-codemirror` |
+| `node-pty` (npm) | Node.js native module, incompatible with Tauri's webview | `portable-pty` on Rust side, communicate via Tauri events |
+| Additional state management | Zustand handles all needs. New features add stores, not frameworks. | Zustand stores for themes, file tree state, terminal sessions |
+| `react-colorful` or color picker | Theme colors should be curated presets, not arbitrary | Tailwind color palette swatches |
+| Chat UI libraries | Overkill for a structured conversation flow | Custom component with shadcn/ui primitives |
 
-The AI SDK lives in TypeScript because the entire AI provider ecosystem is JavaScript-first. Rust calls out to the TypeScript AI layer when workflow steps need intelligence.
+---
 
-This is not a compromise — it's playing to each language's strength.
+## Integration Points with Existing Stack
+
+### Terminal <-> Existing Architecture
+- **Backend:** New `terminal_commands.rs` using `portable-pty`. Spawn shell, pipe I/O through `tauri::Emitter` events (same pattern as `cli_commands.rs` stdout/stderr streaming and `ai_commands.rs` chunk streaming).
+- **Frontend:** xterm.js instance inside a `react-resizable-panels` panel. Terminal input sent via `invoke()`, output received via `listen()` events.
+- **Per-project:** Terminal spawns with `cwd` set to project's linked directory. Managed state maps `project_id` -> PTY handle in Rust backend.
+
+### File Tree <-> Existing Architecture
+- **Backend:** `tauri-plugin-fs` provides `readDir`. Custom Tauri command wraps it to return typed tree structure with file metadata. Existing `notify` crate watches for changes and emits `file-tree-changed` events.
+- **Frontend:** Custom `<FileTree>` component with recursive rendering. Expand/collapse state in local React state (ephemeral UI state, not Zustand). Click emits file path for context display.
+- **Per-project:** Tree root is the project's linked directory. Scoped via Tauri fs permissions at runtime.
+
+### AI Onboarding <-> Existing Architecture
+- **Backend:** New `ai_onboarding_commands.rs` extending existing `AiGateway` + `complete_stream()`. New prompt templates in `prompts` module for multi-turn conversation (structured entry fields -> AI questions -> phase/task generation).
+- **Frontend:** Chat-style component using existing design tokens. Structured form (shadcn/ui inputs) feeds context into AI prompt. Response parsing generates project phases and tasks via existing CRUD commands.
+
+### Theme System <-> Existing Architecture
+- **Backend:** New SQLite migration adds `themes` table. Foreign key from `projects.theme_id` and `tasks.theme_id`. New `theme_commands.rs` with standard CRUD.
+- **Frontend:** New Zustand store for themes. Sidebar groups items by theme with color-coded indicators. Uses Tailwind dynamic classes for theme colors.
+
+---
+
+## Tauri Capability Configuration
+
+The file system plugin requires capability configuration for project directory access:
+
+```json
+{
+  "identifier": "default",
+  "permissions": [
+    "fs:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [{ "path": "$HOME/**/*" }],
+      "deny": [
+        { "path": "$HOME/.ssh/**/*" },
+        { "path": "$HOME/.gnupg/**/*" }
+      ]
+    },
+    "fs:allow-read-dir",
+    "fs:allow-stat",
+    "fs:allow-exists"
+  ]
+}
+```
+
+Consider narrowing the scope to only user-selected project directories at runtime for better security.
+
+---
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `portable-pty` 0.9 | `tokio` 1.x | Async-compatible, works with existing tokio runtime |
+| `@xterm/xterm` 6.0 | `@xterm/addon-fit` 0.11, `@xterm/addon-web-links` 0.12 | Addon versions track xterm major version |
+| `tauri-plugin-fs` 2.x | `tauri` 2.10 | Official plugin, version-matched to Tauri 2.x |
+| `@tauri-apps/plugin-fs` 2.x | `@tauri-apps/api` 2.10 | Official bindings, version-matched |
+
+---
 
 ## Sources
 
-- [Tauri 2.0 Official Site](https://v2.tauri.app/) — HIGH confidence
-- [Tauri Architecture](https://v2.tauri.app/concept/architecture/) — HIGH confidence
-- [Tauri IPC Documentation](https://v2.tauri.app/concept/inter-process-communication/) — HIGH confidence
-- [Tauri Plugin Development](https://v2.tauri.app/develop/plugins/) — HIGH confidence
-- [Tauri SQL Plugin](https://v2.tauri.app/plugin/sql/) — HIGH confidence
-- [Vercel AI SDK](https://ai-sdk.dev) — HIGH confidence
-- [AI SDK Providers](https://ai-sdk.dev/docs/foundations/providers-and-models) — HIGH confidence
-- [AI SDK 6 Announcement](https://vercel.com/blog/ai-sdk-6) — HIGH confidence
-- [shadcn/ui](https://ui.shadcn.com/) — HIGH confidence
-- [shadcn/ui Resizable](https://ui.shadcn.com/docs/components/radix/resizable) — HIGH confidence
-- [shadcn/ui Sidebar](https://ui.shadcn.com/docs/components/radix/sidebar) — HIGH confidence
-- [Drizzle ORM SQLite](https://orm.drizzle.team/docs/get-started-sqlite) — HIGH confidence
-- [TanStack Router](https://tanstack.com/router/latest) — HIGH confidence
-- [Tauri vs Electron Performance](https://www.gethopp.app/blog/tauri-vs-electron) — MEDIUM confidence
-- [Zustand vs Jotai Performance Guide](https://www.reactlibraries.com/blog/zustand-vs-jotai-vs-valtio-performance-guide-2025) — MEDIUM confidence
-- [tauri-plugin-schedule-task](https://crates.io/crates/tauri-plugin-schedule-task) — MEDIUM confidence
-- [ai-sdk-ollama](https://www.npmjs.com/package/ai-sdk-ollama) — MEDIUM confidence
+- [portable-pty on crates.io](https://crates.io/crates/portable-pty) -- v0.9.0, released 2025-02-11, HIGH confidence
+- [tauri-plugin-pty on GitHub](https://github.com/Tnze/tauri-plugin-pty) -- v0.1.1, evaluated and rejected, MEDIUM confidence
+- [@xterm/xterm on npm](https://www.npmjs.com/@xterm/xterm) -- v6.0.0, 30% bundle size reduction, HIGH confidence
+- [xterm.js releases](https://github.com/xtermjs/xterm.js/releases) -- v6.0.0 changelog, HIGH confidence
+- [Tauri File System Plugin](https://v2.tauri.app/plugin/file-system/) -- official docs, readDir API and permissions, HIGH confidence
+- [react-arborist on npm](https://www.npmjs.com/package/react-arborist) -- v3.4.3, evaluated and rejected, HIGH confidence
+- Element codebase: `cli_commands.rs`, `ai_commands.rs`, `plugins/mod.rs` -- existing patterns verified, HIGH confidence
+
+---
+*Stack research for: Element v1.1 Project Manager milestone*
+*Researched: 2026-03-22*

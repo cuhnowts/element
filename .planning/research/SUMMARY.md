@@ -1,242 +1,195 @@
 # Project Research Summary
 
-**Project:** Element — Desktop Workflow Orchestration Platform
-**Domain:** AI-powered desktop workflow orchestration / personal work OS
-**Researched:** 2026-03-15
+**Project:** Element v1.1 — Project Manager milestone
+**Domain:** Desktop project management + AI-driven onboarding + embedded developer workspace (Tauri 2.x + React 19)
+**Researched:** 2026-03-22
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element occupies a genuinely uncontested market position: no existing product combines local-first workflow orchestration, daily work structuring (Pulse), and an adaptive memory layer in a single desktop application. The closest competitors each cover one slice — n8n/Zapier handle automation but are cloud-first and do not plan your day; Motion/Reclaim plan your day but cannot orchestrate multi-step workflows; Raycast is a native desktop productivity launcher, not a composer. Element's value is the combination, not any single piece. Research confirms the domain is well-understood at the component level (workflow engines, plugin systems, AI gateways) but the integrated "personal work OS" pattern is novel enough that Element cannot simply copy an existing architecture.
+Element v1.1 is a developer-focused personal project management desktop app that bridges the gap between IDEs (which have workspace context but no PM structure) and PM tools (which have organizational hierarchy but no filesystem/terminal integration). The milestone adds four interconnected capability areas to the validated v1.0 foundation: a theme/category system for organizing projects, an enhanced project entity with directory linking and phases, an embedded workspace (terminal + file explorer), and AI-driven project onboarding. Research confirms this combination has no direct competitor — Linear, ClickUp, and Notion lack workspace integration; VS Code and Cursor lack PM structure; neither category offers in-context AI project decomposition that generates a full phased plan and inserts it into the PM system.
 
-The recommended technical approach is Tauri 2.x (Rust backend) plus React 19 / TypeScript (frontend), with a custom workflow engine in Rust as the core IP. This combination delivers the "Discord-like" native desktop feel at ~5MB bundle size versus Electron's 100MB+, while Rust's concurrency model is a natural fit for the BSD-pipe execution model where workflow steps run asynchronously and pass Document objects between them. The Vercel AI SDK provides model-agnostic AI abstraction across Claude, OpenAI, and local models via Ollama. All data lives locally in SQLite — no account required, no cloud dependency. This architecture is technically sound and has high cross-reference confidence across all four research files.
+The recommended approach is strongly incremental and dependency-driven. A single database migration (007) unlocks the entire feature surface: adding the themes table, project_phases table, nullable project_id on tasks, and new columns on projects (dir_path, theme_id, ai_mode). Everything else — sidebar refactor, file explorer, terminal, AI onboarding — is gated on this migration. The stack additions are minimal: `portable-pty` + `@xterm/xterm` (plus two addons) for the embedded terminal, and `tauri-plugin-fs` for filesystem access. All other features (AI onboarding, themes, phases, AI mode) reuse the existing v1.0 stack without new dependencies, leveraging existing patterns from `cli_commands.rs` and `ai_commands.rs`.
 
-The dominant risk is scope creep into the "all-in-one productivity app death spiral." Element must remain an orchestrator — it ingests signals from calendar/email/Slack, it does not replace them. The second critical risk is a workflow engine that looks complete in demos but cannot handle real-world failure: timeouts, partial execution, token expiry mid-pipeline. Both risks must be addressed in Phase 1 through explicit architectural boundaries and error-first engine design, not retrofitted later. A third risk — plugin sandboxing — must be designed into the architecture from day one even if full process isolation is deferred to Phase 2.
+Three architectural risks must be addressed upfront, not retrofitted. PTY lifecycle mismanagement (orphaned shell processes) requires explicit Rust-side session management with `Drop` cleanup — React `useEffect` alone is insufficient at the Tauri IPC boundary. File explorer IPC serialization bottlenecks will freeze the UI on real codebases with node_modules unless lazy loading (one level at a time) is built from day one. Schema rigidity must be resolved in migration 007 itself: making tasks.project_id nullable and establishing sort_order columns across themes, projects, and tasks. All three are HIGH recovery cost if left for later.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Element should be built on **Tauri 2.x** as the desktop shell with a **Rust** backend and **React 19 / TypeScript** frontend. This split is not a compromise — it plays to each language's strength: Rust owns the workflow engine, scheduler, plugin host, and SQLite persistence via rusqlite; TypeScript/React owns the complex multi-panel UI and the AI SDK layer (which is JavaScript-native). Tauri's typed IPC bridges the two layers via `invoke` commands and event listeners. **shadcn/ui** with **Tailwind CSS v4** provides the VS Code-style resizable panel layout. **Zustand** manages interconnected frontend state (active workflow, panel layout, AI responses, notifications). **Drizzle ORM** provides type-safe SQL on the TypeScript side.
+The v1.0 stack (Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS) is fully preserved. Only 6 new dependencies are added: 2 Rust crates and 4 npm packages.
 
-The workflow engine is custom Rust built on **tokio** — no existing library fits Element's document-passing pipe model. The **Vercel AI SDK v6** provides the model-agnostic AI layer with providers for Anthropic, OpenAI, and Ollama (local models). Scheduling uses **tauri-plugin-schedule-task** for cron that runs even when the app is backgrounded.
+**Core technologies (new additions only):**
+- `portable-pty` 0.9 (Rust): Cross-platform PTY spawning for the embedded terminal — industry standard from the wezterm project; handles macOS/Windows PTY differences; integrates cleanly with the existing tokio runtime via `spawn_blocking`
+- `@xterm/xterm` 6.0 (npm): Terminal rendering in webview — the only production-grade web terminal emulator; v6 is 30% smaller than v5; no React wrapper needed (30-line component with `useRef + useEffect` matches the existing CodeMirror integration pattern)
+- `@xterm/addon-fit` 0.11 + `@xterm/addon-web-links` 0.12 (npm): Required addons for auto-resize and clickable URLs
+- `tauri-plugin-fs` 2.x (Rust + npm): Official Tauri plugin for scoped filesystem access — provides `readDir`, `stat`, `exists` with permission-based security scoping; wrapped in custom `fs_commands.rs` for project-scoped path validation
 
-**Core technologies:**
-- **Tauri 2.x**: Desktop shell — ~5MB bundles, Rust backend, native OS webview, capability-based plugin security
-- **Rust + tokio**: Workflow engine core — async concurrency for parallel pipeline steps, process spawning, scheduling
-- **React 19 + TypeScript 5.7+**: Frontend — largest ecosystem for complex panel UIs; shadcn/ui and react-resizable-panels map directly to Element's layout
-- **shadcn/ui + Tailwind v4**: Component library — copy-paste model for full control, resizable panels and sidebar ship out of the box
-- **Zustand 5.x**: State management — centralized store for interconnected desktop app state
-- **SQLite via rusqlite**: Local-first persistence — zero-config, single-file, Rust-native access with no IPC overhead for backend ops
-- **Vercel AI SDK v6**: Model-agnostic AI — unified streaming API across Claude, GPT-4o, and local Ollama models
-- **Custom Rust workflow engine**: Core IP — BSD-pipe document-passing model, tokio channels for step orchestration
+**Explicitly rejected:** `tauri-plugin-pty` v0.1.1 (low maturity, thin wrapper), React xterm wrappers (all thin or abandoned), `react-arborist` (brings react-window dependency, over-engineered for project-scale trees), Monaco editor (2MB+ bundle, Element is not an IDE), custom chat UI libraries (clash with shadcn/ui). See STACK.md for full alternatives matrix.
 
 ### Expected Features
 
-Research confirms a clear three-tier feature hierarchy. The workflow engine is the non-negotiable foundation — nothing else is buildable without it. The Pulse system (daily work structuring) and memory layer are Element's genuine differentiators, but both have hard dependencies on the engine and plugin system being solid first.
+**Must have (v1.1 launch — table stakes):**
+- Theme CRUD with color/icon and theme-grouped sidebar navigation — organizational foundation; without this the v1.1 upgrade is invisible to users
+- Project directory linking (`dir_path` field) — the single field that unlocks both file explorer and terminal; blocks all workspace features
+- Project phases with task grouping and progress tracking — transforms Element from a task list into a project manager
+- Standalone tasks (nullable project_id) — quick one-offs must not require creating a project; requires schema change in migration 007
+- File explorer (read-only tree, opens in external editor, respects .gitignore) — the directory link is invisible without a visual representation
+- Embedded terminal (at minimum one session, opens in project directory) — highest-complexity table-stakes feature
+- AI-driven project onboarding (structured form + multi-turn AI conversation + generated phases/tasks + user review gate) — the headline differentiator for v1.1
 
-**Must have (v1 table stakes):**
-- Workflow engine with document-passing pipe execution model — the entire product
-- Structured list workflow editor (Zapier-style, NOT node-graph canvas) — covers 90% of use cases at 20% of engineering cost
-- Cron and manual triggers — covers scheduled reports and ad-hoc execution
-- Core plugins: shell command, HTTP request, file system — shell alone unlocks CLI tools and Claude Code
-- Execution history and status panel — users cannot debug blind
-- Error handling with retry, timeout, and notifications — failures are not a feature to add later
-- Credential management (encrypted, OS keychain-backed) — required for any external integration
-- Desktop app shell with native feel — system tray, native notifications, platform-specific keyboard shortcuts
+**Should have (v1.1.x patches, add after core validation):**
+- Multiple terminal sessions — triggered when users need to run a dev server and git commands simultaneously
+- Per-project AI mode (On-demand / Track+Suggest / Track+Auto) — triggered when users manage multiple projects with different AI trust levels
+- Context switching summaries ("where was I?") — triggered when users have 3+ active projects
+- File system watching for live tree updates — triggered when creating files in terminal leaves the explorer stale
+- Phase drag-and-drop reordering
 
-**Should have (v1.x, after engine is proven):**
-- Model-agnostic AI layer (Claude, GPT, Ollama) — enables text processing in workflows
-- Calendar and email plugins — prerequisite for Pulse
-- Pulse system (daily briefing from ingested signals) — the killer differentiator, once inputs exist
-- Reporting pipeline templates — cron-scheduled AI-summarized reports
-- Code-based workflow definition (YAML/JSON) — git-versionable workflows for power users
-- Event-based triggers (webhooks, filesystem watchers) — augments cron scheduling
+**Defer to v2+:**
+- AI progress reports per project, cross-project theme dashboards, terminal command history linked to tasks
 
-**Defer (v2+):**
-- Memory system — requires months of execution history to be useful; must be designed for privacy from the start
-- Pattern detection and automation suggestions — depends on memory system; this is the long-term vision
-- Plugin marketplace — requires stable plugin API, security review process, and a user base first
-- Windows support — macOS primary; Tauri makes porting easier but testing is still effort
-- Workflow import/export — nice for community building, not needed at launch
-
-**Hard anti-features (do not build):**
-- Full node-graph visual editor — 80% engineering cost for 10% of use cases
-- Built-in email/calendar client — orchestrate signals from these apps, never replace them
-- Real-time multi-user collaboration — contradicts local-first architecture
-- Chat-only workflow creation — AI as copilot, not autopilot; workflows must be human-readable and human-editable
+**Anti-features (do not build):**
+- Built-in code editor — multi-year scope; open in external editor is the correct model
+- Gantt charts — team-scale complexity; phase list with progress bars conveys the same information for personal use
+- Kanban view — task list with status badges is equivalent for a single developer; Kanban shines for team visibility
+- Nested sub-projects beyond 3 levels (theme > project > task is the sweet spot)
+- AI auto-creating tasks without a review gate — users lose trust; the review step is where trust is built
+- Template libraries — AI onboarding is strictly better: personalized, current, adapts to context
 
 ### Architecture Approach
 
-Element is a **layered desktop application** with six bounded components connected through a typed internal event bus and Tauri IPC. The Rust backend owns all business logic, process execution, and persistence. The React frontend is purely presentational — it receives state via Tauri event listeners and sends commands via `invoke`. No business logic lives in the frontend. This boundary is the most important architectural decision: frontend pollution is the most common failure mode in Tauri applications.
+The v1.1 architecture extends the existing three-panel layout (Sidebar + CenterPanel + OutputDrawer) without restructuring it. The Sidebar gains theme-grouped collapsible sections replacing the flat project list. The CenterPanel routes to two new views: `ProjectWorkspace.tsx` (phases + task list + file explorer sidebar) and `OnboardingWizard.tsx` (multi-step AI onboarding). The OutputDrawer gains two new tabs: `TerminalTab.tsx` and `FileExplorerTab.tsx`. Three new Zustand slices (`themeSlice`, `terminalSlice`, `fileExplorerSlice`) follow the existing slice-per-domain pattern. Six new Rust files are added: `models/theme.rs`, `models/phase.rs`, `commands/theme_commands.rs`, `commands/fs_commands.rs`, `commands/onboarding_commands.rs`, `ai/onboarding.rs`. One new migration: `db/sql/007_themes_projects.sql`.
 
-The core execution loop is: Trigger fires → Scheduler emits `RunWorkflow` on Event Bus → Workflow Engine loads definition from SQLite → Engine executes pipeline steps (each receives a `Document`, transforms it, passes output as input to next step) → Engine writes result to SQLite → Engine emits `ExecutionComplete` → Frontend updates reactively. All AI calls route through the AI Gateway component behind a `trait AiProvider`. All plugin interaction routes through the Plugin Host, which enforces capability boundaries declared in plugin manifests.
-
-**Major components:**
-1. **Workflow Engine** — parse, validate, execute, and compose workflows via document-passing pipeline; owns Execution and Workflow domain types; only component that spawns external processes
-2. **Scheduler** — cron-based scheduling, trigger management; fires `RunWorkflow` events but never executes workflows directly
-3. **Event Bus** — internal typed async pub/sub (tokio broadcast channels); thin transport layer with no business logic; decouples all backend components
-4. **Plugin Host** — watches `~/.element/plugins/`, loads/validates manifests, sandboxes plugin execution; plugins never see raw IPC, DB, or filesystem
-5. **AI Gateway** — unified interface to LLM providers; handles routing, fallback chains, streaming normalization; all AI calls go through here
-6. **Pulse Ingestion** — adapters for signal sources (calendar, email, Slack, GitHub); normalizes raw data to `Signal` type; each source is a plugin-loadable adapter
-7. **Data Layer** — SQLite persistence via rusqlite, schema migrations; single source of truth, no component bypasses it
-8. **Frontend** — workflow editor, status/output panels, daily briefing view, settings; purely presentational, receives state via event stream
+**Major components and responsibilities:**
+1. `models/theme.rs` + `commands/theme_commands.rs` — theme CRUD with sort_order; nullable FK from projects and tasks
+2. `models/phase.rs` — project phase lifecycle (plan/active/complete); sort_order for ordering; nullable FK from tasks
+3. `commands/fs_commands.rs` — directory reading scoped to project dir_path; Rust-side path traversal validation; lazy one-level-at-a-time loading with gitignore filtering
+4. Terminal backend using `portable-pty` — PTY session lifecycle stored in `HashMap<String, TerminalSession>` behind `Arc<Mutex<>>`; explicit `terminal_spawn` and `terminal_kill` Tauri commands; `Drop` on TerminalSession kills the child process; `tokio::task::spawn_blocking` for PTY read loops
+5. `ai/onboarding.rs` + `commands/onboarding_commands.rs` — finite state machine (scope_entry → ai_questions → user_answers → phase_generation → review → confirm); state persisted to SQLite after each step; reuses existing `AiGateway` + `complete_stream()` with no new AI infrastructure
+6. `ProjectWorkspace.tsx` — integration capstone combining file tree sidebar, phase overview, and task list; requires all constituent workspace features to exist first
 
 ### Critical Pitfalls
 
-1. **All-in-one death spiral** — Element must never render a full email or calendar client. It ingests signals, structures them into workflows, and pushes actions back out. The moment a feature request is "reply to email from within Element," that is the scope creep alarm. Establish this boundary in Phase 1 and enforce it in every subsequent design review.
+1. **PTY lifecycle mismanagement** — Rust-side `HashMap<sessionId, TerminalSession>` with `Drop` cleanup; explicit `terminal_kill` Tauri command; orphan sweep on `tauri::RunEvent::ExitRequested`. Never trust React `useEffect` cleanup as the sole kill path. Use `tokio::task::spawn_blocking` for PTY read loops (blocking read starves the tokio async runtime if called directly). Recovery cost: MEDIUM if caught early, HIGH if discovered after shipping.
 
-2. **Workflow engine that cannot handle real-world failure** — Happy-path demos obscure the reality that every pipeline stage can timeout, produce malformed output, or hang indefinitely. Error handling (per-stage timeout, retry policy, failure output type, dead-letter queue) must be designed into the engine schema in Phase 1, not retrofitted. A workflow that silently fails is worse than no workflow at all.
+2. **File explorer IPC serialization bottleneck** — Lazy load one directory level at a time (no recursive scan). Filter node_modules, .git, target, build artifacts in Rust before any data crosses the IPC bridge. Cap at 200 entries per IPC call. Return minimal entry data `{name, is_dir, size}`. This has been confirmed in Tauri issue #1817 — it is a known bottleneck, not a hypothesis. Recovery cost: MEDIUM (requires refactoring tree to lazy-load; harder to retrofit than build correctly).
 
-3. **Plugin system without security boundaries** — A file-drop plugin with full host access is a security disaster, especially for a paid marketplace model. Plugins must declare capabilities in a manifest, communicate via message passing (Document in / Document out), and run in isolated processes. Design the permission manifest in Phase 1 even if process isolation ships in Phase 2.
+3. **Schema rigidity** — Migration 007 must make tasks.project_id nullable immediately. Add sort_order columns to themes, projects, and tasks from the start. Support all four valid membership states: task-in-project-in-theme, task-in-project-no-theme, standalone-task-in-theme, standalone-task-no-theme. Adjacency list with nullable parents is correct for max 3 hierarchy levels. Recovery cost: MEDIUM (migration + query updates + frontend logic changes).
 
-4. **Model-specific AI abstraction** — Designing the AI layer around one provider's API shape creates a leaky abstraction when additional providers are added. Abstract at the capability level ("can summarize," "supports tool use," "supports streaming") not the API level. Test against at least two providers from the start.
+4. **AI onboarding conversation state explosion** — Implement as a 6-state finite state machine, not a growing message array. Persist state machine position to SQLite after each step so the user can resume after an app crash. Each AI call uses a fresh structured prompt built from accumulated state data — never replay message history. Cap at 3-5 AI question rounds. Recovery cost: LOW if FSM is designed upfront; MEDIUM if retrofitting free-form conversation storage.
 
-5. **OAuth token management nightmare** — Pulse integrates with Google Calendar, Outlook, Gmail — each with expiring tokens, rate limits, and enterprise consent edge cases. Build a centralized token manager with per-integration health status, graceful degradation (one failed integration should not break the entire briefing), and incremental sync before building any specific integration.
+5. **Per-project AI mode adds multiplicative complexity** — Implement a `SuggestionQueue` pattern: AI always produces suggestions; mode only controls the consumer (auto-apply vs. present-for-approval vs. do-nothing). Never branch on AI mode inside feature logic. Build On-demand first, Track+Suggest second, Track+Auto last (only after an undo system exists). Recovery cost: MEDIUM (requires refactoring mode branches out of feature code).
+
+6. **Tauri permission scope drift** — Create separate capability files (`workspace.json`, `terminal.json`). Use the runtime scope API for per-project directory access rather than static allow-all path patterns. Rust-side path traversal validation makes unauthorized access architecturally impossible, not just permission-blocked. Recovery cost: LOW (audit + tighten capability files), but a security vulnerability if unaddressed.
+
+7. **Context switching destroys in-flight work** — Design per-project session state (`Map<projectId, ProjectSession>`) from the start. Background PTY sessions on project switch rather than killing them. Persist session state (expanded tree paths, terminal session ID, scroll position, pending AI suggestions) to SQLite on project switch. Recovery cost: HIGH if not planned during the workspace phase architecture.
 
 ## Implications for Roadmap
 
-Based on the dependency graph in FEATURES.md and the component build order in ARCHITECTURE.md, five phases emerge naturally. The first two phases must be completed before any AI or integration work can be meaningful.
+Based on research findings and the dependency graph, six phases emerge from the architecture build order documented in ARCHITECTURE.md:
 
-### Phase 1: Foundation and Core Workflow Engine
+### Phase 1: Data Foundation and Theme System
 
-**Rationale:** The workflow engine is the dependency for everything else. Nothing is buildable without it. The desktop shell must also be established first to define the boundary between orchestrator and source apps — this boundary, once violated, is expensive to restore. Error handling and the plugin manifest format must be designed here even though plugins ship in Phase 2.
+**Rationale:** Migration 007 is the dependency root for all v1.1 features. Building the theme system first delivers immediate user value (organizational upgrade) while the high-complexity workspace work is prepared. The data model is the cheapest place to get decisions right — schema changes after features are built on top are expensive.
+**Delivers:** Migration 007 (themes table, project_phases table, projects ALTER for dir_path/theme_id/ai_mode, tasks ALTER for nullable project_id, sort_order columns across the hierarchy); theme and phase models with CRUD; theme Tauri commands; extended project commands accepting new fields; themeSlice.ts; theme-grouped Sidebar with collapsible ThemeGroup.tsx; ThemeView in CenterPanel.
+**Addresses:** Theme CRUD (FEATURES.md table stakes), sidebar navigation, standalone tasks (schema change), default uncategorized bucket
+**Avoids:** Schema rigidity pitfall — nullable project_id, sort_order, and all four membership states must be correct before building on top
 
-**Delivers:** A working desktop application where users can define, run, and monitor workflows manually. The shell command plugin alone demonstrates the value proposition (run any CLI tool as a workflow step). Foundational architecture patterns are established and cannot be changed cheaply later.
+### Phase 2: Project Enhancement and Phases UI
 
-**Addresses (from FEATURES.md):** Workflow engine, structured list workflow editor, manual triggers, shell command plugin, execution history and status panel, basic error handling, desktop app shell
+**Rationale:** Once the data foundation exists, phases must surface in the UI before the workspace view can integrate them. ProjectWorkspace.tsx needs phases to display progress; AI onboarding needs phases to persist its output. This phase completes the "project manager" identity upgrade before adding workspace complexity.
+**Delivers:** Phase CRUD UI (create, rename, reorder, delete); phase-level progress tracking using existing ProgressBar.tsx; project directory linking UI (directory picker dialog via Tauri file dialog); expanded ProjectDetail.tsx showing phases, completion metrics, and recent activity; ProjectWorkspace.tsx scaffold (empty shell for Phase 6 to fill).
+**Addresses:** Project phases with task grouping, phase-level progress tracking, project status overview, project directory linking (FEATURES.md table stakes)
+**Avoids:** Building the workspace integration point before the constituent data exists
 
-**Avoids (from PITFALLS.md):** All-in-one death spiral (establish orchestrator boundary), workflow engine failure handling (error-first design), plugin security boundaries (manifest format spec before implementation), cross-platform bad web app (native shell from day one)
+### Phase 3: File Explorer
 
-**Stack used:** Tauri 2.x, Rust + tokio, React 19, shadcn/ui, SQLite via rusqlite, Zustand, Vite + Biome
+**Rationale:** File explorer is self-contained once dir_path exists. Independent of terminal — can be built and validated without PTY complexity. Establishing the lazy-loading and IPC serialization discipline here sets the precedent for the terminal phase to follow.
+**Delivers:** `commands/fs_commands.rs` with Rust-side path traversal security; gitignore-aware filtering in Rust; fileExplorerSlice.ts; FileExplorerTab.tsx with lazy-loaded tree; OutputDrawer file explorer tab; "open in external editor" via Tauri shell API; separate `workspace.json` capability file.
+**Uses:** `tauri-plugin-fs` 2.x (STACK.md)
+**Avoids:** IPC serialization bottleneck (lazy load from day one — never recursive scan on open), permission scope drift (separate capability file, runtime scope for per-project directories), symlink infinite loop (detect symlinks in Rust, do not follow outside project root)
 
-### Phase 2: Triggers, Scheduler, and Plugin System
+### Phase 4: Embedded Terminal
 
-**Rationale:** Cron scheduling is what makes workflows autonomous rather than manual. The plugin system is the extensibility primitive that enables all future integrations. Credential management must ship with plugins — plugins without secure secrets are useless for external integrations.
+**Rationale:** Architecturally independent of the file explorer — both depend on dir_path (Phase 1) but not on each other. PTY lifecycle complexity justifies its own phase. This is the highest-risk implementation in v1.1 and benefits from file explorer having already established Tauri event streaming patterns.
+**Delivers:** `portable-pty` integration with `tokio::task::spawn_blocking` read loops; PTY session lifecycle manager (`HashMap<id, TerminalSession>` + `Drop` + `ExitRequested` sweep); `terminal_spawn`, `terminal_write`, `terminal_resize`, `terminal_kill` Tauri commands; terminalSlice.ts; TerminalTab.tsx with xterm.js + fit addon + web-links addon; terminal opens with cwd set to project.dir_path; separate `terminal.json` capability file.
+**Uses:** `portable-pty` 0.9, `@xterm/xterm` 6.0, `@xterm/addon-fit` 0.11, `@xterm/addon-web-links` 0.12 (STACK.md)
+**Avoids:** PTY lifecycle mismanagement (explicit session map + Drop + app shutdown sweep), terminal output in React state (xterm.js manages its own scrollback buffer — never pipe through Zustand), missing resize handling (fit addon + SIGWINCH forwarding to PTY), xterm.js + Tauri string serialization on every keystroke (use Tauri Channel API with 16ms batching)
 
-**Delivers:** Workflows that run on schedule without user intervention. File-drop plugins with capability-based sandboxing. Secure encrypted credential storage (OS keychain). HTTP request and file system plugins as the first non-shell connectors.
+### Phase 5: AI-Driven Project Onboarding
 
-**Addresses (from FEATURES.md):** Cron triggers, event-based triggers (file system watcher), plugin system with capability permissions, credential management, HTTP and file system plugins, notification system
+**Rationale:** Requires the Phase 1 data model (project_phases table) as the persistence target for generated output. The AI infrastructure (AiGateway, complete_stream, event streaming) is already validated from v1.0. The headline differentiator for v1.1 — ship it after the workspace is working so the generated phases and tasks can be immediately explored in context.
+**Delivers:** `ai/onboarding.rs` with structured prompt templates for multi-turn project decomposition; `commands/onboarding_commands.rs` implementing the 6-state FSM; FSM state persisted to SQLite after each step; OnboardingWizard.tsx multi-step UI with structured entry form and AI conversation display; user review and edit step before any database writes; per-project AI mode field surfaced in project settings (radio group using existing shadcn/ui).
+**Addresses:** AI-driven project onboarding, AI-generated phase/task decomposition, per-project AI mode configuration (FEATURES.md differentiators)
+**Avoids:** Conversation state explosion (FSM + fresh structured prompts, not growing chat history replay), AI auto-creating without review gate, missing rate limiting on rapid regenerate (debounce + disable button during in-flight AI call), missing error recovery (FSM state persisted so app crash mid-onboarding resumes from last completed step)
 
-**Avoids (from PITFALLS.md):** Plugin security boundaries (process isolation implementation), OAuth token manager foundation (built before Pulse integrations)
+### Phase 6: Project Workspace Integration
 
-**Architecture component:** Scheduler, Plugin Host, Data Layer migrations for credentials
-
-**Research flag:** Plugin process isolation approach (WASM vs. child processes) needs a spike — well-documented problem space but the right tradeoff for a desktop app warrants validation.
-
-### Phase 3: AI Integration and Reporting
-
-**Rationale:** The AI layer unlocks text processing, summarization, and extraction as workflow steps. With the engine and scheduler solid, AI becomes the multiplier that makes workflows intelligent. Reporting pipelines are the first monetizable pattern — cron-scheduled AI-summarized reports for news digests, spending summaries, analytics.
-
-**Delivers:** Model-agnostic AI workflow steps (Claude, GPT-4o, local Ollama). Reporting pipeline templates. Code-based workflow definition (YAML/JSON) for power users and git version control.
-
-**Addresses (from FEATURES.md):** AI layer integration, reporting pipeline templates, code-based workflow definition
-
-**Avoids (from PITFALLS.md):** Model-specific AI abstraction (abstract at capability level, test two providers from the start), AI calls without streaming (stream all responses from day one)
-
-**Architecture component:** AI Gateway
-
-**Research flag:** Vercel AI SDK integration with Tauri's IPC model — AI SDK is JavaScript-native; the TypeScript-to-Rust delegation pattern for streaming responses needs a spike to confirm it works smoothly end-to-end.
-
-### Phase 4: Pulse System and External Integrations
-
-**Rationale:** Pulse is Element's killer differentiator, but it requires calendar and email plugins as inputs. These integrations have the most complex edge cases (OAuth, rate limits, enterprise tenants). Phase 2's token manager foundation makes this buildable; without it, each integration becomes a one-off OAuth mess.
-
-**Delivers:** Daily briefing synthesized from calendar events, email summaries, and task signals. Per-integration health status. Graceful degradation when one source is unavailable. The "wake up and your day is ready" user experience.
-
-**Addresses (from FEATURES.md):** Calendar and email plugins, Pulse system (daily briefing), signal ingestion and normalization
-
-**Avoids (from PITFALLS.md):** OAuth token nightmare (centralized token manager with expiry, refresh, per-integration health UI), Pulse "no data" states (graceful degradation when 0 of N integrations have data), briefing information overload (curate to 3-5 actionable items)
-
-**Architecture component:** Pulse Ingestion, Signal adapters, token manager
-
-**Research flag:** Microsoft Graph API (admin consent in enterprise tenants), Google Calendar incremental sync, Gmail MIME parsing edge cases — these integrations each have well-documented API-specific gotchas that require dedicated research before implementation.
-
-### Phase 5: Memory System and Pattern Detection
-
-**Rationale:** Memory requires months of execution history to learn meaningful patterns. It cannot be built until after Phase 4 gives it enough input data. It also carries the highest UX risk (creepy vs. useless failure modes) and must be built with full transparency controls. This is the long-term competitive moat.
-
-**Delivers:** Multi-layer memory (short-term session context, long-term user preferences, semantic relationships). User-controlled memory viewer with per-pattern delete. Opt-in learning categories. Pattern detection that suggests automation after detecting repeated manual workflows.
-
-**Addresses (from FEATURES.md):** Memory system, pattern detection, automation suggestions
-
-**Avoids (from PITFALLS.md):** Creepy/useless memory (full transparency UI, opt-in categories, memory decay system, never surface observations unprompted in early versions)
-
-**Architecture component:** Memory subsystem (within Data Layer), pattern detection engine
-
-**Research flag:** Memory architecture (vector embeddings vs. structured pattern tables, local vs. cloud AI for memory queries, privacy implications of behavioral data in LLM prompts) needs deep research before implementation. This is the least-documented area in the current research.
+**Rationale:** ProjectWorkspace.tsx is the integration capstone — it assembles file explorer sidebar, phase overview, task list, and terminal access into the unified project view. All constituent features must exist before this view can be meaningfully assembled. This phase also establishes the per-project session state architecture that enables context switching without destroying in-flight work.
+**Delivers:** Fully populated ProjectWorkspace.tsx combining phase overview + task list + file explorer sidebar panel + terminal tab access; per-project session state map (`Map<projectId, ProjectSession>`) in Zustand and persisted to SQLite; backgrounded PTY sessions on project switch with "processes running" indicator; remembered panel sizes; collapsible panel layout.
+**Avoids:** Context switching destroying in-flight work (session state map designed here, even though context-switching AI summaries are deferred to v1.1.x), Zustand store bloat rendering cascades (per-project workspace stores rather than adding more slices to the main AppStore)
 
 ### Phase Ordering Rationale
 
-- **Engine before everything:** The dependency graph in FEATURES.md confirms Workflow Engine is the root node. Every other feature has a transitive dependency on it. Starting anywhere else means rebuilding later.
-- **Plugin manifest in Phase 1, implementation in Phase 2:** The plugin sandboxing pitfall warns that retrofitting security is HIGH recovery cost. Designing the manifest format and permission model in Phase 1 (even before plugins ship) avoids the architectural debt.
-- **AI before Pulse:** The AI Gateway must exist before Pulse can do intelligent summarization. Building Pulse without AI produces a dumb data dump, not a structured workday.
-- **Integrations before memory:** Memory learns from signal data. Without calendar/email signals flowing through the system, memory has nothing to learn from. Phase order reflects this data dependency.
-- **Memory last:** Pattern detection requires enough historical data to surface meaningful patterns. Building it earlier produces a system that learns nothing useful for months, which is the "useless memory" failure mode.
+- Migration 007 and the theme data model gate everything — data foundation is non-negotiable as Phase 1.
+- File explorer and terminal are architecturally independent but both require dir_path (Phase 1) and the workspace scaffold (Phase 2). Sequential is safer than parallel for solo development.
+- AI onboarding requires project_phases table as a persistence target — cannot ship before Phase 1, benefits from shipping after the workspace is visible.
+- ProjectWorkspace.tsx is the integration capstone — building it last prevents the common mistake of assembling the container before the contained features exist.
+- Per-project AI mode is surfaced in Phase 5 as a simple field on the project entity. Full Track+Suggest and Track+Auto behavior is deferred to v1.1.x — PITFALLS.md makes clear that building AI mode behavior simultaneously with onboarding multiplies complexity unacceptably.
+- Context switching AI summaries are deferred to v1.1.x but the session state architecture that enables them is designed in Phase 6 to avoid the HIGH recovery cost retrofit.
 
 ### Research Flags
 
-Phases needing deeper research during planning:
+Phases likely needing deeper research during planning:
+- **Phase 4 (Embedded Terminal):** PTY cross-platform behavior (macOS PTY vs Windows ConPTY) has lifecycle differences not fully covered in current research. The xterm.js + Tauri Channel API integration for binary data batching (vs string event serialization) needs a spike before committing to an implementation plan. Validate `tokio::task::spawn_blocking` against Element's specific tokio runtime configuration.
+- **Phase 5 (AI Onboarding):** The FSM state persistence schema and the prompt templates for multi-turn project decomposition should be prototyped before full planning — prompt quality for generating well-structured phases cannot be known from research alone and requires iteration with real AI calls.
 
-- **Phase 2 (Plugin isolation):** The right sandboxing approach for a Tauri desktop app — child processes vs. WASM isolation — is documented in the web security literature but not well-documented in the Tauri-specific context. A spike is warranted before committing to an approach.
-- **Phase 3 (AI SDK + Tauri streaming):** The Vercel AI SDK streams over HTTP/SSE. Routing streaming AI responses through Tauri's IPC event system (Rust to TypeScript) needs a proof-of-concept before full implementation. The pattern is viable but the implementation details are underspecified.
-- **Phase 4 (External integrations):** Google Calendar API, Microsoft Graph, and Gmail each have integration-specific gotchas well-documented in their own API docs but not in the context of a local-first desktop app. Each integration warrants a focused research spike before implementation begins.
-- **Phase 5 (Memory architecture):** Vector embeddings vs. structured pattern storage, local vs. cloud AI for memory queries, and privacy implications of behavioral data in LLM prompts are all underspecified in current research. This phase needs the most pre-implementation research.
-
-Phases with standard patterns (skip research-phase):
-
-- **Phase 1 (Core engine + shell):** Tauri 2.x, Rust/tokio workflow pipelines, SQLite/rusqlite, and React/shadcn panel layouts all have extensive official documentation and community templates. Standard patterns apply.
-- **Phase 3 (Reporting pipelines):** Cron-scheduled AI summarization via Vercel AI SDK is a well-documented pattern. Template library is implementation work, not research work.
+Phases with standard patterns (skip `/gsd:research-phase`):
+- **Phase 1 (Data Foundation):** SQLite migrations are fully understood; adjacency list for 3-level hierarchy is textbook; existing Element migration pattern is proven and repeatable.
+- **Phase 2 (Project Enhancement):** Extends existing CRUD and adds UI to existing views. Follows Element's established patterns exactly.
+- **Phase 3 (File Explorer):** `tauri-plugin-fs` is the official plugin with clear documentation; lazy tree loading is a well-documented pattern; the primary constraints (lazy load + gitignore filter + path scoping) are already resolved in research.
+- **Phase 6 (Workspace Integration):** Assembly of existing components into a layout; the per-project session state map is a straightforward Zustand + SQLite pattern with no novel technical territory.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All core technology choices have official documentation and production usage evidence. Tauri 2.x is mature; Vercel AI SDK v6 is stable. Only MEDIUM items are community plugins (tauri-plugin-schedule-task, ai-sdk-ollama) which are third-party. |
-| Features | HIGH | Competitive analysis is thorough (n8n, Zapier, Motion, Raycast, Apple Shortcuts). Feature dependency graph is well-reasoned and cross-validates with architecture build order. MVP definition is conservative and defensible. |
-| Architecture | HIGH | Component boundaries are well-defined. Data flow for the core execution loop and signal ingestion loop are explicitly documented. Patterns (pipeline composition, adapter for AI, event bus decoupling) are all established industry patterns applied correctly to this domain. |
-| Pitfalls | MEDIUM-HIGH | Critical pitfalls are validated across multiple sources (n8n, Temporal, Airflow operational experience). OAuth and API integration gotchas are well-documented in provider API docs. Memory system UX pitfalls are inferred from adjacent products rather than direct prior-art in workflow tools. |
+| Stack | HIGH | All recommendations verified against existing Element codebase patterns (cli_commands.rs, ai_commands.rs, plugins/mod.rs) and official Tauri 2.x documentation. The 6 new dependencies have clear integration paths with zero ambiguity. |
+| Features | HIGH | Competitor analysis grounded in public product documentation (Linear, ClickUp, VS Code, Cursor, Warp). Table stakes derived from established PM tool conventions. Feature dependency graph explicit and cross-validated against v1.0 schema. |
+| Architecture | HIGH | Build order derived from actual dependency graph, not estimation. Integration patterns verified against existing codebase files. Anti-patterns documented with confirmed examples (Tauri issue #1817, #9190). |
+| Pitfalls | MEDIUM-HIGH | PTY pitfall confirmed against known Tauri IPC issues and community reports. Schema rigidity pitfall identified from existing code (`tasks.project_id NOT NULL`). IPC bottleneck confirmed from Tauri issue tracker. AI FSM pitfall is pattern-derived from adjacent LLM conversation state problems, not from direct Element failure observation. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Tauri + AI SDK streaming integration:** The exact mechanism for routing streaming AI responses from the TypeScript AI SDK layer through Tauri's Rust event system has not been prototyped. This is a technical risk that should be spiked in Phase 3 planning before committing to the streaming UX.
-- **tauri-plugin-schedule-task maturity:** This crate is listed as MEDIUM confidence. Before committing to it in Phase 2, verify active maintenance, stability on macOS and Windows, and whether it handles laptop sleep/wake correctly (a critical edge case from PITFALLS.md).
-- **Plugin WASM sandboxing feasibility:** Research recommends designing for isolation but defers the mechanism. Before Phase 2 implementation, validate whether Tauri's WebAssembly runtime story is mature enough for plugin sandboxing or whether child-process isolation is the pragmatic choice for v1.
-- **Memory system architecture:** Phase 5 is the least-researched area. Before beginning memory system design, research vector databases that can run locally (e.g., Qdrant embedded, SQLite with sqlite-vec extension), privacy-preserving memory patterns, and user consent frameworks for behavioral learning.
-- **Windows testing setup:** Research flags Windows support as a Phase 3+ concern, but PITFALLS.md warns that cross-platform neglect has MEDIUM recovery cost. Validate that the development environment includes a Windows test machine or VM before Phase 1 concludes.
-- **Workflow definition schema:** The exact format (YAML vs TOML vs JSON) for workflow definitions needs detailed specification during Phase 1. Research recommends YAML for human readability but this is a design decision that must be locked in before the GUI builder is implemented.
+- **Windows ConPTY behavior:** Research focused on macOS PTY. Windows ConPTY has different lifecycle semantics and is called out in PITFALLS.md checklist. Needs validation during terminal phase implementation — at minimum a Windows CI environment or manual test on Windows before shipping Phase 4.
+- **xterm.js binary Channel vs string events:** Research recommends Tauri `Channel` API for binary PTY data batching rather than string event serialization, but this was not validated against Element's specific Tauri 2.10 version. Confirm early in Phase 4 with a spike.
+- **AI prompt quality for phase generation:** The FSM design is architecturally sound, but the prompt templates in `ai/onboarding.rs` will require iteration. Budget iteration time in Phase 5 planning — prompt engineering quality cannot be assessed from research alone.
+- **tauri-plugin-fs vs custom fs_commands minor inconsistency:** ARCHITECTURE.md recommends custom commands for tighter security; STACK.md recommends the official plugin. Resolution: use `tauri-plugin-fs` as the underlying readDir implementation (it is already security-scoped) but wrap it in custom `fs_commands.rs` commands that add Rust-side project-scope validation. Both research files converge on this pattern when read carefully — it is not a genuine conflict.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Tauri 2.0 Official Documentation](https://v2.tauri.app/) — application shell, IPC model, plugin architecture, SQL plugin, capability permissions
-- [Vercel AI SDK](https://ai-sdk.dev) — provider abstraction, streaming, tool calling, AI SDK v6 announcement
-- [shadcn/ui](https://ui.shadcn.com/) — resizable panels, sidebar, component library approach
-- [Drizzle ORM SQLite](https://orm.drizzle.team/docs/get-started-sqlite) — schema definitions, migration system
-- [TanStack Router](https://tanstack.com/router/latest) — type-safe SPA routing
-- [n8n Architecture (DeepWiki)](https://deepwiki.com/n8n-io/n8n) — workflow execution model, JSON data flow comparison
-- [Temporal Workflow Engine Principles](https://temporal.io/blog/workflow-engine-principles) — error handling, durable execution patterns
-- [Local-first software (Ink & Switch)](https://www.inkandswitch.com/essay/local-first/) — data sovereignty principles
-- [Google Calendar API Quota Management](https://developers.google.com/workspace/calendar/api/guides/quota) — rate limit specifics
-- [Microsoft Outlook API Essentials](https://rollout.com/integration-guides/microsoft-outlook/api-essentials) — enterprise consent requirements
+- Element codebase: `src-tauri/src/cli_commands.rs`, `ai_commands.rs`, `plugins/mod.rs`, `db/sql/001_initial.sql`, `src/stores/index.ts`, `capabilities/default.json` — existing patterns verified directly
+- [portable-pty on crates.io](https://crates.io/crates/portable-pty) — v0.9.0, released 2025-02-11
+- [@xterm/xterm on npm](https://www.npmjs.com/@xterm/xterm) — v6.0.0, 30% bundle size reduction vs v5
+- [Tauri File System Plugin docs](https://v2.tauri.app/plugin/file-system/) — official; readDir API and permission scoping
+- [Tauri Permissions docs](https://v2.tauri.app/security/permissions/) — capability and scope architecture
+- [xterm.js releases](https://github.com/xtermjs/xterm.js/releases) — v6.0.0 changelog confirmed
 
 ### Secondary (MEDIUM confidence)
-- [Tauri vs Electron (Hopp)](https://www.gethopp.app/blog/tauri-vs-electron) — performance benchmarks, memory usage, adoption data
-- [Electron vs Tauri (DoltHub)](https://www.dolthub.com/blog/2025-11-13-electron-vs-tauri/) — bundle size, performance comparison
-- [Zustand vs Jotai Performance Guide](https://www.reactlibraries.com/blog/zustand-vs-jotai-vs-valtio-performance-guide-2025) — state management comparison
-- [tauri-plugin-schedule-task](https://crates.io/crates/tauri-plugin-schedule-task) — cron scheduling in Rust/Tauri
-- [ai-sdk-ollama](https://www.npmjs.com/package/ai-sdk-ollama) — local model provider for Vercel AI SDK
-- [Implementing LLM Agnostic Architecture (Entrio)](https://www.entrio.io/blog/implementing-llm-agnostic-architecture-generative-ai-module) — adapter pattern for AI providers
-- [Designing Secure Plugin Architectures (Dev.to)](https://dev.to/cyberpath/designing-secure-plugin-architectures-for-desktop-applications-1meh) — sandboxing approaches for desktop apps
-- [Why All-in-One Productivity Apps Keep Failing](https://home.journalit.app/blog/why-productivity-apps-fail) — scope creep analysis
+- [tauri-terminal reference implementation](https://github.com/marc2332/tauri-terminal) — xterm.js + portable-pty + Tauri integration pattern
+- [Tauri IPC serialization issue #1817](https://github.com/tauri-apps/tauri/issues/1817) — file reading IPC bottleneck, confirmed
+- [Tauri memory issue #9190](https://github.com/tauri-apps/tauri/issues/9190) — memory issues with file reading confirmed
+- [Shell plugin security advisory GHSA-c9pr-q8gx-3mgp](https://github.com/tauri-apps/plugins-workspace/security/advisories/GHSA-c9pr-q8gx-3mgp) — scope validation vulnerability, informs capability design
+- [conaticus/FileExplorer](https://github.com/conaticus/FileExplorer) — Tauri file explorer performance patterns
+- [react-arborist on npm](https://www.npmjs.com/package/react-arborist) — v3.4.3, evaluated and rejected
 
-### Tertiary (LOW confidence / single-source)
-- [Apple Shortcuts AI at WWDC 2025 (TechCrunch)](https://techcrunch.com/2025/06/09/at-wwdc-2025-apple-introduces-an-ai-powered-shortcuts-app/) — competitor trajectory
-- [Understanding Users' Privacy Perceptions Towards LLM's Memory (arXiv)](https://arxiv.org/html/2508.07664v1) — memory UX research, consent frameworks
-- [19 Marketplace Tactics (NFX)](https://www.nfx.com/post/19-marketplace-tactics-for-overcoming-the-chicken-or-egg-problem) — marketplace cold start strategies
+### Tertiary (LOW confidence — directional only)
+- Linear AI, ClickUp Brain, Warp Terminal — competitor feature comparison; capabilities are publicly documented but evolve rapidly
+- SQLite hierarchical data strategy comparisons — adjacency list recommendation well-supported; specific query performance at Element's scale not benchmarked
 
 ---
-*Research completed: 2026-03-15*
+*Research completed: 2026-03-22*
 *Ready for roadmap: yes*
