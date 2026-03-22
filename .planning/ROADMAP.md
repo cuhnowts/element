@@ -112,12 +112,13 @@ Plans:
   3. AI generates a set of phases and tasks based on the conversation
   4. User can review, edit, and confirm the AI-generated breakdown before it is saved to the project
   5. User can set the AI assistance mode per project (Track+Suggest, Track+Auto-execute, or On-demand)
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md -- Backend: migration (008), onboarding model, project ai_mode, Tauri commands (skill file, watcher, batch save, settings), frontend types/API/store
+- [ ] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, AiModeSelect, ProjectDetail integration
+- [ ] 10-03-PLAN.md -- AiPlanReview component with DnD/inline edit, confirm/save, discard, end-to-end checkpoint
 
 ### Phase 11: Workspace Integration and AI Context
 **Goal**: Users experience a unified project workspace with intelligent context switching and AI-driven progress awareness
@@ -154,8 +155,8 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
 | 8. File Explorer | v1.1 | 0/3 | Planning complete | - |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
-| 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
-| 11. Workspace Integration and AI Context | v1.1 | 0/3 | Planning complete | - |
+| 10. AI Project Onboarding | v1.1 | 0/3 | Planning complete | - |
+| 11. Workspace Integration and AI Context | v1.1 | 0/4 | Planning complete | - |
 
 ## Backlog
 
