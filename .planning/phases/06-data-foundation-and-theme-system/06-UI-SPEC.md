@@ -34,12 +34,12 @@ Declared values (must be multiples of 4):
 | xs | 4px | Icon gaps, color dot margin, inline padding |
 | sm | 8px | Compact element spacing, sidebar item padding-x, accordion child indent |
 | md | 16px | Default element spacing, sidebar section padding-x |
-| lg | 24px | Section padding, dialog body padding |
+| lg | 24px | Section padding, dialog body padding, drag handle hit area width |
 | xl | 32px | Layout gaps, dialog width gutters |
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Not used in this phase |
 
-Exceptions: Drag handle hit area uses 24px width for comfortable grab targets. Color palette dot buttons use 20px diameter (closest multiple of 4 that fits 10 dots in a row within dialog).
+Exceptions: none
 
 ---
 
@@ -48,13 +48,13 @@ Exceptions: Drag handle hit area uses 24px width for comfortable grab targets. C
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.33 |
-| Heading | 16px | 600 (semibold) | 1.25 |
+| Label | 12px | 600 (semibold) | 1.33 |
+| Heading | 20px | 600 (semibold) | 1.2 |
 
 Notes:
 - Body (14px/400): Sidebar item text (project names, task titles, theme names in expanded view).
-- Label (12px/500): Section headers ("PROJECTS", "UNCATEGORIZED"), uppercase tracking-wide, uses `text-muted-foreground`. Matches existing `ProjectList` header pattern.
-- Heading (16px/600): Dialog titles ("Create Theme", "Edit Theme"), confirmation dialog headings.
+- Label (12px/600): Section headers ("THEMES", "UNCATEGORIZED"), uppercase tracking-wide, uses `text-muted-foreground`. Matches existing `ProjectList` header pattern.
+- Heading (20px/600): Dialog titles ("Create Theme", "Edit Theme"), confirmation dialog headings. Sized for clear hierarchy above 14px body.
 
 Source: Body size and line-height from existing `app.css` (line 42-43). Label pattern from existing `ProjectList.tsx` (line 34).
 
@@ -88,7 +88,7 @@ Accent reserved for: selected project/theme name text (`text-primary font-medium
 | Blue | #3b82f6 | User-selectable |
 | Gray | #6b7280 | User-selectable |
 
-Rendering: 8px diameter circle (`rounded-full`) rendered inline before theme name in sidebar header. Uses the hex value as `style={{ backgroundColor: color }}`. No background fill on the section -- dot only (per CONTEXT.md specifics).
+Rendering: 8px diameter circle (`rounded-full`) rendered inline before theme name in sidebar header. Uses the hex value as `style={{ backgroundColor: color }}`. No background fill on the section -- dot only (per CONTEXT.md specifics). Color palette dots in the CreateThemeDialog use a larger component-specific diameter for comfortable touch targets; this is a component layout dimension, not a spacing token.
 
 Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifies preset palette of 8-10 colors.
 
@@ -135,7 +135,7 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 
 1. **CalendarToggle** + MiniCalendar (conditional) -- unchanged (D-06)
 2. **Border divider** -- `border-b border-border`
-3. **Theme sections header row**: label "THEMES" (12px/500 uppercase tracking-wide text-muted-foreground) + "+" button (size-6 ghost)
+3. **Theme sections header row**: label "THEMES" (12px/600 uppercase tracking-wide text-muted-foreground) + "+" button (size-6 ghost)
 4. **Theme accordion sections** -- one per theme, sorted by `sort_order`, draggable for reorder (D-08)
 5. **Uncategorized section** -- always last, non-draggable, contains items with null theme_id (D-16)
 6. **Border divider** -- `border-b border-border`
@@ -155,7 +155,7 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 | Trigger | Action | Component |
 |---------|--------|-----------|
 | Click chevron or theme name | Toggle collapse/expand | ThemeHeader |
-| Hover on theme header | Show edit (Pencil, size-3.5) and delete (Trash2, size-3.5) icons | ThemeHeader |
+| Hover on theme header | Show edit (Pencil, size-3.5, `aria-label="Edit theme"`) and delete (Trash2, size-3.5, `aria-label="Delete theme"`) icons with tooltip on focus/hover | ThemeHeader |
 | Click edit icon | Open CreateThemeDialog in edit mode (pre-filled name + color) | CreateThemeDialog |
 | Click delete icon | If theme has items: open confirmation dialog. If empty: delete immediately. | Dialog (confirmation) |
 | Right-click theme header | Full context menu: Rename, Change Color, Delete, Move Up, Move Down | DropdownMenu |
@@ -208,7 +208,7 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 | Element | Copy |
 |---------|------|
 | Primary CTA (create) | "Create Theme" |
-| Primary CTA (save edit) | "Save Changes" |
+| Primary CTA (save edit) | "Update Theme" |
 | Theme name input label | "Theme name" |
 | Theme name input placeholder | "e.g. Work, Personal, Side Projects" |
 | Color palette label | "Color" |
@@ -217,9 +217,9 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 | Empty state (uncategorized, no items) | No special state -- section simply does not render if empty |
 | Error: theme name blank | "Theme name is required" |
 | Error: theme name duplicate | "A theme with this name already exists" |
-| Error: generic backend | "Something went wrong. Please try again." |
+| Error: generic backend | "Couldn't save theme -- please try again or restart the app." |
 | Destructive: delete empty theme | No confirmation needed -- delete immediately |
-| Destructive: delete theme with items | "Delete '{name}'? {N} projects and {M} tasks will become uncategorized." with "Delete" (destructive) and "Cancel" (ghost) buttons |
+| Destructive: delete theme with items | "Delete '{name}'? {N} projects and {M} tasks will become uncategorized." with "Delete Theme" (destructive) and "Keep Theme" (ghost) buttons |
 | Destructive: delete project (existing) | Unchanged from current behavior |
 | Section header | "THEMES" |
 | Uncategorized bucket label | "UNCATEGORIZED" |
@@ -248,7 +248,7 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 | State | Visual Treatment |
 |-------|-----------------|
 | Default | Color dot + name + chevron, action icons hidden |
-| Hover | Action icons (edit, delete) fade in at right side |
+| Hover | Action icons (edit, delete) fade in at right side with tooltip text |
 | Selected/Active | No special selected state for themes (themes are containers, not selectable) |
 
 ### Sidebar Item States (projects, tasks within theme)
@@ -265,7 +265,7 @@ Source: RESEARCH.md theme color palette recommendation. CONTEXT.md D-03 specifie
 | State | Visual Treatment |
 |-------|-----------------|
 | Create mode | Title "Create Theme", empty name input, indigo pre-selected, CTA "Create Theme" |
-| Edit mode | Title "Edit Theme", pre-filled name + current color selected, CTA "Save Changes" |
+| Edit mode | Title "Edit Theme", pre-filled name + current color selected, CTA "Update Theme" |
 | Validation error | Red text below input (text-destructive-foreground, 12px) |
 | Submitting | CTA button shows loading state (disabled + spinner or "Creating...") |
 
