@@ -80,11 +80,13 @@ Plans:
   2. User can open any file in their default external editor from the tree
   3. File tree automatically hides .gitignore entries and common excludes (node_modules, .git, target)
   4. File tree updates in real time when files are added, removed, or renamed on disk
-**Plans**: TBD
+**Plans**: 3 plans
+**UI hint**: yes
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
+- [ ] 08-01-PLAN.md -- Backend: ignore crate, file_explorer_commands (list_directory, open_file, watcher lifecycle)
+- [ ] 08-02-PLAN.md -- Frontend: types, API, store, FileExplorer/FileTreeNode/ProjectTabBar components, CenterPanel wiring, live updates
+- [ ] 08-03-PLAN.md -- Checkpoint: full build verification + end-to-end human verification
 
 ### Phase 9: Embedded Terminal
 **Goal**: Users can run commands in an embedded terminal without leaving Element
@@ -148,7 +150,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
 | 6. Data Foundation and Theme System | v1.1 | 0/3 | Planning complete | - |
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
-| 8. File Explorer | v1.1 | 0/0 | Not started | - |
+| 8. File Explorer | v1.1 | 0/3 | Planning complete | - |
 | 9. Embedded Terminal | v1.1 | 0/0 | Not started | - |
 | 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
 | 11. Workspace Integration and AI Context | v1.1 | 0/0 | Not started | - |
