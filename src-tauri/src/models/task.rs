@@ -72,7 +72,8 @@ impl TaskPriority {
 #[serde(rename_all = "camelCase")]
 pub struct Task {
     pub id: String,
-    pub project_id: String,
+    pub project_id: Option<String>,
+    pub theme_id: Option<String>,
     pub title: String,
     pub description: String,
     pub context: String,
@@ -92,7 +93,8 @@ pub struct Task {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateTaskInput {
-    pub project_id: String,
+    pub project_id: Option<String>,
+    pub theme_id: Option<String>,
     pub title: String,
     pub description: Option<String>,
     pub context: Option<String>,
@@ -122,31 +124,32 @@ pub struct UpdateTaskInput {
     pub estimated_minutes: Option<i32>,
 }
 
-pub const TASK_COLUMNS: &str = "id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at";
+pub const TASK_COLUMNS: &str = "id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at";
 
 pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
-    let status_str: String = row.get(5)?;
-    let priority_str: String = row.get(6)?;
+    let status_str: String = row.get(6)?;
+    let priority_str: String = row.get(7)?;
 
     Ok(Task {
         id: row.get(0)?,
         project_id: row.get(1)?,
-        title: row.get(2)?,
-        description: row.get(3)?,
-        context: row.get(4)?,
+        theme_id: row.get(2)?,
+        title: row.get(3)?,
+        description: row.get(4)?,
+        context: row.get(5)?,
         status: TaskStatus::from_db_str(&status_str)
             .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
         priority: TaskPriority::from_db_str(&priority_str)
             .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
-        external_path: row.get(7)?,
-        due_date: row.get(8)?,
-        scheduled_date: row.get(9)?,
-        scheduled_time: row.get(10)?,
-        duration_minutes: row.get(11)?,
-        recurrence_rule: row.get(12)?,
-        estimated_minutes: row.get(13)?,
-        created_at: row.get(14)?,
-        updated_at: row.get(15)?,
+        external_path: row.get(8)?,
+        due_date: row.get(9)?,
+        scheduled_date: row.get(10)?,
+        scheduled_time: row.get(11)?,
+        duration_minutes: row.get(12)?,
+        recurrence_rule: row.get(13)?,
+        estimated_minutes: row.get(14)?,
+        created_at: row.get(15)?,
+        updated_at: row.get(16)?,
     })
 }
 
@@ -173,10 +176,11 @@ impl Database {
         }
 
         self.conn().execute(
-            "INSERT INTO tasks (id, project_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+            "INSERT INTO tasks (id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
             rusqlite::params![
                 id,
                 input.project_id,
+                input.theme_id,
                 input.title,
                 description,
                 context,
@@ -197,6 +201,7 @@ impl Database {
         Ok(Task {
             id,
             project_id: input.project_id,
+            theme_id: input.theme_id,
             title: input.title,
             description,
             context,
@@ -335,7 +340,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id: project_id.clone(),
+                project_id: Some(project_id.clone()),
+                theme_id: None,
                 title: "My Task".into(),
                 description: None,
                 context: None,
@@ -365,7 +371,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id: project_id.clone(),
+                project_id: Some(project_id.clone()),
+                theme_id: None,
                 title: "Full Task".into(),
                 description: Some("A description".into()),
                 context: Some("Some context notes".into()),
@@ -398,7 +405,8 @@ mod tests {
         let project_id = create_test_project(&db);
 
         db.create_task(CreateTaskInput {
-            project_id: project_id.clone(),
+            project_id: Some(project_id.clone()),
+            theme_id: None,
             title: "Task 1".into(),
             description: None,
             context: None,
@@ -413,7 +421,8 @@ mod tests {
         })
         .unwrap();
         db.create_task(CreateTaskInput {
-            project_id: project_id.clone(),
+            project_id: Some(project_id.clone()),
+            theme_id: None,
             title: "Task 2".into(),
             description: None,
             context: None,
@@ -439,7 +448,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "Original".into(),
                 description: None,
                 context: None,
@@ -485,7 +495,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "Status Test".into(),
                 description: None,
                 context: None,
@@ -520,7 +531,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "To Delete".into(),
                 description: None,
                 context: None,
@@ -547,7 +559,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "External".into(),
                 description: None,
                 context: None,
@@ -573,7 +586,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "Scheduled Task".into(),
                 description: None,
                 context: None,
@@ -610,7 +624,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id,
+                project_id: Some(project_id),
+                theme_id: None,
                 title: "To Schedule".into(),
                 description: None,
                 context: None,
@@ -659,7 +674,8 @@ mod tests {
         let project_id = create_test_project(&db);
 
         let result = db.create_task(CreateTaskInput {
-            project_id,
+            project_id: Some(project_id),
+            theme_id: None,
             title: "Bad Recurrence".into(),
             description: None,
             context: None,

@@ -415,7 +415,8 @@ mod tests {
 
         let task = db
             .create_task(CreateTaskInput {
-                project_id: project.id,
+                project_id: Some(project.id),
+                theme_id: None,
                 title: "Test Task".into(),
                 description: None,
                 context: None,
@@ -486,7 +487,8 @@ mod tests {
             .unwrap();
 
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Active Task".into(),
             description: None,
             context: None,
@@ -503,7 +505,8 @@ mod tests {
 
         let complete_task = db
             .create_task(CreateTaskInput {
-                project_id: project.id,
+                project_id: Some(project.id),
+                theme_id: None,
                 title: "Done Task".into(),
                 description: None,
                 context: None,
@@ -616,7 +619,8 @@ mod tests {
 
         // Task scheduled for today - should appear
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Today Scheduled".into(),
             description: None,
             context: None,
@@ -633,7 +637,8 @@ mod tests {
 
         // Task with overdue due_date - should appear
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Overdue Task".into(),
             description: None,
             context: None,
@@ -650,7 +655,8 @@ mod tests {
 
         // Task scheduled for tomorrow - should NOT appear (has scheduled_date, not today)
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Tomorrow Task".into(),
             description: None,
             context: None,
@@ -667,7 +673,8 @@ mod tests {
 
         // Unscheduled incomplete task - should appear
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Unscheduled Task".into(),
             description: None,
             context: None,

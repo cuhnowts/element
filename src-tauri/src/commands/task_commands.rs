@@ -19,7 +19,8 @@ pub struct TaskWithTags {
 pub async fn create_task(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
-    project_id: String,
+    project_id: Option<String>,
+    theme_id: Option<String>,
     title: String,
     description: Option<String>,
     context: Option<String>,
@@ -35,6 +36,7 @@ pub async fn create_task(
     let db = state.lock().map_err(|e| e.to_string())?;
     let input = CreateTaskInput {
         project_id,
+        theme_id,
         title,
         description,
         context,

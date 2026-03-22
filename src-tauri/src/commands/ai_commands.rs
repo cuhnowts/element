@@ -103,10 +103,10 @@ pub async fn ai_assist_task(
     let (task, project_name, provider_config) = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
         let task = db.get_task(&task_id).map_err(|e| e.to_string())?;
-        let project_name = db
-            .get_project(&task.project_id)
-            .map(|p| p.name)
-            .ok();
+        let project_name = task
+            .project_id
+            .as_deref()
+            .and_then(|pid| db.get_project(pid).map(|p| p.name).ok());
         let config = gateway
             .get_default_config(&db)
             .map_err(|e| e.to_string())?;
