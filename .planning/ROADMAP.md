@@ -96,11 +96,11 @@ Plans:
   1. User can open an embedded terminal in the workspace output panel
   2. Terminal automatically starts in the project's linked directory
   3. Terminal supports standard interaction: typing commands, copy/paste, scrollback, and resize
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md -- Backend PTY plugin, frontend dependencies, workspace store extension, useTerminal hook
+- [ ] 09-02-PLAN.md -- UI: TerminalTab, TerminalEmptyState, OutputDrawer integration, keyboard shortcut, checkpoint
 
 ### Phase 10: AI Project Onboarding
 **Goal**: Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown
@@ -151,7 +151,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 6. Data Foundation and Theme System | v1.1 | 0/3 | Planning complete | - |
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
 | 8. File Explorer | v1.1 | 0/3 | Planning complete | - |
-| 9. Embedded Terminal | v1.1 | 0/0 | Not started | - |
+| 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
 | 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
 | 11. Workspace Integration and AI Context | v1.1 | 0/0 | Not started | - |
 
