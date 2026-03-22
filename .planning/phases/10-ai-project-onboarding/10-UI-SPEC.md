@@ -65,7 +65,7 @@ All values reference existing CSS custom properties from `src/app.css`. No new c
 | Dominant (60%) | `--color-background` / oklch(0.145 0 0) | Page background, form surfaces |
 | Secondary (30%) | `--color-card` / oklch(0.205 0 0) | Waiting state card, review phase rows, scope input form card |
 | Accent (10%) | `--color-primary` / oklch(0.985 0 0) | "Plan with AI" button, "Confirm & Save" button, AI mode active indicator |
-| Destructive | `--color-destructive-foreground` / oklch(0.637 0.237 25.331) | "Discard" button text, delete phase/task in review |
+| Destructive | `--color-destructive-foreground` / oklch(0.637 0.237 25.331) | "Discard plan" button text, delete phase/task in review |
 | Muted | `--color-muted-foreground` / oklch(0.708 0 0) | Scope form labels, waiting state hint text, AI mode descriptions |
 | Success | `--color-chart-2` / oklch(0.6 0.118 184.714) | File watcher detected indicator (pulse dot) |
 
@@ -88,7 +88,7 @@ Accent reserved for: "Plan with AI" button (default variant), "Confirm & Save" b
 
 | Component | Where |
 |-----------|-------|
-| `Button` | "Plan with AI", "Confirm & Save", "Discard", "Cancel", "+ Add phase", "+ Add task" |
+| `Button` | "Plan with AI", "Confirm & Save", "Discard plan", "Back to project", "Stop AI setup", "+ Add phase", "+ Add task" |
 | `Input` | Phase name inline edit (review), task name inline edit (review), project scope form |
 | `Textarea` | Project scope/description input (D-03) |
 | `Select` | AI mode dropdown in project header (D-16) |
@@ -103,7 +103,7 @@ Accent reserved for: "Plan with AI" button (default variant), "Confirm & Save" b
 |-----------|-------------|
 | `PlanWithAiButton` | Prominent CTA shown in empty project detail (zero phases). Sparkles icon + "Plan with AI" text. Default button variant. |
 | `ScopeInputForm` | Pre-launch form: project scope textarea (required) + optional goals input. Submit triggers skill file write + terminal launch. |
-| `OnboardingWaitingCard` | Card displayed while CLI tool runs: project name, scope summary, spinner, hint text, cancel button. Includes pulse dot when plan-output.json detected. |
+| `OnboardingWaitingCard` | Card displayed while CLI tool runs: project name, scope summary, spinner, hint text, "Stop AI setup" button. Includes pulse dot when plan-output.json detected. |
 | `AiPlanReview` | Full review/edit screen for AI-generated phases and tasks. Phase accordion with inline editing, drag-and-drop reorder, add/delete capabilities. |
 | `AiModeSelect` | Select dropdown for AI assistance mode. Renders in project detail header area. Three options with descriptions. |
 
@@ -165,7 +165,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 |  | What does success look like?                                | |
 |  +------------------------------------------------------------+ |
 |                                                                  |
-|  [ Cancel ]                              [ Start AI Planning ]   |
+|  [ Back to project ]                      [ Start AI Planning ]  |
 |                                                                  |
 +------------------------------------------------------------------+
 ```
@@ -173,7 +173,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 - Scope textarea: min-height 120px, auto-resize
 - Goals input: single-line Input
 - "Start AI Planning" button: default variant, disabled until scope is non-empty
-- "Cancel" button: ghost variant, returns to empty project view (D-04)
+- "Back to project" button: ghost variant, returns to empty project view (D-04)
 
 ### Waiting State (D-10)
 
@@ -194,7 +194,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 |  |  Check the Terminal tab to interact with the AI.           | |
 |  |  (text-muted-foreground 12px)                              | |
 |  |                                                            | |
-|  |  [ Cancel ]                                                | |
+|  |  [ Stop AI setup ]                                         | |
 |  |                                                            | |
 |  +------------------------------------------------------------+ |
 |                                                                  |
@@ -212,7 +212,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 | [Project Name] - text-2xl semibold                               |
 +------------------------------------------------------------------+
 |                                                                  |
-|  Review AI Plan                           [Discard] [Confirm &   |
+|  Review AI Plan                     [Discard plan] [Confirm &    |
 |  3 phases, 14 tasks generated                        Save]       |
 |                                                                  |
 +------------------------------------------------------------------+
@@ -238,7 +238,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 - [x] delete buttons: ghost variant, X icon, 16px, `text-muted-foreground`, `text-destructive-foreground` on hover
 - Drag-and-drop for phase reorder: GripVertical handle on left of each phase header (same as Phase 7 PhaseRow)
 - "Confirm & Save" button: default variant (accent)
-- "Discard" button: ghost variant, `text-destructive-foreground`
+- "Discard plan" button: ghost variant, `text-destructive-foreground`
 - Summary line: "3 phases, 14 tasks generated" in 14px `text-muted-foreground`
 
 ### AI Mode Dropdown (D-16, D-17)
@@ -292,14 +292,14 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 
 ### Discard (D-15)
 
-1. User clicks "Discard"
+1. User clicks "Discard plan"
 2. Confirmation Dialog: "Discard this plan? The AI-generated phases and tasks will not be saved."
-3. Confirm: return to empty project detail view, delete `.element/plan-output.json` if present
-4. Cancel: stay on review screen
+3. Confirm ("Discard plan" button): return to empty project detail view, delete `.element/plan-output.json` if present
+4. Cancel ("Keep reviewing" button): stay on review screen
 
 ### Cancel During Waiting (D-04, D-10)
 
-1. User clicks "Cancel" on waiting card
+1. User clicks "Stop AI setup" on waiting card
 2. Return to empty project detail view
 3. Terminal session stays open (user may want to see output)
 4. `.element/plan-output.json` is NOT cleaned up (user can manually inspect)
@@ -326,14 +326,15 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 | Goals field label | "Goals (optional)" |
 | Goals field placeholder | "What does success look like?" |
 | Scope form submit | "Start AI Planning" |
-| Scope form cancel | "Cancel" |
+| Scope form cancel | "Back to project" |
 | Waiting state heading | "AI setup in progress..." |
 | Waiting state hint | "Check the Terminal tab to interact with the AI." |
+| Waiting state cancel | "Stop AI setup" |
 | Waiting state detected heading | "Plan ready for review" |
 | Review heading | "Review AI Plan" |
 | Review summary | "[N] phases, [M] tasks generated" |
 | Review confirm CTA | "Confirm & Save" |
-| Review discard | "Discard" |
+| Review discard | "Discard plan" |
 | Review add phase | "+ Add phase" |
 | Review add task (in phase) | "+ Add task" |
 | Success toast | "[N] phases and [M] tasks created" |
@@ -342,7 +343,7 @@ Container: `max-w-2xl mx-auto` (matches existing ProjectDetail). Empty state car
 | Error: no directory | "Link a project directory first. The AI planning tool needs a directory to store its files." |
 | Discard confirmation heading | "Discard this plan?" |
 | Discard confirmation body | "The AI-generated phases and tasks will not be saved." |
-| Discard confirm button | "Discard" |
+| Discard confirm button | "Discard plan" |
 | Discard cancel button | "Keep reviewing" |
 | AI mode: On-demand label | "On-demand" |
 | AI mode: On-demand description | "AI assists only when you ask" |
