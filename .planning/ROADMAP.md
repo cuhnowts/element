@@ -63,12 +63,13 @@ Plans:
   3. User can assign tasks to specific phases within a project
   4. User can see phase-level progress showing tasks complete out of total
   5. Project detail view displays the phase list, overall progress bar, and status overview
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md -- Backend: migration (007_phases.sql), phase model, project/task extensions, Tauri commands, dialog plugin
+- [ ] 07-02-PLAN.md -- Frontend: npm dependencies, shadcn components, types, API layer, Zustand phase slice
+- [ ] 07-03-PLAN.md -- UI: ProjectDetail redesign, PhaseRow with DnD, DirectoryLink, progress bars, sidebar + TaskDetail updates
 
 ### Phase 8: File Explorer
 **Goal**: Users can browse and interact with project files directly within the Element workspace
@@ -146,7 +147,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
 | 6. Data Foundation and Theme System | v1.1 | 0/3 | Planning complete | - |
-| 7. Project Phases and Directory Linking | v1.1 | 0/0 | Not started | - |
+| 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
 | 8. File Explorer | v1.1 | 0/0 | Not started | - |
 | 9. Embedded Terminal | v1.1 | 0/0 | Not started | - |
 | 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
