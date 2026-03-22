@@ -8,6 +8,19 @@ Element is a desktop workflow orchestration platform — a personal work OS that
 
 The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
 
+## Current Milestone: v1.1 Project Manager
+
+**Goal:** Transform Element into a full project management platform with themed categories, AI-driven project setup, and an integrated workspace with file explorer and terminal.
+
+**Target features:**
+- Theme system — top-level categories containing projects and standalone tasks
+- Project entity — projects linked to directories with structured phases and tasks
+- AI-driven project onboarding — structured entry (scope, goals, constraints) + AI questioning → phases/tasks
+- Per-project AI mode — user chooses: Track+Suggest, Track+Auto-execute, or On-demand
+- Project workspace — file tree sidebar + embedded terminal + task/progress context
+- Task-project linking — tasks belong to projects or standalone within themes
+- Context switching support — AI tracks progress for quick resume or offloading
+
 ## Current State
 
 **Shipped:** v1.0 MVP (2026-03-22)
@@ -29,12 +42,23 @@ v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, 
 
 ### Active
 
+- [ ] Theme system: top-level categories organizing projects and standalone tasks
+- [ ] Project entity: directory-linked projects with phases, tasks, and AI-driven setup
+- [ ] AI project onboarding: structured entry + AI questioning → generated phases/tasks
+- [ ] Per-project AI mode: Track+Suggest, Track+Auto-execute, or On-demand
+- [ ] Project workspace: file tree + embedded terminal + task/progress context
+- [ ] Task-project linking: tasks belong to projects or standalone within themes
+- [ ] Context switching: AI-tracked progress for quick resume or work offloading
+
+### Future
+
 - [ ] Pulse system: ingest calendar/email signals into structured daily work
 - [ ] Reporting pipelines on cron schedules (news, spending, analytics)
 - [ ] Ad-hoc workflow creation with pattern detection for automation suggestions
 - [ ] Memory system: full context model that learns user preferences, habits, and patterns
 - [ ] Code + GUI workflow definition (developers write code, GUI for visual building)
 - [ ] Daily briefing: wake up to a structured workday ready to go
+- [ ] Calendar events wired to smart scheduler
 - [ ] Windows support
 - [ ] Plugin marketplace with paid workflow plugins
 
@@ -81,6 +105,10 @@ v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, 
 | Arc<Mutex<Database>> for async | Required for tokio::spawn in workflow execution | ✓ Good |
 | SecretStore trait for keychain | KeychainStore for prod, InMemoryStore for tests | ✓ Good |
 | OAuth client IDs via option_env! | Users supply their own OAuth apps | ⚠️ Revisit — needs better UX |
+| Themes as top-level categories | Projects and tasks organized under user-defined themes (Business, Dev, Personal) | — Pending |
+| Per-project AI assistance mode | User controls AI involvement level per project | — Pending |
+| Simplified workspace (not full IDE) | File tree + terminal, external editing — 90% value at 20% cost | — Pending |
+| AI-driven project onboarding | Structured entry fields + AI questioning for project breakdown | — Pending |
 
 ## Known Tech Debt
 
@@ -89,5 +117,22 @@ v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, 
 - Phase 2 sidebar removed ProjectList — projects not loaded on startup
 - File > New Task menu event handler is empty (Cmd+N works)
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-22 after v1.0 milestone*
+*Last updated: 2026-03-22 after v1.1 milestone started*
