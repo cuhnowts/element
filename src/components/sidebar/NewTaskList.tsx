@@ -23,7 +23,7 @@ export function NewTaskList() {
 
   const handleNewTask = async () => {
     if (!selectedProjectId) return;
-    const task = await createTask(selectedProjectId, "Untitled Task");
+    const task = await createTask("Untitled Task", selectedProjectId);
     selectTask(task.id);
   };
 

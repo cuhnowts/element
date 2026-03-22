@@ -63,7 +63,7 @@ export function TodayView() {
       const group = getTimeGroup(task, today);
       groups.get(group)!.push({
         task,
-        projectName: projectMap[task.projectId] ?? "Unknown",
+        projectName: (task.projectId ? projectMap[task.projectId] : null) ?? "Unknown",
       });
     }
     return groups;

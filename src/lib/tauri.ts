@@ -11,6 +11,7 @@ import type {
   Credential,
   CalendarAccount,
   CalendarEvent,
+  Theme,
 } from "./types";
 import type {
   AiProvider,
@@ -30,6 +31,29 @@ export const api = {
     invoke<Project>("update_project", { projectId, name, description }),
   deleteProject: (projectId: string) =>
     invoke<void>("delete_project", { projectId }),
+
+  // Themes
+  createTheme: (name: string, color: string) =>
+    invoke<Theme>("create_theme", { name, color }),
+  listThemes: () => invoke<Theme[]>("list_themes"),
+  updateTheme: (themeId: string, name: string | undefined, color: string | undefined) =>
+    invoke<Theme>("update_theme", { themeId, name, color }),
+  deleteTheme: (themeId: string) =>
+    invoke<void>("delete_theme", { themeId }),
+  reorderThemes: (orderedIds: string[]) =>
+    invoke<void>("reorder_themes", { orderedIds }),
+  getThemeItemCounts: (themeId: string) =>
+    invoke<[number, number]>("get_theme_item_counts", { themeId }),
+  assignProjectTheme: (projectId: string, themeId: string | null) =>
+    invoke<Project>("assign_project_theme", { projectId, themeId }),
+  assignTaskTheme: (taskId: string, themeId: string | null) =>
+    invoke<Task>("assign_task_theme", { taskId, themeId }),
+
+  // Standalone tasks
+  listStandaloneTasks: () =>
+    invoke<Task[]>("list_standalone_tasks"),
+  listTasksByTheme: (themeId: string) =>
+    invoke<Task[]>("list_tasks_by_theme", { themeId }),
 
   // Tasks
   createTask: (input: CreateTaskInput) =>

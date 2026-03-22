@@ -21,7 +21,7 @@ export function WelcomeDashboard() {
 
   const handleNewTask = async () => {
     if (selectedProjectId) {
-      const task = await createTask(selectedProjectId, "Untitled Task");
+      const task = await createTask("Untitled Task", selectedProjectId);
       phase1SelectTask(task.id);
       selectTask(task.id);
     }
