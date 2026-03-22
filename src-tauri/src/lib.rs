@@ -28,6 +28,7 @@ use commands::project_commands::*;
 use commands::schedule_commands::*;
 use commands::scheduling_commands::*;
 use commands::task_commands::*;
+use commands::theme_commands::*;
 use commands::workflow_commands::*;
 
 pub fn run() {
@@ -207,6 +208,16 @@ pub fn run() {
             generate_schedule,
             apply_schedule,
             run_cli_tool,
+            create_theme,
+            list_themes,
+            update_theme,
+            delete_theme,
+            reorder_themes,
+            get_theme_item_counts,
+            assign_project_theme,
+            assign_task_theme,
+            list_standalone_tasks,
+            list_tasks_by_theme,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

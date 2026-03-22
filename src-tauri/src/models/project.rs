@@ -8,6 +8,7 @@ pub struct Project {
     pub id: String,
     pub name: String,
     pub description: String,
+    pub theme_id: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -34,6 +35,7 @@ impl Database {
             id,
             name: input.name,
             description,
+            theme_id: None,
             created_at: now.clone(),
             updated_at: now,
         })
@@ -42,15 +44,16 @@ impl Database {
     pub fn list_projects(&self) -> Result<Vec<Project>, rusqlite::Error> {
         let mut stmt = self
             .conn()
-            .prepare("SELECT id, name, description, created_at, updated_at FROM projects ORDER BY created_at DESC")?;
+            .prepare("SELECT id, name, description, theme_id, created_at, updated_at FROM projects ORDER BY created_at DESC")?;
 
         let projects = stmt.query_map([], |row| {
             Ok(Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 description: row.get(2)?,
-                created_at: row.get(3)?,
-                updated_at: row.get(4)?,
+                theme_id: row.get(3)?,
+                created_at: row.get(4)?,
+                updated_at: row.get(5)?,
             })
         })?;
 
@@ -59,15 +62,16 @@ impl Database {
 
     pub fn get_project(&self, id: &str) -> Result<Project, rusqlite::Error> {
         self.conn().query_row(
-            "SELECT id, name, description, created_at, updated_at FROM projects WHERE id = ?1",
+            "SELECT id, name, description, theme_id, created_at, updated_at FROM projects WHERE id = ?1",
             rusqlite::params![id],
             |row| {
                 Ok(Project {
                     id: row.get(0)?,
                     name: row.get(1)?,
                     description: row.get(2)?,
-                    created_at: row.get(3)?,
-                    updated_at: row.get(4)?,
+                    theme_id: row.get(3)?,
+                    created_at: row.get(4)?,
+                    updated_at: row.get(5)?,
                 })
             },
         )
@@ -204,7 +208,8 @@ mod tests {
         // Create a task for this project
         use crate::models::task::CreateTaskInput;
         db.create_task(CreateTaskInput {
-            project_id: project.id.clone(),
+            project_id: Some(project.id.clone()),
+            theme_id: None,
             title: "Task 1".into(),
             description: None,
             context: None,

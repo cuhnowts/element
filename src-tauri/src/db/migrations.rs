@@ -33,5 +33,10 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.pragma_update(None, "user_version", 6)?;
     }
 
+    if version < 7 {
+        conn.execute_batch(include_str!("sql/007_themes.sql"))?;
+        conn.pragma_update(None, "user_version", 7)?;
+    }
+
     Ok(())
 }

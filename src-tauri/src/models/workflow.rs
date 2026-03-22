@@ -391,7 +391,8 @@ mod tests {
 
         let task = db
             .create_task(crate::models::task::CreateTaskInput {
-                project_id: project.id,
+                project_id: Some(project.id),
+                theme_id: None,
                 title: "Test Task".into(),
                 description: None,
                 context: None,
