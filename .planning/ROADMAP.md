@@ -49,7 +49,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01-PLAN.md -- Backend: migration, theme model, theme commands, task/project modifications
+- [x] 06-01-PLAN.md -- Backend: migration, theme model, theme commands, task/project modifications
 - [ ] 06-02-PLAN.md -- Frontend: types, API, store, sidebar components, sidebar restructure
 - [ ] 06-03-PLAN.md -- Checkpoint: end-to-end theme system verification
 
@@ -127,12 +127,13 @@ Plans:
   1. When switching to a project, AI generates a "where was I?" summary of recent progress and next steps
   2. In Track+Suggest mode, AI surfaces relevant suggestions based on project progress
   3. Workspace assembles file explorer, terminal, phase overview, and task list into a cohesive project view with remembered layout
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md -- Backend: Rust types, context aggregation, prompt builders, Tauri commands, frontend API bindings
+- [ ] 11-02-PLAN.md -- Frontend state: per-project workspace store extension, context summary/suggestion slice
+- [ ] 11-03-PLAN.md -- UI: ContextSummaryCard, AiSuggestionCard, ProjectDetail integration, checkpoint
 
 ## Progress
 
@@ -148,12 +149,12 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 3. Workflows and Automation | v1.0 | 5/5 | Complete | 2026-03-17 |
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
-| 6. Data Foundation and Theme System | v1.1 | 0/3 | Planning complete | - |
+| 6. Data Foundation and Theme System | v1.1 | 0/3 | Planned    |  |
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
 | 8. File Explorer | v1.1 | 0/3 | Planning complete | - |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
 | 10. AI Project Onboarding | v1.1 | 0/0 | Not started | - |
-| 11. Workspace Integration and AI Context | v1.1 | 0/0 | Not started | - |
+| 11. Workspace Integration and AI Context | v1.1 | 0/3 | Planning complete | - |
 
 ## Backlog
 
@@ -161,7 +162,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 0/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
