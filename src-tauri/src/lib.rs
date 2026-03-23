@@ -23,6 +23,7 @@ use commands::calendar_commands::*;
 use commands::cli_commands::*;
 use commands::credential_commands::*;
 use commands::execution_commands::*;
+use commands::phase_commands::*;
 use commands::plugin_commands::*;
 use commands::project_commands::*;
 use commands::schedule_commands::*;
@@ -141,6 +142,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_oauth::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             create_project,
             list_projects,
@@ -218,6 +220,13 @@ pub fn run() {
             assign_task_theme,
             list_standalone_tasks,
             list_tasks_by_theme,
+            create_phase,
+            list_phases,
+            update_phase,
+            delete_phase,
+            reorder_phases,
+            link_project_directory,
+            set_task_phase,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
