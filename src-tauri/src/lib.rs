@@ -31,6 +31,7 @@ use commands::scheduling_commands::*;
 use commands::task_commands::*;
 use commands::theme_commands::*;
 use commands::file_explorer_commands::*;
+use commands::onboarding_commands::*;
 use commands::workflow_commands::*;
 
 pub fn run() {
@@ -69,6 +70,9 @@ pub fn run() {
             app.manage(FileWatcherState {
                 watcher: std::sync::Mutex::new(None),
             });
+
+            // Initialize plan watcher state (for AI onboarding)
+            app.manage(PlanWatcherState(std::sync::Mutex::new(None)));
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -239,6 +243,14 @@ pub fn run() {
             reveal_in_file_manager,
             start_file_watcher,
             stop_file_watcher,
+            update_project_ai_mode,
+            generate_skill_file,
+            start_plan_watcher,
+            stop_plan_watcher,
+            parse_plan_output,
+            batch_create_plan,
+            get_app_setting,
+            set_app_setting,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
