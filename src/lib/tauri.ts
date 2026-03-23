@@ -12,6 +12,7 @@ import type {
   CalendarAccount,
   CalendarEvent,
   Theme,
+  Phase,
 } from "./types";
 import type {
   AiProvider,
@@ -48,6 +49,24 @@ export const api = {
     invoke<Project>("assign_project_theme", { projectId, themeId }),
   assignTaskTheme: (taskId: string, themeId: string | null) =>
     invoke<Task>("assign_task_theme", { taskId, themeId }),
+
+  // Phases
+  createPhase: (projectId: string, name: string) =>
+    invoke<Phase>("create_phase", { projectId, name }),
+  listPhases: (projectId: string) =>
+    invoke<Phase[]>("list_phases", { projectId }),
+  updatePhase: (phaseId: string, name: string) =>
+    invoke<Phase>("update_phase", { phaseId, name }),
+  deletePhase: (phaseId: string) =>
+    invoke<void>("delete_phase", { phaseId }),
+  reorderPhases: (projectId: string, orderedIds: string[]) =>
+    invoke<void>("reorder_phases", { projectId, orderedIds }),
+  linkProjectDirectory: (projectId: string, directoryPath: string) =>
+    invoke<Project>("link_project_directory", { projectId, directoryPath }),
+
+  // Task phase assignment
+  setTaskPhase: (taskId: string, phaseId: string | null) =>
+    invoke<Task>("set_task_phase", { taskId, phaseId }),
 
   // Standalone tasks
   listStandaloneTasks: () =>

@@ -14,7 +14,8 @@ export interface TaskSlice {
   selectedTask: TaskWithTags | null;
   tasksLoading: boolean;
   loadTasks: (projectId: string) => Promise<void>;
-  createTask: (title: string, projectId?: string, themeId?: string) => Promise<Task>;
+  createTask: (title: string, projectId?: string, themeId?: string, phaseId?: string) => Promise<Task>;
+  setTaskPhase: (taskId: string, phaseId: string | null) => Promise<void>;
   selectTask: (taskId: string | null) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   updateTask: (
@@ -49,10 +50,19 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
     const tasks = await api.listTasks(projectId);
     set({ tasks, tasksLoading: false });
   },
-  createTask: async (title, projectId, themeId) => {
-    const task = await api.createTask({ projectId, themeId, title });
+  createTask: async (title, projectId, themeId, phaseId) => {
+    const task = await api.createTask({ projectId, themeId, phaseId, title });
     set((s) => ({ tasks: [task, ...s.tasks] }));
     return task;
+  },
+  setTaskPhase: async (taskId, phaseId) => {
+    const task = await api.setTaskPhase(taskId, phaseId);
+    set((s) => ({
+      tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, phaseId: task.phaseId } : t)),
+      selectedTask: s.selectedTask?.id === taskId
+        ? { ...s.selectedTask, phaseId: task.phaseId }
+        : s.selectedTask,
+    }));
   },
   selectTask: async (taskId) => {
     if (!taskId) {
