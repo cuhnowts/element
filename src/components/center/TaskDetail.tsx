@@ -12,6 +12,13 @@ import { ExecutionDiagram } from "./ExecutionDiagram";
 import { PromoteButton } from "./PromoteButton";
 import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
 import { DurationChips } from "@/components/shared/DurationChips";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
@@ -36,6 +43,8 @@ export function TaskDetail() {
   const addTagToTask = useStore((s) => s.addTagToTask);
   const removeTagFromTask = useStore((s) => s.removeTagFromTask);
   const deleteTask = useStore((s) => s.deleteTask);
+  const phases = useStore((s) => s.phases);
+  const setTaskPhase = useStore((s) => s.setTaskPhase);
   const selectTask = useStore((s) => s.selectTask);
   const selectWorkspaceTask = useWorkspaceStore((s) => s.selectTask);
 
@@ -215,6 +224,34 @@ export function TaskDetail() {
           />
         </div>
       </div>
+
+      {/* Phase Assignment */}
+      {phases.length > 0 && (
+        <div>
+          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
+            Phase
+          </span>
+          <Select
+            value={selectedTask.phaseId ?? "unassigned"}
+            onValueChange={(value) => {
+              const newPhaseId = value === "unassigned" ? null : value;
+              setTaskPhase(selectedTask.id, newPhaseId);
+            }}
+          >
+            <SelectTrigger className="w-48 h-8 text-sm">
+              <SelectValue placeholder="Unassigned" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {phases.map((phase) => (
+                <SelectItem key={phase.id} value={phase.id}>
+                  {phase.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Duration Estimate */}
       <div>

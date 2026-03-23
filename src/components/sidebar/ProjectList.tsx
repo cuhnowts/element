@@ -15,6 +15,7 @@ export function ProjectList() {
   const selectedProjectId = useStore((s) => s.selectedProjectId);
   const loadProjects = useStore((s) => s.loadProjects);
   const selectProject = useStore((s) => s.selectProject);
+  const tasks = useStore((s) => s.tasks);
   const loadTasks = useStore((s) => s.loadTasks);
   const openCreateProjectDialog = useStore((s) => s.openCreateProjectDialog);
   const openDeleteConfirm = useStore((s) => s.openDeleteConfirm);
@@ -61,6 +62,14 @@ export function ProjectList() {
                 }
               >
                 {project.name}
+                {project.id === selectedProjectId && tasks.length > 0 && (
+                  <span
+                    className="ml-auto text-[11px] text-muted-foreground"
+                    aria-label={`${tasks.filter((t) => t.status === "complete").length} of ${tasks.length} tasks complete`}
+                  >
+                    {tasks.filter((t) => t.status === "complete").length}/{tasks.length}
+                  </span>
+                )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" sideOffset={4}>
                 <DropdownMenuItem
