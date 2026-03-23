@@ -3,6 +3,7 @@ import { api } from "../lib/tauri";
 import type { Project } from "../lib/types";
 import type { AppStore } from "./index";
 import { useWorkspaceStore } from "./useWorkspaceStore";
+import { toast } from "sonner";
 
 export interface ProjectSlice {
   projects: Project[];
@@ -13,6 +14,7 @@ export interface ProjectSlice {
   deleteProject: (projectId: string) => Promise<void>;
   selectProject: (projectId: string | null) => void;
   linkDirectory: (projectId: string, directoryPath: string) => Promise<void>;
+  updateProjectAiMode: (projectId: string, aiMode: string) => Promise<void>;
 }
 
 export const createProjectSlice: StateCreator<
@@ -51,5 +53,21 @@ export const createProjectSlice: StateCreator<
     set((s) => ({
       projects: s.projects.map((p) => (p.id === projectId ? project : p)),
     }));
+  },
+  updateProjectAiMode: async (projectId, aiMode) => {
+    // Optimistic update
+    set((s) => ({
+      projects: s.projects.map((p) =>
+        p.id === projectId ? { ...p, aiMode } : p
+      ),
+    }));
+    try {
+      await api.updateProjectAiMode(projectId, aiMode);
+    } catch (e) {
+      // Revert on failure
+      const projects = await api.listProjects();
+      set({ projects });
+      toast.error("Failed to update AI mode");
+    }
   },
 });

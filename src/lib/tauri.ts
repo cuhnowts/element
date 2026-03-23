@@ -21,6 +21,7 @@ import type {
   ModelInfo,
 } from "../types/ai";
 import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
+import type { PlanOutput, BatchCreateResult } from "../types/onboarding";
 
 export const api = {
   // Projects
@@ -192,4 +193,26 @@ export const api = {
   // CLI
   runCliTool: (command: string, args: string[], workingDir?: string) =>
     invoke<number>("run_cli_tool", { command, args, workingDir }),
+
+  // AI Mode
+  updateProjectAiMode: (projectId: string, aiMode: string) =>
+    invoke<Project>("update_project_ai_mode", { projectId, aiMode }),
+
+  // Onboarding
+  generateSkillFile: (projectDir: string, projectName: string, scope: string, goals: string) =>
+    invoke<string>("generate_skill_file", { projectDir, projectName, scope, goals }),
+  startPlanWatcher: (projectDir: string) =>
+    invoke<void>("start_plan_watcher", { projectDir }),
+  stopPlanWatcher: () =>
+    invoke<void>("stop_plan_watcher"),
+  parsePlanOutput: (projectDir: string) =>
+    invoke<PlanOutput>("parse_plan_output", { projectDir }),
+  batchCreatePlan: (projectId: string, phases: { name: string; tasks: { title: string; description?: string }[] }[]) =>
+    invoke<BatchCreateResult>("batch_create_plan", { projectId, phases }),
+
+  // App Settings
+  getAppSetting: (key: string) =>
+    invoke<string | null>("get_app_setting", { key }),
+  setAppSetting: (key: string, value: string) =>
+    invoke<void>("set_app_setting", { key, value }),
 };
