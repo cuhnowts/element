@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Project Manager
-status: Ready to plan
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-23T01:52:35.303Z"
+status: Ready to execute
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-23T02:10:48.617Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 1
   total_plans: 18
-  completed_plans: 5
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 07 — project-phases-and-directory-linking
+**Current focus:** Phase 10 — ai-project-onboarding
 
 ## Current Position
 
-Phase: 08
-Plan: Not started
+Phase: 10 (ai-project-onboarding) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,10 @@ Recent decisions affecting current work:
 - [Phase 07]: setTaskPhase is a dedicated API method supporting explicit null for unassignment
 - [Phase 07]: Migration 008 for phases (007 taken by themes)
 - [Phase 07]: Dedicated set_task_phase command for nullable phase assignment
+- [Phase 08]: Extracted list_directory_impl as synchronous core for testability and spawn_blocking wrapping
+- [Phase 08]: Used localStorage persistence for expanded paths instead of workspace store
+- [Phase 09]: Hardcoded /bin/zsh as default shell for macOS (Windows support deferred per D-08) — macOS-first target, Windows shell detection deferred
+- [Phase 09]: Session-only zustand state for activeDrawerTab and hasAutoOpenedTerminal — Per D-03, auto-open is per-session; drawer tab resets on app launch
 
 ### Roadmap Evolution
 
@@ -69,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:02:56.066Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-23T02:10:40.815Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None

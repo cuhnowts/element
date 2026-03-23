@@ -24,15 +24,15 @@ Requirements for v1.1 Project Manager milestone. Each maps to roadmap phases.
 
 ### File Explorer
 
-- [ ] **FILE-01**: User can browse project files in a tree view within the workspace
-- [ ] **FILE-02**: User can open files in their default external editor (VS Code, etc.)
-- [ ] **FILE-03**: File tree respects .gitignore and hides common excludes (node_modules, .git, target)
-- [ ] **FILE-04**: File tree updates live when files change on disk
+- [x] **FILE-01**: User can browse project files in a tree view within the workspace
+- [x] **FILE-02**: User can open files in their default external editor (VS Code, etc.)
+- [x] **FILE-03**: File tree respects .gitignore and hides common excludes (node_modules, .git, target)
+- [x] **FILE-04**: File tree updates live when files change on disk
 
 ### Terminal
 
-- [ ] **TERM-01**: User can open an embedded terminal in the workspace panel
-- [ ] **TERM-02**: Terminal automatically opens in the project's linked directory
+- [x] **TERM-01**: User can open an embedded terminal in the workspace panel
+- [x] **TERM-02**: Terminal automatically opens in the project's linked directory
 - [ ] **TERM-03**: Terminal supports copy, paste, scroll, and standard terminal interaction
 
 ### AI Onboarding
@@ -97,12 +97,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROJ-03 | Phase 7 | Complete |
 | PROJ-04 | Phase 7 | Complete |
 | PROJ-05 | Phase 7 | Pending |
-| FILE-01 | Phase 8 | Pending |
-| FILE-02 | Phase 8 | Pending |
-| FILE-03 | Phase 8 | Pending |
-| FILE-04 | Phase 8 | Pending |
-| TERM-01 | Phase 9 | Pending |
-| TERM-02 | Phase 9 | Pending |
+| FILE-01 | Phase 8 | Complete |
+| FILE-02 | Phase 8 | Complete |
+| FILE-03 | Phase 8 | Complete |
+| FILE-04 | Phase 8 | Complete |
+| TERM-01 | Phase 9 | Complete |
+| TERM-02 | Phase 9 | Complete |
 | TERM-03 | Phase 9 | Pending |
 | AIOB-01 | Phase 10 | Pending |
 | AIOB-02 | Phase 10 | Pending |

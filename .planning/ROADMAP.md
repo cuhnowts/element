@@ -84,7 +84,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 08-01-PLAN.md -- Backend: ignore crate, file_explorer_commands (list_directory, open_file, watcher lifecycle)
+- [x] 08-01-PLAN.md -- Backend: ignore crate, file_explorer_commands (list_directory, open_file, watcher lifecycle)
 - [ ] 08-02-PLAN.md -- Frontend: types, API, store, FileExplorer/FileTreeNode/ProjectTabBar components, CenterPanel wiring, live updates
 - [ ] 08-03-PLAN.md -- Checkpoint: full build verification + end-to-end human verification
 
@@ -99,7 +99,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Backend PTY plugin, frontend dependencies, workspace store extension, useTerminal hook
+- [x] 09-01-PLAN.md -- Backend PTY plugin, frontend dependencies, workspace store extension, useTerminal hook
 - [ ] 09-02-PLAN.md -- UI: TerminalTab, TerminalEmptyState, OutputDrawer integration, keyboard shortcut, checkpoint
 
 ### Phase 10: AI Project Onboarding
