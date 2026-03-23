@@ -11,6 +11,7 @@ import {
 } from "./schedulingSlice";
 import { createAiSlice, type AiSlice } from "./aiSlice";
 import { createThemeSlice, type ThemeSlice } from "./themeSlice";
+import { createPhaseSlice, type PhaseSlice } from "./phaseSlice";
 
 export type AppStore = ProjectSlice &
   TaskSlice &
@@ -20,7 +21,8 @@ export type AppStore = ProjectSlice &
   CalendarSlice &
   SchedulingSlice &
   AiSlice &
-  ThemeSlice;
+  ThemeSlice &
+  PhaseSlice;
 
 export const useStore = create<AppStore>()((...a) => ({
   ...createProjectSlice(...a),
@@ -32,4 +34,5 @@ export const useStore = create<AppStore>()((...a) => ({
   ...createSchedulingSlice(...a),
   ...createAiSlice(...a),
   ...createThemeSlice(...a),
+  ...createPhaseSlice(...a),
 }));

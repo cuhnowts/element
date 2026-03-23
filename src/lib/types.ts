@@ -5,6 +5,7 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  directoryPath: string | null;
   themeId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +26,7 @@ export interface Task {
   scheduledTime: string | null;
   durationMinutes: number | null;
   recurrenceRule: string | null;
+  phaseId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,9 +41,19 @@ export interface Tag {
   createdAt: string;
 }
 
+export interface Phase {
+  id: string;
+  projectId: string;
+  name: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateTaskInput {
   projectId?: string;
   themeId?: string;
+  phaseId?: string;
   title: string;
   description?: string;
   context?: string;
@@ -61,6 +73,7 @@ export interface CreateProjectInput {
 
 export interface UpdateTaskInput {
   title?: string;
+  phaseId?: string;
   description?: string;
   context?: string;
   priority?: TaskPriority;

@@ -11,6 +11,7 @@ export interface ProjectSlice {
   createProject: (name: string, description?: string) => Promise<Project>;
   deleteProject: (projectId: string) => Promise<void>;
   selectProject: (projectId: string | null) => void;
+  linkDirectory: (projectId: string, directoryPath: string) => Promise<void>;
 }
 
 export const createProjectSlice: StateCreator<
@@ -42,4 +43,10 @@ export const createProjectSlice: StateCreator<
   },
   selectProject: (projectId) =>
     set({ selectedProjectId: projectId, selectedTaskId: null }),
+  linkDirectory: async (projectId, directoryPath) => {
+    const project = await api.linkProjectDirectory(projectId, directoryPath);
+    set((s) => ({
+      projects: s.projects.map((p) => (p.id === projectId ? project : p)),
+    }));
+  },
 });
