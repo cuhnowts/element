@@ -29,7 +29,7 @@ The workflow engine must reliably define, organize, schedule, and monitor workfl
 
 v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, global-hotkey quick-capture, multi-step workflows with cron scheduling, plugin system with credential vault, calendar integration (Google/Outlook OAuth), model-agnostic AI assistance, and intelligent time-block scheduling.
 
-v1.1 progress: Phase 8 complete -- file explorer with gitignore-aware tree view, external editor launch, context menus, show-hidden toggle, and live filesystem updates. Phase 9 also complete -- embedded terminal via tauri-plugin-pty + xterm.js in output drawer with Ctrl+backtick shortcut. Themes, project phases, directory linking, and AI onboarding infrastructure also delivered.
+v1.1 progress: Phase 10 complete -- AI project onboarding with scope/goals form, CLI tool integration via file watcher, plan review screen with accordion/DnD/inline-editing, batch phase+task creation, and per-project AI mode dropdown. Also complete: file explorer (Phase 8), embedded terminal (Phase 9), themes, project phases, and directory linking.
 
 ## Requirements
 
@@ -138,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-22 after Phase 8 (file-explorer) completion*
+*Last updated: 2026-03-22 after Phase 10 (ai-project-onboarding) completion*
