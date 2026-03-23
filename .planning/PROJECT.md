@@ -29,6 +29,8 @@ The workflow engine must reliably define, organize, schedule, and monitor workfl
 
 v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, global-hotkey quick-capture, multi-step workflows with cron scheduling, plugin system with credential vault, calendar integration (Google/Outlook OAuth), model-agnostic AI assistance, and intelligent time-block scheduling.
 
+v1.1 progress: Phase 9 complete -- embedded terminal via tauri-plugin-pty + xterm.js in output drawer with Ctrl+backtick shortcut. Themes, project phases, directory linking, file explorer, and AI onboarding infrastructure also delivered.
+
 ## Requirements
 
 ### Validated
