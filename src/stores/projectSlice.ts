@@ -2,6 +2,7 @@ import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
 import type { Project } from "../lib/types";
 import type { AppStore } from "./index";
+import { useWorkspaceStore } from "./useWorkspaceStore";
 
 export interface ProjectSlice {
   projects: Project[];
@@ -41,8 +42,10 @@ export const createProjectSlice: StateCreator<
         s.selectedProjectId === projectId ? null : s.selectedProjectId,
     }));
   },
-  selectProject: (projectId) =>
-    set({ selectedProjectId: projectId, selectedTaskId: null }),
+  selectProject: (projectId) => {
+    set({ selectedProjectId: projectId, selectedTaskId: null, selectedThemeId: null });
+    useWorkspaceStore.getState().selectTask(null);
+  },
   linkDirectory: async (projectId, directoryPath) => {
     const project = await api.linkProjectDirectory(projectId, directoryPath);
     set((s) => ({

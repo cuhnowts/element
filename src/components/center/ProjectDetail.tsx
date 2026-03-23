@@ -1,5 +1,15 @@
 import { useEffect, useState, useRef } from "react";
-import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DragOverEvent,
+} from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,7 +21,7 @@ import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { DirectoryLink } from "./DirectoryLink";
 import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
-import type { Task } from "@/lib/types";
+import type { Task, TaskStatus } from "@/lib/types";
 
 // --- Exported helpers for testing ---
 
@@ -41,15 +51,24 @@ export function ProjectDetail() {
   const reorderPhases = useStore((s) => s.reorderPhases);
   const linkDirectory = useStore((s) => s.linkDirectory);
   const createTask = useStore((s) => s.createTask);
+  const updateTaskStatus = useStore((s) => s.updateTaskStatus);
+  const setTaskPhase = useStore((s) => s.setTaskPhase);
+  const loadTasks = useStore((s) => s.loadTasks);
   const selectTask = useWorkspaceStore((s) => s.selectTask);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isAddingPhase, setIsAddingPhase] = useState(false);
   const [newPhaseName, setNewPhaseName] = useState("");
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [overDropId, setOverDropId] = useState<string | null>(null);
   const descTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const project = projects.find((p) => p.id === selectedProjectId);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   // Load phases when project changes
   useEffect(() => {
@@ -71,7 +90,6 @@ export function ProjectDetail() {
   const apiUpdateProject = async (projectId: string, newName: string, newDesc: string) => {
     const { api } = await import("@/lib/tauri");
     await api.updateProject(projectId, newName, newDesc);
-    // Refresh projects list
     await useStore.getState().loadProjects();
   };
 
@@ -99,15 +117,54 @@ export function ProjectDetail() {
   // Unassigned tasks
   const unassignedTasks = tasksForPhase(tasks, null);
 
-  // DnD handler
+  // Is the current drag a task drag?
+  const isDraggingTask = activeDragId?.startsWith("task:");
+  const draggedTask = isDraggingTask
+    ? tasks.find((t) => t.id === activeDragId!.slice(5))
+    : null;
+
+  // DnD handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(String(event.active.id));
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    if (!isDraggingTask && !String(event.active?.id).startsWith("task:")) {
+      setOverDropId(null);
+      return;
+    }
+    setOverDropId(event.over ? String(event.over.id) : null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
 
+    setActiveDragId(null);
+    setOverDropId(null);
+
+    if (!over) return;
+    const overId = String(over.id);
+
+    // Task drag → phase assignment
+    if (activeId.startsWith("task:")) {
+      const taskId = activeId.slice(5);
+      if (overId === "unassigned-drop") {
+        setTaskPhase(taskId, null);
+      } else {
+        const targetPhase = phases.find((p) => p.id === overId);
+        if (targetPhase) {
+          setTaskPhase(taskId, targetPhase.id);
+        }
+      }
+      return;
+    }
+
+    // Phase reorder
+    if (active.id === over.id) return;
     const oldIndex = sortedPhases.findIndex((p) => p.id === active.id);
     const newIndex = sortedPhases.findIndex((p) => p.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
-
     const reordered = arrayMove(sortedPhases, oldIndex, newIndex);
     reorderPhases(project.id, reordered.map((p) => p.id));
   };
@@ -137,6 +194,22 @@ export function ProjectDetail() {
 
   const handleSelectTask = (taskId: string) => {
     selectTask(taskId);
+  };
+
+  const handleToggleTaskStatus = (taskId: string, currentStatus: TaskStatus) => {
+    const newStatus = currentStatus === "complete" ? "pending" : "complete";
+    updateTaskStatus(taskId, newStatus);
+  };
+
+  const handleDeletePhase = async (phaseId: string) => {
+    await deletePhase(phaseId);
+    if (selectedProjectId) {
+      await loadTasks(selectedProjectId);
+    }
+  };
+
+  const handleSetTaskPhase = (taskId: string, phaseId: string | null) => {
+    setTaskPhase(taskId, phaseId);
   };
 
   const createdDate = new Date(project.createdAt).toLocaleDateString("en-US", {
@@ -227,7 +300,13 @@ export function ProjectDetail() {
           </div>
         ) : (
           <div className="space-y-1">
-            <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
               <SortableContext
                 items={sortedPhases.map((p) => p.id)}
                 strategy={verticalListSortingStrategy}
@@ -237,20 +316,36 @@ export function ProjectDetail() {
                     key={phase.id}
                     phase={phase}
                     tasks={tasksForPhase(tasks, phase.id)}
+                    allPhases={sortedPhases}
                     onUpdatePhase={updatePhase}
-                    onDeletePhase={deletePhase}
+                    onDeletePhase={handleDeletePhase}
                     onCreateTask={handleCreateTaskInPhase}
                     onSelectTask={handleSelectTask}
+                    onToggleTaskStatus={handleToggleTaskStatus}
+                    onSetTaskPhase={handleSetTaskPhase}
+                    isDropTarget={isDraggingTask === true && overDropId === phase.id}
                   />
                 ))}
               </SortableContext>
-            </DndContext>
 
-            <UnassignedBucket
-              tasks={unassignedTasks}
-              onCreateTask={handleCreateUnassignedTask}
-              onSelectTask={handleSelectTask}
-            />
+              <UnassignedBucket
+                tasks={unassignedTasks}
+                phases={sortedPhases}
+                onCreateTask={handleCreateUnassignedTask}
+                onSelectTask={handleSelectTask}
+                onToggleTaskStatus={handleToggleTaskStatus}
+                onSetTaskPhase={handleSetTaskPhase}
+                isDropTarget={isDraggingTask === true && overDropId === "unassigned-drop"}
+              />
+
+              <DragOverlay>
+                {draggedTask ? (
+                  <div className="flex items-center gap-2 py-1 px-3 text-sm bg-popover rounded-md shadow-lg ring-1 ring-primary/20">
+                    {draggedTask.title}
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </div>
         )}
 

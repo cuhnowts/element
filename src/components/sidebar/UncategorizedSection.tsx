@@ -72,67 +72,21 @@ export function UncategorizedSection({
         </span>
       </button>
       {expanded && (
-        <div className="pl-2">
+        <div className="pl-4">
           {projects.map((project) => (
             <div key={project.id}>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <button
-                      type="button"
-                      className={`flex items-center w-full px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-muted text-left ${
-                        selectedProjectId === project.id
-                          ? "text-primary font-medium"
-                          : ""
-                      }`}
-                    />
-                  }
-                >
-                  <button
-                    type="button"
-                    className="flex-shrink-0 p-0.5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleProject(project.id);
-                    }}
-                  >
-                    {expandedProjects.has(project.id) ? (
-                      <ChevronDown className="size-3.5" />
-                    ) : (
-                      <ChevronRight className="size-3.5" />
-                    )}
-                  </button>
-                  <span
-                    className="truncate ml-1"
-                    onClick={() => handleSelectProject(project.id)}
-                  >
-                    {project.name}
-                  </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={4}>
-                  <MoveToThemeMenu
-                    themes={themes}
-                    currentThemeId={null}
-                    onSelect={(themeId) =>
-                      assignProjectToTheme(project.id, themeId)
-                    }
-                  />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() =>
-                      openDeleteConfirm({
-                        type: "project",
-                        id: project.id,
-                        name: project.name,
-                      })
-                    }
-                  >
-                    Delete Project
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UncategorizedProjectRow
+                project={project}
+                isSelected={selectedProjectId === project.id}
+                isExpanded={expandedProjects.has(project.id)}
+                onToggle={() => toggleProject(project.id)}
+                onSelect={() => handleSelectProject(project.id)}
+                themes={themes}
+                onMoveToTheme={(themeId) => assignProjectToTheme(project.id, themeId)}
+                onDelete={() => openDeleteConfirm({ type: "project", id: project.id, name: project.name })}
+              />
               {expandedProjects.has(project.id) && (
-                <div className="pl-4">
+                <div className="pl-6">
                   {storeTasks
                     .filter((t) => t.projectId === project.id)
                     .map((t) => (
@@ -147,6 +101,79 @@ export function UncategorizedSection({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function UncategorizedProjectRow({
+  project,
+  isSelected,
+  isExpanded,
+  onToggle,
+  onSelect,
+  themes,
+  onMoveToTheme,
+  onDelete,
+}: {
+  project: Project;
+  isSelected: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onSelect: () => void;
+  themes: { id: string; name: string; color: string }[];
+  onMoveToTheme: (themeId: string | null) => void;
+  onDelete: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <div className="flex items-center w-full">
+      <button
+        type="button"
+        className="flex-shrink-0 p-0.5"
+        onClick={onToggle}
+      >
+        {isExpanded ? (
+          <ChevronDown className="size-3.5" />
+        ) : (
+          <ChevronRight className="size-3.5" />
+        )}
+      </button>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger
+          render={
+            <button
+              type="button"
+              className={`flex-1 min-w-0 px-1 py-1.5 text-sm rounded-md transition-colors hover:bg-muted text-left truncate ${
+                isSelected ? "text-primary font-medium" : ""
+              }`}
+              onClick={(e) => {
+                e.preventDefault();
+                onSelect();
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setMenuOpen(true);
+              }}
+            />
+          }
+        >
+          {project.name}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" sideOffset={4}>
+          <MoveToThemeMenu
+            themes={themes}
+            currentThemeId={null}
+            onSelect={onMoveToTheme}
+          />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={onDelete}
+          >
+            Delete Project
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

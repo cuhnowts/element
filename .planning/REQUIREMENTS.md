@@ -9,17 +9,17 @@ Requirements for v1.1 Project Manager milestone. Each maps to roadmap phases.
 
 ### Themes
 
-- [ ] **THEME-01**: User can create, rename, and delete themes
-- [ ] **THEME-02**: User can assign projects and standalone tasks to themes
-- [ ] **THEME-03**: Sidebar groups items by theme with collapsible sections and an uncategorized bucket
-- [ ] **THEME-04**: User can create tasks that exist independently without a project
+- [x] **THEME-01**: User can create, rename, and delete themes
+- [x] **THEME-02**: User can assign projects and standalone tasks to themes
+- [x] **THEME-03**: Sidebar groups items by theme with collapsible sections and an uncategorized bucket
+- [x] **THEME-04**: User can create tasks that exist independently without a project
 
 ### Projects
 
-- [ ] **PROJ-01**: User can link a project to a filesystem directory via directory picker
-- [ ] **PROJ-02**: User can create ordered phases within a project
-- [ ] **PROJ-03**: User can assign tasks to phases within a project
-- [ ] **PROJ-04**: User can see phase-level progress (tasks complete / total)
+- [x] **PROJ-01**: User can link a project to a filesystem directory via directory picker
+- [x] **PROJ-02**: User can create ordered phases within a project
+- [x] **PROJ-03**: User can assign tasks to phases within a project
+- [x] **PROJ-04**: User can see phase-level progress (tasks complete / total)
 - [ ] **PROJ-05**: Project detail view shows phase list, overall progress, and status overview
 
 ### File Explorer
@@ -88,14 +88,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| THEME-01 | Phase 6 | Pending |
-| THEME-02 | Phase 6 | Pending |
-| THEME-03 | Phase 6 | Pending |
-| THEME-04 | Phase 6 | Pending |
-| PROJ-01 | Phase 7 | Pending |
-| PROJ-02 | Phase 7 | Pending |
-| PROJ-03 | Phase 7 | Pending |
-| PROJ-04 | Phase 7 | Pending |
+| THEME-01 | Phase 6 | Complete |
+| THEME-02 | Phase 6 | Complete |
+| THEME-03 | Phase 6 | Complete |
+| THEME-04 | Phase 6 | Complete |
+| PROJ-01 | Phase 7 | Complete |
+| PROJ-02 | Phase 7 | Complete |
+| PROJ-03 | Phase 7 | Complete |
+| PROJ-04 | Phase 7 | Complete |
 | PROJ-05 | Phase 7 | Pending |
 | FILE-01 | Phase 8 | Pending |
 | FILE-02 | Phase 8 | Pending |

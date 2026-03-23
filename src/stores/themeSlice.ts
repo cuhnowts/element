@@ -1,12 +1,17 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
-import type { Theme } from "../lib/types";
+import type { Task, Theme } from "../lib/types";
 import type { AppStore } from "./index";
+import { useWorkspaceStore } from "./useWorkspaceStore";
 
 export interface ThemeSlice {
   themes: Theme[];
+  standaloneTasks: Task[];
+  selectedThemeId: string | null;
   themesLoading: boolean;
+  selectTheme: (themeId: string | null) => void;
   loadThemes: () => Promise<void>;
+  loadStandaloneTasks: () => Promise<void>;
   createTheme: (name: string, color: string) => Promise<Theme>;
   updateTheme: (id: string, name?: string, color?: string) => Promise<void>;
   deleteTheme: (id: string) => Promise<void>;
@@ -17,12 +22,24 @@ export interface ThemeSlice {
 
 export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set, get) => ({
   themes: [],
+  standaloneTasks: [],
+  selectedThemeId: null,
   themesLoading: false,
+
+  selectTheme: (themeId) => {
+    set({ selectedThemeId: themeId, selectedProjectId: null, selectedTaskId: null });
+    useWorkspaceStore.getState().selectTask(null);
+  },
 
   loadThemes: async () => {
     set({ themesLoading: true });
     const themes = await api.listThemes();
     set({ themes, themesLoading: false });
+  },
+
+  loadStandaloneTasks: async () => {
+    const tasks = await api.listStandaloneTasks();
+    set({ standaloneTasks: tasks });
   },
 
   createTheme: async (name, color) => {
@@ -49,6 +66,7 @@ export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set
     }));
     // Reload to get fresh data after backend cascade
     get().loadProjects();
+    get().loadStandaloneTasks();
   },
 
   reorderThemes: async (orderedIds) => {
@@ -75,6 +93,7 @@ export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set
     const updated = await api.assignTaskTheme(taskId, themeId);
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? updated : t)),
+      standaloneTasks: s.standaloneTasks.map((t) => (t.id === taskId ? updated : t)),
     }));
   },
 });

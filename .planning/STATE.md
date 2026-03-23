@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Project Manager
-status: Ready to plan
-stopped_at: Phase 10 plans verified
-last_updated: "2026-03-22T21:05:51.836Z"
+status: Ready to execute
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-23T01:02:56.068Z"
 progress:
   total_phases: 9
   completed_phases: 0
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 06 — data-foundation-and-theme-system
+**Current focus:** Phase 07 — project-phases-and-directory-linking
 
 ## Current Position
 
-Phase: 07
-Plan: Not started
+Phase: 07 (project-phases-and-directory-linking) — EXECUTING
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 - [v1.1]: AI-driven project onboarding with structured entry + AI questioning
 - [Phase 06]: Table recreation for nullable project_id (SQLite ALTER TABLE limitation)
 - [Phase 06]: createTask signature changed to (title, projectId?, themeId?) for standalone task support
+- [Phase 07]: PhaseSlice uses optimistic reorder with rollback, matching existing store patterns
+- [Phase 07]: setTaskPhase is a dedicated API method supporting explicit null for unassignment
+- [Phase 07]: Migration 008 for phases (007 taken by themes)
+- [Phase 07]: Dedicated set_task_phase command for nullable phase assignment
 
 ### Roadmap Evolution
 
@@ -65,6 +69,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T20:37:33.059Z
-Stopped at: Phase 10 plans verified
-Resume file: .planning/phases/10-ai-project-onboarding/10-01-PLAN.md
+Last session: 2026-03-23T01:02:56.066Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None

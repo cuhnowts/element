@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
@@ -17,7 +17,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import type { TaskStatus, TaskPriority } from "@/lib/types";
 
@@ -44,8 +43,10 @@ export function TaskDetail() {
   const removeTagFromTask = useStore((s) => s.removeTagFromTask);
   const deleteTask = useStore((s) => s.deleteTask);
   const phases = useStore((s) => s.phases);
+  const projects = useStore((s) => s.projects);
+  const selectProject = useStore((s) => s.selectProject);
   const setTaskPhase = useStore((s) => s.setTaskPhase);
-  const selectTask = useStore((s) => s.selectTask);
+  const loadTaskDetail = useStore((s) => s.loadTaskDetail);
   const selectWorkspaceTask = useWorkspaceStore((s) => s.selectTask);
 
   const executionHistory = useTaskStore((s) => s.executionHistory);
@@ -58,13 +59,13 @@ export function TaskDetail() {
   const descTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contextTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load task when selected
+  // Load task when selected (without clearing project context)
   useEffect(() => {
     if (selectedTaskId) {
-      selectTask(selectedTaskId);
+      loadTaskDetail(selectedTaskId);
       fetchExecutionHistory(selectedTaskId);
     }
-  }, [selectedTaskId, selectTask, fetchExecutionHistory]);
+  }, [selectedTaskId, loadTaskDetail, fetchExecutionHistory]);
 
   // Sync local state when task loads
   useEffect(() => {
@@ -126,8 +127,31 @@ export function TaskDetail() {
   const latestExecution = executionHistory[0];
   const steps = latestExecution?.steps ?? [];
 
+  const taskProject = selectedTask.projectId
+    ? projects.find((p) => p.id === selectedTask.projectId)
+    : null;
+
+  const handleBackToProject = () => {
+    if (taskProject) {
+      selectWorkspaceTask(null);
+      selectProject(taskProject.id);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Back to project */}
+      {taskProject && (
+        <button
+          type="button"
+          onClick={handleBackToProject}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="size-3" />
+          {taskProject.name}
+        </button>
+      )}
+
       {/* Title + Automate */}
       <div className="flex items-center gap-3">
         <Input
@@ -239,7 +263,11 @@ export function TaskDetail() {
             }}
           >
             <SelectTrigger className="w-48 h-8 text-sm">
-              <SelectValue placeholder="Unassigned" />
+              <span className="flex flex-1 text-left truncate">
+                {selectedTask.phaseId
+                  ? phases.find((p) => p.id === selectedTask.phaseId)?.name ?? "Unknown"
+                  : "Unassigned"}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="unassigned">Unassigned</SelectItem>

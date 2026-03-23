@@ -2,15 +2,11 @@ import { useState } from "react";
 import {
   ChevronRight,
   ChevronDown,
+  GripVertical,
+  FolderPlus,
   Pencil,
   Trash2,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -22,16 +18,20 @@ import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
 import { api } from "@/lib/tauri";
 import { CreateThemeDialog } from "./CreateThemeDialog";
+import { useDragHandle } from "./ThemeSidebar";
 import type { Theme } from "@/lib/types";
 
 interface ThemeHeaderProps {
   theme: Theme;
   expanded: boolean;
   onToggle: () => void;
+  onCreateProject?: () => void;
 }
 
-export function ThemeHeader({ theme, expanded, onToggle }: ThemeHeaderProps) {
+export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: ThemeHeaderProps) {
   const deleteTheme = useStore((s) => s.deleteTheme);
+  const selectTheme = useStore((s) => s.selectTheme);
+  const selectedThemeId = useStore((s) => s.selectedThemeId);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
@@ -57,69 +57,69 @@ export function ThemeHeader({ theme, expanded, onToggle }: ThemeHeaderProps) {
     setShowDeleteConfirm(false);
   };
 
+  const dragHandle = useDragHandle();
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <div className="flex items-center gap-1 px-2 py-1.5 group cursor-pointer w-full" />
-          }
+      <div className="flex items-center gap-1 px-2 py-1.5 group w-full">
+        <div
+          className="cursor-grab opacity-0 group-hover:opacity-50 transition-opacity flex-shrink-0"
+          {...(dragHandle?.attributes ?? {})}
+          {...(dragHandle?.listeners ?? {})}
         >
+          <GripVertical className="size-3.5" />
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-shrink-0 p-0.5"
+        >
+          {expanded ? (
+            <ChevronDown className="size-4" />
+          ) : (
+            <ChevronRight className="size-4" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => selectTheme(theme.id)}
+          className={`flex items-center gap-1.5 flex-1 min-w-0 ${
+            selectedThemeId === theme.id ? "text-primary" : ""
+          }`}
+        >
+          <span
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: theme.color }}
+          />
+          <span className="text-xs font-semibold truncate">{theme.name}</span>
+        </button>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             type="button"
-            onClick={onToggle}
-            className="flex items-center gap-1.5 flex-1 min-w-0"
+            className="inline-flex items-center justify-center rounded-md size-6 hover:bg-accent hover:text-accent-foreground"
+            onClick={onCreateProject}
+            aria-label="New project in theme"
           >
-            <span
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: theme.color }}
-            />
-            <span className="text-sm font-medium truncate">{theme.name}</span>
-            {expanded ? (
-              <ChevronDown className="size-4 flex-shrink-0" />
-            ) : (
-              <ChevronRight className="size-4 flex-shrink-0" />
-            )}
+            <FolderPlus className="size-3.5" />
           </button>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowEditDialog(true);
-              }}
-              aria-label="Edit theme"
-            >
-              <Pencil className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              aria-label="Delete theme"
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" sideOffset={4}>
-          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-            Rename
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-            Change Color
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={handleDelete}>
-            Delete Theme
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md size-6 hover:bg-accent hover:text-accent-foreground"
+            onClick={() => setShowEditDialog(true)}
+            aria-label="Edit theme"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center rounded-md size-6 hover:bg-accent hover:text-accent-foreground"
+            onClick={handleDelete}
+            aria-label="Delete theme"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      </div>
 
       <CreateThemeDialog
         open={showEditDialog}

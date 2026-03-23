@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { ListPlus, Plus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -15,11 +15,21 @@ import { CSS } from "@dnd-kit/utilities";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
-import { api } from "@/lib/tauri";
 import { ThemeSection } from "./ThemeSection";
 import { UncategorizedSection } from "./UncategorizedSection";
 import { CreateThemeDialog } from "./CreateThemeDialog";
-import type { Theme, Task } from "@/lib/types";
+import type { Theme } from "@/lib/types";
+
+type DragHandleProps = {
+  attributes: Record<string, unknown>;
+  listeners: Record<string, unknown> | undefined;
+};
+
+const DragHandleContext = createContext<DragHandleProps | null>(null);
+
+export function useDragHandle() {
+  return useContext(DragHandleContext);
+}
 
 function SortableThemeItem({
   theme,
@@ -36,10 +46,14 @@ function SortableThemeItem({
     transition,
   };
 
+  const handleProps = useMemo(() => ({ attributes, listeners }), [attributes, listeners]);
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
+    <DragHandleContext.Provider value={handleProps}>
+      <div ref={setNodeRef} style={style}>
+        {children}
+      </div>
+    </DragHandleContext.Provider>
   );
 }
 
@@ -50,14 +64,16 @@ export function ThemeSidebar() {
   const loadProjects = useStore((s) => s.loadProjects);
   const reorderThemes = useStore((s) => s.reorderThemes);
 
+  const standaloneTasks = useStore((s) => s.standaloneTasks);
+  const loadStandaloneTasks = useStore((s) => s.loadStandaloneTasks);
+  const createTask = useStore((s) => s.createTask);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [standaloneTasks, setStandaloneTasks] = useState<Task[]>([]);
 
   useEffect(() => {
     loadThemes();
     loadProjects();
-    api.listStandaloneTasks().then(setStandaloneTasks).catch(() => {});
-  }, [loadThemes, loadProjects]);
+    loadStandaloneTasks();
+  }, [loadThemes, loadProjects, loadStandaloneTasks]);
 
   const themedProjects = useMemo(() => {
     const map = new Map<string, typeof projects>();
@@ -116,14 +132,29 @@ export function ThemeSidebar() {
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
           THEMES
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-6"
-          onClick={() => setShowCreateDialog(true)}
-        >
-          <Plus className="size-4" />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={async () => {
+              await createTask("New task");
+              loadStandaloneTasks();
+            }}
+            aria-label="New standalone task"
+          >
+            <ListPlus className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6"
+            onClick={() => setShowCreateDialog(true)}
+            aria-label="New theme"
+          >
+            <Plus className="size-4" />
+          </Button>
+        </div>
       </div>
 
       {!hasContent ? (
@@ -150,6 +181,7 @@ export function ThemeSidebar() {
                     theme={theme}
                     projects={themedProjects.get(theme.id) ?? []}
                     tasks={themedTasks.get(theme.id) ?? []}
+                    onProjectCreated={() => loadProjects()}
                   />
                 </SortableThemeItem>
               ))}

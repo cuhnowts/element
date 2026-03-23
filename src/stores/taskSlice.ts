@@ -7,6 +7,7 @@ import type {
   TaskPriority,
 } from "../lib/types";
 import type { AppStore } from "./index";
+import { useWorkspaceStore } from "./useWorkspaceStore";
 
 export interface TaskSlice {
   tasks: Task[];
@@ -16,6 +17,7 @@ export interface TaskSlice {
   loadTasks: (projectId: string) => Promise<void>;
   createTask: (title: string, projectId?: string, themeId?: string, phaseId?: string) => Promise<Task>;
   setTaskPhase: (taskId: string, phaseId: string | null) => Promise<void>;
+  loadTaskDetail: (taskId: string) => Promise<void>;
   selectTask: (taskId: string | null) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
   updateTask: (
@@ -64,12 +66,18 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
         : s.selectedTask,
     }));
   },
+  loadTaskDetail: async (taskId) => {
+    const task = await api.getTask(taskId);
+    set({ selectedTask: task });
+  },
   selectTask: async (taskId) => {
     if (!taskId) {
       set({ selectedTaskId: null, selectedTask: null });
+      useWorkspaceStore.getState().selectTask(null);
       return;
     }
-    set({ selectedTaskId: taskId });
+    set({ selectedTaskId: taskId, selectedProjectId: null, selectedThemeId: null });
+    useWorkspaceStore.getState().selectTask(taskId);
     const task = await api.getTask(taskId);
     set({ selectedTask: task });
   },

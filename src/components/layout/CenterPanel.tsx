@@ -4,11 +4,13 @@ import { useStore } from "@/stores";
 import { TodayView } from "@/components/center/TodayView";
 import { TaskDetail } from "@/components/center/TaskDetail";
 import { ProjectDetail } from "@/components/center/ProjectDetail";
+import { ThemeDetail } from "@/components/center/ThemeDetail";
 import { WorkflowDetail } from "@/components/center/WorkflowDetail";
 
 export function CenterPanel() {
   const selectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
   const selectedProjectId = useStore((s) => s.selectedProjectId);
+  const selectedThemeId = useStore((s) => s.selectedThemeId);
   const selectedWorkflowId = useWorkflowStore((s) => s.selectedWorkflowId);
 
   return (
@@ -19,6 +21,8 @@ export function CenterPanel() {
         <TaskDetail />
       ) : selectedProjectId ? (
         <ProjectDetail />
+      ) : selectedThemeId ? (
+        <ThemeDetail />
       ) : (
         <TodayView />
       )}

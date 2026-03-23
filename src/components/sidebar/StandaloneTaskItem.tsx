@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Circle } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,21 +20,29 @@ export function StandaloneTaskItem({ task }: StandaloneTaskItemProps) {
   const deleteTask = useStore((s) => s.deleteTask);
   const themes = useStore((s) => s.themes);
   const assignTaskToTheme = useStore((s) => s.assignTaskToTheme);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger
         render={
           <button
             type="button"
-            onClick={() => selectTask(task.id)}
-            className={`flex items-center w-full px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-muted text-left ${
+            onClick={(e) => {
+              e.preventDefault();
+              selectTask(task.id);
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenuOpen(true);
+            }}
+            className={`flex items-center w-full px-1.5 py-0.5 text-xs rounded-md transition-colors hover:bg-muted text-left ${
               selectedTaskId === task.id ? "text-primary font-medium" : ""
             }`}
           />
         }
       >
-        <Circle className="size-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
+        <Circle className="size-2.5 mr-1.5 text-muted-foreground flex-shrink-0" />
         <span className="truncate">{task.title}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={4}>

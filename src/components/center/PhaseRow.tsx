@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, ChevronRight, Plus, Circle, CheckCircle2, Clock, Ban } from "lucide-react";
+import { GripVertical, ChevronRight, Plus } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import {
   ContextMenu,
@@ -11,37 +11,33 @@ import {
 } from "@/components/ui/context-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TaskRow } from "./TaskRow";
 import type { Phase, Task, TaskStatus } from "@/lib/types";
 
 interface PhaseRowProps {
   phase: Phase;
   tasks: Task[];
+  allPhases: Phase[];
   onUpdatePhase: (id: string, name: string) => void;
   onDeletePhase: (id: string) => void;
   onCreateTask: (phaseId: string, title: string) => void;
   onSelectTask: (taskId: string) => void;
-}
-
-function StatusIcon({ status }: { status: TaskStatus }) {
-  switch (status) {
-    case "complete":
-      return <CheckCircle2 className="size-3.5 text-primary" />;
-    case "in-progress":
-      return <Clock className="size-3.5 text-muted-foreground" />;
-    case "blocked":
-      return <Ban className="size-3.5 text-destructive" />;
-    default:
-      return <Circle className="size-3.5 text-muted-foreground" />;
-  }
+  onToggleTaskStatus: (taskId: string, currentStatus: TaskStatus) => void;
+  onSetTaskPhase: (taskId: string, phaseId: string | null) => void;
+  isDropTarget: boolean;
 }
 
 export function PhaseRow({
   phase,
   tasks,
+  allPhases,
   onUpdatePhase,
   onDeletePhase,
   onCreateTask,
   onSelectTask,
+  onToggleTaskStatus,
+  onSetTaskPhase,
+  isDropTarget,
 }: PhaseRowProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -103,10 +99,17 @@ export function PhaseRow({
   return (
     <>
       <div ref={setNodeRef} style={style}>
-        <ContextMenu>
-          <ContextMenuTrigger>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-              <div className="flex items-center gap-2 min-h-[40px] px-2 rounded-md hover:bg-card transition-colors">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          {/* Phase header — right-click opens phase context menu */}
+          <ContextMenu>
+            <ContextMenuTrigger>
+              <div
+                className={`flex items-center gap-2 min-h-[40px] px-2 rounded-md transition-colors ${
+                  isDropTarget
+                    ? "bg-primary/10 ring-1 ring-primary/30"
+                    : "hover:bg-card"
+                }`}
+              >
                 <div
                   className="cursor-grab touch-none"
                   {...attributes}
@@ -149,67 +152,66 @@ export function PhaseRow({
                   {complete}/{total}
                 </span>
               </div>
-              <CollapsibleContent>
-                <div className="py-1">
-                  {tasks.map((task) => (
-                    <button
-                      key={task.id}
-                      type="button"
-                      onClick={() => onSelectTask(task.id)}
-                      className="flex items-center gap-2 py-1 pl-10 pr-2 w-full text-left text-sm hover:bg-card rounded-md transition-colors"
-                    >
-                      <StatusIcon status={task.status} />
-                      <span className={task.status === "complete" ? "line-through text-muted-foreground" : ""}>
-                        {task.title}
-                      </span>
-                    </button>
-                  ))}
-                  {isAddingTask ? (
-                    <div className="pl-10 pr-2 py-1">
-                      <Input
-                        autoFocus
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddTask();
-                          if (e.key === "Escape") {
-                            setIsAddingTask(false);
-                            setNewTaskTitle("");
-                          }
-                        }}
-                        onBlur={handleAddTask}
-                        placeholder="Task name..."
-                        className="h-7 text-sm"
-                      />
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-muted-foreground pl-10"
-                      onClick={() => {
-                        setIsAddingTask(true);
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem onClick={handleStartRename}>Rename</ContextMenuItem>
+              <ContextMenuItem
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
+
+          {/* Task list — outside phase ContextMenu so task right-click works independently */}
+          <CollapsibleContent>
+            <div className="py-1">
+              {tasks.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  phases={allPhases}
+                  onSelectTask={onSelectTask}
+                  onToggleTaskStatus={onToggleTaskStatus}
+                  onSetTaskPhase={onSetTaskPhase}
+                />
+              ))}
+              {isAddingTask ? (
+                <div className="pl-10 pr-2 py-1">
+                  <Input
+                    autoFocus
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddTask();
+                      if (e.key === "Escape") {
+                        setIsAddingTask(false);
                         setNewTaskTitle("");
-                      }}
-                    >
-                      <Plus className="size-3 mr-1" />
-                      Add task
-                    </Button>
-                  )}
+                      }
+                    }}
+                    onBlur={handleAddTask}
+                    placeholder="Task name..."
+                    className="h-7 text-sm"
+                  />
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem onClick={handleStartRename}>Rename</ContextMenuItem>
-            <ContextMenuItem
-              variant="destructive"
-              onClick={() => setShowDeleteConfirm(true)}
-            >
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground pl-10"
+                  onClick={() => {
+                    setIsAddingTask(true);
+                    setNewTaskTitle("");
+                  }}
+                >
+                  <Plus className="size-3 mr-1" />
+                  Add task
+                </Button>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {showDeleteConfirm && (
