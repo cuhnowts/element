@@ -29,7 +29,7 @@ The workflow engine must reliably define, organize, schedule, and monitor workfl
 
 v1.0 delivers: task/project CRUD, multi-panel workspace, time-aware today view, global-hotkey quick-capture, multi-step workflows with cron scheduling, plugin system with credential vault, calendar integration (Google/Outlook OAuth), model-agnostic AI assistance, and intelligent time-block scheduling.
 
-v1.1 progress: Phase 9 complete -- embedded terminal via tauri-plugin-pty + xterm.js in output drawer with Ctrl+backtick shortcut. Themes, project phases, directory linking, file explorer, and AI onboarding infrastructure also delivered.
+v1.1 progress: Phase 8 complete -- file explorer with gitignore-aware tree view, external editor launch, context menus, show-hidden toggle, and live filesystem updates. Phase 9 also complete -- embedded terminal via tauri-plugin-pty + xterm.js in output drawer with Ctrl+backtick shortcut. Themes, project phases, directory linking, and AI onboarding infrastructure also delivered.
 
 ## Requirements
 
@@ -48,7 +48,8 @@ v1.1 progress: Phase 9 complete -- embedded terminal via tauri-plugin-pty + xter
 - [ ] Project entity: directory-linked projects with phases, tasks, and AI-driven setup
 - [ ] AI project onboarding: structured entry + AI questioning → generated phases/tasks
 - [ ] Per-project AI mode: Track+Suggest, Track+Auto-execute, or On-demand
-- [ ] Project workspace: file tree + embedded terminal + task/progress context
+- [x] Project workspace: file tree — Validated in Phase 8: file-explorer (tree view, editor launch, gitignore filtering, live updates)
+- [ ] Project workspace: embedded terminal + task/progress context
 - [ ] Task-project linking: tasks belong to projects or standalone within themes
 - [ ] Context switching: AI-tracked progress for quick resume or work offloading
 
@@ -109,7 +110,7 @@ v1.1 progress: Phase 9 complete -- embedded terminal via tauri-plugin-pty + xter
 | OAuth client IDs via option_env! | Users supply their own OAuth apps | ⚠️ Revisit — needs better UX |
 | Themes as top-level categories | Projects and tasks organized under user-defined themes (Business, Dev, Personal) | — Pending |
 | Per-project AI assistance mode | User controls AI involvement level per project | — Pending |
-| Simplified workspace (not full IDE) | File tree + terminal, external editing — 90% value at 20% cost | — Pending |
+| Simplified workspace (not full IDE) | File tree + terminal, external editing — 90% value at 20% cost | ✓ Good — file tree delivered in Phase 8 |
 | AI-driven project onboarding | Structured entry fields + AI questioning for project breakdown | — Pending |
 
 ## Known Tech Debt
@@ -137,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-22 after v1.1 milestone started*
+*Last updated: 2026-03-22 after Phase 8 (file-explorer) completion*
