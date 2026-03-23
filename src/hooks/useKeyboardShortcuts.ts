@@ -18,12 +18,35 @@ export function useKeyboardShortcuts() {
   const commandPaletteOpen = useStore((s) => s.commandPaletteOpen);
 
   const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
+  const openTerminal = useWorkspaceStore((s) => s.openTerminal);
   const workspaceSelectTask = useWorkspaceStore((s) => s.selectTask);
   const workspaceSelectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // When terminal has focus, only allow Ctrl+` through to global handler.
+      // All other keystrokes must flow to xterm.js unintercepted (per D-02, pitfall 4).
+      const terminalFocused = document.activeElement?.closest(".xterm") !== null;
+      if (terminalFocused && !(e.ctrlKey && e.key === "`")) {
+        return; // Let xterm.js handle the keystroke
+      }
+
       const meta = e.metaKey || e.ctrlKey;
+
+      // Ctrl+`: toggle terminal (per D-02)
+      if (e.ctrlKey && e.key === "`") {
+        e.preventDefault();
+        const currentTab = useWorkspaceStore.getState().activeDrawerTab;
+        const isDrawerOpen = useWorkspaceStore.getState().drawerOpen;
+        if (isDrawerOpen && currentTab === "terminal") {
+          // Drawer is open on terminal tab -> close drawer
+          toggleDrawer();
+        } else {
+          // Drawer is closed or on different tab -> open to terminal
+          openTerminal();
+        }
+        return;
+      }
 
       // Cmd+K: toggle command palette
       if (meta && e.key === "k") {
@@ -107,6 +130,7 @@ export function useKeyboardShortcuts() {
     createProjectDialogOpen,
     commandPaletteOpen,
     toggleDrawer,
+    openTerminal,
     workspaceSelectTask,
     workspaceSelectedTaskId,
   ]);
