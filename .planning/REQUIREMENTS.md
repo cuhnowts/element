@@ -37,7 +37,7 @@ Requirements for v1.1 Project Manager milestone. Each maps to roadmap phases.
 
 ### AI Onboarding
 
-- [ ] **AIOB-01**: User can enter project scope, goals, and constraints in a structured form
+- [x] **AIOB-01**: User can enter project scope, goals, and constraints in a structured form
 - [x] **AIOB-02**: AI asks clarifying questions to refine project understanding
 - [x] **AIOB-03**: AI generates phases and tasks from the conversation
 - [ ] **AIOB-04**: User can review, edit, and confirm AI-generated breakdown before it's saved
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TERM-01 | Phase 9 | Complete |
 | TERM-02 | Phase 9 | Complete |
 | TERM-03 | Phase 9 | Complete |
-| AIOB-01 | Phase 10 | Pending |
+| AIOB-01 | Phase 10 | Complete |
 | AIOB-02 | Phase 10 | Complete |
 | AIOB-03 | Phase 10 | Complete |
 | AIOB-04 | Phase 10 | Pending |

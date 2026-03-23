@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [x] 10-01-PLAN.md -- Backend: migration (008), onboarding model, project ai_mode, Tauri commands (skill file, watcher, batch save, settings), frontend types/API/store
-- [ ] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, AiModeSelect, ProjectDetail integration
+- [x] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, AiModeSelect, ProjectDetail integration
 - [ ] 10-03-PLAN.md -- AiPlanReview component with DnD/inline edit, confirm/save, discard, end-to-end checkpoint
 
 ### Phase 11: Workspace Integration and AI Context
@@ -155,7 +155,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
 | 8. File Explorer | v1.1 | 0/3 | Planned    |  |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
-| 10. AI Project Onboarding | v1.1 | 1/3 | In Progress|  |
+| 10. AI Project Onboarding | v1.1 | 2/3 | In Progress|  |
 | 11. Workspace Integration and AI Context | v1.1 | 0/4 | Planning complete | - |
 
 ## Backlog
@@ -164,7 +164,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
