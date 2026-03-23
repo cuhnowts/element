@@ -85,8 +85,8 @@ Plans:
 
 Plans:
 - [x] 08-01-PLAN.md -- Backend: ignore crate, file_explorer_commands (list_directory, open_file, watcher lifecycle)
-- [ ] 08-02-PLAN.md -- Frontend: types, API, store, FileExplorer/FileTreeNode/ProjectTabBar components, CenterPanel wiring, live updates
-- [ ] 08-03-PLAN.md -- Checkpoint: full build verification + end-to-end human verification
+- [x] 08-02-PLAN.md -- Frontend: types, API, store, FileExplorer/FileTreeNode/ProjectTabBar components, CenterPanel wiring, live updates
+- [x] 08-03-PLAN.md -- Checkpoint: full build verification + end-to-end human verification
 
 ### Phase 9: Embedded Terminal
 **Goal**: Users can run commands in an embedded terminal without leaving Element
@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [x] 09-01-PLAN.md -- Backend PTY plugin, frontend dependencies, workspace store extension, useTerminal hook
-- [ ] 09-02-PLAN.md -- UI: TerminalTab, TerminalEmptyState, OutputDrawer integration, keyboard shortcut, checkpoint
+- [x] 09-02-PLAN.md -- UI: TerminalTab, TerminalEmptyState, OutputDrawer integration, keyboard shortcut, checkpoint
 
 ### Phase 10: AI Project Onboarding
 **Goal**: Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Project Manager
-status: Ready to execute
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-23T02:13:58.480Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-23T02:16:10.291Z"
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 18
-  completed_plans: 9
+  completed_plans: 11
 ---
 
 # Project State
@@ -57,6 +57,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Used localStorage persistence for expanded paths instead of workspace store
 - [Phase 09]: Hardcoded /bin/zsh as default shell for macOS (Windows support deferred per D-08) — macOS-first target, Windows shell detection deferred
 - [Phase 09]: Session-only zustand state for activeDrawerTab and hasAutoOpenedTerminal — Per D-03, auto-open is per-session; drawer tab resets on app launch
+- [Phase 09]: CSS display:none for tab switching to preserve terminal scrollback — Unmounting xterm.js destroys scrollback buffer; CSS hiding preserves full terminal state
+- [Phase 09]: Key-based TerminalTab remount on project switch for PTY cleanup — React key change triggers unmount (kills old PTY) and remount (spawns new PTY in new directory)
 
 ### Roadmap Evolution
 
@@ -73,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T02:13:58.477Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-23T02:16:03.295Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None

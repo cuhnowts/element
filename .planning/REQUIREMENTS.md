@@ -33,7 +33,7 @@ Requirements for v1.1 Project Manager milestone. Each maps to roadmap phases.
 
 - [x] **TERM-01**: User can open an embedded terminal in the workspace panel
 - [x] **TERM-02**: Terminal automatically opens in the project's linked directory
-- [ ] **TERM-03**: Terminal supports copy, paste, scroll, and standard terminal interaction
+- [x] **TERM-03**: Terminal supports copy, paste, scroll, and standard terminal interaction
 
 ### AI Onboarding
 
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILE-04 | Phase 8 | Complete |
 | TERM-01 | Phase 9 | Complete |
 | TERM-02 | Phase 9 | Complete |
-| TERM-03 | Phase 9 | Pending |
+| TERM-03 | Phase 9 | Complete |
 | AIOB-01 | Phase 10 | Pending |
 | AIOB-02 | Phase 10 | Complete |
 | AIOB-03 | Phase 10 | Complete |
