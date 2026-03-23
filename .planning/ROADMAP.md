@@ -153,7 +153,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
 | 6. Data Foundation and Theme System | v1.1 | 0/3 | Planned    |  |
 | 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
-| 8. File Explorer | v1.1 | 0/3 | Planning complete | - |
+| 8. File Explorer | v1.1 | 0/3 | Planned    |  |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
 | 10. AI Project Onboarding | v1.1 | 0/3 | Planning complete | - |
 | 11. Workspace Integration and AI Context | v1.1 | 0/4 | Planning complete | - |
@@ -181,6 +181,15 @@ Plans:
 ### Phase 999.3: Plugin Skills and MCP Server Support (BACKLOG)
 
 **Goal:** Extend the plugin system so plugins can expose skills (slash-command-like capabilities) and register MCP server connections, similar to Claude Code's skill/MCP architecture. Plugins would declare skills in their manifest that appear in the workflow step picker and UI command palette. MCP server plugins would provide tool access for AI-assisted task execution -- the AI gateway routes tool calls to the appropriate MCP server based on plugin registration.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 999.4: GSD .planning/ Directory Sync (BACKLOG)
+
+**Goal:** When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created → mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app.
 **Requirements:** TBD
 **Plans:** 0 plans
 
