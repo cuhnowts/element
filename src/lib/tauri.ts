@@ -13,6 +13,7 @@ import type {
   CalendarEvent,
   Theme,
   Phase,
+  FileEntry,
 } from "./types";
 import type {
   AiProvider,
@@ -175,6 +176,18 @@ export const api = {
     invoke<ModelInfo[]>("list_provider_models", { id }),
   aiAssistTask: (taskId: string) =>
     invoke<void>("ai_assist_task", { taskId }),
+
+  // File Explorer
+  listDirectory: (dirPath: string, showHidden: boolean) =>
+    invoke<FileEntry[]>("list_directory", { dirPath, showHidden }),
+  openFileInEditor: (filePath: string) =>
+    invoke<void>("open_file_in_editor", { filePath }),
+  revealInFileManager: (path: string) =>
+    invoke<void>("reveal_in_file_manager", { path }),
+  startFileWatcher: (dirPath: string) =>
+    invoke<void>("start_file_watcher", { dirPath }),
+  stopFileWatcher: () =>
+    invoke<void>("stop_file_watcher"),
 
   // CLI
   runCliTool: (command: string, args: string[], workingDir?: string) =>

@@ -12,6 +12,10 @@ import {
 import { createAiSlice, type AiSlice } from "./aiSlice";
 import { createThemeSlice, type ThemeSlice } from "./themeSlice";
 import { createPhaseSlice, type PhaseSlice } from "./phaseSlice";
+import {
+  createFileExplorerSlice,
+  type FileExplorerSlice,
+} from "./fileExplorerSlice";
 
 export type AppStore = ProjectSlice &
   TaskSlice &
@@ -22,7 +26,8 @@ export type AppStore = ProjectSlice &
   SchedulingSlice &
   AiSlice &
   ThemeSlice &
-  PhaseSlice;
+  PhaseSlice &
+  FileExplorerSlice;
 
 export const useStore = create<AppStore>()((...a) => ({
   ...createProjectSlice(...a),
@@ -35,4 +40,5 @@ export const useStore = create<AppStore>()((...a) => ({
   ...createAiSlice(...a),
   ...createThemeSlice(...a),
   ...createPhaseSlice(...a),
+  ...createFileExplorerSlice(...a),
 }));
