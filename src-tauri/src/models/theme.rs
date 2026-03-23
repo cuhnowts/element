@@ -366,6 +366,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 

@@ -86,6 +86,7 @@ pub struct Task {
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
     pub estimated_minutes: Option<i32>,
+    pub phase_id: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -106,6 +107,7 @@ pub struct CreateTaskInput {
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
     pub estimated_minutes: Option<i32>,
+    pub phase_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -122,9 +124,10 @@ pub struct UpdateTaskInput {
     pub duration_minutes: Option<i32>,
     pub recurrence_rule: Option<String>,
     pub estimated_minutes: Option<i32>,
+    pub phase_id: Option<String>,
 }
 
-pub const TASK_COLUMNS: &str = "id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at";
+pub const TASK_COLUMNS: &str = "id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, phase_id, created_at, updated_at";
 
 pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
     let status_str: String = row.get(6)?;
@@ -148,8 +151,9 @@ pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
         duration_minutes: row.get(12)?,
         recurrence_rule: row.get(13)?,
         estimated_minutes: row.get(14)?,
-        created_at: row.get(15)?,
-        updated_at: row.get(16)?,
+        phase_id: row.get(15)?,
+        created_at: row.get(16)?,
+        updated_at: row.get(17)?,
     })
 }
 
@@ -176,7 +180,7 @@ impl Database {
         }
 
         self.conn().execute(
-            "INSERT INTO tasks (id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
+            "INSERT INTO tasks (id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, phase_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
             rusqlite::params![
                 id,
                 input.project_id,
@@ -193,6 +197,7 @@ impl Database {
                 input.duration_minutes,
                 input.recurrence_rule,
                 input.estimated_minutes,
+                input.phase_id,
                 now,
                 now,
             ],
@@ -214,6 +219,7 @@ impl Database {
             duration_minutes: input.duration_minutes,
             recurrence_rule: input.recurrence_rule,
             estimated_minutes: input.estimated_minutes,
+            phase_id: input.phase_id,
             created_at: now.clone(),
             updated_at: now,
         })
@@ -251,6 +257,7 @@ impl Database {
         let duration_minutes = input.duration_minutes.or(existing.duration_minutes);
         let recurrence_rule = input.recurrence_rule.or(existing.recurrence_rule);
         let estimated_minutes = input.estimated_minutes.or(existing.estimated_minutes);
+        let phase_id = input.phase_id.or(existing.phase_id);
 
         // Validate recurrence_rule if present
         if let Some(ref rule) = recurrence_rule {
@@ -266,7 +273,7 @@ impl Database {
         }
 
         self.conn().execute(
-            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, due_date = ?6, scheduled_date = ?7, scheduled_time = ?8, duration_minutes = ?9, recurrence_rule = ?10, estimated_minutes = ?11, updated_at = ?12 WHERE id = ?13",
+            "UPDATE tasks SET title = ?1, description = ?2, context = ?3, priority = ?4, external_path = ?5, due_date = ?6, scheduled_date = ?7, scheduled_time = ?8, duration_minutes = ?9, recurrence_rule = ?10, estimated_minutes = ?11, phase_id = ?12, updated_at = ?13 WHERE id = ?14",
             rusqlite::params![
                 title,
                 description,
@@ -279,6 +286,7 @@ impl Database {
                 duration_minutes,
                 recurrence_rule,
                 estimated_minutes,
+                phase_id,
                 now,
                 id,
             ],
@@ -306,6 +314,19 @@ impl Database {
         self.conn()
             .execute("DELETE FROM tasks WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
+    }
+
+    pub fn set_task_phase(
+        &self,
+        task_id: &str,
+        phase_id: Option<&str>,
+    ) -> Result<Task, rusqlite::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+        self.conn().execute(
+            "UPDATE tasks SET phase_id = ?1, updated_at = ?2 WHERE id = ?3",
+            rusqlite::params![phase_id, now, task_id],
+        )?;
+        self.get_task(task_id)
     }
 
     pub fn list_standalone_tasks(&self) -> Result<Vec<Task>, rusqlite::Error> {
@@ -373,6 +394,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -404,6 +426,7 @@ mod tests {
                 duration_minutes: Some(60),
                 recurrence_rule: Some("weekly".into()),
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -438,6 +461,7 @@ mod tests {
             duration_minutes: None,
             recurrence_rule: None,
             estimated_minutes: None,
+            phase_id: None,
         })
         .unwrap();
         db.create_task(CreateTaskInput {
@@ -454,6 +478,7 @@ mod tests {
             duration_minutes: None,
             recurrence_rule: None,
             estimated_minutes: None,
+            phase_id: None,
         })
         .unwrap();
 
@@ -481,6 +506,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -499,6 +525,7 @@ mod tests {
                     duration_minutes: None,
                     recurrence_rule: None,
                     estimated_minutes: None,
+                    phase_id: None,
                 },
             )
             .unwrap();
@@ -528,6 +555,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -564,6 +592,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -592,6 +621,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -619,6 +649,7 @@ mod tests {
                 duration_minutes: Some(45),
                 recurrence_rule: Some("daily".into()),
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -657,6 +688,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -677,6 +709,7 @@ mod tests {
                     duration_minutes: Some(30),
                     recurrence_rule: Some("weekdays".into()),
                     estimated_minutes: None,
+                    phase_id: None,
                 },
             )
             .unwrap();
@@ -707,6 +740,7 @@ mod tests {
             duration_minutes: None,
             recurrence_rule: Some("every-other-tuesday".into()),
             estimated_minutes: None,
+            phase_id: None,
         });
 
         assert!(result.is_err());
@@ -731,6 +765,7 @@ mod tests {
                 duration_minutes: None,
                 recurrence_rule: None,
                 estimated_minutes: None,
+                phase_id: None,
             })
             .unwrap();
 
@@ -763,6 +798,7 @@ mod tests {
             duration_minutes: None,
             recurrence_rule: None,
             estimated_minutes: None,
+            phase_id: None,
         })
         .unwrap();
 
@@ -781,11 +817,84 @@ mod tests {
             duration_minutes: None,
             recurrence_rule: None,
             estimated_minutes: None,
+            phase_id: None,
         })
         .unwrap();
 
         let standalone = db.list_standalone_tasks().unwrap();
         assert_eq!(standalone.len(), 1);
         assert_eq!(standalone[0].title, "Standalone");
+    }
+
+    #[test]
+    fn test_set_task_phase() {
+        let db = setup_test_db();
+        let project_id = create_test_project(&db);
+
+        // Create a phase
+        use crate::models::phase::CreatePhaseInput;
+        let phase = db
+            .create_phase(CreatePhaseInput {
+                project_id: project_id.clone(),
+                name: "Phase 1".into(),
+            })
+            .unwrap();
+
+        // Create a task
+        let task = db
+            .create_task(CreateTaskInput {
+                project_id: Some(project_id),
+                theme_id: None,
+                title: "Phase Task".into(),
+                description: None,
+                context: None,
+                priority: None,
+                external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
+                estimated_minutes: None,
+                phase_id: None,
+            })
+            .unwrap();
+
+        assert!(task.phase_id.is_none());
+
+        // Assign to phase
+        let assigned = db.set_task_phase(&task.id, Some(&phase.id)).unwrap();
+        assert_eq!(assigned.phase_id, Some(phase.id.clone()));
+
+        // Unassign from phase
+        let unassigned = db.set_task_phase(&task.id, None).unwrap();
+        assert!(unassigned.phase_id.is_none());
+    }
+
+    #[test]
+    fn test_task_serializes_phase_id_camel_case() {
+        let task = Task {
+            id: "test-id".into(),
+            project_id: None,
+            theme_id: None,
+            title: "Test".into(),
+            description: "".into(),
+            context: "".into(),
+            status: TaskStatus::Pending,
+            priority: TaskPriority::Medium,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+            phase_id: Some("phase-1".into()),
+            created_at: "2026-01-01".into(),
+            updated_at: "2026-01-01".into(),
+        };
+
+        let json = serde_json::to_string(&task).unwrap();
+        assert!(json.contains("phaseId"));
     }
 }
