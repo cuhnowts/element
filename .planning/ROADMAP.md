@@ -67,9 +67,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 07-01-PLAN.md -- Backend: migration (007_phases.sql), phase model, project/task extensions, Tauri commands, dialog plugin
-- [ ] 07-02-PLAN.md -- Frontend: npm dependencies, shadcn components, types, API layer, Zustand phase slice
-- [ ] 07-03-PLAN.md -- UI: ProjectDetail redesign, PhaseRow with DnD, DirectoryLink, progress bars, sidebar + TaskDetail updates
+- [x] 07-01-PLAN.md -- Backend: migration (007_phases.sql), phase model, project/task extensions, Tauri commands, dialog plugin
+- [x] 07-02-PLAN.md -- Frontend: npm dependencies, shadcn components, types, API layer, Zustand phase slice
+- [x] 07-03-PLAN.md -- UI: ProjectDetail redesign, PhaseRow with DnD, DirectoryLink, progress bars, sidebar + TaskDetail updates
 
 ### Phase 8: File Explorer
 **Goal**: Users can browse and interact with project files directly within the Element workspace
