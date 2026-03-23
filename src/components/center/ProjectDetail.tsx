@@ -25,6 +25,7 @@ import { PlanWithAiButton } from "./PlanWithAiButton";
 import { ScopeInputForm } from "./ScopeInputForm";
 import { OnboardingWaitingCard } from "./OnboardingWaitingCard";
 import { AiModeSelect } from "./AiModeSelect";
+import { AiPlanReview } from "./AiPlanReview";
 import { api } from "@/lib/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
@@ -400,11 +401,8 @@ export function ProjectDetail() {
           planDetected={pendingPlan !== null}
           onCancel={handleCancelOnboarding}
         />
-      ) : onboardingStep === "review" ? (
-        <div className="text-sm text-muted-foreground text-center mt-12">
-          {/* Review screen placeholder -- implemented in Plan 03 */}
-          Review screen coming in next plan...
-        </div>
+      ) : onboardingStep === "review" && pendingPlan ? (
+        <AiPlanReview projectId={project.id} />
       ) : (
       <div>
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
