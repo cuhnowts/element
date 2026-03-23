@@ -30,6 +30,7 @@ use commands::schedule_commands::*;
 use commands::scheduling_commands::*;
 use commands::task_commands::*;
 use commands::theme_commands::*;
+use commands::file_explorer_commands::*;
 use commands::workflow_commands::*;
 
 pub fn run() {
@@ -63,6 +64,11 @@ pub fn run() {
 
             // Initialize AI gateway
             app.manage(ai::gateway::AiGateway::new());
+
+            // Initialize file watcher state
+            app.manage(FileWatcherState {
+                watcher: std::sync::Mutex::new(None),
+            });
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -227,6 +233,11 @@ pub fn run() {
             reorder_phases,
             link_project_directory,
             set_task_phase,
+            list_directory,
+            open_file_in_editor,
+            reveal_in_file_manager,
+            start_file_watcher,
+            stop_file_watcher,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
