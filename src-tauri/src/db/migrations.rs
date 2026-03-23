@@ -43,5 +43,10 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.pragma_update(None, "user_version", 8)?;
     }
 
+    if version < 9 {
+        conn.execute_batch(include_str!("sql/009_ai_onboarding.sql"))?;
+        conn.pragma_update(None, "user_version", 9)?;
+    }
+
     Ok(())
 }
