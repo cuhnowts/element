@@ -1,12 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
 import { useTaskStore } from "@/stores/useTaskStore";
 
-type Tab = "logs" | "history";
-
 interface DrawerHeaderProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
+  activeTab: DrawerTab;
+  onTabChange: (tab: DrawerTab) => void;
 }
 
 export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
@@ -15,30 +13,36 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
   const clearLogs = useTaskStore((s) => s.clearLogs);
   const executionLogs = useTaskStore((s) => s.executionLogs);
 
+  const tabClass = (tab: DrawerTab) =>
+    `text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
+      activeTab === tab
+        ? "text-foreground bg-muted"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
+
   return (
     <div className="flex items-center justify-between px-4 py-2 border-b border-border">
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => onTabChange("logs")}
-          className={`text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
-            activeTab === "logs"
-              ? "text-foreground bg-muted"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={tabClass("logs")}
         >
           Logs
         </button>
         <button
           type="button"
           onClick={() => onTabChange("history")}
-          className={`text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
-            activeTab === "history"
-              ? "text-foreground bg-muted"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={tabClass("history")}
         >
           History
+        </button>
+        <button
+          type="button"
+          onClick={() => onTabChange("terminal")}
+          className={tabClass("terminal")}
+        >
+          Terminal
         </button>
       </div>
       <div className="flex items-center gap-2">
