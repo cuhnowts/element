@@ -202,6 +202,14 @@ export const THEME_COLORS = [
   '#6b7280', // gray
 ] as const;
 
+// File Explorer
+export interface FileEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  is_hidden: boolean;
+}
+
 // Settings navigation
 export type SettingsTab =
   | "plugins"
