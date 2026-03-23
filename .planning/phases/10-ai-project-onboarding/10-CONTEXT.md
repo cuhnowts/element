@@ -132,6 +132,7 @@ Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
 - **Track+Suggest behavior** — Actual AI suggestion logic when mode is set (Phase 11)
 - **Track+Auto-execute behavior** — Automatic task execution logic (Phase 11)
 - **Skill marketplace** — Shareable/downloadable skill files for different project types (future)
+- **GSD `.planning/` directory sync** — When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created → mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app. User-requested during Phase 7 verification (2026-03-22).
 
 </deferred>
 
