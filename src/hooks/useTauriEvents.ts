@@ -13,6 +13,7 @@ export function useTauriEvents() {
   const fetchTodaysTasks = useTaskStore((s) => s.fetchTodaysTasks);
   const fetchExecutionLogs = useTaskStore((s) => s.fetchExecutionLogs);
   const workspaceSelectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
+  const refreshChangedDirectories = useStore((s) => s.refreshChangedDirectories);
 
   useEffect(() => {
     const listeners = Promise.all([
@@ -43,10 +44,14 @@ export function useTauriEvents() {
       listen("execution-completed", () => {
         if (workspaceSelectedTaskId) fetchExecutionLogs(workspaceSelectedTaskId);
       }),
+      listen<string[]>("file-system-changed", (event) => {
+        const changedDirs = event.payload;
+        refreshChangedDirectories(changedDirs);
+      }),
     ]);
 
     return () => {
       listeners.then((fns) => fns.forEach((fn) => fn()));
     };
-  }, [selectedProjectId, loadProjects, loadTasks, openCreateProjectDialog, fetchTodaysTasks, fetchExecutionLogs, workspaceSelectedTaskId]);
+  }, [selectedProjectId, loadProjects, loadTasks, openCreateProjectDialog, fetchTodaysTasks, fetchExecutionLogs, workspaceSelectedTaskId, refreshChangedDirectories]);
 }
