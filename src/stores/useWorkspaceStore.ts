@@ -18,8 +18,9 @@ interface WorkspaceState {
   toggleCalendar: () => void;
   selectTask: (id: string | null) => void;
 
-  // Terminal actions
+  // Terminal/drawer actions
   setActiveDrawerTab: (tab: DrawerTab) => void;
+  openDrawerToTab: (tab: DrawerTab) => void;
   openTerminal: () => void;
   markTerminalAutoOpened: () => void;
 }
@@ -40,6 +41,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       selectTask: (id) => set({ selectedTaskId: id }),
 
       setActiveDrawerTab: (tab) => set({ activeDrawerTab: tab }),
+      openDrawerToTab: (tab) => set({ drawerOpen: true, activeDrawerTab: tab }),
       openTerminal: () => set({ drawerOpen: true, activeDrawerTab: "terminal" }),
       markTerminalAutoOpened: () => set({ hasAutoOpenedTerminal: true }),
     }),

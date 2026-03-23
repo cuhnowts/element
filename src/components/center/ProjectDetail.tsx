@@ -21,7 +21,15 @@ import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { DirectoryLink } from "./DirectoryLink";
 import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
+import { PlanWithAiButton } from "./PlanWithAiButton";
+import { ScopeInputForm } from "./ScopeInputForm";
+import { OnboardingWaitingCard } from "./OnboardingWaitingCard";
+import { AiModeSelect } from "./AiModeSelect";
+import { api } from "@/lib/tauri";
+import { listen } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/lib/types";
+import type { PlanOutput } from "@/types/onboarding";
 
 // --- Exported helpers for testing ---
 
@@ -55,6 +63,18 @@ export function ProjectDetail() {
   const setTaskPhase = useStore((s) => s.setTaskPhase);
   const loadTasks = useStore((s) => s.loadTasks);
   const selectTask = useWorkspaceStore((s) => s.selectTask);
+  const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
+
+  // Onboarding state
+  const onboardingStep = useStore((s) => s.onboardingStep);
+  const setOnboardingStep = useStore((s) => s.setOnboardingStep);
+  const onboardingScope = useStore((s) => s.onboardingScope);
+  const setOnboardingScope = useStore((s) => s.setOnboardingScope);
+  const setOnboardingGoals = useStore((s) => s.setOnboardingGoals);
+  const pendingPlan = useStore((s) => s.pendingPlan);
+  const setPendingPlan = useStore((s) => s.setPendingPlan);
+  const updateProjectAiMode = useStore((s) => s.updateProjectAiMode);
+  const loadProjects = useStore((s) => s.loadProjects);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -63,6 +83,7 @@ export function ProjectDetail() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [overDropId, setOverDropId] = useState<string | null>(null);
   const descTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevStepRef = useRef(onboardingStep);
 
   const project = projects.find((p) => p.id === selectedProjectId);
 
@@ -85,7 +106,82 @@ export function ProjectDetail() {
     }
   }, [project?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Listen for plan-output events from Tauri backend
+  useEffect(() => {
+    const unlisteners = Promise.all([
+      listen<PlanOutput>("plan-output-detected", (event) => {
+        setPendingPlan(event.payload);
+        setTimeout(() => setOnboardingStep("review"), 500);
+      }),
+      listen<string>("plan-output-error", (event) => {
+        toast.error(event.payload);
+      }),
+    ]);
+    return () => { unlisteners.then((fns) => fns.forEach((fn) => fn())); };
+  }, [setPendingPlan, setOnboardingStep]);
+
+  // When review completes and returns to idle, reload phases
+  useEffect(() => {
+    if (prevStepRef.current === "review" && onboardingStep === "idle") {
+      loadProjects();
+      if (selectedProjectId) {
+        loadPhases(selectedProjectId);
+        loadTasks(selectedProjectId);
+      }
+    }
+    prevStepRef.current = onboardingStep;
+  }, [onboardingStep, loadProjects, loadPhases, loadTasks, selectedProjectId]);
+
   if (!project) return null;
+
+  const handleStartPlanning = async (scope: string, goals: string) => {
+    if (!project) return;
+
+    // Guard: project must have a linked directory
+    if (!project.directoryPath) {
+      toast.error("Link a project directory first. The AI planning tool needs a directory to store its files.");
+      return;
+    }
+
+    setOnboardingScope(scope);
+    setOnboardingGoals(goals);
+
+    try {
+      // Get CLI tool path from settings
+      const cliTool = await api.getAppSetting("cli_tool_path");
+      if (!cliTool) {
+        toast.error("Configure a CLI tool in Settings > AI first.");
+        return;
+      }
+
+      // Write skill file
+      await api.generateSkillFile(
+        project.directoryPath,
+        project.name,
+        scope,
+        goals
+      );
+
+      // Start file watcher
+      await api.startPlanWatcher(project.directoryPath);
+
+      // Open terminal tab and ensure drawer is visible
+      openDrawerToTab("terminal");
+
+      // Launch CLI tool in terminal
+      const skillPath = `${project.directoryPath}/.element/onboard.md`;
+      await api.runCliTool(cliTool, [skillPath], project.directoryPath);
+
+      setOnboardingStep("waiting");
+    } catch (e) {
+      toast.error(`Failed to start AI planning: ${e}`);
+    }
+  };
+
+  const handleCancelOnboarding = async () => {
+    await api.stopPlanWatcher().catch(() => {});
+    setOnboardingStep("idle");
+  };
 
   const apiUpdateProject = async (projectId: string, newName: string, newDesc: string) => {
     const { api } = await import("@/lib/tauri");
@@ -283,21 +379,46 @@ export function ProjectDetail() {
           </span>
           <span className="text-muted-foreground">{total}</span>
         </div>
+        <div className="ml-auto">
+          <AiModeSelect
+            value={project.aiMode}
+            onChange={(mode) => updateProjectAiMode(project.id, mode)}
+          />
+        </div>
       </div>
 
-      {/* Phases Section */}
+      {/* Phases Section / Onboarding Flow */}
+      {onboardingStep === "scope-input" ? (
+        <ScopeInputForm
+          projectName={project.name}
+          onSubmit={handleStartPlanning}
+          onCancel={() => setOnboardingStep("idle")}
+        />
+      ) : onboardingStep === "waiting" ? (
+        <OnboardingWaitingCard
+          scope={onboardingScope}
+          planDetected={pendingPlan !== null}
+          onCancel={handleCancelOnboarding}
+        />
+      ) : onboardingStep === "review" ? (
+        <div className="text-sm text-muted-foreground text-center mt-12">
+          {/* Review screen placeholder -- implemented in Plan 03 */}
+          Review screen coming in next plan...
+        </div>
+      ) : (
       <div>
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
           Phases
         </span>
 
         {!hasContent && !phasesLoading ? (
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">No phases yet</p>
-            <p className="text-xs text-muted-foreground">
-              Break this project into phases to track progress. Click &quot;+ Add phase&quot; below to start.
-            </p>
-          </div>
+          <PlanWithAiButton
+            onPlanWithAi={() => setOnboardingStep("scope-input")}
+            onAddPhaseManually={() => {
+              setIsAddingPhase(true);
+              setNewPhaseName("");
+            }}
+          />
         ) : (
           <div className="space-y-1">
             <DndContext
@@ -383,6 +504,7 @@ export function ProjectDetail() {
           </Button>
         )}
       </div>
+      )}
     </div>
   );
 }
