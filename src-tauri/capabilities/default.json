@@ -14,6 +14,7 @@
     "global-shortcut:default",
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
-    "dialog:default"
+    "dialog:default",
+    "pty:default"
   ]
 }

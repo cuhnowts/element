@@ -149,6 +149,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_oauth::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_pty::init())
         .invoke_handler(tauri::generate_handler![
             create_project,
             list_projects,
