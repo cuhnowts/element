@@ -121,21 +121,23 @@ Plans:
 - [x] 10-03-PLAN.md -- AiPlanReview component with DnD/inline edit, confirm/save, discard, end-to-end checkpoint
 
 ### Phase 11: Workspace Integration and AI Context
-**Goal**: Users experience a unified project workspace with intelligent context switching and AI-driven progress awareness
-**Depends on**: Phase 8, Phase 9, Phase 10 (requires file explorer, terminal, and AI mode)
-**Requirements**: AIAS-02, AIAS-03
+**Goal**: Users can click an "Open AI" button that seeds full project context into the embedded terminal, giving the AI immediate awareness of project state
+**Depends on**: Phase 8, Phase 9, Phase 10 (requires file explorer, terminal, and onboarding infrastructure)
+**Requirements**: AIAS-02, AIAS-03 — to be revised
 **Success Criteria** (what must be TRUE):
-  1. When switching to a project, AI generates a "where was I?" summary of recent progress and next steps
-  2. In Track+Suggest mode, AI surfaces relevant suggestions based on project progress
-  3. Workspace assembles file explorer, terminal, phase overview, and task list into a cohesive project view with remembered layout
-**Plans**: 4 plans
+  1. ~~When switching to a project, AI generates a "where was I?" summary~~ — REMOVED (2026-03-24)
+  2. ~~In Track+Suggest mode, AI surfaces relevant suggestions~~ — REMOVED (2026-03-24)
+  3. User can click "Open AI" button and project context (phases, tasks, progress, what's next) is seeded into the terminal
+  4. AI in terminal immediately knows project state and can assist
+  5. Manual terminal usage (without clicking AI button) remains context-free
+**Plans**: NEEDS RE-PLANNING (existing 4 plans invalidated by AI mode removal)
 **UI hint**: yes
 
 Plans:
-- [ ] 11-00-PLAN.md -- Wave 0: Test stubs for workspace state, context slice, and UI components
-- [ ] 11-01-PLAN.md -- Backend: Rust types, context aggregation, prompt builders, Tauri commands, frontend API bindings
-- [ ] 11-02-PLAN.md -- Frontend state: per-project workspace store extension, context summary/suggestion slice
-- [ ] 11-03-PLAN.md -- UI: ContextSummaryCard, AiSuggestionCard, ProjectDetail integration, checkpoint
+- [ ] ~~11-00-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
+- [ ] ~~11-01-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
+- [ ] ~~11-02-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
+- [ ] ~~11-03-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
 
 ## Progress
 

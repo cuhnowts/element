@@ -1,14 +1,16 @@
 # Phase 11: Workspace Integration and AI Context - Context
 
 **Gathered:** 2026-03-22
-**Status:** Ready for planning
+**Status:** NEEDS RE-DISCUSSION — existing plans invalidated by AI mode removal (2026-03-24)
+
+> **WARNING (2026-03-24):** All 4 existing plans (11-00 through 11-03) were written assuming per-project AI mode (on-demand/track-suggest/track-auto-execute) from Phase 10. That feature has been removed. The new direction: a single "Open AI" button that seeds project context into the embedded terminal. No persistent modes, no idle-threshold summaries, no suggestion cards. Plans must be scrapped and re-created after re-discussion.
 
 <domain>
 ## Phase Boundary
 
-Users experience a unified project workspace with intelligent context switching and AI-driven progress awareness. This phase delivers: workspace state management that assembles file tree, terminal, phases, and tasks into a cohesive per-project view with remembered layout; AI-generated "where was I?" context summaries on project switch; and AI-driven progress suggestions in Track+Suggest mode.
+Users experience a unified project workspace where clicking an "Open AI" button seeds full project context (phases, tasks, progress, what's next) into the embedded terminal. The AI immediately knows the project state and can help the user with what needs to be done next. No persistent AI modes — it's an action, not a setting.
 
-Requirements: AIAS-02, AIAS-03
+Requirements: AIAS-02, AIAS-03 — to be revised during re-discussion
 
 </domain>
 
