@@ -18,7 +18,7 @@ Users can set up new projects through an AI-guided conversation that generates a
 | AIOB-02 | AI asks clarifying questions to refine project understanding | PASSED |
 | AIOB-03 | AI generates phases and tasks from the conversation | PASSED |
 | AIOB-04 | User can review, edit, and confirm AI-generated breakdown before it's saved | PASSED |
-| AIAS-01 | User can set AI mode per project (Track+Suggest, Track+Auto-execute, On-demand) | PASSED |
+| AIAS-01 | ~~User can set AI mode per project~~ | REMOVED (2026-03-23) |
 
 ## Automated Checks
 
@@ -36,20 +36,20 @@ Users can set up new projects through an AI-guided conversation that generates a
 - [x] src/components/center/PlanWithAiButton.tsx — Entry CTA exists
 - [x] src/components/center/ScopeInputForm.tsx — Scope form exists
 - [x] src/components/center/OnboardingWaitingCard.tsx — Waiting card exists
-- [x] src/components/center/AiModeSelect.tsx — AI mode dropdown exists
+- [ ] ~~src/components/center/AiModeSelect.tsx~~ — REMOVED (2026-03-23)
 - [x] src/components/center/AiPlanReview.tsx — Review screen exists
 
 ### Content Verification
-- [x] Migration adds ai_mode column and app_settings table
+- [x] Migration adds app_settings table (ai_mode column remains in DB but unused)
 - [x] Onboarding model exports PlanOutput, PendingPhase, PendingTask
-- [x] 8 Tauri commands registered in lib.rs invoke_handler
+- [x] 7 Tauri commands registered in lib.rs invoke_handler (update_project_ai_mode removed)
 - [x] PlanWatcherState managed in Tauri app state
 - [x] OnboardingSlice includes all editing actions (update/remove/add/reorder phases and tasks)
 - [x] confirmAndSavePlan calls batchCreatePlan and resets state
 - [x] ProjectDetail renders based on onboardingStep state machine
 - [x] Directory guard prevents planning without linked directory
 - [x] Terminal auto-opens via openDrawerToTab("terminal")
-- [x] AI mode dropdown with 3 options in project header
+- [ ] ~~AI mode dropdown with 3 options in project header~~ — REMOVED (2026-03-23)
 - [x] AiPlanReview uses DndContext + SortableContext for phase reorder
 - [x] Inline editing with auto-focus and empty-removes pattern
 - [x] Discard confirmation dialog with "Keep reviewing" and "Discard plan"
@@ -59,7 +59,7 @@ Users can set up new projects through an AI-guided conversation that generates a
 The following items require manual testing with `npm run tauri dev`:
 
 1. Empty project detail view shows "No phases yet" with "Plan with AI" button
-2. AI Mode dropdown visible in header, defaults to "On-demand", persists on change
+2. ~~AI Mode dropdown visible in header~~ — REMOVED (2026-03-23)
 3. Clicking "Plan with AI" shows scope input form with required scope field
 4. "Start AI Planning" button disabled when scope is empty
 5. Submit without linked directory shows toast error
@@ -73,8 +73,8 @@ The following items require manual testing with `npm run tauri dev`:
 
 ## Score
 
-**5/5 requirements verified** (all automated checks pass)
-**12 items need human testing** (UI interaction verification)
+**4/4 requirements verified** (AIAS-01 removed; all automated checks pass)
+**11 items need human testing** (UI interaction verification; AI mode item removed)
 
 ## Gaps
 

@@ -6,9 +6,11 @@
 <domain>
 ## Phase Boundary
 
-Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown, plus set per-project AI assistance mode. The AI conversation is delegated to the user's preferred CLI tool (Claude Code, Cursor, etc.) running in Element's embedded terminal. Element orchestrates: writes a skill file with project context, launches the CLI tool, watches for structured output, and presents a review/edit screen before saving.
+Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown. The AI conversation is delegated to the user's preferred CLI tool (Claude Code, Cursor, etc.) running in Element's embedded terminal. Element orchestrates: writes a skill file with project context, launches the CLI tool, watches for structured output, and presents a review/edit screen before saving.
 
-Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
+Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04
+
+> **REMOVED (2026-03-23):** AIAS-01 (per-project AI mode) removed. The on-demand/track-suggest/track-auto-execute dropdown was over-engineered for current needs. AI mode may be reintroduced later in a simpler form.
 
 </domain>
 
@@ -40,10 +42,10 @@ Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
 - **D-14:** "Confirm & Save" batch-creates all phases and tasks in the database. Center panel transitions to the populated project detail view. Toast confirms: "X phases and Y tasks created."
 - **D-15:** "Discard" discards the AI output and returns to empty project detail view.
 
-### AI Mode Selection
-- **D-16:** AI mode dropdown in the project detail header area (alongside directory link, progress bar). Always visible and changeable.
-- **D-17:** Three modes: Track+Suggest, Track+Auto-execute, On-demand. Default for new projects: On-demand.
-- **D-18:** Phase 10 delivers the UI to set and persist ai_mode per project (schema column + dropdown). Actual Track+Suggest and Auto-execute behavior is implemented in Phase 11.
+### AI Mode Selection — REMOVED (2026-03-23)
+- ~~**D-16:** AI mode dropdown in the project detail header area~~ — Removed. Over-simplified for current needs.
+- ~~**D-17:** Three modes: Track+Suggest, Track+Auto-execute, On-demand~~ — Removed.
+- ~~**D-18:** Phase 10 delivers the UI to set and persist ai_mode per project~~ — Removed. `AiModeSelect.tsx` deleted, `ai_mode` field removed from Project model/struct/queries, `update_project_ai_mode` command removed. DB column remains (harmless default) but is no longer read.
 
 ### Claude's Discretion
 - Exact skill file template content and output JSON schema design
@@ -68,8 +70,8 @@ Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
 - `src/types/ai.ts` — AI type definitions (extend with onboarding types)
 
 ### Project & Phase Infrastructure (Phase 7 dependencies)
-- `src-tauri/src/models/project.rs` — Project model (needs ai_mode field)
-- `src-tauri/src/commands/project_commands.rs` — Project commands (needs AI mode update command)
+- `src-tauri/src/models/project.rs` — Project model
+- `src-tauri/src/commands/project_commands.rs` — Project commands
 - `src/components/center/ProjectDetail.tsx` — Project detail view (add "Plan with AI" button, AI mode dropdown, review screen)
 
 ### Terminal Integration (Phase 9 dependency)
@@ -106,9 +108,9 @@ Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
 - Tauri invoke wrapper: `api.*` methods in `src/lib/tauri.ts`
 
 ### Integration Points
-- New SQL migration: add `ai_mode` column to projects table, add `cli_tool_path` to settings/config
+- New SQL migration: add `app_settings` table for key-value config
 - New Rust commands: CLI tool config CRUD, skill file generation, file watcher for plan output
-- ProjectDetail.tsx: "Plan with AI" empty state, waiting state, review screen, AI mode dropdown
+- ProjectDetail.tsx: "Plan with AI" empty state, waiting state, review screen
 - Extend `useWorkspaceStore` or `aiSlice` with onboarding flow state
 - Terminal integration: programmatic tab open and CLI invocation
 
@@ -129,8 +131,7 @@ Requirements: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
 
 - **Re-trigger AI planning for existing projects** — "Regenerate with AI" for projects that already have phases (adds merge/append complexity)
 - **Per-project CLI tool override** — Different projects using different CLI tools (global setting sufficient for now)
-- **Track+Suggest behavior** — Actual AI suggestion logic when mode is set (Phase 11)
-- **Track+Auto-execute behavior** — Automatic task execution logic (Phase 11)
+- **AI assistance modes** — Per-project AI mode (on-demand/track-suggest/track-auto-execute) removed 2026-03-23. May revisit in simpler form.
 - **Skill marketplace** — Shareable/downloadable skill files for different project types (future)
 - **GSD `.planning/` directory sync** — When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created → mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app. User-requested during Phase 7 verification (2026-03-22).
 

@@ -243,7 +243,6 @@ pub fn run() {
             reveal_in_file_manager,
             start_file_watcher,
             stop_file_watcher,
-            update_project_ai_mode,
             generate_skill_file,
             start_plan_watcher,
             stop_plan_watcher,

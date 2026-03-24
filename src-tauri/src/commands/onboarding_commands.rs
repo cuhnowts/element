@@ -4,7 +4,6 @@ use std::sync::Mutex as StdMutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::db::connection::Database;
-use crate::models::project::Project;
 
 /// Managed state for the plan file watcher
 pub struct PlanWatcherState(
@@ -168,28 +167,6 @@ pub async fn batch_create_plan(
     };
     let _ = app.emit("plan-saved", &project_id);
     Ok(result)
-}
-
-#[tauri::command]
-pub async fn update_project_ai_mode(
-    app: AppHandle,
-    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
-    project_id: String,
-    ai_mode: String,
-) -> Result<Project, String> {
-    if !["on-demand", "track-suggest", "track-auto-execute"].contains(&ai_mode.as_str()) {
-        return Err(format!(
-            "Invalid ai_mode: {}. Must be on-demand, track-suggest, or track-auto-execute",
-            ai_mode
-        ));
-    }
-    let db = state.lock().map_err(|e| e.to_string())?;
-    let project = db
-        .update_project_ai_mode(&project_id, &ai_mode)
-        .map_err(|e| e.to_string())?;
-    app.emit("project-updated", &project)
-        .map_err(|e| e.to_string())?;
-    Ok(project)
 }
 
 #[tauri::command]

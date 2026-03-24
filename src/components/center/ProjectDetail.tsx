@@ -24,7 +24,6 @@ import { UnassignedBucket } from "./UnassignedBucket";
 import { PlanWithAiButton } from "./PlanWithAiButton";
 import { ScopeInputForm } from "./ScopeInputForm";
 import { OnboardingWaitingCard } from "./OnboardingWaitingCard";
-import { AiModeSelect } from "./AiModeSelect";
 import { AiPlanReview } from "./AiPlanReview";
 import { api } from "@/lib/tauri";
 import { listen } from "@tauri-apps/api/event";
@@ -74,7 +73,6 @@ export function ProjectDetail() {
   const setOnboardingGoals = useStore((s) => s.setOnboardingGoals);
   const pendingPlan = useStore((s) => s.pendingPlan);
   const setPendingPlan = useStore((s) => s.setPendingPlan);
-  const updateProjectAiMode = useStore((s) => s.updateProjectAiMode);
   const loadProjects = useStore((s) => s.loadProjects);
 
   const [name, setName] = useState("");
@@ -379,12 +377,6 @@ export function ProjectDetail() {
             Tasks
           </span>
           <span className="text-muted-foreground">{total}</span>
-        </div>
-        <div className="ml-auto">
-          <AiModeSelect
-            value={project.aiMode}
-            onChange={(mode) => updateProjectAiMode(project.id, mode)}
-          />
         </div>
       </div>
 

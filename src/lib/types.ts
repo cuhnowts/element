@@ -7,7 +7,6 @@ export interface Project {
   description: string;
   directoryPath: string | null;
   themeId: string | null;
-  aiMode: string;
   createdAt: string;
   updatedAt: string;
 }
