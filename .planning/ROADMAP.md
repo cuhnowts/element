@@ -50,8 +50,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 Plans:
 - [x] 06-01-PLAN.md -- Backend: migration, theme model, theme commands, task/project modifications
-- [ ] 06-02-PLAN.md -- Frontend: types, API, store, sidebar components, sidebar restructure
-- [ ] 06-03-PLAN.md -- Checkpoint: end-to-end theme system verification
+- [x] 06-02-PLAN.md -- Frontend: types, API, store, sidebar components, sidebar restructure
+- [x] 06-03-PLAN.md -- Checkpoint: end-to-end theme system verification (user-verified 2026-03-24)
 
 ### Phase 7: Project Phases and Directory Linking
 **Goal**: Users can structure projects into ordered phases, track progress, and link projects to filesystem directories
