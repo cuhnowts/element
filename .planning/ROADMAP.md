@@ -105,19 +105,19 @@ Plans:
 ### Phase 10: AI Project Onboarding
 **Goal**: Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown
 **Depends on**: Phase 7 (requires phases schema and CRUD)
-**Requirements**: AIOB-01, AIOB-02, AIOB-03, AIOB-04, AIAS-01
+**Requirements**: AIOB-01, AIOB-02, AIOB-03, AIOB-04 (AIAS-01 removed 2026-03-23)
 **Success Criteria** (what must be TRUE):
   1. User can enter project scope, goals, and constraints in a structured onboarding form
   2. AI asks clarifying questions to refine understanding of the project before generating a breakdown
   3. AI generates a set of phases and tasks based on the conversation
   4. User can review, edit, and confirm the AI-generated breakdown before it is saved to the project
-  5. User can set the AI assistance mode per project (Track+Suggest, Track+Auto-execute, or On-demand)
+  5. ~~User can set the AI assistance mode per project~~ — REMOVED (2026-03-23)
 **Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [x] 10-01-PLAN.md -- Backend: migration (008), onboarding model, project ai_mode, Tauri commands (skill file, watcher, batch save, settings), frontend types/API/store
-- [x] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, AiModeSelect, ProjectDetail integration
+- [x] 10-01-PLAN.md -- Backend: migration (008), onboarding model, Tauri commands (skill file, watcher, batch save, settings), frontend types/API/store
+- [x] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, ProjectDetail integration
 - [x] 10-03-PLAN.md -- AiPlanReview component with DnD/inline edit, confirm/save, discard, end-to-end checkpoint
 
 ### Phase 11: Workspace Integration and AI Context
@@ -190,6 +190,15 @@ Plans:
 ### Phase 999.4: GSD .planning/ Directory Sync (BACKLOG)
 
 **Goal:** When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created → mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 999.5: Vision-Driven Goal Planning and Covey Role Management (BACKLOG)
+
+**Goal:** Add workspace-level vision statements, SMART goals (own table), Covey 7-Habits role-based theme management, and a reconciliation layer between active work and stated goals. Helps users define where they want to be, back into themes/projects/phases/tasks, and surface when daily work drifts from what matters. Self-discovery dimension. Could be separate feature area from project management with reconciliation between the two.
 **Requirements:** TBD
 **Plans:** 0 plans
 
