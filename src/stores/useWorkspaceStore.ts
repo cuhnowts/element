@@ -28,7 +28,7 @@ interface WorkspaceState {
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set) => ({
-      drawerHeight: 30,
+      drawerHeight: 40,
       drawerOpen: true,
       calendarVisible: true,
       selectedTaskId: null,

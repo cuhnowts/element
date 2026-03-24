@@ -17,8 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
+import { useTaskStore } from "@/stores/useTaskStore";
 import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
+import { GripHorizontal } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
@@ -29,17 +31,40 @@ export function AppLayout() {
   const settingsOpen = useStore((s) => s.settingsOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
+  const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
+  const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
+  const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
+  const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
+  const clearLogs = useTaskStore((s) => s.clearLogs);
+  const executionLogs = useTaskStore((s) => s.executionLogs);
   const drawerPanelRef = usePanelRef();
+
+  const handleTabClick = (tab: DrawerTab) => {
+    if (drawerOpen && activeDrawerTab === tab) {
+      toggleDrawer();
+    } else if (drawerOpen) {
+      setActiveDrawerTab(tab);
+    } else {
+      openDrawerToTab(tab);
+    }
+  };
+
+  const tabClass = (tab: DrawerTab) =>
+    `text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
+      activeDrawerTab === tab
+        ? "text-foreground bg-muted"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
 
   useEffect(() => {
     const panel = drawerPanelRef.current;
     if (!panel) return;
     if (drawerOpen) {
-      panel.expand();
+      panel.resize(Math.max(drawerHeight, 40));
     } else {
       panel.collapse();
     }
-  }, [drawerOpen, drawerPanelRef]);
+  }, [drawerOpen, drawerPanelRef, drawerHeight]);
 
   // Create Project Dialog
   const createProjectDialogOpen = useStore((s) => s.createProjectDialogOpen);
@@ -95,26 +120,51 @@ export function AppLayout() {
             <SettingsPage />
           </div>
         ) : (
-          <ResizablePanelGroup direction="vertical" className="flex-1">
-            <ResizablePanel
-              defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
-              minSize="30%"
-            >
-              <CenterPanel />
-            </ResizablePanel>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <ResizablePanelGroup direction="vertical" className="flex-1">
+              <ResizablePanel
+                defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
+                minSize="30%"
+              >
+                <CenterPanel />
+              </ResizablePanel>
 
-            <ResizableHandle withHandle />
+              <ResizableHandle className="border-t border-border bg-card cursor-row-resize">
+                <div className="flex items-center justify-between w-full px-4 py-1.5">
+                  <div className="flex items-center gap-1">
+                    <GripHorizontal className="size-3 text-muted-foreground mr-1 flex-shrink-0" />
+                    {(["logs", "history", "terminal"] as DrawerTab[]).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => handleTabClick(tab)}
+                        className={tabClass(tab)}
+                      >
+                        {tab === "logs" ? "Logs" : tab === "history" ? "History" : "Terminal"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {drawerOpen && activeDrawerTab === "logs" && executionLogs.length > 0 && (
+                      <Button variant="ghost" size="sm" className="text-xs h-6" onClick={clearLogs}>
+                        Clear Logs
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </ResizableHandle>
 
-            <ResizablePanel
-              defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
-              minSize="0%"
-              maxSize="60%"
-              collapsible
-              panelRef={drawerPanelRef}
-            >
-              <OutputDrawer />
-            </ResizablePanel>
-          </ResizablePanelGroup>
+              <ResizablePanel
+                defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
+                minSize="0%"
+                maxSize="60%"
+                collapsible
+                panelRef={drawerPanelRef}
+              >
+                <OutputDrawer />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
         )}
       </div>
 

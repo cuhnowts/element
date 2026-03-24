@@ -32,23 +32,29 @@ function ResizablePanel({
 function ResizableHandle({
   withHandle,
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof Separator> & {
   withHandle?: boolean;
+  children?: React.ReactNode;
 }) {
   return (
     <Separator
       className={cn(
-        "bg-border focus-visible:ring-ring relative flex w-px items-center justify-center focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden",
+        "bg-border focus-visible:ring-ring relative flex items-center justify-center focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden",
+        !children && "w-px",
+        children && "w-full h-auto",
         className,
       )}
       {...props}
     >
-      {withHandle && (
+      {children ? (
+        children
+      ) : withHandle ? (
         <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-sm border">
           <GripVertical className="size-2.5" />
         </div>
-      )}
+      ) : null}
     </Separator>
   );
 }

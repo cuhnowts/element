@@ -8,7 +8,6 @@ import { RunHistoryList } from "@/components/output/RunHistoryList";
 import { RunHistoryDetail } from "@/components/output/RunHistoryDetail";
 import { TerminalTab } from "@/components/output/TerminalTab";
 import { TerminalEmptyState } from "@/components/output/TerminalEmptyState";
-import { DrawerHeader } from "@/components/output/DrawerHeader";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -58,8 +57,7 @@ export function OutputDrawer() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-card border-t border-border">
-      <DrawerHeader activeTab={activeDrawerTab} onTabChange={handleTabChange} />
+    <div className="flex flex-col h-full bg-card">
       <div className="flex-1 overflow-hidden relative">
         <div style={{ display: activeDrawerTab === "logs" ? "block" : "none" }} className="h-full">
           <LogViewer entries={executionLogs} />
