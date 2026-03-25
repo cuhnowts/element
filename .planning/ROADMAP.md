@@ -8,6 +8,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 - ✅ **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-22) -- [archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Project Manager** -- Phases 6-11 (shipped 2026-03-25) -- [archive](milestones/v1.1-ROADMAP.md)
+- **v1.2 Intelligent Planning** -- Phases 12-15 (in progress)
 
 ## Phases
 
@@ -35,6 +36,59 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
+### v1.2 Intelligent Planning (Phases 12-15)
+
+- [ ] **Phase 12: CLI Settings and Schema Foundation** - Configurable AI tool command, schema additions for tier and sync, watcher safety patterns
+- [ ] **Phase 13: Adaptive Context Builder** - Mode-aware context file generation with token budget enforcement
+- [ ] **Phase 14: Planning Tier Decision Tree and Execution Mode** - Tier selection dialog, Quick/Medium/GSD flows, "What's next?" execution guidance
+- [ ] **Phase 15: .planning/ Folder Sync** - ROADMAP.md parsing, file watcher, one-way disk-to-database sync for GSD tier
+
+## Phase Details
+
+### Phase 12: CLI Settings and Schema Foundation
+**Goal**: Users can configure their AI terminal tool and the app is ready to store tier and sync metadata
+**Depends on**: Phase 11
+**Requirements**: CLI-01, CLI-02, PLAN-05, SYNC-04
+**Success Criteria** (what must be TRUE):
+  1. User can open Settings, enter a custom CLI command (e.g., `aider`, `codex`), and the "Open AI" button launches that command instead of hardcoded claude
+  2. App checks whether the configured CLI tool exists on the system before launching, and shows an actionable error message if it is missing
+  3. User's planning tier choice persists per-project -- selecting a tier on one project does not affect other projects
+  4. Phases and tasks created by external sync are distinguishable from user-created ones in the database (source tagging exists)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 13: Adaptive Context Builder
+**Goal**: The AI context file intelligently adapts its content based on what the project needs right now
+**Depends on**: Phase 12
+**Requirements**: CTX-01, CTX-02, CTX-04
+**Success Criteria** (what must be TRUE):
+  1. Context file for a project with no plan contains planning instructions; context file for a project with tasks in progress contains execution guidance with progress summary
+  2. A project with 50+ tasks generates a context file that summarizes completed work rather than listing every task, staying within token budget
+  3. Context file for a Quick-tier project contains simple todo-list prompts; context file for a GSD-tier project contains GSD command instructions
+**Plans**: TBD
+
+### Phase 14: Planning Tier Decision Tree and Execution Mode
+**Goal**: Users get the right level of AI planning for their project -- from a quick todo list to full GSD breakdown -- and planned projects get "what's next?" execution guidance
+**Depends on**: Phase 13
+**Requirements**: PLAN-01, PLAN-02, PLAN-03, PLAN-04, CTX-03
+**Success Criteria** (what must be TRUE):
+  1. Clicking "Open AI" on a project with no plan shows a tier selection dialog (Quick / Medium / GSD) before launching the terminal
+  2. Selecting Quick tier and providing a brief description produces a flat task list that is saved directly to the project (no phases)
+  3. Selecting Medium tier starts an AI conversation that asks focused questions, then generates phases and tasks for user review via the existing AiPlanReview UI
+  4. Selecting GSD tier launches the AI with instructions to run GSD commands, and the selected tier is stored on the project
+  5. Clicking "Open AI" on a project that already has tasks shows progress, highlights blockers, and suggests the next action to work on
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 15: .planning/ Folder Sync
+**Goal**: GSD-tier projects automatically reflect their .planning/ROADMAP.md structure in Element's UI
+**Depends on**: Phase 14
+**Requirements**: SYNC-01, SYNC-02, SYNC-03
+**Success Criteria** (what must be TRUE):
+  1. User can trigger an import of .planning/ROADMAP.md and see the parsed phases and tasks appear in the project's phase list
+  2. When GSD executes and updates ROADMAP.md on disk, Element detects the change and syncs the updates into the database automatically
+  3. App-side writes to .planning/ (if any) do not trigger a re-import loop -- content hashing prevents infinite sync cycles
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -51,6 +105,10 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 | 9. Embedded Terminal | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
+| 12. CLI Settings and Schema Foundation | v1.2 | 0/0 | Not started | - |
+| 13. Adaptive Context Builder | v1.2 | 0/0 | Not started | - |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/0 | Not started | - |
+| 15. .planning/ Folder Sync | v1.2 | 0/0 | Not started | - |
 
 ## Backlog
 

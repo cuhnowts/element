@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: Defining requirements
+status: Ready to plan
 stopped_at: null
 last_updated: "2026-03-25"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,24 +19,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Defining v1.2 requirements
+**Current focus:** Phase 12 - CLI Settings and Schema Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-25 — Milestone v1.2 started
+Phase: 12 of 15 (CLI Settings and Schema Foundation)
+Plan: 0 of 0 in current phase
+Status: Ready to plan
+Last activity: 2026-03-25 -- v1.2 roadmap created, 4 phases derived from 15 requirements
+
+Progress: [██████████████████████░░░░░░░░] 73% (11/15 phases complete across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
+- Total plans completed: 34 (v1.0: 17, v1.1: 17)
+- Average duration: carried from v1.0/v1.1
+- Total execution time: carried from v1.0/v1.1
 
-- Total plans completed: 29 (v1.0)
-- Average duration: carried from v1.0
-- Total execution time: carried from v1.0
+**Recent Trend:**
+- v1.0: 6 phases in 7 days
+- v1.1: 6 phases in 10 days (higher complexity per phase)
+- Trend: Stable
 
-*Metrics reset for v1.1 after first plan completion*
+*Updated after each plan completion*
 
 ## Accumulated Context
 
@@ -45,31 +51,11 @@ Last activity: 2026-03-25 — Milestone v1.2 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.1]: Themes as top-level categories containing projects and standalone tasks
-- [v1.1]: Per-project AI assistance mode (Track+Suggest, Track+Auto-execute, On-demand)
-- [v1.1]: Simplified workspace -- file tree + terminal, external editing
-- [v1.1]: AI-driven project onboarding with structured entry + AI questioning
-- [Phase 06]: Table recreation for nullable project_id (SQLite ALTER TABLE limitation)
-- [Phase 06]: createTask signature changed to (title, projectId?, themeId?) for standalone task support
-- [Phase 07]: PhaseSlice uses optimistic reorder with rollback, matching existing store patterns
-- [Phase 07]: setTaskPhase is a dedicated API method supporting explicit null for unassignment
-- [Phase 07]: Migration 008 for phases (007 taken by themes)
-- [Phase 07]: Dedicated set_task_phase command for nullable phase assignment
-- [Phase 08]: Extracted list_directory_impl as synchronous core for testability and spawn_blocking wrapping
-- [Phase 08]: Used localStorage persistence for expanded paths instead of workspace store
-- [Phase 09]: Hardcoded /bin/zsh as default shell for macOS (Windows support deferred per D-08) — macOS-first target, Windows shell detection deferred
-- [Phase 09]: Session-only zustand state for activeDrawerTab and hasAutoOpenedTerminal — Per D-03, auto-open is per-session; drawer tab resets on app launch
-- [Phase 09]: CSS display:none for tab switching to preserve terminal scrollback — Unmounting xterm.js destroys scrollback buffer; CSS hiding preserves full terminal state
-- [Phase 09]: Key-based TerminalTab remount on project switch for PTY cleanup — React key change triggers unmount (kills old PTY) and remount (spawns new PTY in new directory)
-- [Phase 11]: Session-only per-project state excluded from Zustand partialize (D-14)
-- [Phase 11]: Terminal kill/respawn via session key increment triggering React key change and component remount
-- [Phase 11]: Context file uses markdown with status icons, empty projects get onboarding instructions, attention section caps at 5 items
-- [Phase 11]: Hardcoded claude --dangerously-skip-permissions instead of configurable CLI tool path in OpenAiButton
-
-### Roadmap Evolution
-
-- Phase 02.1 inserted after Phase 2: Daily UX Foundation (v1.0, completed)
-- v1.1 roadmap: 6 phases (6-11), 23 requirements mapped
+- [Phase 11]: Hardcoded claude CLI needs configurable setting (tech debt, addressed in Phase 12)
+- [Phase 11]: Terminal kill/respawn via session key increment
+- [Phase 11]: Context file uses markdown with status icons, attention section caps at 5 items
+- [v1.2 research]: Regex parsing over AST for ROADMAP.md (predictable GSD format)
+- [v1.2 research]: One-way sync only (disk -> DB), bidirectional deferred to future
 
 ### Pending Todos
 
@@ -77,10 +63,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- CLI flag regression: `--dangerously-skip-permissions` broken after claude v2.1.77; Phase 12 must support alternative flags
+- Cross-tool context quality untested with Aider/Codex/Cursor -- validate during Phase 13-14
+- Orphaned files from v1.1: ScopeInputForm.tsx, OnboardingWaitingCard.tsx (cleanup opportunity)
 
 ## Session Continuity
 
-Last session: 2026-03-25T03:48:41.193Z
-Stopped at: Completed 11-03-PLAN.md
+Last session: 2026-03-25
+Stopped at: v1.2 roadmap created, ready to plan Phase 12
 Resume file: None

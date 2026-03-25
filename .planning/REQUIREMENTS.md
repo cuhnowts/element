@@ -71,27 +71,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| PLAN-01 | TBD | Pending |
-| PLAN-02 | TBD | Pending |
-| PLAN-03 | TBD | Pending |
-| PLAN-04 | TBD | Pending |
-| PLAN-05 | TBD | Pending |
-| CTX-01 | TBD | Pending |
-| CTX-02 | TBD | Pending |
-| CTX-03 | TBD | Pending |
-| CTX-04 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| SYNC-03 | TBD | Pending |
-| SYNC-04 | TBD | Pending |
+| CLI-01 | Phase 12 | Pending |
+| CLI-02 | Phase 12 | Pending |
+| PLAN-01 | Phase 14 | Pending |
+| PLAN-02 | Phase 14 | Pending |
+| PLAN-03 | Phase 14 | Pending |
+| PLAN-04 | Phase 14 | Pending |
+| PLAN-05 | Phase 12 | Pending |
+| CTX-01 | Phase 13 | Pending |
+| CTX-02 | Phase 13 | Pending |
+| CTX-03 | Phase 14 | Pending |
+| CTX-04 | Phase 13 | Pending |
+| SYNC-01 | Phase 15 | Pending |
+| SYNC-02 | Phase 15 | Pending |
+| SYNC-03 | Phase 15 | Pending |
+| SYNC-04 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 after roadmap creation*
