@@ -44,9 +44,9 @@ Requirements for v1.1 Project Manager milestone. Each maps to roadmap phases.
 
 ### AI Assistance
 
-- [x] **AIAS-01**: User can set AI mode per project (Track+Suggest, Track+Auto-execute, On-demand)
-- [ ] **AIAS-02**: AI generates a "where was I?" context summary when user switches to a project
-- [ ] **AIAS-03**: AI tracks project progress and surfaces relevant suggestions (in Track+Suggest mode)
+- [x] **AIAS-01**: User can set AI mode per project (Track+Suggest, Track+Auto-execute, On-demand) — REMOVED (2026-03-24, AI mode removed in Phase 10 rework)
+- [ ] **AIAS-02**: User can click "Open AI" button and project context (phases, tasks, progress, what's next) is seeded into the embedded terminal
+- [ ] **AIAS-03**: Manual terminal usage (without clicking AI button) remains context-free; per-project workspace state restores on project switch
 
 ## Future Requirements
 
