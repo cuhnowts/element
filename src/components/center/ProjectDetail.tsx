@@ -11,7 +11,7 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { Bot, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,8 @@ import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { DirectoryLink } from "./DirectoryLink";
 import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
-import { PlanWithAiButton } from "./PlanWithAiButton";
-import { ScopeInputForm } from "./ScopeInputForm";
-import { OnboardingWaitingCard } from "./OnboardingWaitingCard";
+import { OpenAiButton } from "./OpenAiButton";
 import { AiPlanReview } from "./AiPlanReview";
-import { api } from "@/lib/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/lib/types";
@@ -63,14 +60,10 @@ export function ProjectDetail() {
   const setTaskPhase = useStore((s) => s.setTaskPhase);
   const loadTasks = useStore((s) => s.loadTasks);
   const selectTask = useWorkspaceStore((s) => s.selectTask);
-  const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
 
-  // Onboarding state
+  // Onboarding state (retained for AiPlanReview flow)
   const onboardingStep = useStore((s) => s.onboardingStep);
   const setOnboardingStep = useStore((s) => s.setOnboardingStep);
-  const onboardingScope = useStore((s) => s.onboardingScope);
-  const setOnboardingScope = useStore((s) => s.setOnboardingScope);
-  const setOnboardingGoals = useStore((s) => s.setOnboardingGoals);
   const pendingPlan = useStore((s) => s.pendingPlan);
   const setPendingPlan = useStore((s) => s.setPendingPlan);
   const loadProjects = useStore((s) => s.loadProjects);
@@ -132,55 +125,6 @@ export function ProjectDetail() {
   }, [onboardingStep, loadProjects, loadPhases, loadTasks, selectedProjectId]);
 
   if (!project) return null;
-
-  const handleStartPlanning = async (scope: string, goals: string) => {
-    if (!project) return;
-
-    // Guard: project must have a linked directory
-    if (!project.directoryPath) {
-      toast.error("Link a project directory first. The AI planning tool needs a directory to store its files.");
-      return;
-    }
-
-    setOnboardingScope(scope);
-    setOnboardingGoals(goals);
-
-    try {
-      // Get CLI tool path from settings
-      const cliTool = await api.getAppSetting("cli_tool_path");
-      if (!cliTool) {
-        toast.error("Configure a CLI tool in Settings > AI first.");
-        return;
-      }
-
-      // Write skill file
-      await api.generateSkillFile(
-        project.directoryPath,
-        project.name,
-        scope,
-        goals
-      );
-
-      // Start file watcher
-      await api.startPlanWatcher(project.directoryPath);
-
-      // Open terminal tab and ensure drawer is visible
-      openDrawerToTab("terminal");
-
-      // Launch CLI tool in terminal
-      const skillPath = `${project.directoryPath}/.element/onboard.md`;
-      await api.runCliTool(cliTool, [skillPath], project.directoryPath);
-
-      setOnboardingStep("waiting");
-    } catch (e) {
-      toast.error(`Failed to start AI planning: ${e}`);
-    }
-  };
-
-  const handleCancelOnboarding = async () => {
-    await api.stopPlanWatcher().catch(() => {});
-    setOnboardingStep("idle");
-  };
 
   const apiUpdateProject = async (projectId: string, newName: string, newDesc: string) => {
     const { api } = await import("@/lib/tauri");
@@ -317,17 +261,20 @@ export function ProjectDetail() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Project Name */}
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onBlur={handleNameBlur}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur();
-        }}
-        className="text-2xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent"
-        placeholder="Project name"
-      />
+      {/* Project Name + Open AI */}
+      <div className="flex items-center gap-3">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={handleNameBlur}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          className="flex-1 text-2xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent"
+          placeholder="Project name"
+        />
+        <OpenAiButton projectId={project.id} directoryPath={project.directoryPath} />
+      </div>
 
       {/* Directory Section */}
       <div>
@@ -381,19 +328,7 @@ export function ProjectDetail() {
       </div>
 
       {/* Phases Section / Onboarding Flow */}
-      {onboardingStep === "scope-input" ? (
-        <ScopeInputForm
-          projectName={project.name}
-          onSubmit={handleStartPlanning}
-          onCancel={() => setOnboardingStep("idle")}
-        />
-      ) : onboardingStep === "waiting" ? (
-        <OnboardingWaitingCard
-          scope={onboardingScope}
-          planDetected={pendingPlan !== null}
-          onCancel={handleCancelOnboarding}
-        />
-      ) : onboardingStep === "review" && pendingPlan ? (
+      {onboardingStep === "review" && pendingPlan ? (
         <AiPlanReview projectId={project.id} />
       ) : (
       <div>
@@ -402,13 +337,19 @@ export function ProjectDetail() {
         </span>
 
         {!hasContent && !phasesLoading ? (
-          <PlanWithAiButton
-            onPlanWithAi={() => setOnboardingStep("scope-input")}
-            onAddPhaseManually={() => {
-              setIsAddingPhase(true);
-              setNewPhaseName("");
-            }}
-          />
+          <div className="bg-card rounded-lg p-8 text-center max-w-md mx-auto mt-12">
+            <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-base font-semibold mb-2">No phases yet</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Use AI to plan your project, or add phases manually.
+            </p>
+            <OpenAiButton projectId={project.id} directoryPath={project.directoryPath} />
+            <div className="mt-3">
+              <Button variant="ghost" size="sm" onClick={() => { setIsAddingPhase(true); setNewPhaseName(""); }} className="text-sm">
+                + Add phase manually
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="space-y-1">
             <DndContext
