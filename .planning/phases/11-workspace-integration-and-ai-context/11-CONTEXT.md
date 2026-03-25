@@ -1,51 +1,51 @@
 # Phase 11: Workspace Integration and AI Context - Context
 
-**Gathered:** 2026-03-22
-**Status:** NEEDS RE-DISCUSSION — existing plans invalidated by AI mode removal (2026-03-24)
-
-> **WARNING (2026-03-24):** All 4 existing plans (11-00 through 11-03) were written assuming per-project AI mode (on-demand/track-suggest/track-auto-execute) from Phase 10. That feature has been removed. The new direction: a single "Open AI" button that seeds project context into the embedded terminal. No persistent modes, no idle-threshold summaries, no suggestion cards. Plans must be scrapped and re-created after re-discussion.
+**Gathered:** 2026-03-24
+**Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Users experience a unified project workspace where clicking an "Open AI" button seeds full project context (phases, tasks, progress, what's next) into the embedded terminal. The AI immediately knows the project state and can help the user with what needs to be done next. No persistent AI modes — it's an action, not a setting.
+Users can click an "Open AI" button in any project to seed full project context into the embedded terminal. Element writes a context/skill file to the project directory, kills any existing PTY, and spawns the configured CLI tool (claude, cursor, etc.) pointed at the context file. The AI immediately knows the project state — phases, tasks, progress, what's next — and can assist. For empty projects, the context file includes onboarding instructions so the AI guides project setup (replacing the old ScopeInputForm flow). Manual terminal usage (without clicking the button) remains context-free.
 
-Requirements: AIAS-02, AIAS-03 — to be revised during re-discussion
+Per-project workspace state (active center tab, drawer state) is restored on project switch for a seamless multi-project experience.
+
+Requirements: AIAS-02, AIAS-03 — revised to match "Open AI" button approach (no persistent AI modes, no summary cards, no suggestion cards).
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
+### Context Seeding Mechanism
+- **D-01:** Skill file + launch pattern. Element writes `.element/context.md` with project state, then spawns the configured CLI tool pointed at it. Reuses Phase 10's skill file concept. Tool-agnostic — any CLI that can read a file works.
+- **D-02:** Always fresh session. Clicking "Open AI" kills existing PTY and spawns a new CLI session with the context file. No injection into running sessions.
+- **D-03:** CLI tool configured globally in Element settings (one setting for all projects). Reuses Phase 10's D-06 decision.
+- **D-04:** When no CLI tool is configured, show a toast: "No AI tool configured" with a button navigating to Settings. Non-blocking.
+
+### Button & Trigger
+- **D-05:** "Open AI" button in the header area of ProjectDetail, next to the project name/directory link. Always visible when viewing a project.
+- **D-06:** "Open AI" replaces the existing "Plan with AI" button entirely. The context file adapts: empty projects get onboarding instructions, populated projects get progress context. One button, one flow.
+- **D-07:** Clicking "Open AI" auto-switches drawer to Terminal tab (opens drawer if closed). User immediately sees the CLI tool starting.
+
+### Context Content
+- **D-08:** Full structured dump modeled after GSD's project context: project overview, all phases with tasks (name, status, description), progress metrics, current phase focus, and actionable next steps. Comprehensive enough that the AI can answer any project question without follow-up.
+- **D-09:** For empty projects (no phases), context file includes onboarding instructions for the AI to guide project setup — ask about scope/goals, break down into phases and tasks.
+- **D-10:** Output contract (JSON schema for phases/tasks) included in context file. File watcher from Phase 10 picks up `plan-output.json` and shows the AiPlanReview screen. Reuses existing infrastructure.
+
 ### Workspace Assembly
-- **D-01:** Auto-switch to project view on project selection. Center panel shows project detail (phases/tasks) by default. Files tab available but not auto-selected. Terminal auto-opens per Phase 9 decision (D-03). AI summary card appears at top of project detail.
-- **D-02:** Per-project tab memory — workspace remembers which center panel tab (Detail vs Files) was last active per project. Switching back to a project restores the last-active tab.
-- **D-03:** Per-project drawer state — drawer open/closed state and active tab (Logs/History/Terminal) saved per project. Switching back to a project restores the drawer state.
-
-### Context Switching Summaries (AIAS-02)
-- **D-04:** "Where was I?" summary triggers on project switch after 30+ minutes of idle from that project. First project open in a session always shows summary (in-memory timestamps reset on app restart).
-- **D-05:** Summary content includes: recent task completions, current phase status, and AI-suggested next actions. Concise — 3-5 bullet points max.
-- **D-06:** Summary generated via configured AI provider (AiGateway). Fallback when no provider configured: simple template summary showing task counts and phase progress with a note to configure AI for smarter summaries.
-- **D-07:** Summary appears as a dismissible card at the top of project detail view, above the directory link and progress bar. First thing the user sees.
-
-### AI Progress Suggestions (AIAS-03)
-- **D-08:** Track+Suggest mode surfaces task-focused suggestions: next tasks to work on, stalled phase alerts, untouched task reminders, phase completion nudges. Stays within the task/phase domain.
-- **D-09:** Suggestions presented as dismissible cards below the "where was I?" summary in the project detail view. Each card has an action button ("Go to task", "Scaffold with AI") and a dismiss button.
-- **D-10:** Suggestions refresh on project switch only — generated alongside the "where was I?" summary. No background polling, no mid-session regeneration. Dismissed suggestions don't reappear until next project switch.
-- **D-11:** On-demand AI mode shows no auto-generated AI features. No summary card, no suggestion cards. Clean project view with just phases and progress. User can still trigger AI scaffold on individual tasks via existing flow.
-- **D-12:** Track+Auto-execute mode shows the same summary and suggestions as Track+Suggest. The difference is that auto-execute can act on suggestions without user confirmation (scope of auto-execute behavior defined by Phase 10).
-
-### Data & State Tracking
-- **D-13:** AI context fed from existing task data only — task completions, status changes, creation dates, phase progress. All queryable from existing SQLite tables. No new tracking infrastructure or tables needed.
-- **D-14:** Last-viewed timestamp per project stored in Zustand in-memory state (not persisted). Resets on app restart — so first project open in a session always triggers summary. No migration needed.
+- **D-11:** Auto-switch to project detail view on project selection in sidebar.
+- **D-12:** Per-project tab memory — workspace remembers which center panel tab (Detail vs Files) was last active per project. Switching back restores the last-active tab.
+- **D-13:** Per-project drawer state — drawer open/closed state and active tab saved per project. Switching back restores drawer state.
+- **D-14:** Per-project state stored in session-only Zustand (in-memory map, resets on app restart). No persistence, no migration needed.
 
 ### Claude's Discretion
-- AI prompt design for context summary and suggestion generation
-- Exact idle threshold (30min suggested but adjustable)
-- How per-project workspace state is structured in Zustand (map keyed by project ID, etc.)
-- Loading/skeleton state while AI summary generates
-- Animation/transition for summary card appearance and dismissal
-- How suggestion action buttons route to the relevant task or phase
+- Context file format and template design (markdown structure, how to represent phases/tasks/progress)
+- Onboarding prompt wording for empty projects
+- How the CLI tool path is validated and errors are handled
+- How per-project workspace state map is structured in Zustand
+- Whether to reuse `.element/onboard.md` naming or consolidate to a single `.element/context.md`
+- Loading state while CLI tool spawns
 
 </decisions>
 
@@ -54,25 +54,33 @@ Requirements: AIAS-02, AIAS-03 — to be revised during re-discussion
 
 **Downstream agents MUST read these before planning or implementing.**
 
-### AI Layer
-- `src-tauri/src/ai/prompts.rs` — Existing prompt building pattern (build_scaffold_request). Add context summary and suggestion prompts here.
-- `src-tauri/src/ai/gateway.rs` — AiGateway for model-agnostic AI calls
-- `src-tauri/src/commands/ai_commands.rs` — Existing AI Tauri commands. Add context summary command here.
-- `src/stores/aiSlice.ts` — Zustand AI state with request/suggestion lifecycle pattern
-- `src/components/detail/AiSuggestionPanel.tsx` — Existing AI suggestion card pattern (accept/dismiss per field)
+### Terminal Infrastructure
+- `src/hooks/useTerminal.ts` — PTY spawn, pty.write(), kill, resize. Must be extended to support kill+respawn for "Open AI" flow.
+- `src/components/output/TerminalTab.tsx` — Terminal UI component. Currently takes cwd + isVisible.
+- `src/stores/useWorkspaceStore.ts` — Workspace state (drawer, tabs). Extend with per-project state map.
 
-### Workspace Layout
-- `src/stores/useWorkspaceStore.ts` — Current workspace state (drawer, calendar). Extend with per-project state.
-- `src/components/layout/AppLayout.tsx` — Three-panel layout: Sidebar, CenterPanel, OutputDrawer
-- `src/components/center/ProjectDetail.tsx` — Project detail view where summary and suggestion cards will live
+### AI Onboarding (Phase 10 — reuse)
+- `src/components/center/PlanWithAiButton.tsx` — Existing button to replace with "Open AI"
+- `src/components/center/ScopeInputForm.tsx` — To be removed (replaced by context file onboarding)
+- `src/components/center/OnboardingWaitingCard.tsx` — To be removed (replaced by terminal view)
+- `src/components/center/AiPlanReview.tsx` — Keep: review screen for structured AI output
+- `src/types/onboarding.ts` — PlanOutput type definition for file watcher
+
+### Project & Phase Data
+- `src-tauri/src/models/project.rs` — Project model (name, directory, phases, tasks)
+- `src-tauri/src/commands/project_commands.rs` — Project CRUD commands
+- `src/components/center/ProjectDetail.tsx` — Project detail view where "Open AI" button lives
+- `src/stores/projectSlice.ts` — Zustand project state
+
+### Settings Infrastructure
+- `src-tauri/src/commands/ai_commands.rs` — Existing AI commands (CLI tool config may live here)
 
 ### Prior Phase Context
-- `.planning/phases/07-project-phases-and-directory-linking/07-CONTEXT.md` — Project detail layout decisions (stacked sections, progress bars)
-- `.planning/phases/08-file-explorer/08-CONTEXT.md` — File tree as center panel tab
-- `.planning/phases/09-embedded-terminal/09-CONTEXT.md` — Terminal tab in drawer, kill-on-switch, auto-open behavior
+- `.planning/phases/09-embedded-terminal/09-CONTEXT.md` — Terminal auto-open, kill-on-switch, session-only state
+- `.planning/phases/10-ai-project-onboarding/10-CONTEXT.md` — Skill file pattern, file watcher, CLI tool config, output contract
 
 ### Requirements
-- `.planning/REQUIREMENTS.md` — AIAS-02, AIAS-03 acceptance criteria
+- `.planning/REQUIREMENTS.md` — AIAS-02, AIAS-03 acceptance criteria (to be revised)
 
 </canonical_refs>
 
@@ -80,47 +88,50 @@ Requirements: AIAS-02, AIAS-03 — to be revised during re-discussion
 ## Existing Code Insights
 
 ### Reusable Assets
-- `AiGateway` + provider abstraction — model-agnostic AI completion with streaming support
-- `aiSlice.ts` — Zustand AI state pattern (isGenerating, pendingSuggestions, accept/dismiss lifecycle)
-- `AiSuggestionPanel.tsx` — Card-based AI suggestion UI with per-field accept/dismiss. Reusable pattern for suggestion cards.
-- `prompts.rs` — Prompt construction and JSON response parsing. Extend for context summaries.
-- `useWorkspaceStore.ts` — Persisted workspace layout state via Zustand persist middleware
-- `app.emit()` event system — Backend-to-frontend communication for streaming AI responses
+- `useTerminal` hook — PTY lifecycle (spawn, write, kill, resize). Needs extension to support external kill+respawn trigger.
+- `AiPlanReview` component — Review/edit screen for AI-generated phases/tasks. Fully functional from Phase 10.
+- `PlanWithAiButton` — Existing button component to repurpose as "Open AI"
+- `useWorkspaceStore` — Zustand persist store with `openDrawerToTab()` and `openTerminal()` actions
+- File watcher infrastructure from Phase 10 — watches for `plan-output.json` in project directory
 
 ### Established Patterns
-- AI flow: Rust command -> AiGateway -> provider -> emit events -> frontend receives via Tauri event listeners
-- State: Zustand slices in combined store + separate persist stores (useWorkspaceStore, useWorkflowStore)
-- Backend: `#[tauri::command]` async fns with `State<Arc<Mutex<Database>>>` and `AppHandle` for events
-- SQL queries for task/phase data already exist in models — extend with aggregation queries for AI context
+- Terminal: `tauri-pty` spawn() with bidirectional data flow via onData/write
+- State: Zustand slices in combined store + separate persist stores
+- CLI tool config: global `app_settings` table (key-value) from Phase 10
+- Skill files: `.element/` directory convention for Element's project-level files
 
 ### Integration Points
-- `ProjectDetail.tsx` — Add AI summary card and suggestion cards at top
-- `useWorkspaceStore.ts` — Add per-project state map (last tab, drawer state, last-viewed timestamp)
-- `prompts.rs` — Add `build_context_summary_request` and `build_suggestions_request` functions
-- `ai_commands.rs` — Add `generate_context_summary` and `generate_suggestions` Tauri commands
-- Phase 10's ai_mode field on projects — determines whether AI features render (Track+Suggest vs On-demand)
+- `ProjectDetail.tsx` — Replace PlanWithAiButton with "Open AI", remove ScopeInputForm and OnboardingWaitingCard
+- `useTerminal.ts` — Expose kill/respawn capability for programmatic session management
+- `useWorkspaceStore.ts` — Add per-project state map (Map<projectId, {activeTab, drawerOpen, drawerTab}>)
+- Context file generation — new Rust command to build `.element/context.md` from project data
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- Summary card matches the existing AiSuggestionPanel visual language — card with subtle left border accent, dismiss button
-- Suggestion cards use a lightbulb icon to distinguish from the summary card's robot icon
-- Per-project workspace state avoids persisting to DB — Zustand in-memory map is sufficient since it's UI-only state
-- Fallback template summary ensures the feature is useful even without an AI provider configured
-- "Where was I?" phrasing is user-facing — appears as the card header
+- Context file modeled after GSD's project context format — structured, comprehensive, immediately actionable
+- "Open AI" is the single entry point for all AI interactions — empty projects get onboarding, populated projects get progress context
+- The skill file concept from Phase 10 is preserved as the underlying mechanism but is invisible to the user
+- Removing ScopeInputForm, OnboardingWaitingCard, and the multi-step onboarding state machine simplifies the codebase significantly
+- Manual terminal (user opens drawer > Terminal tab) stays context-free — just a plain shell in the project directory
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+- **Per-project CLI tool override** — Different projects using different CLI tools (from Phase 10 deferred)
+- **Re-trigger AI planning for existing projects** — "Regenerate with AI" for projects with existing phases (from Phase 10 deferred)
+- **GSD `.planning/` directory sync** — Scan linked directories for `.planning/ROADMAP.md` and sync phases/tasks (from Phase 10 deferred)
+- **AI assistance modes** — Per-project AI mode may return in simpler form later
+- **"Where was I?" summary cards** — Removed from Phase 11. Could return as an optional feature if users want it.
+- **AI suggestion cards** — Removed from Phase 11. Could return as an optional feature.
 
 </deferred>
 
 ---
 
 *Phase: 11-workspace-integration-and-ai-context*
-*Context gathered: 2026-03-22*
+*Context gathered: 2026-03-24*

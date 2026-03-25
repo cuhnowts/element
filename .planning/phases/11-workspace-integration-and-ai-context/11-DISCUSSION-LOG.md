@@ -3,178 +3,161 @@
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
-**Date:** 2026-03-22
+**Date:** 2026-03-24
 **Phase:** 11-workspace-integration-and-ai-context
-**Areas discussed:** Workspace Assembly, Context Switching Summaries, AI Progress Suggestions, Data & State Tracking
+**Areas discussed:** Context seeding, Button & trigger, Context content, Workspace state
 
 ---
 
-## Workspace Assembly
-
-### Layout arrangement on project select
+## Context Seeding
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Auto-switch to project view | Center shows project detail by default, Files tab available, terminal auto-opens, AI summary as top banner | ✓ |
-| Side-by-side split | Center splits: left = project detail, right = file tree | |
-| Tabbed workspace (keep current) | No layout change, keep existing tab system | |
+| Write command to PTY | Programmatically type a command into the terminal. User sees exactly what runs. | |
+| Skill file + launch | Write .element/context.md with project state, then launch the CLI tool pointed at it. Reuses Phase 10's pattern. | ✓ |
+| Clipboard + prompt | Copy context to clipboard and open terminal. User pastes into their AI tool. | |
 
-**User's choice:** Auto-switch to project view
-**Notes:** None
-
-### Per-project tab memory
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Yes, per-project tab memory | Switching back to a project restores last-active tab (Detail vs Files) | ✓ |
-| No, always reset to Detail | Always land on Detail tab when switching projects | |
-
-**User's choice:** Yes, per-project tab memory
-**Notes:** None
-
-### Per-project drawer state
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Yes, per-project drawer state | Drawer tab and open/close state saved per project | ✓ |
-| No, global drawer state only | Drawer stays however user last left it globally | |
-
-**User's choice:** Yes, per-project drawer state
-**Notes:** None
+**User's choice:** Skill file + launch
+**Notes:** "I might end up using tools that don't support command" — tool-agnostic approach preferred.
 
 ---
 
-## Context Switching Summaries
-
-### Summary trigger
-
 | Option | Description | Selected |
 |--------|-------------|----------|
-| On project switch after idle | Summary appears after 30+ min idle from that project; first open always shows | ✓ |
-| Every project switch | Always generate summary regardless of recency | |
-| Manual only | User clicks "Where was I?" button explicitly | |
+| Always fresh session | Kill existing PTY, spawn new one with CLI tool + context file. Clean slate. | ✓ |
+| Inject if running | Write context command into existing terminal session if one is running. | |
+| Separate AI terminal | Open second terminal instance alongside the manual one. | |
 
-**User's choice:** On project switch after idle
-**Notes:** None
-
-### Summary content
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Progress + next steps | Recent completions, phase status, suggested next actions (3-5 bullets) | ✓ |
-| Progress only | Just completions and phase status, no AI next-step suggestions | |
-| Full context dump | Progress, next steps, file changes, terminal commands | |
-
-**User's choice:** Progress + next steps
-**Notes:** None
-
-### Generation method
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| AI-generated via provider | Send task/phase data to AI provider; fallback template if no provider | ✓ |
-| Local template (no AI) | Compute from task data using templates, no provider needed | |
-| Hybrid | Local template for facts, AI only for next-step suggestions | |
-
-**User's choice:** AI-generated via provider
-**Notes:** None
-
-### Summary placement
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Top banner, above progress | Dismissible card at very top of project detail | ✓ |
-| Inline between progress and phases | Card between progress bar and phase list | |
-| Slide-in panel from right | Overlay from right edge, disappears after reading | |
-
-**User's choice:** Top banner, above progress
-**Notes:** None
+**User's choice:** Always fresh session
 
 ---
 
-## AI Progress Suggestions
-
-### Suggestion types
-
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Task-focused suggestions | Next tasks, stalled phases, untouched task reminders, phase completion nudges | ✓ |
-| Broader project intelligence | Above plus duplicate detection, phase reordering, task size flags | |
-| Minimal — next task only | Just highlight the single most important next task | |
+| Global only | One CLI tool path in Element settings. Same as Phase 10's D-06. | ✓ |
+| Per-project override | Global default + optional per-project override. | |
 
-**User's choice:** Task-focused suggestions
-**Notes:** None
-
-### Suggestion presentation
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Suggestion cards below summary | Dismissible cards in project detail with action + dismiss buttons | ✓ |
-| Inline badges on phases/tasks | Small badges/annotations on relevant rows | |
-| Notification-style toast | Dismissible toast notifications | |
-
-**User's choice:** Suggestion cards below summary
-**Notes:** None
-
-### Refresh frequency
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| On project switch only | Generated alongside "where was I?" summary, no background polling | ✓ |
-| On task completion | Refresh when tasks completed | |
-| Periodic background | Regenerate every N minutes | |
-
-**User's choice:** On project switch only
-**Notes:** None
-
-### On-demand mode behavior
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| No AI features — clean project view | No auto-summary, no suggestions. Just phases and progress. | ✓ |
-| Summary only, no suggestions | Show "where was I?" but no proactive suggestion cards | |
-| Everything still shows | AI features appear regardless of mode | |
-
-**User's choice:** No AI features — clean project view
-**Notes:** None
+**User's choice:** Global only
 
 ---
 
-## Data & State Tracking
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Open settings | Toast: "No AI tool configured" with button to Settings. | ✓ |
+| Prompt inline | Inline input field asking for CLI tool path. | |
+| Just open terminal | Write context file, open plain terminal. | |
 
-### Data inputs for AI context
+**User's choice:** Open settings
+
+---
+
+## Button & Trigger
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Task activity only | Task completions, status changes, creation dates, phase progress from existing DB | ✓ |
-| Task + file activity | Task data plus file changes from watcher (Phase 8) | |
-| Task + file + terminal | Everything plus terminal command history | |
+| Header area | Next to project name/directory link at top of ProjectDetail. | ✓ |
+| Floating action button | Fixed-position button in bottom-right corner. | |
+| Phase section actions | Within each phase section — contextual per-phase button. | |
 
-**User's choice:** Task activity only
-**Notes:** None
+**User's choice:** Header area
 
-### Last-viewed timestamp tracking
+---
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| In-memory timestamp | Zustand in-memory map, resets on restart, first open always gets summary | ✓ |
-| Persisted timestamp in DB | Survives restarts, needs migration | |
-| Persisted in localStorage | Middle ground via Zustand persist | |
+| Replace it | "Open AI" replaces "Plan with AI" entirely. Context file adapts based on project state. | ✓ |
+| Coexist | "Plan with AI" for empty projects, "Open AI" for populated ones. Two separate flows. | |
+| Merge with mode | One button always shown, context adapts. | |
 
-**User's choice:** In-memory timestamp
-**Notes:** None
+**User's choice:** Replace it
+
+---
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Auto-switch to Terminal | Drawer opens, switches to Terminal tab, CLI session visible immediately. | ✓ |
+| Background launch | Terminal spawns but drawer stays on current tab. | |
+
+**User's choice:** Auto-switch to Terminal
+
+---
+
+## Context Content
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Full structured dump | All phases with tasks, progress stats, current focus, what's next. | ✓ |
+| Summary only | Phase names + completion percentages, task counts, current focus. | |
+| You decide | Claude's discretion on depth and format. | |
+
+**User's choice:** "Basically the same as GSD" — full structured dump modeled after GSD project context.
+
+---
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Yes, onboarding prompt | Context file includes project info + AI instructions for project setup. | ✓ |
+| Just project info | Only project name and description, no onboarding guidance. | |
+
+**User's choice:** Yes, onboarding prompt
+
+---
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Yes, keep output contract | Include plan-output.json schema. File watcher + AiPlanReview screen reused. | ✓ |
+| No contract | Context file is read-only. No structured output, no auto-import. | |
+| Optional contract | Schema mentioned but not required. | |
+
+**User's choice:** Yes, keep output contract
+
+---
+
+## Workspace State
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Keep both | Per-project tab memory and drawer state. Restore view on project switch. | ✓ |
+| Drop them | Not essential for "Open AI". Keep workspace state global. | |
+| Just tab memory | Remember center panel tab per project, skip drawer state. | |
+
+**User's choice:** Keep both
+
+---
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Session-only | In-memory Zustand map, resets on app restart. No migration. | ✓ |
+| Persist to localStorage | Survives restarts via Zustand persist middleware. | |
+| You decide | Claude picks persistence strategy. | |
+
+**User's choice:** Session-only
+
+---
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Yes, keep auto-switch | Selecting project in sidebar switches center panel to project detail. | ✓ |
+| No auto-switch | Selecting project just highlights in sidebar, center stays. | |
+
+**User's choice:** Yes, keep auto-switch
 
 ---
 
 ## Claude's Discretion
 
-- AI prompt design for context summary and suggestion generation
-- Exact idle threshold (30min suggested)
-- Per-project workspace state structure in Zustand
-- Loading/skeleton state while AI generates
-- Animation/transition for card appearance/dismissal
-- Suggestion action button routing
+- Context file format and template design
+- Onboarding prompt wording for empty projects
+- CLI tool path validation and error handling
+- Per-project workspace state map structure in Zustand
+- `.element/` file naming convention (onboard.md vs context.md)
+- Loading state while CLI tool spawns
 
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+- Per-project CLI tool override
+- Re-trigger AI planning for existing projects
+- GSD `.planning/` directory sync
+- AI assistance modes (simpler form)
+- "Where was I?" summary cards
+- AI suggestion cards
