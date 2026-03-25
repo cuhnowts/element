@@ -265,3 +265,125 @@ pub fn parse_plan_output_file(content: &str) -> Result<PlanOutput, String> {
     serde_json::from_str::<PlanOutput>(content)
         .map_err(|e| format!("Invalid plan output JSON: {}", e))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_context_file_populated_project() {
+        let data = ProjectContextData {
+            project_name: "My App".into(),
+            project_description: "A cool application".into(),
+            phases: vec![
+                PhaseContextData {
+                    name: "Setup".into(),
+                    sort_order: 0,
+                    tasks: vec![
+                        TaskContextData {
+                            title: "Init repo".into(),
+                            status: "complete".into(),
+                            description: "".into(),
+                        },
+                        TaskContextData {
+                            title: "Configure CI".into(),
+                            status: "complete".into(),
+                            description: "".into(),
+                        },
+                    ],
+                    completed: 2,
+                    total: 2,
+                },
+                PhaseContextData {
+                    name: "Core Features".into(),
+                    sort_order: 1,
+                    tasks: vec![
+                        TaskContextData {
+                            title: "Build API".into(),
+                            status: "complete".into(),
+                            description: "".into(),
+                        },
+                        TaskContextData {
+                            title: "Build UI".into(),
+                            status: "in-progress".into(),
+                            description: "".into(),
+                        },
+                        TaskContextData {
+                            title: "Add tests".into(),
+                            status: "pending".into(),
+                            description: "".into(),
+                        },
+                    ],
+                    completed: 1,
+                    total: 3,
+                },
+            ],
+            unassigned_tasks: vec![],
+            total_tasks: 5,
+            completed_tasks: 3,
+            in_progress_tasks: 1,
+            is_empty: false,
+        };
+
+        let output = generate_context_file_content(&data);
+
+        assert!(output.contains("# Project Context: My App"));
+        assert!(output.contains("3/5 tasks complete"));
+        assert!(output.contains("Setup"));
+        assert!(output.contains("Core Features"));
+        assert!(output.contains("## What Needs Attention"));
+        assert!(output.contains("plan-output.json"));
+        // In-progress tasks should appear in attention
+        assert!(output.contains("**Build UI**"));
+    }
+
+    #[test]
+    fn test_context_file_empty_project() {
+        let data = ProjectContextData {
+            project_name: "New Project".into(),
+            project_description: "Starting fresh".into(),
+            phases: vec![],
+            unassigned_tasks: vec![],
+            total_tasks: 0,
+            completed_tasks: 0,
+            in_progress_tasks: 0,
+            is_empty: true,
+        };
+
+        let output = generate_context_file_content(&data);
+
+        assert!(output.contains("# Project Onboarding:"));
+        assert!(output.contains("## Your Task"));
+        assert!(output.contains("plan-output.json"));
+        assert!(!output.contains("## Phases"));
+    }
+
+    #[test]
+    fn test_context_file_no_unassigned_tasks() {
+        let data = ProjectContextData {
+            project_name: "Organized Project".into(),
+            project_description: "Everything is in phases".into(),
+            phases: vec![PhaseContextData {
+                name: "Phase 1".into(),
+                sort_order: 0,
+                tasks: vec![TaskContextData {
+                    title: "Task A".into(),
+                    status: "pending".into(),
+                    description: "".into(),
+                }],
+                completed: 0,
+                total: 1,
+            }],
+            unassigned_tasks: vec![],
+            total_tasks: 1,
+            completed_tasks: 0,
+            in_progress_tasks: 0,
+            is_empty: false,
+        };
+
+        let output = generate_context_file_content(&data);
+
+        assert!(!output.contains("## Unassigned Tasks"));
+        assert!(output.contains("## Phases"));
+    }
+}
