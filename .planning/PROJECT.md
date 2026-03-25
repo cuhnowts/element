@@ -8,6 +8,20 @@ Element is a desktop workflow orchestration platform — a personal work OS that
 
 The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
 
+## Current Milestone: v1.2 Intelligent Planning
+
+**Goal:** Two-mode AI assistant — a planning mode that scales from quick todos to full GSD breakdowns, and an execution mode that answers "what's next?" based on current project state.
+
+**Target features:**
+- Planning decision tree — first-time "Open AI" detects no plan, asks complexity tier, runs appropriate flow
+- Quick tier — AI generates flat todo list from brief description (same-week work)
+- Medium tier — AI asks focused questions, generates phases + tasks (multi-week projects)
+- GSD tier — AI runs full GSD workflow with research, milestones, phases (complex long-running projects)
+- "What's next?" mode — once planned, AI seeds current progress and guides execution
+- `.planning/` folder sync — reads ROADMAP.md into database, file watcher syncs as GSD executes
+- Configurable CLI tool — Settings UI for the terminal command
+- Smart context file — adapts markdown based on project state and mode
+
 ## Current State
 
 **Shipped:** v1.1 Project Manager (2026-03-25)
@@ -39,7 +53,11 @@ v1.1 delivered: theme system with DnD reorder, project phases with directory lin
 
 ### Active
 
-(No active requirements — next milestone TBD)
+- [ ] Scalable planning decision tree (Quick/Medium/GSD tiers)
+- [ ] "What's next?" execution mode with progress-aware context
+- [ ] `.planning/` folder sync into Element database
+- [ ] Configurable CLI tool setting in Settings UI
+- [ ] Smart context file adapting to project state and mode
 
 ### Future
 
@@ -131,4 +149,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after v1.1 milestone*
+*Last updated: 2026-03-25 after v1.2 milestone start*

@@ -1,30 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Project Manager
-status: v1.1 milestone complete
-stopped_at: Completed 11-03-PLAN.md
-last_updated: "2026-03-25T04:06:45.062Z"
+milestone: v1.2
+milestone_name: Intelligent Planning
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-03-25"
 progress:
-  total_phases: 11
-  completed_phases: 6
-  total_plans: 17
-  completed_plans: 17
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-22)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 11 — workspace-integration-and-ai-context
+**Current focus:** Defining v1.2 requirements
 
 ## Current Position
 
-Phase: 999.1
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-25 — Milestone v1.2 started
 
 ## Performance Metrics
 
