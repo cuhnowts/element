@@ -4,11 +4,12 @@ import { useTerminal } from "@/hooks/useTerminal";
 interface TerminalTabProps {
   cwd: string;
   isVisible: boolean;
+  initialCommand?: { command: string; args: string[] } | null;
 }
 
-export function TerminalTab({ cwd, isVisible }: TerminalTabProps) {
+export function TerminalTab({ cwd, isVisible, initialCommand }: TerminalTabProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { error } = useTerminal(containerRef, cwd, isVisible);
+  const { error } = useTerminal(containerRef, cwd, isVisible, initialCommand);
 
   return (
     <div className="h-full w-full flex flex-col">

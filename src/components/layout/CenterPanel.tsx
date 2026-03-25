@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useStore } from "@/stores";
@@ -17,6 +18,37 @@ export function CenterPanel() {
   const projects = useStore((s) => s.projects);
   const activeProjectTab = useStore((s) => s.activeProjectTab);
   const setActiveProjectTab = useStore((s) => s.setActiveProjectTab);
+
+  const getProjectState = useWorkspaceStore((s) => s.getProjectState);
+  const setProjectCenterTab = useWorkspaceStore((s) => s.setProjectCenterTab);
+  const saveCurrentProjectState = useWorkspaceStore((s) => s.saveCurrentProjectState);
+  const restoreProjectState = useWorkspaceStore((s) => s.restoreProjectState);
+
+  // Track previous project ID for save-on-switch
+  const prevProjectRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedProjectId) return;
+
+    // Save outgoing project state
+    if (prevProjectRef.current && prevProjectRef.current !== selectedProjectId) {
+      saveCurrentProjectState(prevProjectRef.current);
+    }
+
+    // Restore incoming project state
+    restoreProjectState(selectedProjectId);
+    const projectState = getProjectState(selectedProjectId);
+    setActiveProjectTab(projectState.centerTab);
+
+    prevProjectRef.current = selectedProjectId;
+  }, [selectedProjectId]);
+
+  const handleTabChange = (tab: "detail" | "files") => {
+    setActiveProjectTab(tab);
+    if (selectedProjectId) {
+      setProjectCenterTab(selectedProjectId, tab);
+    }
+  };
 
   // Determine if selected project has a linked directory
   const selectedProject = selectedProjectId
@@ -45,7 +77,7 @@ export function CenterPanel() {
       <div className="h-full flex flex-col">
         <ProjectTabBar
           activeTab={activeProjectTab}
-          onTabChange={setActiveProjectTab}
+          onTabChange={handleTabChange}
         />
         <div className="flex-1 overflow-auto p-6">
           {activeProjectTab === "detail" ? (
