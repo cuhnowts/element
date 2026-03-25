@@ -8,7 +8,8 @@ import "@xterm/xterm/css/xterm.css";
 export function useTerminal(
   containerRef: React.RefObject<HTMLDivElement | null>,
   cwd: string | null,
-  isVisible: boolean
+  isVisible: boolean,
+  initialCommand?: { command: string; args: string[] } | null
 ): { isReady: boolean; error: string | null } {
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -67,11 +68,12 @@ export function useTerminal(
 
     fitAddon.fit();
 
-    // Spawn PTY with login shell
+    // Spawn PTY with initial command or login shell
     // On macOS, use /bin/zsh as default. On Windows, would use powershell.exe (D-08).
-    const shell = "/bin/zsh";
+    const shell = initialCommand?.command ?? "/bin/zsh";
+    const shellArgs = initialCommand?.args ?? ["-l"];
     try {
-      const pty = spawn(shell, ["-l"], {
+      const pty = spawn(shell, shellArgs, {
         cols: term.cols,
         rows: term.rows,
         cwd,
@@ -123,7 +125,7 @@ export function useTerminal(
       fitRef.current = null;
       setIsReady(false);
     };
-  }, [containerRef, cwd]);
+  }, [containerRef, cwd, initialCommand]);
 
   // Visibility effect: re-fit when terminal becomes visible
   useEffect(() => {
