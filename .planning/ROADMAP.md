@@ -7,7 +7,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 ## Milestones
 
 - ✅ **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-22) -- [archive](milestones/v1.0-ROADMAP.md)
-- 🚧 **v1.1 Project Manager** -- Phases 6-11 (in progress)
+- ✅ **v1.1 Project Manager** -- Phases 6-11 (shipped 2026-03-25) -- [archive](milestones/v1.1-ROADMAP.md)
 
 ## Phases
 
@@ -23,127 +23,19 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.1 Project Manager (In Progress)
+<details>
+<summary>v1.1 Project Manager (Phases 6-11) -- SHIPPED 2026-03-25</summary>
 
-**Milestone Goal:** Transform Element into a full project management platform with themed categories, AI-driven project setup, and an integrated workspace with file explorer and terminal.
+- [x] Phase 6: Data Foundation and Theme System (3/3 plans) -- completed 2026-03-22
+- [x] Phase 7: Project Phases and Directory Linking (3/3 plans) -- completed 2026-03-22
+- [x] Phase 8: File Explorer (3/3 plans) -- completed 2026-03-22
+- [x] Phase 9: Embedded Terminal (2/2 plans) -- completed 2026-03-23
+- [x] Phase 10: AI Project Onboarding (3/3 plans) -- completed 2026-03-23
+- [x] Phase 11: Workspace Integration and AI Context (3/3 plans) -- completed 2026-03-25
 
-- [ ] **Phase 6: Data Foundation and Theme System** - Schema migration + theme CRUD + themed sidebar navigation
-- [ ] **Phase 7: Project Phases and Directory Linking** - Phase management within projects + directory picker + progress tracking
-- [ ] **Phase 8: File Explorer** - Project file tree with gitignore filtering, external editor launch, and live updates
-- [ ] **Phase 9: Embedded Terminal** - PTY-backed terminal in workspace, auto-opening in project directory
-- [x] **Phase 10: AI Project Onboarding** - Structured project entry + AI questioning + generated phases/tasks + per-project AI mode (completed 2026-03-23)
-- [x] **Phase 11: Workspace Integration and AI Context** - Unified project workspace + context switching summaries + AI progress suggestions (completed 2026-03-25)
-
-## Phase Details
-
-### Phase 6: Data Foundation and Theme System
-**Goal**: Users can organize their projects and tasks under themed categories with a restructured sidebar
-**Depends on**: Phase 5 (v1.0 complete)
-**Requirements**: THEME-01, THEME-02, THEME-03, THEME-04
-**Success Criteria** (what must be TRUE):
-  1. User can create, rename, and delete themes from the sidebar
-  2. User can assign projects and standalone tasks to themes
-  3. Sidebar displays items grouped by theme with collapsible sections; uncategorized items appear in a default bucket
-  4. User can create a task without assigning it to any project (standalone task)
-**Plans**: 4 plans
-**UI hint**: yes
-
-Plans:
-- [x] 06-01-PLAN.md -- Backend: migration, theme model, theme commands, task/project modifications
-- [x] 06-02-PLAN.md -- Frontend: types, API, store, sidebar components, sidebar restructure
-- [x] 06-03-PLAN.md -- Checkpoint: end-to-end theme system verification (user-verified 2026-03-24)
-
-### Phase 7: Project Phases and Directory Linking
-**Goal**: Users can structure projects into ordered phases, track progress, and link projects to filesystem directories
-**Depends on**: Phase 6
-**Requirements**: PROJ-01, PROJ-02, PROJ-03, PROJ-04, PROJ-05
-**Success Criteria** (what must be TRUE):
-  1. User can link a project to a filesystem directory using a native directory picker
-  2. User can create, reorder, and manage phases within a project
-  3. User can assign tasks to specific phases within a project
-  4. User can see phase-level progress showing tasks complete out of total
-  5. Project detail view displays the phase list, overall progress bar, and status overview
-**Plans**: 4 plans
-**UI hint**: yes
-
-Plans:
-- [x] 07-01-PLAN.md -- Backend: migration (007_phases.sql), phase model, project/task extensions, Tauri commands, dialog plugin
-- [x] 07-02-PLAN.md -- Frontend: npm dependencies, shadcn components, types, API layer, Zustand phase slice
-- [x] 07-03-PLAN.md -- UI: ProjectDetail redesign, PhaseRow with DnD, DirectoryLink, progress bars, sidebar + TaskDetail updates
-
-### Phase 8: File Explorer
-**Goal**: Users can browse and interact with project files directly within the Element workspace
-**Depends on**: Phase 7 (requires project directory linking)
-**Requirements**: FILE-01, FILE-02, FILE-03, FILE-04
-**Success Criteria** (what must be TRUE):
-  1. User can browse project files in a tree view within the workspace panel
-  2. User can open any file in their default external editor from the tree
-  3. File tree automatically hides .gitignore entries and common excludes (node_modules, .git, target)
-  4. File tree updates in real time when files are added, removed, or renamed on disk
-**Plans**: 4 plans
-**UI hint**: yes
-
-Plans:
-- [x] 08-01-PLAN.md -- Backend: ignore crate, file_explorer_commands (list_directory, open_file, watcher lifecycle)
-- [x] 08-02-PLAN.md -- Frontend: types, API, store, FileExplorer/FileTreeNode/ProjectTabBar components, CenterPanel wiring, live updates
-- [x] 08-03-PLAN.md -- Checkpoint: full build verification + end-to-end human verification
-
-### Phase 9: Embedded Terminal
-**Goal**: Users can run commands in an embedded terminal without leaving Element
-**Depends on**: Phase 7 (requires project directory linking)
-**Requirements**: TERM-01, TERM-02, TERM-03
-**Success Criteria** (what must be TRUE):
-  1. User can open an embedded terminal in the workspace output panel
-  2. Terminal automatically starts in the project's linked directory
-  3. Terminal supports standard interaction: typing commands, copy/paste, scrollback, and resize
-**Plans**: 2 plans
-
-Plans:
-- [x] 09-01-PLAN.md -- Backend PTY plugin, frontend dependencies, workspace store extension, useTerminal hook
-- [x] 09-02-PLAN.md -- UI: TerminalTab, TerminalEmptyState, OutputDrawer integration, keyboard shortcut, checkpoint
-
-### Phase 10: AI Project Onboarding
-**Goal**: Users can set up new projects through an AI-guided conversation that generates a structured phase and task breakdown
-**Depends on**: Phase 7 (requires phases schema and CRUD)
-**Requirements**: AIOB-01, AIOB-02, AIOB-03, AIOB-04 (AIAS-01 removed 2026-03-23)
-**Success Criteria** (what must be TRUE):
-  1. User can enter project scope, goals, and constraints in a structured onboarding form
-  2. AI asks clarifying questions to refine understanding of the project before generating a breakdown
-  3. AI generates a set of phases and tasks based on the conversation
-  4. User can review, edit, and confirm the AI-generated breakdown before it is saved to the project
-  5. ~~User can set the AI assistance mode per project~~ — REMOVED (2026-03-23)
-**Plans**: 3 plans
-**UI hint**: yes
-
-Plans:
-- [x] 10-01-PLAN.md -- Backend: migration (008), onboarding model, Tauri commands (skill file, watcher, batch save, settings), frontend types/API/store
-- [x] 10-02-PLAN.md -- Frontend: npm deps, shadcn components, PlanWithAiButton, ScopeInputForm, OnboardingWaitingCard, ProjectDetail integration
-- [x] 10-03-PLAN.md -- AiPlanReview component with DnD/inline edit, confirm/save, discard, end-to-end checkpoint
-
-### Phase 11: Workspace Integration and AI Context
-**Goal**: Users can click an "Open AI" button that seeds full project context into the embedded terminal, giving the AI immediate awareness of project state
-**Depends on**: Phase 8, Phase 9, Phase 10 (requires file explorer, terminal, and onboarding infrastructure)
-**Requirements**: AIAS-02, AIAS-03
-**Success Criteria** (what must be TRUE):
-  1. ~~When switching to a project, AI generates a "where was I?" summary~~ — REMOVED (2026-03-24)
-  2. ~~In Track+Suggest mode, AI surfaces relevant suggestions~~ — REMOVED (2026-03-24)
-  3. User can click "Open AI" button and project context (phases, tasks, progress, what's next) is seeded into the terminal
-  4. AI in terminal immediately knows project state and can assist
-  5. Manual terminal usage (without clicking AI button) remains context-free
-  6. Per-project workspace state (center tab, drawer state) restores on project switch
-**Plans**: 3 plans
-**UI hint**: yes
-
-Plans:
-- [x] 11-01-PLAN.md -- Backend: generate_context_file Tauri command, context file content generation, Rust tests
-- [x] 11-02-PLAN.md -- Frontend: per-project workspace state map in useWorkspaceStore, CenterPanel/OutputDrawer state restore
-- [x] 11-03-PLAN.md -- OpenAiButton component, ProjectDetail integration, old onboarding UI removal, end-to-end checkpoint
+</details>
 
 ## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
-(Phases 8 and 9 both depend on Phase 7 but not on each other; sequential order is safer for solo development.)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -153,12 +45,12 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 3. Workflows and Automation | v1.0 | 5/5 | Complete | 2026-03-17 |
 | 4. Plugin System | v1.0 | 5/5 | Complete | 2026-03-18 |
 | 5. AI and Smart Scheduling | v1.0 | 6/6 | Complete | 2026-03-19 |
-| 6. Data Foundation and Theme System | v1.1 | 0/3 | Planned    |  |
-| 7. Project Phases and Directory Linking | v1.1 | 0/3 | Planning complete | - |
-| 8. File Explorer | v1.1 | 0/3 | Planned    |  |
-| 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
-| 10. AI Project Onboarding | v1.1 | 3/3 | Complete    | 2026-03-23 |
-| 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete    | 2026-03-25 |
+| 6. Data Foundation and Theme System | v1.1 | 3/3 | Complete | 2026-03-22 |
+| 7. Project Phases and Directory Linking | v1.1 | 3/3 | Complete | 2026-03-22 |
+| 8. File Explorer | v1.1 | 3/3 | Complete | 2026-03-22 |
+| 9. Embedded Terminal | v1.1 | 2/2 | Complete | 2026-03-23 |
+| 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
+| 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 
 ## Backlog
 

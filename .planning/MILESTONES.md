@@ -1,5 +1,29 @@
 # Milestones
 
+## v1.1 Project Manager (Shipped: 2026-03-25)
+
+**Phases completed:** 11 phases, 17 plans, 32 tasks
+
+**Key accomplishments:**
+
+- SQLite migration 007 with themes table, nullable project_id via table recreation, theme CRUD model with 8 tests, and 10 Tauri commands registered
+- Theme sidebar with Zustand store, DnD reorder via @dnd-kit, create/edit dialog with color palette, and restructured sidebar replacing ProjectList + TaskList
+- Phases table with CRUD/reorder, directory_path on projects, phase_id FK on tasks, and 7 Tauri commands registered with dialog plugin
+- Phase/directory type system with Zustand PhaseSlice, 7 Tauri API methods, and dnd-kit/shadcn component dependencies
+- Redesigned ProjectDetail with DnD phase management, task drag between phases, directory linking via native OS picker, progress tracking, and inline task/phase creation
+- 5 Tauri commands for file explorer: gitignore-aware directory listing via ignore crate, open-in-editor, reveal-in-file-manager, and debounced file watcher lifecycle
+- Complete file explorer UI: tree view with context menus, tab bar for Detail/Files switching, Zustand store with lazy loading and localStorage-persisted expand state, and live filesystem update wiring
+- PTY backend via tauri-plugin-pty with xterm.js terminal hook managing spawn, bidirectional data, resize, WebGL rendering, and cleanup
+- Terminal tab in output drawer with xterm.js rendering, empty states, Ctrl+backtick shortcut, and focus guard for uninterrupted terminal typing
+- Migration 009 with ai_mode and app_settings, Rust onboarding commands (skill file, file watcher, batch create), and Zustand onboarding slice with full plan editing state machine
+- Four onboarding UI components (PlanWithAi, ScopeInput, WaitingCard, AiModeSelect) integrated into ProjectDetail with step-based state machine rendering, directory guard, and terminal auto-open
+- AiPlanReview component with accordion layout, inline editing, drag-and-drop phase reorder, add/delete phases and tasks, confirm & save batch creation, and discard confirmation dialog
+- Backend Tauri command that generates .element/context.md with full project context (phases, tasks, progress, attention items) or onboarding instructions for empty projects
+- Per-project workspace state map with save/restore on project switch, plus terminal kill/respawn infrastructure via session key and initialCommand support
+- "Open AI" button in ProjectDetail that generates context file, starts plan watcher, and launches claude --dangerously-skip-permissions in visible terminal via PTY kill/respawn
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-22)
 
 **Phases completed:** 6 phases, 29 plans, 63 tasks
