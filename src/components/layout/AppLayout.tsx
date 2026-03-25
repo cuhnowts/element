@@ -35,6 +35,8 @@ export function AppLayout() {
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
   const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
   const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
+  const setProjectDrawerState = useWorkspaceStore((s) => s.setProjectDrawerState);
+  const selectedProjectId = useStore((s) => s.selectedProjectId);
   const clearLogs = useTaskStore((s) => s.clearLogs);
   const executionLogs = useTaskStore((s) => s.executionLogs);
   const drawerPanelRef = usePanelRef();
@@ -46,6 +48,9 @@ export function AppLayout() {
       setActiveDrawerTab(tab);
     } else {
       openDrawerToTab(tab);
+    }
+    if (selectedProjectId) {
+      setProjectDrawerState(selectedProjectId, true, tab);
     }
   };
 

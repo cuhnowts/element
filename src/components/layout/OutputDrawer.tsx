@@ -1,7 +1,7 @@
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
-import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { LogViewer } from "@/components/output/LogViewer";
 import { ExecutionHistory } from "@/components/output/ExecutionHistory";
 import { RunHistoryList } from "@/components/output/RunHistoryList";
@@ -19,7 +19,6 @@ export function OutputDrawer() {
 
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
-  const setProjectDrawerState = useWorkspaceStore((s) => s.setProjectDrawerState);
   const terminalSessionKey = useWorkspaceStore((s) => s.terminalSessionKey);
   const terminalInitialCommand = useWorkspaceStore((s) => s.terminalInitialCommand);
 
@@ -40,15 +39,6 @@ export function OutputDrawer() {
 
   const hasWorkflow = selectedWorkflowId !== null;
 
-  const handleTabChange = (tab: DrawerTab) => {
-    if (tab === "runs") {
-      selectRun(null);
-    }
-    setActiveDrawerTab(tab);
-    if (selectedProjectId) {
-      setProjectDrawerState(selectedProjectId, true, tab);
-    }
-  };
 
   const handleLinkDirectory = async () => {
     if (!selectedProjectId) return;
