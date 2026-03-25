@@ -1,246 +1,244 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** Project management platform with AI-driven onboarding, embedded workspace, and theme system
-**Researched:** 2026-03-22
-**Confidence:** HIGH
-**Scope:** v1.1 milestone features ONLY -- builds on existing v1.0 foundation
+**Domain:** Tiered AI planning, .planning/ folder sync, progress-aware execution mode for desktop project management
+**Researched:** 2026-03-25
+**Confidence:** HIGH (based on direct analysis of GSD codebase + industry context file patterns)
 
-## Feature Landscape
+## Table Stakes
 
-### Table Stakes (Users Expect These)
+Features users expect. Missing = product feels incomplete.
 
-Features users expect from any project management tool with these capabilities. Missing these makes the feature feel broken or incomplete.
+| Feature | Why Expected | Complexity | Dependencies | Notes |
+|---------|--------------|------------|--------------|-------|
+| Planning decision tree on first "Open AI" | Users click "Open AI" on empty project and get generic instructions. Must detect state and route appropriately. | Medium | Existing `generate_context_file`, `OpenAiButton` | Currently `is_empty` triggers a generic onboarding prompt. Needs tier detection. |
+| Quick tier (flat todo list) | Same-week work should not require multi-phase ceremony. Users will abandon if forced through complex flows for simple tasks. | Low | Context file generation | Equivalent to GSD's `/gsd:quick` — single plan, 1-3 tasks, no phases. |
+| Progress-aware context file | Once planned, "Open AI" must seed current state (what's done, what's next) not just static structure. Already partially built. | Low | Existing `generate_populated_project_context` | Current implementation already shows phases/tasks with status icons. Needs "what's next" framing. |
+| Structured output contract | AI must produce machine-parseable output (JSON) that Element can ingest. Already built for plan-output.json. | Low (exists) | `plan-output.json` schema, `start_plan_watcher` | Extend existing pattern for different tiers — same contract, different complexity levels. |
+| Configurable CLI tool | Hardcoded `claude --dangerously-skip-permissions` must become a setting. Users on Codex, Aider, or other CLI tools are locked out. | Low | Settings UI (exists), `launchTerminalCommand` | Known tech debt item. Simple string setting + UI. |
 
-#### Theme / Category System
+## Differentiators
 
-| Feature | Why Expected | Complexity | Dependencies |
-|---------|--------------|------------|--------------|
-| **Create/rename/delete themes** | Basic CRUD. Every grouping system needs this. ClickUp has Spaces, Linear has Teams, Notion has top-level pages. Without CRUD, themes are decorative. | LOW | New `themes` table in SQLite |
-| **Assign projects and standalone tasks to themes** | The whole point of themes is grouping. If things cannot be assigned, themes are empty containers. | LOW | FK from projects/tasks to themes, nullable for "uncategorized" |
-| **Visual theme distinction (color/icon)** | Asana uses color-coded projects, Linear has team icons, ClickUp has Space colors. Without visual cues, themes are just text labels in a list. Users need to scan quickly. | LOW | Color and icon fields on theme entity. Small icon picker UI. |
-| **Theme-based sidebar navigation** | Sidebar must group items by theme. Every project tool (Linear, Asana, ClickUp, Notion) organizes the sidebar by category/team/space. The current flat project list does not scale past 5 projects. | MEDIUM | Refactor Sidebar component. Collapsible theme sections. Theme ordering (drag or manual). |
-| **Default/uncategorized bucket** | Users should not be forced to categorize everything up front. ClickUp has "Everything" view, Todoist has Inbox. Items without a theme must still be visible. | LOW | NULL theme_id = uncategorized. Render as "Inbox" or "Uncategorized" section. |
+Features that set Element apart. Not expected, but valued.
 
-#### Project Entity (Directory-Linked)
+| Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---------|-------------------|------------|--------------|-------|
+| Medium tier with focused questioning | AI asks 3-5 focused questions about gray areas before generating phases + tasks. Goes beyond dump-and-plan to collaborative thinking. | Medium | Context file with conditional instructions, questioning framework | GSD's questioning.md pattern is the blueprint. Must work via markdown instructions, not slash commands. |
+| GSD tier (full research + milestones) | For complex long-running projects, AI runs research, generates milestones, phases, and detailed task breakdowns. No other desktop PM tool offers this depth. | High | `.planning/` folder sync, ROADMAP.md parsing, multi-step workflow encoding | This is the killer differentiator. Must be achievable through context file instructions alone. |
+| `.planning/` folder sync | Bidirectional awareness — GSD (or any AI tool) writes ROADMAP.md/phases, Element reads them into its database. File watcher keeps them in sync as the AI executes. | High | File watcher (pattern exists for `.element/`), markdown parser, database schema extensions | MarkdownDB (JS library) validates the approach but custom parser is more appropriate for the specific ROADMAP.md format. |
+| "What's next?" execution mode | After planning, AI understands progress and guides execution: "Phase 2 task 3 is next, here's the context." Transforms from planning tool to execution companion. | Medium | Progress tracking (exists), context file adaptation | GSD's `next.md` workflow is the model — detect state, route to next action. Encode routing logic in markdown. |
+| Tool-agnostic context files | Context files work with Claude Code, Codex, Aider, Cursor, or any CLI tool that accepts a markdown file. Not locked to Claude's slash commands. | Medium | Context file architecture redesign | This is the portability challenge. GSD uses slash commands + Task() API. Element must encode the same logic in pure markdown. |
+| Smart context adaptation | Context file changes based on project state: empty project gets planning instructions, partially complete gets execution guidance, fully planned gets "what's next" mode. | Medium | State detection in Rust, template system | Three templates: onboarding, planning-in-progress, execution. Rust selects based on DB state. |
 
-| Feature | Why Expected | Complexity | Dependencies |
-|---------|--------------|------------|--------------|
-| **Link project to filesystem directory** | Core differentiator for developer-focused project management. VS Code, Cursor, Zed all revolve around a directory. Without this link, the "workspace" has no context. | LOW | `directory_path` column on projects table. Directory picker dialog via Tauri file dialog API. |
-| **Project phases (ordered groupings of tasks)** | Every structured project tool has phases/milestones/sprints. Linear has Cycles, Asana has Sections, ClickUp has Lists. Phases give structure beyond a flat task list. | MEDIUM | New `phases` table (id, project_id, name, position, status). Tasks get optional `phase_id`. |
-| **Phase-level progress tracking** | Users expect to see "Phase 2: 3/7 tasks done." Linear shows cycle progress, Asana shows section completion. Without this, phases are just labels. | LOW | Computed from task statuses within a phase. Progress bar component already exists (`ProgressBar.tsx`). |
-| **Project status overview** | A project detail view showing overall health: total tasks, completion %, active phase, recent activity. Every PM tool has a project dashboard. The current ProjectDetail.tsx only shows name/description/count. | MEDIUM | Expand `ProjectDetail.tsx` with phase list, progress metrics, and recent activity. |
-| **Task-project linking (tasks belong to projects or standalone)** | Current schema already has `project_id` on tasks. But tasks are always project-bound. Standalone tasks (in a theme but not a project) are needed for quick one-offs. | LOW | Make `project_id` nullable on tasks table. Already `NOT NULL` with FK -- migration needed. |
+## Anti-Features
 
-#### Embedded Terminal
+Features to explicitly NOT build.
 
-| Feature | Why Expected | Complexity | Dependencies |
-|---------|--------------|------------|--------------|
-| **Terminal emulator in workspace panel** | VS Code, Cursor, Zed, Warp -- every developer tool has an integrated terminal. Without it, users alt-tab to a separate terminal app, losing context. | HIGH | xterm.js frontend + tauri-plugin-pty for PTY spawning. Significant integration work. |
-| **Terminal opens in project directory** | If the terminal does not open in the project's linked directory, users have to `cd` every time. VS Code does this automatically. Table stakes for context-aware terminal. | LOW | Pass `directory_path` from project entity to PTY spawn. |
-| **Multiple terminal sessions** | VS Code supports multiple terminals via tabs. Users expect to run a dev server in one terminal and git commands in another. Single-terminal is frustrating. | MEDIUM | Terminal tab management. Each tab owns a PTY instance. Tab create/close/switch UI. |
-| **Copy/paste and scroll** | Basic terminal interaction. xterm.js handles this out of the box with clipboard addon and scrollback buffer. Missing this makes the terminal unusable. | LOW | xterm.js addons: clipboard, fit, weblinks. Standard configuration. |
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Built-in AI chat UI for planning | Element orchestrates, external tools execute. Building a chat UI duplicates Claude Code/Cursor and is a maintenance pit. | Seed context files into the terminal. Let the AI CLI handle the conversation. |
+| GSD slash command integration | Slash commands are Claude Code-specific. Building direct integration couples to one tool. | Encode workflow logic in markdown instructions that any AI tool can follow. |
+| Automatic plan execution without user review | Users must see and approve plans before they become tasks. Autonomous execution erodes trust. | Always surface plans in AiPlanReview with inline editing and DnD before committing to database. |
+| Full ROADMAP.md bidirectional write-back | Element should not write back to .planning/ files. The AI tool owns those files; Element reads them. | Read-only sync from `.planning/` to database. Element's database is the UI source of truth; `.planning/` is the AI tool's source of truth. |
+| Multi-tool orchestration | Don't try to coordinate between Claude Code AND Cursor simultaneously. One tool per session. | Configurable CLI tool setting. User picks their tool. Context file format works with all of them. |
+| Real-time streaming of AI output into UI | Parsing streaming terminal output to show progress is fragile and tool-specific. | Use file-based contracts (plan-output.json, ROADMAP.md) as the communication channel. File watcher detects when AI has produced output. |
 
-#### File Explorer
+## GSD Skill/Workflow Pattern Analysis
 
-| Feature | Why Expected | Complexity | Dependencies |
-|---------|--------------|------------|--------------|
-| **Directory tree view** | VS Code, Cursor, Zed, Finder -- file trees are universal. Without one, the project directory link is invisible to the user. | MEDIUM | Use tauri-plugin-fs to read directory. react-arborist for tree rendering. Virtualized for large directories. |
-| **Open file in external editor** | Element is NOT an editor (key decision: "simplified workspace, external editing"). Double-click must open the file in the user's default editor or configured tool (VS Code, Cursor). | LOW | Tauri shell API `open()` or configurable editor command. |
-| **File type icons** | Every file explorer shows icons by extension. Without them, the tree is a wall of identical text. Users rely on icons to scan quickly. | LOW | Icon mapping by file extension. Use a small icon set (VS Code Seti icons or similar). |
-| **Ignore patterns (.gitignore, node_modules)** | Showing node_modules (100K+ files) kills performance and UX. VS Code hides these by default. Must respect .gitignore and allow custom exclusions. | MEDIUM | Parse .gitignore. Add default ignores (node_modules, .git, target, dist). |
-| **File system watching for live updates** | If the user creates a file in their terminal, the explorer should update. VS Code does this. Stale file trees are confusing. | MEDIUM | tauri-plugin-fs `watch` feature with debounced refresh. |
+This section analyzes how GSD structures its instruction system and how to adapt it for tool-agnostic context files.
 
-### Differentiators (Competitive Advantage)
+### GSD Architecture (from direct codebase analysis)
 
-Features that make Element's v1.1 stand out. Not expected by every PM tool, but high value.
+GSD organizes AI instructions across four layers:
 
-| Feature | Value Proposition | Complexity | Dependencies |
-|---------|-------------------|------------|--------------|
-| **AI-driven project onboarding** | No PM tool generates a full project breakdown from a conversation. Linear has AI triage, ClickUp has AI task descriptions, but none do interactive questioning to decompose scope into phases and tasks. The closest is ChatGPT project planning, but that lives outside the PM tool. Element does it in-context. | HIGH | Existing AI provider layer (streaming). New onboarding wizard UI. Structured entry fields (scope, goals, constraints, tech stack). AI multi-turn conversation to refine. Generated phases/tasks inserted into project. |
-| **Per-project AI mode** | No PM tool lets users control AI involvement per-project. Element offers three modes: Track+Suggest (AI observes and suggests), Track+Auto-execute (AI acts autonomously), On-demand (AI only when asked). This is unique trust calibration. | MEDIUM | `ai_mode` field on project entity. Mode selector in project settings. Mode-aware AI behavior layer. The three modes determine when AI surfaces suggestions vs. acts. |
-| **Context switching support** | When switching between projects, AI provides a "where was I?" summary. No PM tool does this. Users currently re-read docs or scroll through history to regain context. Element tracks progress breadcrumbs per project and generates a resume summary. | MEDIUM | Track last-active timestamps, recent task completions, and terminal history per project. AI generates a short context summary on project switch. Requires AI layer + per-project state tracking. |
-| **Integrated workspace view** | Terminal + file explorer + task progress in one view, scoped to a project. VS Code has terminal + files but no task tracking. Linear has tasks but no terminal. Element combines both with project context. This is the "command center" for a project. | MEDIUM | Layout component combining file tree sidebar, terminal panel, and task/progress panel. Context-aware -- all panels scoped to the selected project. |
-| **AI-generated phase/task decomposition** | During onboarding, AI breaks high-level goals into structured phases with ordered tasks. Not just a flat task list -- a phased roadmap with dependencies. This is what a senior PM does, automated. | HIGH | Part of onboarding flow. AI must understand project types (software, content, research). Output must conform to the phases/tasks schema. User reviews and edits before committing. |
+**Layer 1: Workflows (56 files in `workflows/`)**
+Each workflow is a complete multi-step process encoded in markdown with XML-like tags. Key patterns:
+- `<purpose>` tag — What this workflow does
+- `<process>` with numbered `<step>` elements — Sequential decision logic
+- `<required_reading>` — Files the AI must read before starting
+- `<success_criteria>` — Checkboxes defining completion
+- Conditional branching via `**If X:** do Y. **If not X:** do Z.`
 
-### Anti-Features (Commonly Requested, Often Problematic)
+Example from `next.md` (the "what's next?" equivalent):
+```
+Route 1: No phases exist -> discuss
+Route 2: Phase exists but no context -> discuss
+Route 3: Phase has context but no plans -> plan
+Route 4: Phase has plans but incomplete -> execute
+Route 5: All plans have summaries -> verify and complete
+```
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| **Built-in code editor** | "If I can see files, why not edit them?" Users see file explorer and expect editor. | Building a code editor is a multi-year effort. Monaco (VS Code's editor) is 2MB+ bundled. Syntax highlighting, language servers, extensions -- infinite scope. Element is a project orchestrator, not an IDE. | Open in external editor (VS Code, Cursor, Zed, vim). One click to open. Element knows which file, the editor handles editing. The key decision already says "simplified workspace -- file tree + terminal, external editing." |
-| **Full Gantt chart / timeline view** | PM tools like MS Project and GanttProject have them. "Show me a timeline." | Gantt charts are complex to build (dependency lines, drag resize, zoom, critical path). They serve teams planning months-long projects with resource allocation. Element is a personal tool for individual developers. Phases with progress bars convey the same information with 5% of the complexity. | Phase list with progress bars. Each phase shows task count, completion %, and status. Simple, scannable, and sufficient for personal project management. |
-| **Kanban board per project** | Trello/Linear/Notion all have Kanban views. "Show me columns: Todo, In Progress, Done." | Kanban adds a second view paradigm to maintain (list view + board view). For personal use with a single developer, the task list grouped by status or phase is equivalent. Kanban shines for team visibility, which Element does not need. | Task list with status-based grouping or filtering. The existing task list with status badges (pending, in-progress, complete, blocked) provides the same information in a denser format. |
-| **Nested sub-projects** | "I want projects inside projects." Hierarchical project structures. | Recursive data structures complicate queries, UI rendering, and navigation. Two levels (theme > project) is sufficient. Three levels creates confusion about where things belong. | Themes contain projects. Projects contain phases. Phases contain tasks. Three levels of hierarchy is the sweet spot -- more than that and navigation becomes a chore. |
-| **AI auto-creating tasks without review** | "Just let the AI add tasks directly." Skip the review step in onboarding. | Users lose trust when AI makes changes they did not approve. Phantom tasks appear, wrong priorities are set, scope creeps invisibly. The onboarding flow must have a human review gate. | AI generates a proposal. User reviews, edits, and confirms. The review step is where trust is built. Show the full breakdown before committing anything to the database. |
-| **Template library for project types** | "Give me templates for React app, API service, marketing campaign." | Templates go stale, require maintenance, and rarely match the user's actual needs. They create a false sense of completeness. | AI onboarding replaces templates. Instead of picking a template, the user describes their project and AI generates a custom breakdown. This is strictly better than templates -- it is personalized, current, and adapts to context. |
-| **Real-time file content preview** | "Show me the file contents in a preview pane." | Preview pane for code requires syntax highlighting, scroll sync, and large file handling. For images, PDF, markdown -- each format needs a renderer. Scope creep into editor territory. | File explorer shows names and types. Double-click opens in external editor. The terminal can `cat` or `less` files when needed. Keep Element focused on orchestration, not content viewing. |
+**Layer 2: References (15 files in `references/`)**
+Reusable context documents loaded on-demand. Not instructions — they are knowledge:
+- `questioning.md` — How to ask good questions (loaded by discussion workflows)
+- `tdd.md` — Test-driven development patterns (loaded by executors)
+- `verification-patterns.md` — How to verify work (loaded by verifiers)
+
+**Layer 3: Templates (32+ files in `templates/`)**
+Structural patterns for output files. Define the shape of artifacts:
+- `context.md` — Phase context template with decisions, specifics, deferred ideas
+- `project.md` — Project definition template
+- `claude-md.md` — CLAUDE.md generation template with marker-bounded sections
+
+**Layer 4: Agents (18 agent definitions in `agents/`)**
+Specialized roles spawned by orchestrator workflows:
+- `gsd-executor` — Executes plan tasks
+- `gsd-planner` — Creates detailed plans
+- `gsd-verifier` — Verifies phase completion
+- `gsd-phase-researcher` — Researches technical approaches
+
+### Key GSD Patterns to Adapt
+
+**Pattern 1: State-Driven Routing**
+GSD's `next.md` reads STATE.md and routes to the appropriate workflow. Element must replicate this in the context file itself — the AI reads the project state and follows the appropriate instruction branch.
+
+Adaptation: Embed routing logic directly in context markdown:
+```markdown
+## Your Mode
+
+**If no phases exist below:** You are in PLANNING mode. Follow the Planning Instructions.
+**If phases exist with incomplete tasks:** You are in EXECUTION mode. Follow the Execution Instructions.
+**If all tasks are complete:** Congratulate the user and ask what's next.
+```
+
+**Pattern 2: Tiered Complexity (Quick/Medium/GSD)**
+GSD has separate workflows: `quick.md` (1-3 tasks), `plan-phase.md` (medium), `new-project.md` (full). The tier decision happens in the orchestrator.
+
+Adaptation: Element detects complexity in Rust (based on project state and user choice) and generates the appropriate context file template. No tier decision in the AI — Element makes the decision and provides the right instructions.
+
+**Pattern 3: Structured Output Contracts**
+GSD uses frontmatter YAML + XML tags for structured plan files. Element already uses `plan-output.json`.
+
+Adaptation: Keep the existing JSON contract. Extend it for medium/GSD tiers:
+```json
+{
+  "tier": "medium",
+  "phases": [...],
+  "metadata": { "estimated_duration": "2 weeks" }
+}
+```
+
+**Pattern 4: Progressive Disclosure via File References**
+GSD skills use `<files_to_read>` blocks — the AI doesn't get everything upfront. It reads what it needs when it needs it.
+
+Adaptation: Context files can reference other files in the project:
+```markdown
+## Reference Materials
+- If you need project history, read `.element/history.md`
+- If you need architecture context, read `CLAUDE.md` or `AGENTS.md`
+```
+
+**Pattern 5: Gray Area Questioning**
+GSD's `questioning.md` + `discuss-phase.md` surface 2-4 decision points before planning. The AI asks domain-specific questions (not generic ones) using a heuristic:
+- Something users SEE -> layout, interactions
+- Something users CALL -> API design, errors
+- Something users RUN -> CLI flags, output format
+
+Adaptation: For the medium tier, embed the questioning framework in the context file:
+```markdown
+## Before You Plan
+
+Identify 3-5 gray areas in this project. For each, ask the user a focused question
+with concrete options (not vague categories). Consider:
+- User-facing decisions (what they'll see/interact with)
+- Technical decisions (architecture, data model, libraries)
+- Scope decisions (what's in v1 vs later)
+
+After gathering answers, generate the plan.
+```
+
+### Portability Analysis: Making Context Files Tool-Agnostic
+
+The critical challenge is that GSD relies on Claude Code-specific features:
+1. **Slash commands** (`/gsd:plan-phase`) — Not portable
+2. **Task() API** for subagent spawning — Not portable
+3. **AskUserQuestion** structured prompts — Not portable (but conversational equivalent works everywhere)
+4. **`gsd-tools.cjs`** CLI utilities — Not portable
+
+What IS portable across all AI CLI tools:
+1. **Markdown instructions** — Every tool reads markdown
+2. **File reading directives** — "Read this file before proceeding"
+3. **Conditional logic in natural language** — "If X, then do Y"
+4. **Structured output requests** — "Write JSON to this path with this schema"
+5. **File-based communication** — Write output to a known path, file watcher picks it up
+
+**Portability strategy:** Element generates markdown context files that:
+- Contain all instructions inline (no external tool dependencies)
+- Use natural language conditionals instead of code branching
+- Request structured JSON output to known file paths
+- Are self-contained — the AI needs only the context file + project files to operate
+
+### How AGENTS.md Fits
+
+AGENTS.md (Linux Foundation standard, adopted by 40,000+ projects) is emerging as the tool-agnostic alternative to CLAUDE.md. Key facts:
+- Standard markdown format, hierarchical (project root + subdirectories)
+- Supported by Codex, Amp, Jules, Cursor, Factory
+- Claude Code has an open feature request to support it natively
+- Does NOT replace tool-specific files — coexists with CLAUDE.md, .cursorrules
+
+**Recommendation:** Element should generate `.element/context.md` (its own format for seeding AI sessions) but could optionally also write an `AGENTS.md` at project root for tools that auto-discover it. This is a nice-to-have, not a priority.
 
 ## Feature Dependencies
 
 ```
-[Theme System]
-    |
-    +--enables--> [Theme-based sidebar navigation]
-    |
-    +--enables--> [Assign projects to themes]
-    |                  |
-    |                  +--requires--> [Project entity exists (v1.0)]
-    |
-    +--enables--> [Standalone tasks in themes]
-                       |
-                       +--requires--> [Nullable project_id on tasks]
-
-[Project Entity Enhancement]
-    |
-    +--requires--> [Project CRUD (v1.0, exists)]
-    |
-    +--adds------> [directory_path field]
-    |                  |
-    |                  +--enables--> [File Explorer]
-    |                  |                  |
-    |                  |                  +--requires--> [tauri-plugin-fs]
-    |                  |
-    |                  +--enables--> [Embedded Terminal (cwd)]
-    |                                     |
-    |                                     +--requires--> [tauri-plugin-pty + xterm.js]
-    |
-    +--adds------> [Phases table]
-    |                  |
-    |                  +--enables--> [Phase progress tracking]
-    |                  |
-    |                  +--enables--> [AI-generated phase decomposition]
-    |
-    +--adds------> [ai_mode field]
-                       |
-                       +--enables--> [Per-project AI behavior]
-
-[AI-Driven Onboarding]
-    |
-    +--requires--> [AI provider layer (v1.0, exists)]
-    |
-    +--requires--> [Project entity with phases]
-    |
-    +--requires--> [Streaming AI responses (v1.0, exists)]
-    |
-    +--produces--> [Generated phases + tasks]
-
-[Embedded Terminal]
-    |
-    +--requires--> [xterm.js + tauri-plugin-pty]
-    |
-    +--enhanced-by--> [Project directory_path (auto-cwd)]
-
-[File Explorer]
-    |
-    +--requires--> [tauri-plugin-fs read_dir + watch]
-    |
-    +--requires--> [Project directory_path]
-    |
-    +--enhanced-by--> [.gitignore parsing]
-
-[Context Switching]
-    |
-    +--requires--> [Per-project state tracking]
-    |
-    +--requires--> [AI provider layer (v1.0, exists)]
-    |
-    +--enhanced-by--> [Terminal history per project]
+Configurable CLI tool -> (independent, do first)
+                                    |
+                                    v
+Planning decision tree -> Smart context adaptation -> Tier detection (Quick/Medium/GSD)
+         |                         |                           |
+         v                         v                           v
+   Quick tier <---- Context file templates ----> Medium tier questioning
+         |                         |                           |
+         v                         v                           v
+   plan-output.json --> AiPlanReview (exists) <-- Extended JSON schema
+                                    |
+                    .planning/ folder sync -> ROADMAP.md parser
+                              |                      |
+                              v                      v
+                     File watcher          Database schema extensions
+                              |
+                              v
+                    "What's next?" mode -> Progress-aware context
 ```
 
-### Dependency Notes
+## MVP Recommendation
 
-- **Theme system is independent of workspace features:** Themes can be built first as a pure data/UI layer. No backend complexity beyond a new table and FK relationships.
-- **Project directory_path unlocks both file explorer and terminal:** This single field is the gateway to the workspace. Without it, the workspace has no context. Must be added before either workspace feature.
-- **AI onboarding requires phases to exist:** The onboarding flow generates phases and tasks. The phases table and task-phase linking must be built before the onboarding wizard can persist its output.
-- **File explorer and terminal are independent of each other:** They can be built in parallel or in either order. Both depend on `directory_path` but not on each other.
-- **Context switching is an enhancement layer:** It requires everything else to be built first (projects with phases, AI layer, terminal). It is the polish feature, not the foundation.
+Prioritize:
+1. **Configurable CLI tool** — Unblocks non-Claude users, known tech debt, trivial complexity
+2. **Smart context adaptation with tier detection** — The core UX change. "Open AI" on empty project asks tier, generates appropriate context file. Requires reworking `generate_context_file_content` in Rust.
+3. **Quick tier** — Generates a simple "help me plan these tasks" context file. AI produces `plan-output.json`. Existing AiPlanReview handles the rest.
+4. **Medium tier with questioning** — Context file includes questioning framework. AI asks questions, then produces structured plan.
+5. **"What's next?" execution mode** — Progress-aware context file that guides the AI to the next action based on project state.
 
-## MVP Definition
+Defer:
+- **GSD tier (full research + milestones):** Requires `.planning/` folder sync to be useful. Build after sync is working.
+- **`.planning/` folder sync:** High complexity, requires markdown parser + file watcher + schema extensions. Build after tiers are working.
+- **AGENTS.md generation:** Nice-to-have, build after core context file system is solid.
 
-### Launch With (v1.1 Core)
+## Complexity Budget
 
-Minimum features needed to call v1.1 "Project Manager" complete.
-
-- [ ] **Theme CRUD with sidebar navigation** -- Users can create themes, assign projects to them, and navigate by theme in the sidebar. Without this, the organizational upgrade is invisible.
-- [ ] **Project directory linking** -- Projects can be linked to a filesystem directory. This is the foundation for the entire workspace concept.
-- [ ] **Project phases with task grouping** -- Phases give projects structure beyond a flat task list. Progress tracking per phase. This is what makes Element a project manager, not just a task list.
-- [ ] **Standalone tasks (nullable project_id)** -- Tasks can exist in a theme without belonging to a project. Quick one-offs should not require creating a project.
-- [ ] **File explorer (read-only tree view)** -- See the project's files in the workspace. Opens files in external editor. Respects .gitignore.
-- [ ] **Embedded terminal** -- Terminal in the workspace panel, opens in project directory. At minimum one session.
-- [ ] **AI-driven project onboarding** -- Structured entry + AI conversation generates phases and tasks. This is the headline differentiator for v1.1.
-
-### Add After Validation (v1.1.x)
-
-Features to add once the core workspace is working and usable.
-
-- [ ] **Multiple terminal sessions** -- Trigger: user needs to run dev server AND run commands simultaneously
-- [ ] **Per-project AI mode** -- Trigger: user has multiple projects with different AI trust levels
-- [ ] **Context switching summaries** -- Trigger: user has 3+ active projects and loses context when switching
-- [ ] **File system watching** -- Trigger: stale file tree becomes annoying when creating files via terminal
-- [ ] **Phase reordering (drag-and-drop)** -- Trigger: user restructures a project and needs to move phases around
-
-### Future Consideration (v2+)
-
-- [ ] **AI progress reports per project** -- Generates a weekly summary of what was accomplished. Needs more project activity data to be useful.
-- [ ] **Cross-project theme dashboards** -- Theme-level progress view aggregating all projects. Needs multiple real projects per theme to validate.
-- [ ] **Terminal command history linked to tasks** -- Associates terminal commands with the task being worked on. Interesting for context switching but complex to implement.
-
-## Feature Prioritization Matrix
-
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Theme CRUD + sidebar refactor | HIGH | MEDIUM | P1 |
-| Project directory linking | HIGH | LOW | P1 |
-| Project phases + progress | HIGH | MEDIUM | P1 |
-| Standalone tasks (nullable project_id) | MEDIUM | LOW | P1 |
-| File explorer (tree view) | HIGH | MEDIUM | P1 |
-| Embedded terminal (single session) | HIGH | HIGH | P1 |
-| AI-driven project onboarding | HIGH | HIGH | P1 |
-| Multiple terminal sessions | MEDIUM | MEDIUM | P2 |
-| Per-project AI mode | MEDIUM | MEDIUM | P2 |
-| Context switching summaries | MEDIUM | MEDIUM | P2 |
-| File system watching | MEDIUM | LOW | P2 |
-| Phase drag-and-drop reordering | LOW | LOW | P2 |
-| AI progress reports | MEDIUM | MEDIUM | P3 |
-| Theme dashboards | LOW | MEDIUM | P3 |
-| Terminal-task command linking | LOW | HIGH | P3 |
-
-**Priority key:**
-- P1: Must have for v1.1 launch -- themes, project enhancement, workspace (terminal + files), AI onboarding
-- P2: Should have, add in v1.1.x patches -- multi-terminal, AI modes, context switching, file watching
-- P3: Nice to have, defer to v1.2+ -- reports, dashboards, command linking
-
-## Competitor Feature Analysis
-
-| Feature | VS Code / Cursor | Linear | ClickUp | Notion | Element v1.1 Approach |
-|---------|-----------------|--------|---------|--------|----------------------|
-| Project organization | Workspaces (directory-based) | Teams + Projects | Spaces > Folders > Lists | Pages + Databases | Themes > Projects > Phases > Tasks |
-| File explorer | Full tree view with search | None | None | None | Read-only tree, open in external editor |
-| Embedded terminal | Full integrated terminal | None | None | None | xterm.js + tauri-plugin-pty, project-scoped |
-| AI project setup | Copilot chat (no project generation) | AI triage + description | ClickUp Brain (descriptions) | Notion AI (content) | Interactive onboarding: structured entry + AI questioning generates phases/tasks |
-| AI control per project | Global settings only | Global AI settings | Global AI settings | Global AI settings | Per-project AI mode (Track+Suggest, Track+Auto-execute, On-demand) |
-| Category/theme system | None (workspace = 1 project) | Teams (multi-user) | Spaces (team-oriented) | Top-level pages | Themes as personal categories (Business, Dev, Personal) |
-| Phase/milestone tracking | None | Cycles (time-boxed) | Lists with statuses | Databases with status | Named phases with ordered tasks and progress bars |
-| Context switching | None built-in | None | None | None | AI-generated "where was I?" summary on project switch |
-
-### Key Differentiation
-
-Element v1.1 occupies a unique niche: **a personal project command center that combines the workspace awareness of an IDE (files + terminal) with the organizational structure of a PM tool (themes + projects + phases) and AI-driven setup that neither category offers.** No existing tool provides this combination:
-
-- IDEs have workspace context but no project management structure
-- PM tools have organizational hierarchy but no filesystem/terminal integration
-- AI tools can plan projects but the output lives outside the PM system
+| Feature | Estimated Effort | Risk |
+|---------|-----------------|------|
+| Configurable CLI tool | 1-2 hours | None — string setting + UI |
+| Tier detection + routing | 1-2 days | Low — extends existing context generation |
+| Quick tier context file | 0.5-1 day | Low — simplest template |
+| Medium tier with questioning | 1-2 days | Medium — question quality depends on context file design |
+| "What's next?" mode | 1-2 days | Medium — routing logic must be clear enough for any AI tool |
+| .planning/ folder sync (read) | 3-5 days | High — markdown parsing, schema changes, file watcher |
+| GSD tier context file | 2-3 days | High — complex multi-step instructions in pure markdown |
 
 ## Sources
 
-- [tauri-plugin-pty](https://crates.io/crates/tauri-plugin-pty) -- PTY plugin for Tauri terminal integration
-- [tauri-terminal](https://github.com/marc2332/tauri-terminal) -- Reference implementation of terminal in Tauri
-- [xterm.js](https://xtermjs.org/) -- Terminal emulator for web frontends
-- [tauri-plugin-fs](https://v2.tauri.app/plugin/file-system/) -- File system access with watch support
-- [react-arborist](https://github.com/brimdata/react-arborist) -- Tree view component for React (file explorer)
-- [Linear AI](https://linear.app/ai) -- AI triage and workflow features in Linear
-- [ClickUp Brain](https://clickup.com/p/features/ai/onboarding-document-generator) -- AI-generated onboarding documents
-- [Warp Terminal](https://www.warp.dev/terminal) -- AI-powered terminal with project awareness
+### Direct Analysis (HIGH confidence)
+- GSD codebase at `$HOME/.claude/get-shit-done/` — 56 workflows, 15 references, 32+ templates, 18 agents
+- Element codebase — `onboarding_commands.rs`, `onboarding.rs`, `OpenAiButton.tsx`
+- GSD skill system — `$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/*/skills/*/SKILL.md`
 
----
-*Feature research for: Element v1.1 Project Manager milestone*
-*Researched: 2026-03-22*
+### Industry Context (MEDIUM confidence)
+- [AGENTS.md specification](https://agents.md/) — Linux Foundation standard for tool-agnostic AI context
+- [CLAUDE.md, AGENTS.md, and Every AI Config File Explained](https://www.deployhq.com/blog/ai-coding-config-files-guide) — Comparison of context file formats
+- [The Complete Guide to AI Agent Memory Files](https://medium.com/data-science-collective/the-complete-guide-to-ai-agent-memory-files-claude-md-agents-md-and-beyond-49ea0df5c5a9) — Tiered context management patterns
+- [Codified Context: Infrastructure for AI Agents](https://arxiv.org/html/2602.20478v1) — Research on tiered knowledge architecture for AI agents
+- [Planning with Files](https://github.com/OthmanAdi/planning-with-files) — Claude Code skill for persistent markdown planning
+- [MarkdownDB](https://markdowndb.com/) — JS library for indexing markdown into SQLite (validates parse-markdown-to-DB approach)
+- [Context Management for Windsurf](https://iceberglakehouse.com/posts/2026-03-context-windsurf/) — How Windsurf manages context via Rules files and Memories
+- [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) — Anthropic's analysis of coding agent patterns
