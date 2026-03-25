@@ -248,6 +248,7 @@ pub fn run() {
             stop_plan_watcher,
             parse_plan_output,
             batch_create_plan,
+            generate_context_file,
             get_app_setting,
             set_app_setting,
         ])

@@ -179,6 +179,118 @@ pub async fn get_app_setting(
 }
 
 #[tauri::command]
+pub async fn generate_context_file(
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    project_id: String,
+) -> Result<String, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+
+    let project = db
+        .get_project(&project_id)
+        .map_err(|e| format!("Failed to get project: {}", e))?;
+
+    let directory_path = project
+        .directory_path
+        .ok_or_else(|| "Project has no linked directory".to_string())?;
+
+    let phases = db
+        .list_phases(&project_id)
+        .map_err(|e| format!("Failed to list phases: {}", e))?;
+
+    let tasks = db
+        .list_tasks(&project_id)
+        .map_err(|e| format!("Failed to list tasks: {}", e))?;
+
+    // Build context data
+    let mut phase_data: Vec<crate::models::onboarding::PhaseContextData> = Vec::new();
+    let mut unassigned_tasks: Vec<crate::models::onboarding::TaskContextData> = Vec::new();
+    let mut total_tasks = 0usize;
+    let mut completed_tasks = 0usize;
+    let mut in_progress_tasks = 0usize;
+
+    // Group tasks by phase
+    let mut tasks_by_phase: std::collections::HashMap<String, Vec<&crate::models::task::Task>> =
+        std::collections::HashMap::new();
+    let mut no_phase_tasks: Vec<&crate::models::task::Task> = Vec::new();
+
+    for task in &tasks {
+        total_tasks += 1;
+        if task.status == crate::models::task::TaskStatus::Complete {
+            completed_tasks += 1;
+        } else if task.status == crate::models::task::TaskStatus::InProgress {
+            in_progress_tasks += 1;
+        }
+
+        match &task.phase_id {
+            Some(pid) => {
+                tasks_by_phase.entry(pid.clone()).or_default().push(task);
+            }
+            None => {
+                no_phase_tasks.push(task);
+            }
+        }
+    }
+
+    for phase in &phases {
+        let phase_tasks = tasks_by_phase.get(&phase.id).cloned().unwrap_or_default();
+        let completed = phase_tasks
+            .iter()
+            .filter(|t| t.status == crate::models::task::TaskStatus::Complete)
+            .count();
+        let total = phase_tasks.len();
+
+        phase_data.push(crate::models::onboarding::PhaseContextData {
+            name: phase.name.clone(),
+            sort_order: phase.sort_order,
+            tasks: phase_tasks
+                .iter()
+                .map(|t| crate::models::onboarding::TaskContextData {
+                    title: t.title.clone(),
+                    status: t.status.to_string(),
+                    description: t.description.clone(),
+                })
+                .collect(),
+            completed,
+            total,
+        });
+    }
+
+    for task in &no_phase_tasks {
+        unassigned_tasks.push(crate::models::onboarding::TaskContextData {
+            title: task.title.clone(),
+            status: task.status.to_string(),
+            description: task.description.clone(),
+        });
+    }
+
+    let is_empty = phases.is_empty() && tasks.is_empty();
+
+    let context_data = crate::models::onboarding::ProjectContextData {
+        project_name: project.name,
+        project_description: project.description,
+        phases: phase_data,
+        unassigned_tasks,
+        total_tasks,
+        completed_tasks,
+        in_progress_tasks,
+        is_empty,
+    };
+
+    let content = crate::models::onboarding::generate_context_file_content(&context_data);
+
+    // Write to .element/context.md
+    let element_dir = PathBuf::from(&directory_path).join(".element");
+    std::fs::create_dir_all(&element_dir)
+        .map_err(|e| format!("Failed to create .element dir: {}", e))?;
+
+    let context_path = element_dir.join("context.md");
+    std::fs::write(&context_path, &content)
+        .map_err(|e| format!("Failed to write context file: {}", e))?;
+
+    Ok(context_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 pub async fn set_app_setting(
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     key: String,

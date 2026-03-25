@@ -197,6 +197,8 @@ export const api = {
   // Onboarding
   generateSkillFile: (projectDir: string, projectName: string, scope: string, goals: string) =>
     invoke<string>("generate_skill_file", { projectDir, projectName, scope, goals }),
+  generateContextFile: (projectId: string) =>
+    invoke<string>("generate_context_file", { projectId }),
   startPlanWatcher: (projectDir: string) =>
     invoke<void>("start_plan_watcher", { projectDir }),
   stopPlanWatcher: () =>
