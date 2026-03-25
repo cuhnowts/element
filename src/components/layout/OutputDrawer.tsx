@@ -19,6 +19,9 @@ export function OutputDrawer() {
 
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
+  const setProjectDrawerState = useWorkspaceStore((s) => s.setProjectDrawerState);
+  const terminalSessionKey = useWorkspaceStore((s) => s.terminalSessionKey);
+  const terminalInitialCommand = useWorkspaceStore((s) => s.terminalInitialCommand);
 
   const selectedWorkflowId = useWorkflowStore((s) => s.selectedWorkflowId);
   const runs = useWorkflowStore((s) => s.runs);
@@ -42,6 +45,9 @@ export function OutputDrawer() {
       selectRun(null);
     }
     setActiveDrawerTab(tab);
+    if (selectedProjectId) {
+      setProjectDrawerState(selectedProjectId, true, tab);
+    }
   };
 
   const handleLinkDirectory = async () => {
@@ -98,9 +104,10 @@ export function OutputDrawer() {
         <div style={{ display: activeDrawerTab === "terminal" ? "block" : "none" }} className="h-full">
           {directoryPath ? (
             <TerminalTab
-              key={`terminal-${selectedProjectId}-${directoryPath}`}
+              key={`terminal-${selectedProjectId}-${directoryPath}-${terminalSessionKey}`}
               cwd={directoryPath}
               isVisible={activeDrawerTab === "terminal"}
+              initialCommand={terminalInitialCommand}
             />
           ) : (
             <TerminalEmptyState
