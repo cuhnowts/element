@@ -123,21 +123,21 @@ Plans:
 ### Phase 11: Workspace Integration and AI Context
 **Goal**: Users can click an "Open AI" button that seeds full project context into the embedded terminal, giving the AI immediate awareness of project state
 **Depends on**: Phase 8, Phase 9, Phase 10 (requires file explorer, terminal, and onboarding infrastructure)
-**Requirements**: AIAS-02, AIAS-03 — to be revised
+**Requirements**: AIAS-02, AIAS-03
 **Success Criteria** (what must be TRUE):
   1. ~~When switching to a project, AI generates a "where was I?" summary~~ — REMOVED (2026-03-24)
   2. ~~In Track+Suggest mode, AI surfaces relevant suggestions~~ — REMOVED (2026-03-24)
   3. User can click "Open AI" button and project context (phases, tasks, progress, what's next) is seeded into the terminal
   4. AI in terminal immediately knows project state and can assist
   5. Manual terminal usage (without clicking AI button) remains context-free
-**Plans**: NEEDS RE-PLANNING (existing 4 plans invalidated by AI mode removal)
+  6. Per-project workspace state (center tab, drawer state) restores on project switch
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] ~~11-00-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
-- [ ] ~~11-01-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
-- [ ] ~~11-02-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
-- [ ] ~~11-03-PLAN.md~~ — INVALIDATED (2026-03-24, AI mode removed)
+- [ ] 11-01-PLAN.md -- Backend: generate_context_file Tauri command, context file content generation, Rust tests
+- [ ] 11-02-PLAN.md -- Frontend: per-project workspace state map in useWorkspaceStore, CenterPanel/OutputDrawer state restore
+- [ ] 11-03-PLAN.md -- OpenAiButton component, ProjectDetail integration, old onboarding UI removal, end-to-end checkpoint
 
 ## Progress
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 8. File Explorer | v1.1 | 0/3 | Planned    |  |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete    | 2026-03-23 |
-| 11. Workspace Integration and AI Context | v1.1 | 0/4 | Planning complete | - |
+| 11. Workspace Integration and AI Context | v1.1 | 0/3 | Planning complete | - |
 
 ## Backlog
 
