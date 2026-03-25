@@ -1,0 +1,97 @@
+# Requirements: Element
+
+**Defined:** 2026-03-25
+**Core Value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
+
+## v1.2 Requirements
+
+Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phases.
+
+### CLI Configuration
+
+- [ ] **CLI-01**: User can set the AI terminal command in Settings (replaces hardcoded claude)
+- [ ] **CLI-02**: App validates CLI tool availability before launching and shows actionable error if missing
+
+### Planning Tiers
+
+- [ ] **PLAN-01**: User sees a tier selection dialog when clicking "Open AI" on a project with no plan (Quick / Medium / GSD)
+- [ ] **PLAN-02**: Quick tier generates a flat task list from a brief user description, saved directly to project
+- [ ] **PLAN-03**: Medium tier asks focused questions via AI conversation, then generates phases and tasks for review
+- [ ] **PLAN-04**: GSD tier instructs the AI to run GSD commands for full planning, and stores the selected tier on the project
+- [ ] **PLAN-05**: User's tier choice is stored per-project so subsequent "Open AI" clicks skip the tier dialog
+
+### Context Intelligence
+
+- [ ] **CTX-01**: Context file adapts content based on project state (no plan, planned, in-progress, complete)
+- [ ] **CTX-02**: Context file respects token budget — large projects summarize instead of listing every task
+- [ ] **CTX-03**: "What's next?" execution mode shows progress, highlights blockers, and suggests the next action
+- [ ] **CTX-04**: Planning mode context includes tier-appropriate instructions (quick prompts vs medium questioning vs GSD commands)
+
+### .planning/ Sync
+
+- [ ] **SYNC-01**: User can trigger import of .planning/ROADMAP.md into project phases and tasks
+- [ ] **SYNC-02**: File watcher on .planning/ directory detects changes and syncs updates into the database
+- [ ] **SYNC-03**: Sync uses content hashing to prevent write loops (app writes don't trigger re-import)
+- [ ] **SYNC-04**: Phases and tasks created by sync are tagged with source so the app knows they originated externally
+
+## Future Requirements
+
+Deferred to future releases. Tracked but not in current roadmap.
+
+### Template System
+
+- **TMPL-01**: Context file templates stored in SQL for user editing
+- **TMPL-02**: Template editor UI in Settings for customizing AI instructions
+
+### Multi-Tool Support
+
+- **TOOL-01**: AGENTS.md generation for tool-agnostic AI context
+- **TOOL-02**: Per-tool argument format detection (Claude Code, Aider, Codex, Cursor)
+
+### Bidirectional Sync
+
+- **BSYNC-01**: App-side phase/task edits written back to .planning/ files
+- **BSYNC-02**: Conflict resolution UI when app and disk edits diverge
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Recreating GSD inside Element | GSD already exists — Element points users to it, syncs the results |
+| Built-in AI questioning engine | The terminal AI does the questioning — Element generates the right prompts |
+| Bidirectional .planning/ sync | One-way (disk → DB) is safer and sufficient for v1.2; bidirectional deferred |
+| Template marketplace | User-editable templates deferred; hardcoded templates sufficient for v1.2 |
+| Non-markdown planning formats | .planning/ is markdown-based; other formats (YAML, JSON) not supported |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CLI-01 | TBD | Pending |
+| CLI-02 | TBD | Pending |
+| PLAN-01 | TBD | Pending |
+| PLAN-02 | TBD | Pending |
+| PLAN-03 | TBD | Pending |
+| PLAN-04 | TBD | Pending |
+| PLAN-05 | TBD | Pending |
+| CTX-01 | TBD | Pending |
+| CTX-02 | TBD | Pending |
+| CTX-03 | TBD | Pending |
+| CTX-04 | TBD | Pending |
+| SYNC-01 | TBD | Pending |
+| SYNC-02 | TBD | Pending |
+| SYNC-03 | TBD | Pending |
+| SYNC-04 | TBD | Pending |
+
+**Coverage:**
+- v1.2 requirements: 15 total
+- Mapped to phases: 0
+- Unmapped: 15
+
+---
+*Requirements defined: 2026-03-25*
+*Last updated: 2026-03-25 after initial definition*
