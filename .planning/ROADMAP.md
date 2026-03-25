@@ -32,7 +32,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [ ] **Phase 8: File Explorer** - Project file tree with gitignore filtering, external editor launch, and live updates
 - [ ] **Phase 9: Embedded Terminal** - PTY-backed terminal in workspace, auto-opening in project directory
 - [x] **Phase 10: AI Project Onboarding** - Structured project entry + AI questioning + generated phases/tasks + per-project AI mode (completed 2026-03-23)
-- [ ] **Phase 11: Workspace Integration and AI Context** - Unified project workspace + context switching summaries + AI progress suggestions
+- [x] **Phase 11: Workspace Integration and AI Context** - Unified project workspace + context switching summaries + AI progress suggestions (completed 2026-03-25)
 
 ## Phase Details
 
@@ -135,9 +135,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 11-01-PLAN.md -- Backend: generate_context_file Tauri command, context file content generation, Rust tests
-- [ ] 11-02-PLAN.md -- Frontend: per-project workspace state map in useWorkspaceStore, CenterPanel/OutputDrawer state restore
-- [ ] 11-03-PLAN.md -- OpenAiButton component, ProjectDetail integration, old onboarding UI removal, end-to-end checkpoint
+- [x] 11-01-PLAN.md -- Backend: generate_context_file Tauri command, context file content generation, Rust tests
+- [x] 11-02-PLAN.md -- Frontend: per-project workspace state map in useWorkspaceStore, CenterPanel/OutputDrawer state restore
+- [x] 11-03-PLAN.md -- OpenAiButton component, ProjectDetail integration, old onboarding UI removal, end-to-end checkpoint
 
 ## Progress
 
@@ -158,7 +158,7 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9 -> 10 -> 11
 | 8. File Explorer | v1.1 | 0/3 | Planned    |  |
 | 9. Embedded Terminal | v1.1 | 0/2 | Planning complete | - |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete    | 2026-03-23 |
-| 11. Workspace Integration and AI Context | v1.1 | 0/3 | Planning complete | - |
+| 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete   | 2026-03-25 |
 
 ## Backlog
 

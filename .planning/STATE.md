@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Project Manager
-status: Ready to plan
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-25T00:44:32Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-03-25T03:48:41.196Z"
 progress:
   total_phases: 11
-  completed_phases: 5
-  total_plans: 18
-  completed_plans: 15
+  completed_phases: 6
+  total_plans: 17
+  completed_plans: 17
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 11
-Plan: 01 complete
+Phase: 11 (workspace-integration-and-ai-context) — EXECUTING
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -59,7 +59,10 @@ Recent decisions affecting current work:
 - [Phase 09]: Session-only zustand state for activeDrawerTab and hasAutoOpenedTerminal — Per D-03, auto-open is per-session; drawer tab resets on app launch
 - [Phase 09]: CSS display:none for tab switching to preserve terminal scrollback — Unmounting xterm.js destroys scrollback buffer; CSS hiding preserves full terminal state
 - [Phase 09]: Key-based TerminalTab remount on project switch for PTY cleanup — React key change triggers unmount (kills old PTY) and remount (spawns new PTY in new directory)
+- [Phase 11]: Session-only per-project state excluded from Zustand partialize (D-14)
+- [Phase 11]: Terminal kill/respawn via session key increment triggering React key change and component remount
 - [Phase 11]: Context file uses markdown with status icons, empty projects get onboarding instructions, attention section caps at 5 items
+- [Phase 11]: Hardcoded claude --dangerously-skip-permissions instead of configurable CLI tool path in OpenAiButton
 
 ### Roadmap Evolution
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T00:44:32Z
-Stopped at: Completed 11-01-PLAN.md
-Resume file: .planning/phases/11-workspace-integration-and-ai-context/11-01-SUMMARY.md
+Last session: 2026-03-25T03:48:41.193Z
+Stopped at: Completed 11-03-PLAN.md
+Resume file: None
