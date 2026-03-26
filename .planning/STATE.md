@@ -2,14 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: Ready to plan
-stopped_at: null
-last_updated: "2026-03-25"
+status: planning
+stopped_at: Phase 12 context gathered
+last_updated: "2026-03-26T14:53:52.007Z"
+last_activity: 2026-03-25 -- v1.2 roadmap created, 4 phases derived from 15 requirements
 progress:
-  total_phases: 4
+  total_phases: 9
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
+  percent: 73
 ---
 
 # Project State
@@ -33,11 +35,13 @@ Progress: [██████████████████████░
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 34 (v1.0: 17, v1.1: 17)
 - Average duration: carried from v1.0/v1.1
 - Total execution time: carried from v1.0/v1.1
 
 **Recent Trend:**
+
 - v1.0: 6 phases in 7 days
 - v1.1: 6 phases in 10 days (higher complexity per phase)
 - Trend: Stable
@@ -69,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: v1.2 roadmap created, ready to plan Phase 12
-Resume file: None
+Last session: 2026-03-26T14:53:52.004Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-cli-settings-and-schema-foundation/12-CONTEXT.md
