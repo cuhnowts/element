@@ -62,11 +62,10 @@ Weights used: 2 (400 regular, 600 semibold). Inherited from Phase 12. Tier optio
 |------|-------|-------|
 | Dominant (60%) | `oklch(0.145 0 0)` / `--background` | Dialog background, page background |
 | Secondary (30%) | `oklch(0.205 0 0)` / `--card` | Selected radio option highlight background |
-| Accent (10%) | `oklch(0.985 0 0)` / `--primary` | "Start Planning" button (default variant), selected radio indicator fill, tier badge on project header |
-| Destructive | `oklch(0.396 0.141 25.723)` / `--destructive` | "Change plan" warning dialog confirm button |
+| Accent (10%) | `oklch(0.985 0 0)` / `--primary` | "Start Planning" button (default variant), "Change Plan" warning confirm button (default variant), selected radio indicator fill, tier badge on project header |
 | Muted foreground | `oklch(0.708 0 0)` / `--muted-foreground` | Tier description text, textarea placeholder |
 
-Accent reserved for: "Start Planning" button (primary CTA), selected radio indicator, tier badge in project header. All other interactive elements use `variant="outline"` or `variant="ghost"`.
+Accent reserved for: "Start Planning" button (primary CTA), "Change Plan" warning confirm button, selected radio indicator, tier badge in project header. All other interactive elements use `variant="outline"` or `variant="ghost"`.
 
 ---
 
@@ -180,11 +179,11 @@ Badge appears only when a tier is set on the project. "Change plan" button appea
 |  but new AI sessions will use the new     |
 |  approach.                                |
 |                                           |
-| [Cancel                ] [Change Plan   ] |
+| [Keep Current Plan   ] [Change Plan     ] |
 +------------------------------------------+
 ```
 
-- "Cancel" button: `variant="outline"`
+- "Keep Current Plan" button: `variant="outline"`
 - "Change Plan" button: `variant="default"` (accent color, not destructive -- this action does not delete data)
 - After confirmation, opens the `TierSelectionDialog` with current tier pre-selected
 
@@ -239,7 +238,7 @@ Badge appears only when a tier is set on the project. "Change plan" button appea
 | Change plan button | "Change plan" |
 | Change plan warning title | "Change planning approach?" |
 | Change plan warning body | "This project already has tasks. Changing the tier will not delete existing work, but new AI sessions will use the new approach." |
-| Change plan warning cancel | "Cancel" |
+| Change plan warning dismiss | "Keep Current Plan" |
 | Change plan warning confirm | "Change Plan" |
 | Submitting state | "Starting..." |
 | Toast: launch failure | "Failed to launch AI: {error}" (existing pattern preserved) |
