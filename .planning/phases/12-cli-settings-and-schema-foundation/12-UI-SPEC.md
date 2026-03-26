@@ -48,11 +48,11 @@ Exceptions: none
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.5 |
-| Heading | 18px (`text-lg`) | 600 (semibold) | 1.2 |
-| Section heading | 16px (`text-base`) | 500 (medium) | 1.5 |
+| Label | 14px | 400 (regular) | 1.5 |
+| Section heading | 16px (`text-base`) | 600 (semibold) | 1.2 |
+| Page heading | 18px (`text-lg`) | 600 (semibold) | 1.2 |
 
-Source: Existing `app.css` declares 14px body. Existing settings pages use `text-lg font-semibold` for page headings, `text-base font-medium` for section headings (see AiSettings.tsx line 39 pattern).
+Weights used: 2 (400 regular, 600 semibold). Source: Existing `app.css` declares 14px body. Existing settings pages use `text-lg font-semibold` for page headings (see AiSettings.tsx line 39 pattern). Weight 500 dropped to stay within 2-weight maximum; section headings promoted to semibold for consistency.
 
 ---
 
@@ -62,11 +62,11 @@ Source: Existing `app.css` declares 14px body. Existing settings pages use `text
 |------|-------|-------|
 | Dominant (60%) | `oklch(0.145 0 0)` / `--background` | Page background, settings content area |
 | Secondary (30%) | `oklch(0.205 0 0)` / `--card` | Input fields, nav sidebar background |
-| Accent (10%) | `oklch(0.985 0 0)` / `--primary` | "Save" button (default variant), active nav tab indicator |
+| Accent (10%) | `oklch(0.985 0 0)` / `--primary` | "Save CLI Tool" button (default variant), active nav tab indicator |
 | Destructive | `oklch(0.396 0.141 25.723)` / `--destructive` | Not used this phase (no destructive actions) |
 | Muted foreground | `oklch(0.708 0 0)` / `--muted-foreground` | Placeholder text, helper text, secondary descriptions |
 
-Accent reserved for: Save button (primary CTA on CLI tool form), active settings tab left-border indicator. All other interactive elements use `variant="outline"` or `variant="ghost"`.
+Accent reserved for: Save CLI Tool button (primary CTA on CLI tool form), active settings tab left-border indicator. All other interactive elements use `variant="outline"` or `variant="ghost"`.
 
 ---
 
@@ -85,6 +85,8 @@ This phase modifies existing components. No new shadcn components need to be ins
 
 ### CLI Tool Section Layout (within AiSettings.tsx)
 
+**Focal point:** "CLI Tool" section heading, top of the settings content area.
+
 ```
 [Section heading: "CLI Tool"]
 [Helper text explaining what this does]
@@ -92,7 +94,7 @@ This phase modifies existing components. No new shadcn components need to be ins
 [Label: "Command"]     [Input: placeholder "claude"]
 [Label: "Arguments"]   [Input: placeholder "--dangerously-skip-permissions"]
 
-[Button: "Save"]
+[Button: "Save CLI Tool"]
 
 [Separator]
 
@@ -104,7 +106,7 @@ This phase modifies existing components. No new shadcn components need to be ins
 - 24px (`gap-6`) vertical gap between CLI Tool section and the Separator
 - 8px (`gap-2`) between each label and its input
 - 16px (`gap-4`) between the Command field group and Arguments field group
-- 16px (`gap-4`) between the Arguments field group and the Save button
+- 16px (`gap-4`) between the Arguments field group and the Save CLI Tool button
 - Each input is full-width within the section (max-width 400px to prevent stretching on wide screens)
 - Separator with 24px vertical margin separates CLI Tool from AI Providers
 
@@ -117,7 +119,7 @@ This phase modifies existing components. No new shadcn components need to be ins
 | State | Behavior |
 |-------|----------|
 | Empty (first visit) | Both inputs empty. Placeholder text shows example values. No validation on this screen. |
-| Editing | Standard input focus ring (`--ring` token). Save button enabled when at least Command field has a value. |
+| Editing | Standard input focus ring (`--ring` token). Save CLI Tool button enabled when at least Command field has a value. |
 | Save success | `toast.success("CLI tool saved.")` — uses existing sonner toast pattern |
 | Save with empty command | Save clears the setting. No error -- this is a valid "unconfigure" action. |
 
@@ -136,7 +138,7 @@ This phase modifies existing components. No new shadcn components need to be ins
 
 | Element | Copy |
 |---------|------|
-| Primary CTA | "Save" (on CLI tool form) |
+| Primary CTA | "Save CLI Tool" (on CLI tool form) |
 | Section heading | "CLI Tool" |
 | Section helper text | "Set the command that runs when you click Open AI. Leave empty to disable." |
 | Command field label | "Command" |
