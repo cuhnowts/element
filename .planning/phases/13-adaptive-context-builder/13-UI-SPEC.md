@@ -58,9 +58,9 @@ Inherited from Phase 12. No frontend typography decisions in this phase.
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.5 |
+| Label | 14px | 600 (semibold) | 1.5 |
 | Heading | 18px | 600 (semibold) | 1.2 |
-| Section heading | 16px | 500 (medium) | 1.5 |
+| Section heading | 16px | 400 (regular) | 1.5 |
 
 ---
 
@@ -135,7 +135,7 @@ Each cell contains the exact copy for the Instructions section.
 
 | Tier | Instructions Copy |
 |------|-------------------|
-| Quick | "You have a task list. Check off items as you complete them." |
+| Quick | "You have a simple task list. Check off items as you complete them." |
 | Medium | "Review the phases below. Focus on the current phase. Ask if you need clarification." |
 | GSD | "This project uses GSD workflow. Run /gsd:progress to see status. Run /gsd:next to continue." |
 
