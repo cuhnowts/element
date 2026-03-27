@@ -84,12 +84,13 @@ Plans:
   3. Selecting Medium tier starts an AI conversation that asks focused questions, then generates phases and tasks for user review via the existing AiPlanReview UI
   4. Selecting GSD tier launches the AI with instructions to run GSD commands, and the selected tier is stored on the project
   5. Clicking "Open AI" on a project that already has tasks shows progress, highlights blockers, and suggests the next action to work on
-**Plans**: 2 plans
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 12-01-PLAN.md — Migration 010, model updates, validate_cli_tool and set_planning_tier commands
-- [ ] 12-02-PLAN.md — CLI Tool settings UI, tab rename, OpenAiButton wiring with validation
+- [ ] 14-01-PLAN.md — TierSelectionDialog component, OpenAiButton tier gate, ProjectDetail tier badge and Change plan button
+- [ ] 14-02-PLAN.md — Rust tier-aware context templates, What's Next execution mode, batch_create_tasks command
+- [ ] 14-03-PLAN.md — End-to-end wiring: dialog submission, API bindings, Quick tier flat task confirm, GSD plan watcher skip
 
 ### Phase 15: .planning/ Folder Sync
 **Goal**: GSD-tier projects automatically reflect their .planning/ROADMAP.md structure in Element's UI
@@ -118,7 +119,7 @@ Plans:
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 | 12. CLI Settings and Schema Foundation | v1.2 | 0/2 | Planning | - |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Planning | - |
-| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/0 | Not started | - |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/3 | Planning | - |
 | 15. .planning/ Folder Sync | v1.2 | 0/0 | Not started | - |
 
 ## Backlog
