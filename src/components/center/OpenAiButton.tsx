@@ -22,17 +22,34 @@ export function OpenAiButton({ projectId, directoryPath }: OpenAiButtonProps) {
 
     setIsLaunching(true);
     try {
-      // 1. Generate context file (writes .element/context.md)
+      // 1. Read CLI settings
+      const command = await api.getAppSetting("cli_command");
+      const args = await api.getAppSetting("cli_args");
+
+      // 2. Check if CLI tool is configured
+      if (!command) {
+        toast.error("No AI tool configured. Set one up in Settings > AI.");
+        return;
+      }
+
+      // 3. Validate tool exists on system
+      const isValid = await api.validateCliTool(command);
+      if (!isValid) {
+        toast.error(`${command} not found on your system. Check the command in Settings > AI.`);
+        return;
+      }
+
+      // 4. Generate context file (writes .element/context.md)
       const contextPath = await api.generateContextFile(projectId);
 
-      // 2. Start plan watcher (picks up plan-output.json for AiPlanReview)
+      // 5. Start plan watcher (picks up plan-output.json for AiPlanReview)
       await api.startPlanWatcher(directoryPath);
 
-      // 3. Kill existing PTY and spawn claude in visible terminal
-      launchTerminalCommand("claude", [
-        "--dangerously-skip-permissions",
-        contextPath,
-      ]);
+      // 6. Build args list and launch
+      const argsList = args ? args.split(/\s+/).filter(Boolean) : [];
+      argsList.push(contextPath);
+
+      launchTerminalCommand(command, argsList);
     } catch (e) {
       toast.error(`Failed to launch AI: ${e}`);
     } finally {
