@@ -10,7 +10,7 @@ Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phase
 ### CLI Configuration
 
 - [ ] **CLI-01**: User can set the AI terminal command in Settings (replaces hardcoded claude)
-- [ ] **CLI-02**: App validates CLI tool availability before launching and shows actionable error if missing
+- [x] **CLI-02**: App validates CLI tool availability before launching and shows actionable error if missing
 
 ### Planning Tiers
 
@@ -18,7 +18,7 @@ Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phase
 - [ ] **PLAN-02**: Quick tier generates a flat task list from a brief user description, saved directly to project
 - [ ] **PLAN-03**: Medium tier asks focused questions via AI conversation, then generates phases and tasks for review
 - [ ] **PLAN-04**: GSD tier instructs the AI to run GSD commands for full planning, and stores the selected tier on the project
-- [ ] **PLAN-05**: User's tier choice is stored per-project so subsequent "Open AI" clicks skip the tier dialog
+- [x] **PLAN-05**: User's tier choice is stored per-project so subsequent "Open AI" clicks skip the tier dialog
 
 ### Context Intelligence
 
@@ -32,7 +32,7 @@ Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phase
 - [ ] **SYNC-01**: User can trigger import of .planning/ROADMAP.md into project phases and tasks
 - [ ] **SYNC-02**: File watcher on .planning/ directory detects changes and syncs updates into the database
 - [ ] **SYNC-03**: Sync uses content hashing to prevent write loops (app writes don't trigger re-import)
-- [ ] **SYNC-04**: Phases and tasks created by sync are tagged with source so the app knows they originated externally
+- [x] **SYNC-04**: Phases and tasks created by sync are tagged with source so the app knows they originated externally
 
 ## Future Requirements
 
@@ -72,12 +72,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CLI-01 | Phase 12 | Pending |
-| CLI-02 | Phase 12 | Pending |
+| CLI-02 | Phase 12 | Complete |
 | PLAN-01 | Phase 14 | Pending |
 | PLAN-02 | Phase 14 | Pending |
 | PLAN-03 | Phase 14 | Pending |
 | PLAN-04 | Phase 14 | Pending |
-| PLAN-05 | Phase 12 | Pending |
+| PLAN-05 | Phase 12 | Complete |
 | CTX-01 | Phase 13 | Pending |
 | CTX-02 | Phase 13 | Pending |
 | CTX-03 | Phase 14 | Pending |
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYNC-01 | Phase 15 | Pending |
 | SYNC-02 | Phase 15 | Pending |
 | SYNC-03 | Phase 15 | Pending |
-| SYNC-04 | Phase 12 | Pending |
+| SYNC-04 | Phase 12 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 15 total

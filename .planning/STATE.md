@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: planning
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-27T13:11:06.710Z"
-last_activity: 2026-03-25 -- v1.2 roadmap created, 4 phases derived from 15 requirements
+status: Ready to execute
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-27T13:28:02.278Z"
 progress:
   total_phases: 9
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 73
+  total_plans: 7
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 12 - CLI Settings and Schema Foundation
+**Current focus:** Phase 12 — cli-settings-and-schema-foundation
 
 ## Current Position
 
-Phase: 12 of 15 (CLI Settings and Schema Foundation)
-Plan: 0 of 0 in current phase
-Status: Ready to plan
-Last activity: 2026-03-25 -- v1.2 roadmap created, 4 phases derived from 15 requirements
-
-Progress: [██████████████████████░░░░░░░░] 73% (11/15 phases complete across all milestones)
+Phase: 12 (cli-settings-and-schema-foundation) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -60,6 +54,8 @@ Recent decisions affecting current work:
 - [Phase 11]: Context file uses markdown with status icons, attention section caps at 5 items
 - [v1.2 research]: Regex parsing over AST for ROADMAP.md (predictable GSD format)
 - [v1.2 research]: One-way sync only (disk -> DB), bidirectional deferred to future
+- [Phase 12]: validate_cli_tool returns Ok(false) for missing tools, not Err
+- [Phase 12]: planning_tier CHECK constraint: quick/medium/full; source CHECK: user/sync
 
 ### Pending Todos
 
@@ -73,6 +69,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T13:11:06.706Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-planning-folder-sync/15-CONTEXT.md
+Last session: 2026-03-27T13:28:02.275Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None

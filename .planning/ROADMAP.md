@@ -58,7 +58,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **UI hint**: yes
 
 Plans:
-- [ ] 12-01-PLAN.md — Migration 010, model updates, validate_cli_tool and set_planning_tier commands
+- [x] 12-01-PLAN.md — Migration 010, model updates, validate_cli_tool and set_planning_tier commands
 - [ ] 12-02-PLAN.md — CLI Tool settings UI, tab rename, OpenAiButton wiring with validation
 
 ### Phase 13: Adaptive Context Builder
@@ -117,7 +117,7 @@ Plans:
 | 9. Embedded Terminal | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
-| 12. CLI Settings and Schema Foundation | v1.2 | 0/2 | Planning | - |
+| 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | In Progress|  |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Planning | - |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/3 | Planning | - |
 | 15. .planning/ Folder Sync | v1.2 | 0/0 | Not started | - |
@@ -128,7 +128,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
