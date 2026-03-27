@@ -65,7 +65,10 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   1. Context file for a project with no plan contains planning instructions; context file for a project with tasks in progress contains execution guidance with progress summary
   2. A project with 50+ tasks generates a context file that summarizes completed work rather than listing every task, staying within token budget
   3. Context file for a Quick-tier project contains simple todo-list prompts; context file for a GSD-tier project contains GSD command instructions
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 13-01-PLAN.md -- Adaptive context builder with state detection, instruction matrix, and token budget rollup (TDD)
 
 ### Phase 14: Planning Tier Decision Tree and Execution Mode
 **Goal**: Users get the right level of AI planning for their project -- from a quick todo list to full GSD breakdown -- and planned projects get "what's next?" execution guidance
@@ -106,7 +109,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 | 12. CLI Settings and Schema Foundation | v1.2 | 0/0 | Not started | - |
-| 13. Adaptive Context Builder | v1.2 | 0/0 | Not started | - |
+| 13. Adaptive Context Builder | v1.2 | 0/1 | Planning | - |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/0 | Not started | - |
 | 15. .planning/ Folder Sync | v1.2 | 0/0 | Not started | - |
 
