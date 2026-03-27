@@ -100,6 +100,11 @@ Plans:
   1. User can trigger an import of .planning/ROADMAP.md and see the parsed phases and tasks appear in the project's phase list
   2. When GSD executes and updates ROADMAP.md on disk, Element detects the change and syncs the updates into the database automatically
   3. App-side writes to .planning/ (if any) do not trigger a re-import loop -- content hashing prevents infinite sync cycles
+**Plans**: 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Rust ROADMAP.md parser, content hashing, DB sync engine, PlanningWatcherState and watcher commands
+- [ ] 15-02-PLAN.md — Frontend integration: API bindings, event listeners, auto-import/watcher lifecycle, GSD badges, read-only gating
 
 ## Progress
 
@@ -120,7 +125,7 @@ Plans:
 | 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | In Progress|  |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Planning | - |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/3 | Planning | - |
-| 15. .planning/ Folder Sync | v1.2 | 0/0 | Not started | - |
+| 15. .planning/ Folder Sync | v1.2 | 0/2 | Planning | - |
 
 ## Backlog
 
