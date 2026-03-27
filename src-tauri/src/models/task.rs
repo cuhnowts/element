@@ -87,6 +87,7 @@ pub struct Task {
     pub recurrence_rule: Option<String>,
     pub estimated_minutes: Option<i32>,
     pub phase_id: Option<String>,
+    pub source: String,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -127,7 +128,7 @@ pub struct UpdateTaskInput {
     pub phase_id: Option<String>,
 }
 
-pub const TASK_COLUMNS: &str = "id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, phase_id, created_at, updated_at";
+pub const TASK_COLUMNS: &str = "id, project_id, theme_id, title, description, context, status, priority, external_path, due_date, scheduled_date, scheduled_time, duration_minutes, recurrence_rule, estimated_minutes, phase_id, source, created_at, updated_at";
 
 pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
     let status_str: String = row.get(6)?;
@@ -152,8 +153,9 @@ pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
         recurrence_rule: row.get(13)?,
         estimated_minutes: row.get(14)?,
         phase_id: row.get(15)?,
-        created_at: row.get(16)?,
-        updated_at: row.get(17)?,
+        source: row.get(16)?,
+        created_at: row.get(17)?,
+        updated_at: row.get(18)?,
     })
 }
 
@@ -220,6 +222,7 @@ impl Database {
             recurrence_rule: input.recurrence_rule,
             estimated_minutes: input.estimated_minutes,
             phase_id: input.phase_id,
+            source: "user".to_string(),
             created_at: now.clone(),
             updated_at: now,
         })
@@ -890,6 +893,7 @@ mod tests {
             recurrence_rule: None,
             estimated_minutes: None,
             phase_id: Some("phase-1".into()),
+            source: "user".to_string(),
             created_at: "2026-01-01".into(),
             updated_at: "2026-01-01".into(),
         };

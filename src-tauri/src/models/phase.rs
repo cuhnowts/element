@@ -9,6 +9,7 @@ pub struct Phase {
     pub project_id: String,
     pub name: String,
     pub sort_order: i32,
+    pub source: String,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -41,6 +42,7 @@ impl Database {
             project_id: input.project_id,
             name: input.name,
             sort_order,
+            source: "user".to_string(),
             created_at: now.clone(),
             updated_at: now,
         })
@@ -48,7 +50,7 @@ impl Database {
 
     pub fn list_phases(&self, project_id: &str) -> Result<Vec<Phase>, rusqlite::Error> {
         let mut stmt = self.conn().prepare(
-            "SELECT id, project_id, name, sort_order, created_at, updated_at FROM phases WHERE project_id = ?1 ORDER BY sort_order ASC",
+            "SELECT id, project_id, name, sort_order, source, created_at, updated_at FROM phases WHERE project_id = ?1 ORDER BY sort_order ASC",
         )?;
 
         let phases = stmt.query_map(rusqlite::params![project_id], |row| {
@@ -57,8 +59,9 @@ impl Database {
                 project_id: row.get(1)?,
                 name: row.get(2)?,
                 sort_order: row.get(3)?,
-                created_at: row.get(4)?,
-                updated_at: row.get(5)?,
+                source: row.get(4)?,
+                created_at: row.get(5)?,
+                updated_at: row.get(6)?,
             })
         })?;
 
@@ -74,7 +77,7 @@ impl Database {
         )?;
 
         self.conn().query_row(
-            "SELECT id, project_id, name, sort_order, created_at, updated_at FROM phases WHERE id = ?1",
+            "SELECT id, project_id, name, sort_order, source, created_at, updated_at FROM phases WHERE id = ?1",
             rusqlite::params![id],
             |row| {
                 Ok(Phase {
@@ -82,8 +85,9 @@ impl Database {
                     project_id: row.get(1)?,
                     name: row.get(2)?,
                     sort_order: row.get(3)?,
-                    created_at: row.get(4)?,
-                    updated_at: row.get(5)?,
+                    source: row.get(4)?,
+                    created_at: row.get(5)?,
+                    updated_at: row.get(6)?,
                 })
             },
         )
@@ -317,6 +321,7 @@ mod tests {
             project_id: "proj-1".into(),
             name: "Test".into(),
             sort_order: 0,
+            source: "user".to_string(),
             created_at: "2026-01-01".into(),
             updated_at: "2026-01-01".into(),
         };

@@ -48,5 +48,10 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.pragma_update(None, "user_version", 9)?;
     }
 
+    if version < 10 {
+        conn.execute_batch(include_str!("sql/010_cli_planning_sync.sql"))?;
+        conn.pragma_update(None, "user_version", 10)?;
+    }
+
     Ok(())
 }
