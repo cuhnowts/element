@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
 status: planning
-stopped_at: Phase 14 context gathered
-last_updated: "2026-03-26T15:27:46.105Z"
+stopped_at: Phase 15 context gathered
+last_updated: "2026-03-27T13:11:06.710Z"
 last_activity: 2026-03-25 -- v1.2 roadmap created, 4 phases derived from 15 requirements
 progress:
   total_phases: 9
@@ -73,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T15:27:46.102Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-planning-tier-decision-tree-and-execution-mode/14-CONTEXT.md
+Last session: 2026-03-27T13:11:06.706Z
+Stopped at: Phase 15 context gathered
+Resume file: .planning/phases/15-planning-folder-sync/15-CONTEXT.md
