@@ -251,6 +251,8 @@ pub fn run() {
             generate_context_file,
             get_app_setting,
             set_app_setting,
+            validate_cli_tool,
+            set_planning_tier,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -299,3 +299,35 @@ pub async fn set_app_setting(
     let db = state.lock().map_err(|e| e.to_string())?;
     db.set_app_setting(&key, &value).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn validate_cli_tool(command: String) -> Result<bool, String> {
+    use tokio::process::Command as TokioCommand;
+
+    let result = tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        TokioCommand::new(&command)
+            .arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status(),
+    )
+    .await;
+
+    match result {
+        Ok(Ok(status)) => Ok(status.success()),
+        Ok(Err(_)) => Ok(false),  // Command not found or failed to spawn
+        Err(_) => Ok(false),       // Timeout
+    }
+}
+
+#[tauri::command]
+pub fn set_planning_tier(
+    project_id: String,
+    tier: Option<String>,
+    db: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+) -> Result<crate::models::project::Project, String> {
+    let db = db.lock().map_err(|e| e.to_string())?;
+    db.set_planning_tier(&project_id, tier.as_deref())
+        .map_err(|e| e.to_string())
+}
