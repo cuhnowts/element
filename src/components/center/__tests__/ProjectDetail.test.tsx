@@ -23,6 +23,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     durationMinutes: null,
     recurrenceRule: null,
     phaseId: null,
+    source: "user",
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
     ...overrides,

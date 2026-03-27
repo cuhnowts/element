@@ -7,6 +7,7 @@ export interface Project {
   description: string;
   directoryPath: string | null;
   themeId: string | null;
+  planningTier: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +28,7 @@ export interface Task {
   durationMinutes: number | null;
   recurrenceRule: string | null;
   phaseId: string | null;
+  source: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +48,7 @@ export interface Phase {
   projectId: string;
   name: string;
   sortOrder: number;
+  source: string;
   createdAt: string;
   updatedAt: string;
 }

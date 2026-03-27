@@ -213,4 +213,12 @@ export const api = {
     invoke<string | null>("get_app_setting", { key }),
   setAppSetting: (key: string, value: string) =>
     invoke<void>("set_app_setting", { key, value }),
+
+  // CLI Validation
+  validateCliTool: (command: string) =>
+    invoke<boolean>("validate_cli_tool", { command }),
+
+  // Planning Tier
+  setPlanningTier: (projectId: string, tier: string | null) =>
+    invoke<Project>("set_planning_tier", { projectId, tier }),
 };
