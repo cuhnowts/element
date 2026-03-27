@@ -20,7 +20,7 @@ const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   },
   {
     id: "ai",
-    label: "AI Providers",
+    label: "AI",
     icon: <Sparkles className="size-4" />,
   },
 ];

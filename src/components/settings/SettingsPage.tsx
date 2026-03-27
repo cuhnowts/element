@@ -14,7 +14,7 @@ const tabHeadings: Record<string, string> = {
   credentials: "Credentials",
   calendars: "Calendars",
   schedule: "Schedule",
-  ai: "AI Providers",
+  ai: "AI",
 };
 
 export function SettingsPage() {
