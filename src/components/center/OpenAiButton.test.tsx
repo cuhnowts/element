@@ -122,6 +122,21 @@ describe("OpenAiButton", () => {
     });
   });
 
+  describe("Phase 14: Tier gate", () => {
+    // PLAN-01: Dialog gate
+    it.todo("opens tier dialog when project has no tier and no tasks");
+    it.todo("skips tier dialog when project has a stored tier");
+    it.todo("skips tier dialog when project has existing tasks");
+
+    // PLAN-04: GSD behavior
+    it.todo("skips plan watcher when tier is 'full' (GSD)");
+    it.todo("starts plan watcher when tier is 'quick'");
+    it.todo("starts plan watcher when tier is 'medium'");
+
+    // D-07: Context file regeneration after confirm
+    it.todo("regenerates context file after plan confirmation");
+  });
+
   it("shows error toast on generateContextFile failure", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>

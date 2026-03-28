@@ -90,3 +90,15 @@ describe("tasksForPhase", () => {
     expect(result).toEqual([]);
   });
 });
+
+describe("Phase 14: Tier badge and change plan", () => {
+  // PLAN-01: Tier badge
+  it.todo("shows tier badge when project has planningTier set");
+  it.todo("shows 'GSD' text for full tier");
+  it.todo("shows 'Quick' text for quick tier");
+  it.todo("shows 'Medium' text for medium tier");
+
+  // D-04: Change plan
+  it.todo("shows 'Change plan' button when tier is set");
+  it.todo("opens tier dialog with isChangingTier when Change plan clicked");
+});
