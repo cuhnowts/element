@@ -45,11 +45,14 @@ export function OpenAiButton({ projectId, directoryPath }: OpenAiButtonProps) {
       // 5. Start plan watcher (picks up plan-output.json for AiPlanReview)
       await api.startPlanWatcher(directoryPath);
 
-      // 6. Build args list and launch
-      const argsList = args ? args.split(/\s+/).filter(Boolean) : [];
-      argsList.push(contextPath);
+      // 6. Build full command + args
+      const fullArgs: string[] = [];
+      if (args) fullArgs.push(args.trim());
+      // Claude CLI requires "--" before positional args to separate them from flags
+      fullArgs.push("--");
+      fullArgs.push(contextPath);
 
-      launchTerminalCommand(command, argsList);
+      launchTerminalCommand(command, fullArgs);
     } catch (e) {
       toast.error(`Failed to launch AI: ${e}`);
     } finally {

@@ -68,24 +68,38 @@ export function useTerminal(
 
     fitAddon.fit();
 
-    // Spawn PTY with initial command or login shell
-    // On macOS, use /bin/zsh as default. On Windows, would use powershell.exe (D-08).
-    const shell = initialCommand?.command ?? "/bin/zsh";
-    const shellArgs = initialCommand?.args ?? ["-l"];
+    // Spawn PTY — always start a login shell, then write command if needed.
+    // tauri-pty's spawn does not reliably pass args as process argv,
+    // so we write the command to stdin after the shell is ready.
+    const pendingCommand = initialCommand
+      ? [initialCommand.command, ...initialCommand.args].join(" ")
+      : null;
+
     try {
-      const pty = spawn(shell, shellArgs, {
+      const pty = spawn("/bin/zsh", ["-l"], {
         cols: term.cols,
         rows: term.rows,
         cwd,
       });
 
       // Bidirectional data flow
+      let commandSent = false;
       pty.onData((data: Uint8Array) => {
         term.write(data);
       });
       term.onData((data: string) => {
         pty.write(data);
       });
+
+      // Write pending command after shell has time to initialize
+      if (pendingCommand) {
+        setTimeout(() => {
+          if (!commandSent) {
+            commandSent = true;
+            pty.write(pendingCommand + "\r");
+          }
+        }, 500);
+      }
 
       // Handle exit
       pty.onExit(({ exitCode }: { exitCode: number }) => {
