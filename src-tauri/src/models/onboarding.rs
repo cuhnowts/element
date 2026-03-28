@@ -110,70 +110,184 @@ pub struct TaskContextData {
     pub description: String,
 }
 
-/// Generate context file content for seeding into an AI CLI tool
-pub fn generate_context_file_content(data: &ProjectContextData) -> String {
-    if data.is_empty {
-        generate_empty_project_context(data)
-    } else {
-        generate_populated_project_context(data)
+/// Project state derived from task data (D-01, D-02)
+#[derive(Debug, Clone, PartialEq)]
+pub enum ProjectState {
+    NoPlan,
+    Planned,
+    InProgress,
+    Complete,
+}
+
+/// Phase classification for token budget rollup (D-04)
+#[derive(Debug, PartialEq)]
+enum PhaseClass {
+    Completed,
+    Active,
+    Future,
+}
+
+const SOFT_TOKEN_BUDGET: usize = 2000;
+
+/// Detect project state from task data (CTX-01)
+pub fn detect_project_state(data: &ProjectContextData) -> ProjectState {
+    if data.phases.is_empty() && data.total_tasks == 0 {
+        return ProjectState::NoPlan;
+    }
+    if data.total_tasks > 0 && data.completed_tasks == data.total_tasks {
+        return ProjectState::Complete;
+    }
+    if data.in_progress_tasks > 0 {
+        return ProjectState::InProgress;
+    }
+    if data.total_tasks > 0 {
+        return ProjectState::Planned;
+    }
+    // Edge case: phases exist but no tasks
+    ProjectState::NoPlan
+}
+
+/// Get tier+state-specific instruction text (CTX-04)
+pub fn get_instructions(state: &ProjectState, tier: &str) -> &'static str {
+    match (state, tier) {
+        (ProjectState::NoPlan, "quick") => "Describe what you need done. I'll create a simple task list.",
+        (ProjectState::NoPlan, "medium") => "Let's break this into phases. What are the major deliverables?",
+        (ProjectState::NoPlan, "full") => "This project uses GSD workflow. Run /gsd:new-project to begin.",
+        (ProjectState::Planned, "quick") => "You have a task list below. Pick one and start working on it.",
+        (ProjectState::Planned, "medium") => "Review the phases below. Start with the first incomplete phase. Ask if you need clarification.",
+        (ProjectState::Planned, "full") => "This project uses GSD workflow. Run /gsd:progress to see status. Run /gsd:next to continue.",
+        (ProjectState::InProgress, "quick") => "You have a simple task list. Check off items as you complete them.",
+        (ProjectState::InProgress, "medium") => "Review the phases below. Focus on the current phase. Ask if you need clarification.",
+        (ProjectState::InProgress, "full") => "This project uses GSD workflow. Run /gsd:progress to see status. Run /gsd:next to continue.",
+        (ProjectState::Complete, _) => "All tasks are complete. Consider marking this project as done, or add follow-up work if needed.",
+        _ => "Review the tasks below and continue working.",
     }
 }
 
-fn generate_populated_project_context(data: &ProjectContextData) -> String {
-    let mut out = String::new();
+fn estimate_tokens(text: &str) -> usize {
+    text.len() / 4
+}
 
-    // Header
-    out.push_str(&format!("# Project Context: {}\n\n", data.project_name));
-
-    // Overview
-    out.push_str("## Overview\n\n");
-    if !data.project_description.is_empty() {
-        out.push_str(&format!("{}\n\n", data.project_description));
-    }
-    let pct = if data.total_tasks > 0 {
-        (data.completed_tasks as f64 / data.total_tasks as f64 * 100.0) as usize
+fn classify_phase(phase: &PhaseContextData) -> PhaseClass {
+    if phase.total > 0 && phase.completed == phase.total {
+        PhaseClass::Completed
+    } else if phase.tasks.iter().any(|t| t.status == "in-progress") {
+        PhaseClass::Active
     } else {
-        0
-    };
-    out.push_str(&format!(
-        "**Progress:** {}/{} tasks complete ({}%)\n\n",
-        data.completed_tasks, data.total_tasks, pct
-    ));
+        PhaseClass::Future
+    }
+}
 
-    // Phases
-    out.push_str("## Phases\n\n");
-    for phase in &data.phases {
+fn classify_phases(phases: &[PhaseContextData]) -> Vec<PhaseClass> {
+    let mut classes: Vec<PhaseClass> = phases.iter().map(classify_phase).collect();
+    // If none are Active, promote first Future to Active
+    if !classes.contains(&PhaseClass::Active) {
+        if let Some(pos) = classes.iter().position(|c| *c == PhaseClass::Future) {
+            classes[pos] = PhaseClass::Active;
+        }
+    }
+    classes
+}
+
+fn status_icon(status: &str) -> &'static str {
+    match status {
+        "complete" => "[x]",
+        "in-progress" => "[~]",
+        "blocked" => "[!]",
+        _ => "[ ]",
+    }
+}
+
+fn format_phase_rollup(phase: &PhaseContextData, class: &PhaseClass) -> String {
+    match class {
+        PhaseClass::Completed => {
+            format!("- {} [{}/{} complete]\n", phase.name, phase.completed, phase.total)
+        }
+        PhaseClass::Active => {
+            let mut out = format!("### {} [{}/{}]\n\n", phase.name, phase.completed, phase.total);
+            for task in &phase.tasks {
+                out.push_str(&format!("- {} {}\n", status_icon(&task.status), task.title));
+            }
+            out
+        }
+        PhaseClass::Future => {
+            format!("- {} [{} tasks]\n", phase.name, phase.total)
+        }
+    }
+}
+
+fn tier_display(tier: &str) -> &'static str {
+    match tier {
+        "quick" => "Quick",
+        "medium" => "Medium",
+        "full" => "GSD",
+        _ => "Quick",
+    }
+}
+
+fn state_display(state: &ProjectState) -> &'static str {
+    match state {
+        ProjectState::NoPlan => "No plan",
+        ProjectState::Planned => "Planned",
+        ProjectState::InProgress => "In progress",
+        ProjectState::Complete => "Complete",
+    }
+}
+
+fn truncate_description(desc: &str) -> String {
+    if desc.len() <= 500 {
+        return desc.to_string();
+    }
+    // Find last ". " before 500 chars
+    if let Some(pos) = desc[..500].rfind(". ") {
+        format!("{}...", &desc[..pos + 1])
+    } else {
+        // No sentence boundary found, just truncate at 500
+        format!("{}...", &desc[..500])
+    }
+}
+
+fn build_header(data: &ProjectContextData, tier: &str, state: &ProjectState) -> String {
+    let mut out = format!("# {}\n\n", data.project_name);
+
+    if !data.project_description.is_empty() {
+        out.push_str(&truncate_description(&data.project_description));
+        out.push_str("\n\n");
+    }
+
+    out.push_str(&format!("**Tier:** {}\n", tier_display(tier)));
+    out.push_str(&format!("**State:** {}\n", state_display(state)));
+
+    if *state != ProjectState::NoPlan {
         out.push_str(&format!(
-            "### {} [{}/{}]\n\n",
-            phase.name, phase.completed, phase.total
+            "**Progress:** {}/{} tasks complete across {} phases\n",
+            data.completed_tasks, data.total_tasks, data.phases.len()
         ));
-        for task in &phase.tasks {
-            let icon = status_icon(&task.status);
-            out.push_str(&format!("- {} {} ({})\n", icon, task.title, task.status));
-        }
-        out.push('\n');
     }
 
-    // Unassigned tasks
-    if !data.unassigned_tasks.is_empty() {
-        out.push_str("## Unassigned Tasks\n\n");
-        for task in &data.unassigned_tasks {
-            let icon = status_icon(&task.status);
-            out.push_str(&format!("- {} {} ({})\n", icon, task.title, task.status));
-        }
-        out.push('\n');
+    out.push('\n');
+    out
+}
+
+fn build_instructions(state: &ProjectState, tier: &str) -> String {
+    format!("## Instructions\n\n{}\n\n", get_instructions(state, tier))
+}
+
+fn build_attention_section(data: &ProjectContextData, state: &ProjectState) -> String {
+    if *state == ProjectState::NoPlan {
+        return String::new();
     }
 
-    // What needs attention
-    out.push_str("## What Needs Attention\n\n");
+    let mut out = String::from("## What Needs Attention\n\n");
     let mut attention: Vec<&TaskContextData> = Vec::new();
-    // Collect in-progress first, then pending
+
     let all_tasks: Vec<&TaskContextData> = data
         .phases
         .iter()
         .flat_map(|p| p.tasks.iter())
         .chain(data.unassigned_tasks.iter())
         .collect();
+
     for task in &all_tasks {
         if task.status == "in-progress" {
             attention.push(task);
@@ -184,6 +298,7 @@ fn generate_populated_project_context(data: &ProjectContextData) -> String {
             attention.push(task);
         }
     }
+
     for task in attention.iter().take(5) {
         out.push_str(&format!("- **{}** ({})\n", task.title, task.status));
     }
@@ -191,50 +306,42 @@ fn generate_populated_project_context(data: &ProjectContextData) -> String {
         out.push_str("All tasks complete!\n");
     }
     out.push('\n');
-
-    // Output contract
-    out.push_str(&output_contract_section());
-
     out
 }
 
-fn generate_empty_project_context(data: &ProjectContextData) -> String {
-    let mut out = String::new();
+fn build_work_section(data: &ProjectContextData, _state: &ProjectState) -> String {
+    let classes = classify_phases(&data.phases);
+    let mut out = String::from("## Current Work\n\n");
 
-    out.push_str(&format!(
-        "# Project Onboarding: {}\n\n",
-        data.project_name
-    ));
-
-    out.push_str("## Project Context\n\n");
-    out.push_str(&format!("- **Name:** {}\n", data.project_name));
-    if !data.project_description.is_empty() {
-        out.push_str(&format!(
-            "- **Description:** {}\n",
-            data.project_description
-        ));
+    // First pass: normal rollup
+    for (phase, class) in data.phases.iter().zip(classes.iter()) {
+        out.push_str(&format_phase_rollup(phase, class));
     }
+
+    // Include unassigned tasks if any
+    if !data.unassigned_tasks.is_empty() {
+        out.push_str("\n### Unassigned Tasks\n\n");
+        for task in &data.unassigned_tasks {
+            out.push_str(&format!("- {} {}\n", status_icon(&task.status), task.title));
+        }
+    }
+
+    // Check budget -- progressive collapse
+    if estimate_tokens(&out) > SOFT_TOKEN_BUDGET {
+        out = String::from("## Current Work\n\n");
+        let classes = classify_phases(&data.phases);
+        for (phase, class) in data.phases.iter().zip(classes.iter()) {
+            if class == &PhaseClass::Active {
+                out.push_str(&format_phase_rollup(phase, &PhaseClass::Active));
+            } else {
+                out.push_str(&format!("- {} [{}/{} complete]\n",
+                    phase.name, phase.completed, phase.total));
+            }
+        }
+    }
+
     out.push('\n');
-
-    out.push_str("## Your Task\n");
-    out.push_str("You are helping the user plan this project. Have a conversation to understand:\n");
-    out.push_str("1. What are the major deliverables?\n");
-    out.push_str("2. What are the technical constraints?\n");
-    out.push_str("3. What is the priority order?\n\n");
-    out.push_str("Ask clarifying questions before generating the plan.\n\n");
-
-    out.push_str(&output_contract_section());
-
     out
-}
-
-fn status_icon(status: &str) -> &'static str {
-    match status {
-        "complete" => "[x]",
-        "in-progress" => "[~]",
-        "blocked" => "[!]",
-        _ => "[ ]",
-    }
 }
 
 fn output_contract_section() -> String {
@@ -260,6 +367,33 @@ IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
     .to_string()
 }
 
+/// Generate context file content for seeding into an AI CLI tool
+pub fn generate_context_file_content(data: &ProjectContextData, tier: &str) -> String {
+    let state = detect_project_state(data);
+    let mut out = String::new();
+
+    // Section 1: Header
+    out.push_str(&build_header(data, tier, &state));
+
+    // Section 2: Instructions (tier+state matrix)
+    out.push_str(&build_instructions(&state, tier));
+
+    // Section 3: What Needs Attention (preserved from Phase 11)
+    out.push_str(&build_attention_section(data, &state));
+
+    // Section 4: Current Work (with token budget rollup)
+    if state != ProjectState::NoPlan {
+        out.push_str(&build_work_section(data, &state));
+    }
+
+    // Section 5: Output contract (Quick/Medium only, NoPlan state only per D-10/D-13)
+    if tier != "full" && state == ProjectState::NoPlan {
+        out.push_str(&output_contract_section());
+    }
+
+    out
+}
+
 /// Parse and validate a plan output file
 pub fn parse_plan_output_file(content: &str) -> Result<PlanOutput, String> {
     serde_json::from_str::<PlanOutput>(content)
@@ -269,6 +403,391 @@ pub fn parse_plan_output_file(content: &str) -> Result<PlanOutput, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Helper to build test ProjectContextData
+    fn make_test_data(
+        name: &str,
+        description: &str,
+        phases: Vec<PhaseContextData>,
+        unassigned: Vec<TaskContextData>,
+    ) -> ProjectContextData {
+        let total_tasks: usize = phases.iter().map(|p| p.total).sum::<usize>()
+            + unassigned.len();
+        let completed_tasks: usize = phases.iter().map(|p| p.completed).sum::<usize>()
+            + unassigned.iter().filter(|t| t.status == "complete").count();
+        let in_progress_tasks: usize = phases.iter()
+            .flat_map(|p| p.tasks.iter())
+            .chain(unassigned.iter())
+            .filter(|t| t.status == "in-progress")
+            .count();
+        let is_empty = phases.is_empty() && total_tasks == 0;
+
+        ProjectContextData {
+            project_name: name.into(),
+            project_description: description.into(),
+            phases,
+            unassigned_tasks: unassigned,
+            total_tasks,
+            completed_tasks,
+            in_progress_tasks,
+            is_empty,
+        }
+    }
+
+    fn make_phase(name: &str, tasks: Vec<(&str, &str)>) -> PhaseContextData {
+        let completed = tasks.iter().filter(|(_, s)| *s == "complete").count();
+        let total = tasks.len();
+        PhaseContextData {
+            name: name.into(),
+            sort_order: 0,
+            tasks: tasks.into_iter().map(|(title, status)| TaskContextData {
+                title: title.into(),
+                status: status.into(),
+                description: String::new(),
+            }).collect(),
+            completed,
+            total,
+        }
+    }
+
+    // === State Detection Tests (CTX-01) ===
+
+    #[test]
+    fn test_state_no_plan_empty() {
+        let data = make_test_data("Test", "", vec![], vec![]);
+        assert_eq!(detect_project_state(&data), ProjectState::NoPlan);
+    }
+
+    #[test]
+    fn test_state_no_plan_phases_but_no_tasks() {
+        // Phases exist but have no tasks -- still NoPlan per D-01
+        let data = ProjectContextData {
+            project_name: "Test".into(),
+            project_description: "".into(),
+            phases: vec![PhaseContextData {
+                name: "Empty Phase".into(),
+                sort_order: 0,
+                tasks: vec![],
+                completed: 0,
+                total: 0,
+            }],
+            unassigned_tasks: vec![],
+            total_tasks: 0,
+            completed_tasks: 0,
+            in_progress_tasks: 0,
+            is_empty: false,
+        };
+        assert_eq!(detect_project_state(&data), ProjectState::NoPlan);
+    }
+
+    #[test]
+    fn test_state_planned() {
+        let data = make_test_data("Test", "", vec![
+            make_phase("Phase 1", vec![("Task A", "pending"), ("Task B", "pending")]),
+        ], vec![]);
+        assert_eq!(detect_project_state(&data), ProjectState::Planned);
+    }
+
+    #[test]
+    fn test_state_planned_blocked_only() {
+        let data = make_test_data("Test", "", vec![
+            make_phase("Phase 1", vec![("Task A", "blocked"), ("Task B", "pending")]),
+        ], vec![]);
+        assert_eq!(detect_project_state(&data), ProjectState::Planned);
+    }
+
+    #[test]
+    fn test_state_in_progress() {
+        let data = make_test_data("Test", "", vec![
+            make_phase("Phase 1", vec![("Task A", "complete"), ("Task B", "in-progress")]),
+        ], vec![]);
+        assert_eq!(detect_project_state(&data), ProjectState::InProgress);
+    }
+
+    #[test]
+    fn test_state_complete() {
+        let data = make_test_data("Test", "", vec![
+            make_phase("Phase 1", vec![("Task A", "complete"), ("Task B", "complete")]),
+        ], vec![]);
+        assert_eq!(detect_project_state(&data), ProjectState::Complete);
+    }
+
+    // === Instruction Matrix Tests (CTX-04) ===
+
+    #[test]
+    fn test_instructions_no_plan_quick() {
+        assert_eq!(
+            get_instructions(&ProjectState::NoPlan, "quick"),
+            "Describe what you need done. I'll create a simple task list."
+        );
+    }
+
+    #[test]
+    fn test_instructions_no_plan_medium() {
+        assert_eq!(
+            get_instructions(&ProjectState::NoPlan, "medium"),
+            "Let's break this into phases. What are the major deliverables?"
+        );
+    }
+
+    #[test]
+    fn test_instructions_gsd() {
+        let instr = get_instructions(&ProjectState::NoPlan, "full");
+        assert!(instr.contains("/gsd:new-project"));
+    }
+
+    #[test]
+    fn test_instructions_planned_quick() {
+        assert_eq!(
+            get_instructions(&ProjectState::Planned, "quick"),
+            "You have a task list below. Pick one and start working on it."
+        );
+    }
+
+    #[test]
+    fn test_instructions_planned_medium() {
+        assert!(get_instructions(&ProjectState::Planned, "medium").contains("first incomplete phase"));
+    }
+
+    #[test]
+    fn test_instructions_planned_gsd() {
+        let instr = get_instructions(&ProjectState::Planned, "full");
+        assert!(instr.contains("/gsd:progress"));
+        assert!(instr.contains("/gsd:next"));
+    }
+
+    #[test]
+    fn test_instructions_in_progress_quick() {
+        assert_eq!(
+            get_instructions(&ProjectState::InProgress, "quick"),
+            "You have a simple task list. Check off items as you complete them."
+        );
+    }
+
+    #[test]
+    fn test_instructions_in_progress_medium() {
+        assert!(get_instructions(&ProjectState::InProgress, "medium").contains("current phase"));
+    }
+
+    #[test]
+    fn test_instructions_in_progress_gsd() {
+        let instr = get_instructions(&ProjectState::InProgress, "full");
+        assert!(instr.contains("/gsd:progress"));
+    }
+
+    #[test]
+    fn test_instructions_complete_all_tiers_same() {
+        let quick = get_instructions(&ProjectState::Complete, "quick");
+        let medium = get_instructions(&ProjectState::Complete, "medium");
+        let full = get_instructions(&ProjectState::Complete, "full");
+        assert_eq!(quick, medium);
+        assert_eq!(medium, full);
+        assert!(quick.contains("All tasks are complete"));
+    }
+
+    // === Phase Classification Tests ===
+
+    #[test]
+    fn test_classify_phase_completed() {
+        let phase = make_phase("Done", vec![("T1", "complete"), ("T2", "complete")]);
+        assert_eq!(classify_phase(&phase), PhaseClass::Completed);
+    }
+
+    #[test]
+    fn test_classify_phase_active() {
+        let phase = make_phase("Active", vec![("T1", "complete"), ("T2", "in-progress")]);
+        assert_eq!(classify_phase(&phase), PhaseClass::Active);
+    }
+
+    #[test]
+    fn test_classify_phase_future() {
+        let phase = make_phase("Future", vec![("T1", "pending"), ("T2", "pending")]);
+        assert_eq!(classify_phase(&phase), PhaseClass::Future);
+    }
+
+    #[test]
+    fn test_classify_phases_promotes_first_future() {
+        let phases = vec![
+            make_phase("Done", vec![("T1", "complete")]),
+            make_phase("Next", vec![("T1", "pending")]),
+            make_phase("Later", vec![("T1", "pending")]),
+        ];
+        let classes = classify_phases(&phases);
+        assert_eq!(classes, vec![PhaseClass::Completed, PhaseClass::Active, PhaseClass::Future]);
+    }
+
+    // === Token Budget Tests (CTX-02) ===
+
+    #[test]
+    fn test_estimate_tokens() {
+        assert_eq!(estimate_tokens("hello world"), 11 / 4); // 2
+    }
+
+    #[test]
+    fn test_token_budget_large_project() {
+        // Build 12 completed phases + 1 active + 2 future
+        let mut phases = Vec::new();
+        for i in 0..12 {
+            phases.push(make_phase(
+                &format!("Completed Phase {}", i + 1),
+                (0..5).map(|j| (Box::leak(format!("Task {}", j).into_boxed_str()) as &str, "complete")).collect(),
+            ));
+        }
+        phases.push(make_phase(
+            "Active Phase",
+            vec![("Current Task", "in-progress"), ("Next Task", "pending")],
+        ));
+        phases.push(make_phase("Future Phase 1", vec![("F1", "pending"), ("F2", "pending")]));
+        phases.push(make_phase("Future Phase 2", vec![("F3", "pending")]));
+
+        let data = make_test_data("Big Project", "A large project", phases, vec![]);
+
+        let output = generate_context_file_content(&data, "medium");
+
+        // Completed phases should be one-line summaries, not full task listings
+        assert!(output.contains("Completed Phase 1 [5/5 complete]"));
+        assert!(output.contains("Completed Phase 10 [5/5 complete]"));
+        // Active phase should have task details
+        assert!(output.contains("### Active Phase"));
+        assert!(output.contains("Current Task"));
+        // Should NOT list individual tasks for completed phases
+        assert!(!output.contains("- [x] Task 0\n- [x] Task 1\n- [x] Task 2"));
+    }
+
+    #[test]
+    fn test_progressive_collapse() {
+        // Build a project large enough to exceed 2000 tokens
+        let mut phases = Vec::new();
+        for i in 0..20 {
+            let tasks: Vec<(&str, &str)> = (0..10)
+                .map(|j| {
+                    (
+                        Box::leak(format!("Very Long Task Name Number {} in Phase {}", j, i).into_boxed_str()) as &str,
+                        if i < 15 { "complete" } else { "pending" },
+                    )
+                })
+                .collect();
+            phases.push(make_phase(
+                &format!("Phase {} With A Reasonably Long Name", i + 1),
+                tasks,
+            ));
+        }
+        // Make one phase active
+        phases[16] = make_phase(
+            "The Active Phase",
+            vec![("Active Task 1", "in-progress"), ("Active Task 2", "pending")],
+        );
+
+        let data = make_test_data("Huge Project", "Description", phases, vec![]);
+        let output = generate_context_file_content(&data, "medium");
+
+        // The output should contain Current Work section
+        assert!(output.contains("## Current Work"));
+        // Active phase should still have task listing
+        assert!(output.contains("Active Task 1"));
+    }
+
+    // === Full Content Generation Tests ===
+
+    #[test]
+    fn test_content_no_plan_quick() {
+        let data = make_test_data("My App", "A cool app", vec![], vec![]);
+        let output = generate_context_file_content(&data, "quick");
+
+        assert!(output.contains("# My App"));
+        assert!(output.contains("**Tier:** Quick"));
+        assert!(output.contains("**State:** No plan"));
+        assert!(output.contains("## Instructions"));
+        assert!(output.contains("simple task list"));
+        assert!(output.contains("## Output Contract"));
+        assert!(output.contains("plan-output.json"));
+    }
+
+    #[test]
+    fn test_content_no_plan_gsd_no_output_contract() {
+        let data = make_test_data("GSD Project", "", vec![], vec![]);
+        let output = generate_context_file_content(&data, "full");
+
+        assert!(output.contains("# GSD Project"));
+        assert!(output.contains("**Tier:** GSD"));
+        assert!(output.contains("/gsd:new-project"));
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_content_in_progress_medium() {
+        let data = make_test_data("Active Project", "Working on it", vec![
+            make_phase("Setup", vec![("Init", "complete"), ("Config", "complete")]),
+            make_phase("Core", vec![("Build API", "in-progress"), ("Build UI", "pending")]),
+        ], vec![]);
+
+        let output = generate_context_file_content(&data, "medium");
+
+        assert!(output.contains("## What Needs Attention"));
+        assert!(output.contains("## Current Work"));
+        assert!(output.contains("**Progress:** 2/4 tasks complete across 2 phases"));
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_content_complete() {
+        let data = make_test_data("Done Project", "", vec![
+            make_phase("Only Phase", vec![("Task 1", "complete"), ("Task 2", "complete")]),
+        ], vec![]);
+
+        let output = generate_context_file_content(&data, "quick");
+
+        assert!(output.contains("**State:** Complete"));
+        assert!(output.contains("All tasks are complete"));
+        assert!(output.contains("All tasks complete!"));
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_output_contract_gsd_excluded() {
+        let data = make_test_data("GSD", "", vec![], vec![]);
+        let output = generate_context_file_content(&data, "full");
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_output_contract_quick_no_plan_included() {
+        let data = make_test_data("Quick", "", vec![], vec![]);
+        let output = generate_context_file_content(&data, "quick");
+        assert!(output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_output_contract_not_rendered_in_progress() {
+        let data = make_test_data("Project", "", vec![
+            make_phase("P1", vec![("T1", "in-progress")]),
+        ], vec![]);
+        let output = generate_context_file_content(&data, "quick");
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_output_contract_not_rendered_planned() {
+        let data = make_test_data("Project", "", vec![
+            make_phase("P1", vec![("T1", "pending")]),
+        ], vec![]);
+        let output = generate_context_file_content(&data, "quick");
+        assert!(!output.contains("## Output Contract"));
+    }
+
+    #[test]
+    fn test_long_description_truncated() {
+        let long_desc = "This is a sentence. ".repeat(30); // ~600 chars
+        let data = make_test_data("Proj", &long_desc, vec![], vec![]);
+        let output = generate_context_file_content(&data, "quick");
+
+        // Should be truncated with "..."
+        assert!(output.contains("..."));
+        // Should not contain the full description
+        assert!(!output.contains(&long_desc));
+    }
+
+    // === Updated existing tests ===
 
     #[test]
     fn test_context_file_populated_project() {
@@ -325,16 +844,15 @@ mod tests {
             is_empty: false,
         };
 
-        let output = generate_context_file_content(&data);
+        let output = generate_context_file_content(&data, "quick");
 
-        assert!(output.contains("# Project Context: My App"));
+        assert!(output.contains("# My App"));
         assert!(output.contains("3/5 tasks complete"));
         assert!(output.contains("Setup"));
         assert!(output.contains("Core Features"));
         assert!(output.contains("## What Needs Attention"));
-        assert!(output.contains("plan-output.json"));
-        // In-progress tasks should appear in attention
         assert!(output.contains("**Build UI**"));
+        assert!(output.contains("## Current Work"));
     }
 
     #[test]
@@ -350,12 +868,12 @@ mod tests {
             is_empty: true,
         };
 
-        let output = generate_context_file_content(&data);
+        let output = generate_context_file_content(&data, "quick");
 
-        assert!(output.contains("# Project Onboarding:"));
-        assert!(output.contains("## Your Task"));
+        assert!(output.contains("# New Project"));
+        assert!(output.contains("## Instructions"));
         assert!(output.contains("plan-output.json"));
-        assert!(!output.contains("## Phases"));
+        assert!(!output.contains("## Current Work"));
     }
 
     #[test]
@@ -381,9 +899,9 @@ mod tests {
             is_empty: false,
         };
 
-        let output = generate_context_file_content(&data);
+        let output = generate_context_file_content(&data, "quick");
 
-        assert!(!output.contains("## Unassigned Tasks"));
-        assert!(output.contains("## Phases"));
+        assert!(!output.contains("Unassigned Tasks"));
+        assert!(output.contains("## Current Work"));
     }
 }
