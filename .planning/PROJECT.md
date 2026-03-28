@@ -32,6 +32,8 @@ v1.0 delivered: task/project CRUD, multi-panel workspace, time-aware today view,
 
 v1.1 delivered: theme system with DnD reorder, project phases with directory linking, file explorer with live updates and gitignore filtering, embedded PTY terminal, AI plan review with inline editing, "Open AI" button that seeds full project context into terminal, and per-project workspace state restore.
 
+v1.2 progress: Phase 13 complete — context file now adapts content based on 4 project states × 3 planning tiers with progressive phase collapse for token budget.
+
 ## Requirements
 
 ### Validated
@@ -57,7 +59,7 @@ v1.1 delivered: theme system with DnD reorder, project phases with directory lin
 - [ ] "What's next?" execution mode with progress-aware context
 - [ ] `.planning/` folder sync into Element database
 - [ ] Configurable CLI tool setting in Settings UI
-- [ ] Smart context file adapting to project state and mode
+- ✓ Smart context file adapting to project state and mode — Phase 13
 
 ### Future
 
@@ -149,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after v1.2 milestone start*
+*Last updated: 2026-03-27 after Phase 13 completion*
