@@ -1,5 +1,183 @@
 // Planning sync: ROADMAP.md parser, content hashing, and DB sync engine
 
+use regex::Regex;
+use sha2::{Digest, Sha256};
+
+use crate::db::connection::Database;
+
+/// A parsed phase from ROADMAP.md
+#[derive(Debug, Clone)]
+pub struct ParsedPhase {
+    pub name: String,
+    pub description: String,
+    pub tasks: Vec<ParsedTask>,
+    pub sort_order: i32,
+}
+
+/// A parsed task (success criterion) from ROADMAP.md
+#[derive(Debug, Clone)]
+pub struct ParsedTask {
+    pub title: String,
+    pub is_complete: bool,
+}
+
+/// Result of parsing a ROADMAP.md file
+#[derive(Debug)]
+pub struct ParseResult {
+    pub phases: Vec<ParsedPhase>,
+}
+
+/// Result of syncing parsed data to the database
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncResult {
+    pub phase_count: i32,
+    pub task_count: i32,
+}
+
+/// Parse a ROADMAP.md file into phases and tasks.
+///
+/// Extracts `### Phase N: Name` headers, `**Goal**: description` lines,
+/// and success criteria checkboxes as tasks. Skips backlog phases (999.x).
+pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
+    let phase_header_re = Regex::new(r"^### Phase (\d+(?:\.\d+)?): (.+)$").unwrap();
+    let goal_re = Regex::new(r"^\*\*Goal\*\*\s*:\s*(.+)$").unwrap();
+    let criterion_re = Regex::new(r"^\s+\d+\.\s+\[([ xX])\]\s+(.+)$").unwrap();
+    let backlog_re = Regex::new(r"^### Phase 999").unwrap();
+
+    let mut phases = Vec::new();
+    let mut current_phase: Option<ParsedPhase> = None;
+    let mut in_success_criteria = false;
+    let mut in_backlog = false;
+    let mut sort_order = 0i32;
+
+    for line in content.lines() {
+        // Skip everything after backlog starts (D-04)
+        if backlog_re.is_match(line) {
+            in_backlog = true;
+        }
+        if in_backlog {
+            continue;
+        }
+
+        if let Some(caps) = phase_header_re.captures(line) {
+            // Save previous phase
+            if let Some(phase) = current_phase.take() {
+                phases.push(phase);
+            }
+            current_phase = Some(ParsedPhase {
+                name: caps[2].trim().to_string(),
+                description: String::new(),
+                tasks: Vec::new(),
+                sort_order,
+            });
+            sort_order += 1;
+            in_success_criteria = false;
+        } else if let Some(caps) = goal_re.captures(line) {
+            if let Some(ref mut phase) = current_phase {
+                phase.description = caps[1].trim().to_string();
+            }
+        } else if line.contains("**Success Criteria**") {
+            in_success_criteria = true;
+        } else if in_success_criteria {
+            if let Some(caps) = criterion_re.captures(line) {
+                let is_complete = &caps[1] == "x" || &caps[1] == "X";
+                let title = caps[2].trim().to_string();
+                if let Some(ref mut phase) = current_phase {
+                    phase.tasks.push(ParsedTask { title, is_complete });
+                }
+            } else if !line.trim().is_empty() && !line.starts_with("  ") {
+                // Non-indented non-empty line ends success criteria section
+                in_success_criteria = false;
+            }
+        }
+    }
+
+    // Don't forget the last phase
+    if let Some(phase) = current_phase {
+        phases.push(phase);
+    }
+
+    if phases.is_empty() {
+        return Err("No phases found in ROADMAP.md".to_string());
+    }
+
+    Ok(ParseResult { phases })
+}
+
+/// Compute SHA-256 hash of content, returning lowercase hex string.
+pub fn compute_content_hash(content: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(content.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+/// Sync parsed ROADMAP data to the database using full-replace strategy.
+///
+/// Deletes all existing `source='sync'` phases and tasks for the project,
+/// then inserts new ones from the parse result. Runs in a single transaction.
+pub fn sync_roadmap_to_db(
+    db: &Database,
+    project_id: &str,
+    result: &ParseResult,
+) -> Result<SyncResult, String> {
+    let tx = db
+        .conn()
+        .unchecked_transaction()
+        .map_err(|e| e.to_string())?;
+
+    // Delete existing synced tasks first (before phases, due to FK)
+    tx.execute(
+        "DELETE FROM tasks WHERE project_id = ?1 AND source = 'sync'",
+        rusqlite::params![project_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // Delete existing synced phases
+    tx.execute(
+        "DELETE FROM phases WHERE project_id = ?1 AND source = 'sync'",
+        rusqlite::params![project_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    let mut phase_count = 0i32;
+    let mut task_count = 0i32;
+
+    for parsed_phase in &result.phases {
+        let phase_id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        tx.execute(
+            "INSERT INTO phases (id, project_id, name, sort_order, source, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, 'sync', ?5, ?6)",
+            rusqlite::params![phase_id, project_id, parsed_phase.name, parsed_phase.sort_order, now, now],
+        )
+        .map_err(|e| e.to_string())?;
+        phase_count += 1;
+
+        for task in &parsed_phase.tasks {
+            let task_id = uuid::Uuid::new_v4().to_string();
+            let status = if task.is_complete {
+                "complete"
+            } else {
+                "pending"
+            };
+            tx.execute(
+                "INSERT INTO tasks (id, project_id, phase_id, title, description, context, status, priority, source, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, '', '', ?5, 'medium', 'sync', ?6, ?7)",
+                rusqlite::params![task_id, project_id, phase_id, task.title, status, now, now],
+            )
+            .map_err(|e| e.to_string())?;
+            task_count += 1;
+        }
+    }
+
+    tx.commit().map_err(|e| e.to_string())?;
+
+    Ok(SyncResult {
+        phase_count,
+        task_count,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::db::connection::Database;
