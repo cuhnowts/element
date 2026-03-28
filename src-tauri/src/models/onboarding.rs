@@ -876,6 +876,131 @@ mod tests {
         assert!(!output.contains("## Current Work"));
     }
 
+    // === Skill Section Tests (Phase 16) ===
+
+    #[test]
+    fn test_skill_section_contains_about_element() {
+        let output = build_skill_section("claude", "quick");
+        assert!(output.contains("## About Element"), "Missing '## About Element' heading");
+    }
+
+    #[test]
+    fn test_skill_section_contains_product_description() {
+        let output = build_skill_section("claude", "quick");
+        assert!(output.contains("themes"), "Missing 'themes'");
+        assert!(output.contains("projects"), "Missing 'projects'");
+        assert!(output.contains("phases"), "Missing 'phases'");
+        assert!(output.contains("tasks"), "Missing 'tasks'");
+    }
+
+    #[test]
+    fn test_skill_section_contains_role_framing() {
+        let output = build_skill_section("claude", "quick");
+        assert!(output.contains("Your Role"), "Missing 'Your Role'");
+        assert!(output.contains("Element"), "Missing 'Element'");
+        assert!(output.contains("context has been seeded"), "Missing 'context has been seeded'");
+    }
+
+    #[test]
+    fn test_skill_section_dynamic_cli_tool() {
+        let output_aider = build_skill_section("aider", "quick");
+        assert!(output_aider.contains("aider"), "aider not found in output");
+        let output_codex = build_skill_section("codex", "medium");
+        assert!(output_codex.contains("codex"), "codex not found in output");
+    }
+
+    #[test]
+    fn test_skill_section_dynamic_tier() {
+        let output_full = build_skill_section("claude", "full");
+        assert!(output_full.contains("GSD"), "Missing 'GSD' for full tier");
+        let output_quick = build_skill_section("claude", "quick");
+        assert!(output_quick.contains("Quick"), "Missing 'Quick' for quick tier");
+    }
+
+    #[test]
+    fn test_skill_section_tier_invariant() {
+        let quick = build_skill_section("claude", "quick");
+        let medium = build_skill_section("claude", "medium");
+        let full = build_skill_section("claude", "full");
+        // Replace tier display names to compare the rest
+        let quick_normalized = quick.replace("Quick", "TIER");
+        let medium_normalized = medium.replace("Medium", "TIER");
+        let full_normalized = full.replace("GSD", "TIER");
+        assert_eq!(quick_normalized, medium_normalized, "quick vs medium differ beyond tier name");
+        assert_eq!(medium_normalized, full_normalized, "medium vs full differ beyond tier name");
+    }
+
+    #[test]
+    fn test_skill_section_ordering() {
+        let data = make_test_data("ProjectName", "desc", vec![], vec![]);
+        let output = generate_context_file_content(&data, "quick", "claude");
+        let about_pos = output.find("## About Element").expect("Missing ## About Element");
+        let header_pos = output.find("# ProjectName").expect("Missing # ProjectName");
+        assert!(about_pos < header_pos, "## About Element must come before # ProjectName");
+    }
+
+    #[test]
+    fn test_skill_section_all_states() {
+        // NoPlan
+        let data_noplan = make_test_data("P", "", vec![], vec![]);
+        let out_noplan = generate_context_file_content(&data_noplan, "quick", "claude");
+        assert!(out_noplan.contains("## About Element"), "Missing in NoPlan");
+
+        // Planned
+        let data_planned = make_test_data("P", "", vec![
+            make_phase("Ph1", vec![("T1", "pending")]),
+        ], vec![]);
+        let out_planned = generate_context_file_content(&data_planned, "quick", "claude");
+        assert!(out_planned.contains("## About Element"), "Missing in Planned");
+
+        // InProgress
+        let data_ip = make_test_data("P", "", vec![
+            make_phase("Ph1", vec![("T1", "in-progress")]),
+        ], vec![]);
+        let out_ip = generate_context_file_content(&data_ip, "medium", "claude");
+        assert!(out_ip.contains("## About Element"), "Missing in InProgress");
+
+        // Complete
+        let data_complete = make_test_data("P", "", vec![
+            make_phase("Ph1", vec![("T1", "complete")]),
+        ], vec![]);
+        let out_complete = generate_context_file_content(&data_complete, "full", "claude");
+        assert!(out_complete.contains("## About Element"), "Missing in Complete");
+    }
+
+    #[test]
+    fn test_skill_section_token_budget() {
+        let output = build_skill_section("claude", "quick");
+        let tokens = estimate_tokens(&output);
+        assert!(tokens <= 500, "Skill section exceeds 500 token budget: {} tokens", tokens);
+    }
+
+    #[test]
+    fn test_skill_section_no_collapse() {
+        // Even for a large project, the skill section should be fully present
+        let mut phases = Vec::new();
+        for i in 0..20 {
+            let tasks: Vec<(&str, &str)> = (0..10)
+                .map(|j| {
+                    (
+                        Box::leak(format!("Task {} in Phase {}", j, i).into_boxed_str()) as &str,
+                        if i < 15 { "complete" } else { "pending" },
+                    )
+                })
+                .collect();
+            phases.push(make_phase(
+                &format!("Phase {} Long Name", i + 1),
+                tasks,
+            ));
+        }
+        phases[16] = make_phase("Active", vec![("Active Task", "in-progress")]);
+        let data = make_test_data("Big", "desc", phases, vec![]);
+        let output = generate_context_file_content(&data, "medium", "claude");
+        assert!(output.contains("## About Element"), "Skill section collapsed for large project");
+        // Check full content is there
+        assert!(output.contains("Your Role"), "Role section collapsed for large project");
+    }
+
     #[test]
     fn test_context_file_no_unassigned_tasks() {
         let data = ProjectContextData {
