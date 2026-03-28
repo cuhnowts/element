@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
 status: Ready to plan
-stopped_at: Phase 16 context gathered
-last_updated: "2026-03-28T02:00:43.013Z"
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-28T02:22:33.302Z"
 progress:
   total_phases: 10
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 5
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 15 — planning-folder-sync
+**Current focus:** Phase 16 — onboarding-skill-context-delivery
 
 ## Current Position
 
-Phase: 16
+Phase: 999.4
 Plan: Not started
 
 ## Performance Metrics
@@ -60,6 +60,7 @@ Recent decisions affecting current work:
 - [Phase 14]: Used it.todo() stubs for Wave-0 Nyquist compliance before implementation
 - [Phase 15]: Phase Goal text not persisted to DB; watcher emits event for async sync; in-memory hash storage
 - [Phase 15]: Watcher starts after initial sync to avoid race condition; toast suppressed on hash-match no-op
+- [Phase 16]: Skill section content rendered as first section in context file, before project header
 
 ### Roadmap Evolution
 
@@ -77,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T02:00:43.010Z
-Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-onboarding-skill-context-delivery/16-CONTEXT.md
+Last session: 2026-03-28T02:18:57.757Z
+Stopped at: Completed 16-01-PLAN.md
+Resume file: None
