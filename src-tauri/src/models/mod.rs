@@ -1,6 +1,7 @@
 pub mod execution;
 pub mod onboarding;
 pub mod phase;
+pub mod planning_sync;
 pub mod project;
 pub mod schedule;
 pub mod tag;
