@@ -108,13 +108,13 @@ Plans:
 
 ### Phase 16: Onboarding Skill and Context Delivery
 
-**Goal:** Create a Claude Code skill that explains what Element is, its capabilities, and how to use it. The skill content is delivered through the context.md file at AI initialization so the AI assistant has full product knowledge when helping users.
-**Requirements:** TBD
+**Goal:** Add product knowledge section to the AI context file so the AI assistant understands what Element is, its core concepts, and its role when helping users.
+**Requirements:** D-01 through D-11 (phase-specific decisions from CONTEXT.md)
 **Depends on:** Phase 13
-**Plans:** 2/2 plans complete
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 16 to break down)
+- [ ] 16-01-PLAN.md — build_skill_section function in onboarding.rs, updated generate_context_file_content signature, CLI tool name wiring from settings
 
 ## Progress
 
@@ -136,7 +136,7 @@ Plans:
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
-| 16. Onboarding Skill and Context Delivery | v1.2 | 0/0 | Not Planned | - |
+| 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Planned | - |
 
 ## Backlog
 
@@ -184,4 +184,3 @@ Plans:
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
-
