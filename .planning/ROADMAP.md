@@ -39,7 +39,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 ### v1.2 Intelligent Planning (Phases 12-15)
 
 - [x] **Phase 12: CLI Settings and Schema Foundation** - Configurable AI tool command, schema additions for tier and sync, watcher safety patterns (completed 2026-03-28)
-- [ ] **Phase 13: Adaptive Context Builder** - Mode-aware context file generation with token budget enforcement
+- [x] **Phase 13: Adaptive Context Builder** - Mode-aware context file generation with token budget enforcement (completed 2026-03-28)
 - [ ] **Phase 14: Planning Tier Decision Tree and Execution Mode** - Tier selection dialog, Quick/Medium/GSD flows, "What's next?" execution guidance
 - [ ] **Phase 15: .planning/ Folder Sync** - ROADMAP.md parsing, file watcher, one-way disk-to-database sync for GSD tier
 
@@ -123,7 +123,7 @@ Plans:
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 | 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete    | 2026-03-28 |
-| 13. Adaptive Context Builder | v1.2 | 0/1 | Planned    |  |
+| 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/3 | Planning | - |
 | 15. .planning/ Folder Sync | v1.2 | 0/2 | Planning | - |
 
@@ -133,7 +133,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/2 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
