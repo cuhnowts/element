@@ -29,9 +29,9 @@ Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phase
 
 ### .planning/ Sync
 
-- [ ] **SYNC-01**: User can trigger import of .planning/ROADMAP.md into project phases and tasks
-- [ ] **SYNC-02**: File watcher on .planning/ directory detects changes and syncs updates into the database
-- [ ] **SYNC-03**: Sync uses content hashing to prevent write loops (app writes don't trigger re-import)
+- [x] **SYNC-01**: User can trigger import of .planning/ROADMAP.md into project phases and tasks
+- [x] **SYNC-02**: File watcher on .planning/ directory detects changes and syncs updates into the database
+- [x] **SYNC-03**: Sync uses content hashing to prevent write loops (app writes don't trigger re-import)
 - [x] **SYNC-04**: Phases and tasks created by sync are tagged with source so the app knows they originated externally
 
 ## Future Requirements
@@ -82,9 +82,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CTX-02 | Phase 13 | Complete |
 | CTX-03 | Phase 14 | Pending |
 | CTX-04 | Phase 13 | Complete |
-| SYNC-01 | Phase 15 | Pending |
-| SYNC-02 | Phase 15 | Pending |
-| SYNC-03 | Phase 15 | Pending |
+| SYNC-01 | Phase 15 | Complete |
+| SYNC-02 | Phase 15 | Complete |
+| SYNC-03 | Phase 15 | Complete |
 | SYNC-04 | Phase 12 | Complete |
 
 **Coverage:**
