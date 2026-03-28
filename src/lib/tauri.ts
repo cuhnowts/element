@@ -223,4 +223,12 @@ export const api = {
   // Planning Tier
   setPlanningTier: (projectId: string, tier: string | null) =>
     invoke<Project>("set_planning_tier", { projectId, tier }),
+
+  // Planning Sync
+  syncPlanningRoadmap: (projectId: string, directoryPath: string) =>
+    invoke<{ phaseCount: number; taskCount: number }>("sync_planning_roadmap", { projectId, directoryPath }),
+  startPlanningWatcher: (projectId: string, directoryPath: string) =>
+    invoke<void>("start_planning_watcher", { projectId, directoryPath }),
+  stopPlanningWatcher: () =>
+    invoke<void>("stop_planning_watcher"),
 };

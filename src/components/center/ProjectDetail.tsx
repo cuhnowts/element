@@ -95,6 +95,47 @@ export function ProjectDetail() {
     }
   }, [selectedProjectId, loadPhases]);
 
+  // Planning sync: auto-import and watcher lifecycle (per D-05, D-11)
+  useEffect(() => {
+    if (!project) return;
+
+    const isGsdTier = project.planningTier === "full";
+    const hasDirectory = !!project.directoryPath;
+
+    if (!isGsdTier || !hasDirectory) {
+      // Stop any existing watcher when switching to non-GSD project
+      api.stopPlanningWatcher().catch(() => {});
+      return;
+    }
+
+    let cancelled = false;
+
+    const initSync = async () => {
+      try {
+        // Auto-import: trigger sync on project open (per D-11)
+        await api.syncPlanningRoadmap(project.id, project.directoryPath!);
+      } catch {
+        // Errors emitted as planning-sync-error event, handled by useTauriEvents
+      }
+
+      if (cancelled) return;
+
+      try {
+        // Start watcher after initial sync to avoid race condition (per Pitfall 2)
+        await api.startPlanningWatcher(project.id, project.directoryPath!);
+      } catch {
+        // Watcher start failure is non-fatal
+      }
+    };
+
+    initSync();
+
+    return () => {
+      cancelled = true;
+      api.stopPlanningWatcher().catch(() => {});
+    };
+  }, [project?.id, project?.planningTier, project?.directoryPath]);
+
   // Sync local state when project loads
   useEffect(() => {
     if (project) {
