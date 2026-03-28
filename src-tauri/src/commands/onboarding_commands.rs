@@ -189,6 +189,8 @@ pub async fn generate_context_file(
         .get_project(&project_id)
         .map_err(|e| format!("Failed to get project: {}", e))?;
 
+    let tier = project.planning_tier.as_deref().unwrap_or("quick").to_string();
+
     let directory_path = project
         .directory_path
         .ok_or_else(|| "Project has no linked directory".to_string())?;
@@ -276,7 +278,7 @@ pub async fn generate_context_file(
         is_empty,
     };
 
-    let content = crate::models::onboarding::generate_context_file_content(&context_data);
+    let content = crate::models::onboarding::generate_context_file_content(&context_data, &tier);
 
     // Write to .element/context.md
     let element_dir = PathBuf::from(&directory_path).join(".element");
