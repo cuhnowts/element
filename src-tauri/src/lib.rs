@@ -32,6 +32,7 @@ use commands::task_commands::*;
 use commands::theme_commands::*;
 use commands::file_explorer_commands::*;
 use commands::onboarding_commands::*;
+use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
 
 pub fn run() {
@@ -73,6 +74,12 @@ pub fn run() {
 
             // Initialize plan watcher state (for AI onboarding)
             app.manage(PlanWatcherState(std::sync::Mutex::new(None)));
+
+            // Initialize planning sync watcher state (for .planning/ folder sync)
+            app.manage(PlanningWatcherState {
+                watcher: std::sync::Mutex::new(None),
+                last_hash: std::sync::Mutex::new(None),
+            });
 
             // Initialize scheduler state (will be populated after async init)
             app.manage(Arc::new(tokio::sync::Mutex::new(None::<JobScheduler>)));
@@ -254,6 +261,9 @@ pub fn run() {
             set_app_setting,
             validate_cli_tool,
             set_planning_tier,
+            sync_planning_roadmap,
+            start_planning_watcher,
+            stop_planning_watcher,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
