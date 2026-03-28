@@ -22,10 +22,10 @@ Requirements for v1.2 Intelligent Planning milestone. Each maps to roadmap phase
 
 ### Context Intelligence
 
-- [ ] **CTX-01**: Context file adapts content based on project state (no plan, planned, in-progress, complete)
-- [ ] **CTX-02**: Context file respects token budget — large projects summarize instead of listing every task
+- [x] **CTX-01**: Context file adapts content based on project state (no plan, planned, in-progress, complete)
+- [x] **CTX-02**: Context file respects token budget — large projects summarize instead of listing every task
 - [ ] **CTX-03**: "What's next?" execution mode shows progress, highlights blockers, and suggests the next action
-- [ ] **CTX-04**: Planning mode context includes tier-appropriate instructions (quick prompts vs medium questioning vs GSD commands)
+- [x] **CTX-04**: Planning mode context includes tier-appropriate instructions (quick prompts vs medium questioning vs GSD commands)
 
 ### .planning/ Sync
 
@@ -78,10 +78,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-03 | Phase 14 | Pending |
 | PLAN-04 | Phase 14 | Pending |
 | PLAN-05 | Phase 12 | Complete |
-| CTX-01 | Phase 13 | Pending |
-| CTX-02 | Phase 13 | Pending |
+| CTX-01 | Phase 13 | Complete |
+| CTX-02 | Phase 13 | Complete |
 | CTX-03 | Phase 14 | Pending |
-| CTX-04 | Phase 13 | Pending |
+| CTX-04 | Phase 13 | Complete |
 | SYNC-01 | Phase 15 | Pending |
 | SYNC-02 | Phase 15 | Pending |
 | SYNC-03 | Phase 15 | Pending |

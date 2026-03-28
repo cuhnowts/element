@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: Ready to execute
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-03-27T13:28:02.278Z"
+status: Ready to plan
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-28T00:53:55.092Z"
 progress:
   total_phases: 9
-  completed_phases: 0
-  total_plans: 7
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 9
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 12 — cli-settings-and-schema-foundation
+**Current focus:** Phase 13 — adaptive-context-builder
 
 ## Current Position
 
-Phase: 12 (cli-settings-and-schema-foundation) — EXECUTING
-Plan: 2 of 2
+Phase: 13
+Plan: Not started
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Recent decisions affecting current work:
 - [v1.2 research]: One-way sync only (disk -> DB), bidirectional deferred to future
 - [Phase 12]: validate_cli_tool returns Ok(false) for missing tools, not Err
 - [Phase 12]: planning_tier CHECK constraint: quick/medium/full; source CHECK: user/sync
+- [Phase 13]: Output contract rendered only in NoPlan state for Quick/Medium tiers
 
 ### Pending Todos
 
@@ -69,6 +70,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T13:28:02.275Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-03-28T00:52:14.182Z
+Stopped at: Completed 13-01-PLAN.md
 Resume file: None
