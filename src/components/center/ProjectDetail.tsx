@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { DirectoryLink } from "./DirectoryLink";
@@ -23,6 +24,8 @@ import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
 import { OpenAiButton } from "./OpenAiButton";
 import { AiPlanReview } from "./AiPlanReview";
+import { TierSelectionDialog, type PlanningTier } from "./TierSelectionDialog";
+import { api } from "@/lib/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/lib/types";
@@ -72,6 +75,8 @@ export function ProjectDetail() {
   const [description, setDescription] = useState("");
   const [isAddingPhase, setIsAddingPhase] = useState(false);
   const [newPhaseName, setNewPhaseName] = useState("");
+  const [showTierDialog, setShowTierDialog] = useState(false);
+  const [isChangingTier, setIsChangingTier] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [overDropId, setOverDropId] = useState<string | null>(null);
   const descTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -124,7 +129,66 @@ export function ProjectDetail() {
     prevStepRef.current = onboardingStep;
   }, [onboardingStep, loadProjects, loadPhases, loadTasks, selectedProjectId]);
 
+  const launchTerminalCommand = useWorkspaceStore((s) => s.launchTerminalCommand);
+
   if (!project) return null;
+
+  const handleTierDialogOpen = () => {
+    setIsChangingTier(false);
+    setShowTierDialog(true);
+  };
+
+  const handleChangePlan = () => {
+    setIsChangingTier(hasContent);
+    setShowTierDialog(true);
+  };
+
+  const handleTierSubmit = async (tier: PlanningTier, description: string) => {
+    try {
+      // 1. Save description to project if changed
+      if (description && description !== project.description) {
+        await apiUpdateProject(project.id, project.name, description);
+      }
+
+      // 2. Save tier -- MUST succeed for D-02 skip-dialog guarantee
+      await api.setPlanningTier(project.id, tier);
+
+      // 3. Generate context file with tier-specific templates
+      if (!project.directoryPath) {
+        toast.error("Link a project directory first.");
+        return;
+      }
+      const contextPath = await api.generateContextFile(project.id, tier, description);
+
+      // 4. Read CLI settings
+      const command = await api.getAppSetting("cli_command");
+      const args = await api.getAppSetting("cli_args");
+      if (!command) {
+        toast.error("No AI tool configured. Set one up in Settings > AI.");
+        return;
+      }
+
+      // 5. Start plan watcher for Quick and Medium tiers (D-09: skip for GSD)
+      if (tier !== "full") {
+        await api.startPlanWatcher(project.directoryPath);
+      }
+
+      // 6. Launch terminal with context file
+      const fullArgs: string[] = [];
+      if (args) fullArgs.push(args.trim());
+      fullArgs.push("--");
+      fullArgs.push(contextPath);
+      launchTerminalCommand(command, fullArgs);
+
+      // 7. Close dialog
+      setShowTierDialog(false);
+
+      // 8. Reload project to pick up saved tier
+      await loadProjects();
+    } catch (e) {
+      toast.error(`Failed to start planning: ${e}`);
+    }
+  };
 
   const apiUpdateProject = async (projectId: string, newName: string, newDesc: string) => {
     const { api } = await import("@/lib/tauri");
@@ -261,7 +325,7 @@ export function ProjectDetail() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Project Name + Open AI */}
+      {/* Project Name + Tier Badge + Change Plan + Open AI */}
       <div className="flex items-center gap-3">
         <Input
           value={name}
@@ -273,7 +337,23 @@ export function ProjectDetail() {
           className="flex-1 text-2xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent"
           placeholder="Project name"
         />
-        <OpenAiButton projectId={project.id} directoryPath={project.directoryPath} />
+        {project.planningTier && (
+          <>
+            <Badge variant={project.planningTier === "full" ? "outline" : "secondary"} className="text-xs">
+              {project.planningTier === "full" ? "GSD" : project.planningTier === "medium" ? "Medium" : "Quick"}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={handleChangePlan} className="text-xs">
+              Change plan
+            </Button>
+          </>
+        )}
+        <OpenAiButton
+          projectId={project.id}
+          directoryPath={project.directoryPath}
+          planningTier={project.planningTier}
+          hasContent={hasContent}
+          onTierDialogOpen={handleTierDialogOpen}
+        />
       </div>
 
       {/* Directory Section */}
@@ -343,7 +423,13 @@ export function ProjectDetail() {
             <p className="text-sm text-muted-foreground mb-6">
               Use AI to plan your project, or add phases manually.
             </p>
-            <OpenAiButton projectId={project.id} directoryPath={project.directoryPath} />
+            <OpenAiButton
+              projectId={project.id}
+              directoryPath={project.directoryPath}
+              planningTier={project.planningTier}
+              hasContent={hasContent}
+              onTierDialogOpen={handleTierDialogOpen}
+            />
             <div className="mt-3">
               <Button variant="ghost" size="sm" onClick={() => { setIsAddingPhase(true); setNewPhaseName(""); }} className="text-sm">
                 + Add phase manually
@@ -436,6 +522,15 @@ export function ProjectDetail() {
         )}
       </div>
       )}
+
+      <TierSelectionDialog
+        open={showTierDialog}
+        onOpenChange={setShowTierDialog}
+        onSubmit={handleTierSubmit}
+        defaultTier={project.planningTier as PlanningTier | undefined}
+        defaultDescription={project.description}
+        isChangingTier={isChangingTier}
+      />
     </div>
   );
 }
