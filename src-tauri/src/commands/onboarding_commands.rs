@@ -317,7 +317,11 @@ pub async fn generate_context_file(
         is_empty,
     };
 
-    let content = crate::models::onboarding::generate_context_file_content(&context_data, &tier);
+    let cli_tool = db.get_app_setting("cli_command")
+        .map_err(|e| format!("Failed to get CLI setting: {}", e))?
+        .unwrap_or_else(|| "claude".to_string());
+
+    let content = crate::models::onboarding::generate_context_file_content(&context_data, &tier, &cli_tool);
 
     // Write to .element/context.md
     let element_dir = PathBuf::from(&directory_path).join(".element");

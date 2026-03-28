@@ -247,6 +247,32 @@ fn truncate_description(desc: &str) -> String {
     }
 }
 
+fn build_skill_section(cli_tool: &str, tier: &str) -> String {
+    format!(
+        r#"## About Element
+
+Element is a desktop workflow orchestration platform -- a personal work OS that
+organizes work into themes, projects, phases, and tasks. It structures your work
+top-down from high-level goals to actionable items, and orchestrates execution
+through external AI tools rather than executing directly.
+
+### Your Role
+
+You are working inside Element, launched via `{cli_tool}`. This project's context has been seeded below. The project uses the **{tier}** planning tier.
+
+You can help by:
+- Planning work (breaking down goals into phases and tasks)
+- Working on tasks (writing code, documentation, configuration)
+- Answering questions about the project's current state
+
+---
+
+"#,
+        cli_tool = cli_tool,
+        tier = tier_display(tier),
+    )
+}
+
 fn build_header(data: &ProjectContextData, tier: &str, state: &ProjectState) -> String {
     let mut out = format!("# {}\n\n", data.project_name);
 
@@ -368,9 +394,12 @@ IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
 }
 
 /// Generate context file content for seeding into an AI CLI tool
-pub fn generate_context_file_content(data: &ProjectContextData, tier: &str) -> String {
+pub fn generate_context_file_content(data: &ProjectContextData, tier: &str, cli_tool: &str) -> String {
     let state = detect_project_state(data);
     let mut out = String::new();
+
+    // Section 0: Skill section (About Element)
+    out.push_str(&build_skill_section(cli_tool, tier));
 
     // Section 1: Header
     out.push_str(&build_header(data, tier, &state));
@@ -642,7 +671,7 @@ mod tests {
 
         let data = make_test_data("Big Project", "A large project", phases, vec![]);
 
-        let output = generate_context_file_content(&data, "medium");
+        let output = generate_context_file_content(&data, "medium", "claude");
 
         // Completed phases should be one-line summaries, not full task listings
         assert!(output.contains("Completed Phase 1 [5/5 complete]"));
@@ -679,7 +708,7 @@ mod tests {
         );
 
         let data = make_test_data("Huge Project", "Description", phases, vec![]);
-        let output = generate_context_file_content(&data, "medium");
+        let output = generate_context_file_content(&data, "medium", "claude");
 
         // The output should contain Current Work section
         assert!(output.contains("## Current Work"));
@@ -692,7 +721,7 @@ mod tests {
     #[test]
     fn test_content_no_plan_quick() {
         let data = make_test_data("My App", "A cool app", vec![], vec![]);
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         assert!(output.contains("# My App"));
         assert!(output.contains("**Tier:** Quick"));
@@ -706,7 +735,7 @@ mod tests {
     #[test]
     fn test_content_no_plan_gsd_no_output_contract() {
         let data = make_test_data("GSD Project", "", vec![], vec![]);
-        let output = generate_context_file_content(&data, "full");
+        let output = generate_context_file_content(&data, "full", "claude");
 
         assert!(output.contains("# GSD Project"));
         assert!(output.contains("**Tier:** GSD"));
@@ -721,7 +750,7 @@ mod tests {
             make_phase("Core", vec![("Build API", "in-progress"), ("Build UI", "pending")]),
         ], vec![]);
 
-        let output = generate_context_file_content(&data, "medium");
+        let output = generate_context_file_content(&data, "medium", "claude");
 
         assert!(output.contains("## What Needs Attention"));
         assert!(output.contains("## Current Work"));
@@ -735,7 +764,7 @@ mod tests {
             make_phase("Only Phase", vec![("Task 1", "complete"), ("Task 2", "complete")]),
         ], vec![]);
 
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         assert!(output.contains("**State:** Complete"));
         assert!(output.contains("All tasks are complete"));
@@ -746,14 +775,14 @@ mod tests {
     #[test]
     fn test_output_contract_gsd_excluded() {
         let data = make_test_data("GSD", "", vec![], vec![]);
-        let output = generate_context_file_content(&data, "full");
+        let output = generate_context_file_content(&data, "full", "claude");
         assert!(!output.contains("## Output Contract"));
     }
 
     #[test]
     fn test_output_contract_quick_no_plan_included() {
         let data = make_test_data("Quick", "", vec![], vec![]);
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
         assert!(output.contains("## Output Contract"));
     }
 
@@ -762,7 +791,7 @@ mod tests {
         let data = make_test_data("Project", "", vec![
             make_phase("P1", vec![("T1", "in-progress")]),
         ], vec![]);
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
         assert!(!output.contains("## Output Contract"));
     }
 
@@ -771,7 +800,7 @@ mod tests {
         let data = make_test_data("Project", "", vec![
             make_phase("P1", vec![("T1", "pending")]),
         ], vec![]);
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
         assert!(!output.contains("## Output Contract"));
     }
 
@@ -779,7 +808,7 @@ mod tests {
     fn test_long_description_truncated() {
         let long_desc = "This is a sentence. ".repeat(30); // ~600 chars
         let data = make_test_data("Proj", &long_desc, vec![], vec![]);
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         // Should be truncated with "..."
         assert!(output.contains("..."));
@@ -844,7 +873,7 @@ mod tests {
             is_empty: false,
         };
 
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         assert!(output.contains("# My App"));
         assert!(output.contains("3/5 tasks complete"));
@@ -868,7 +897,7 @@ mod tests {
             is_empty: true,
         };
 
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         assert!(output.contains("# New Project"));
         assert!(output.contains("## Instructions"));
@@ -1024,7 +1053,7 @@ mod tests {
             is_empty: false,
         };
 
-        let output = generate_context_file_content(&data, "quick");
+        let output = generate_context_file_content(&data, "quick", "claude");
 
         assert!(!output.contains("Unassigned Tasks"));
         assert!(output.contains("## Current Work"));
