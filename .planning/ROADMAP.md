@@ -135,7 +135,7 @@ Plans:
 | 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
-| 15. .planning/ Folder Sync | v1.2 | 0/2 | Planning | - |
+| 15. .planning/ Folder Sync | v1.2 | 1/2 | In Progress | - |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/0 | Not Planned | - |
 
 ## Backlog
