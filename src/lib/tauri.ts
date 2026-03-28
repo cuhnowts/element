@@ -197,8 +197,8 @@ export const api = {
   // Onboarding
   generateSkillFile: (projectDir: string, projectName: string, scope: string, goals: string) =>
     invoke<string>("generate_skill_file", { projectDir, projectName, scope, goals }),
-  generateContextFile: (projectId: string) =>
-    invoke<string>("generate_context_file", { projectId }),
+  generateContextFile: (projectId: string, tierOverride?: string, descriptionOverride?: string) =>
+    invoke<string>("generate_context_file", { projectId, tierOverride, descriptionOverride }),
   startPlanWatcher: (projectDir: string) =>
     invoke<void>("start_plan_watcher", { projectDir }),
   stopPlanWatcher: () =>
@@ -207,6 +207,8 @@ export const api = {
     invoke<PlanOutput>("parse_plan_output", { projectDir }),
   batchCreatePlan: (projectId: string, phases: { name: string; tasks: { title: string; description?: string }[] }[]) =>
     invoke<BatchCreateResult>("batch_create_plan", { projectId, phases }),
+  batchCreateTasks: (projectId: string, tasks: { title: string; description?: string }[]) =>
+    invoke<BatchCreateResult>("batch_create_tasks", { projectId, tasks }),
 
   // App Settings
   getAppSetting: (key: string) =>

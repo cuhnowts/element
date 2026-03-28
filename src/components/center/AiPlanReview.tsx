@@ -60,6 +60,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
     removePendingTask,
     addPendingTask,
     confirmAndSavePlan,
+    confirmAndSaveQuickPlan,
     discardPlan,
   } = useStore();
 
@@ -86,7 +87,14 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
 
   const handleConfirm = async () => {
     await api.stopPlanWatcher().catch(() => {});
-    await confirmAndSavePlan(projectId);
+
+    // Detect Quick tier output: single phase with empty/whitespace name
+    const isQuickTier = phases.length === 1 && phases[0].name.trim() === "";
+    if (isQuickTier) {
+      await confirmAndSaveQuickPlan(projectId);
+    } else {
+      await confirmAndSavePlan(projectId);
+    }
   };
 
   const handlePhaseNameBlur = (index: number, value: string) => {
