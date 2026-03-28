@@ -32,7 +32,7 @@ v1.0 delivered: task/project CRUD, multi-panel workspace, time-aware today view,
 
 v1.1 delivered: theme system with DnD reorder, project phases with directory linking, file explorer with live updates and gitignore filtering, embedded PTY terminal, AI plan review with inline editing, "Open AI" button that seeds full project context into terminal, and per-project workspace state restore.
 
-v1.2 progress: Phase 14 complete — users now choose Quick/Medium/GSD tier before first AI session. TierSelectionDialog gates "Open AI" for new projects. Quick tier creates flat tasks without phases. Backend generates tier-appropriate context files with execution mode. D-07: context file regenerates to "What's Next?" after plan confirmation.
+v1.2 progress: Phase 15 complete — GSD-tier projects now auto-sync their .planning/ROADMAP.md into Element's UI. ROADMAP parser extracts phases and success criteria as tasks, SHA-256 content hashing prevents sync loops, file watcher detects changes automatically, and synced records display GSD badges with read-only gating.
 
 ## Requirements
 
@@ -151,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 13 completion*
+*Last updated: 2026-03-28 after Phase 15 completion*
