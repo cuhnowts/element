@@ -8,7 +8,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 - ✅ **v1.0 MVP** -- Phases 1-5 (shipped 2026-03-22) -- [archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Project Manager** -- Phases 6-11 (shipped 2026-03-25) -- [archive](milestones/v1.1-ROADMAP.md)
-- **v1.2 Intelligent Planning** -- Phases 12-15 (in progress)
+- **v1.2 Intelligent Planning** -- Phases 12-16 (in progress)
 
 ## Phases
 
@@ -36,11 +36,11 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.2 Intelligent Planning (Phases 12-15)
+### v1.2 Intelligent Planning (Phases 12-16)
 
 - [x] **Phase 12: CLI Settings and Schema Foundation** - Configurable AI tool command, schema additions for tier and sync, watcher safety patterns (completed 2026-03-28)
 - [x] **Phase 13: Adaptive Context Builder** - Mode-aware context file generation with token budget enforcement (completed 2026-03-28)
-- [ ] **Phase 14: Planning Tier Decision Tree and Execution Mode** - Tier selection dialog, Quick/Medium/GSD flows, "What's next?" execution guidance
+- [x] **Phase 14: Planning Tier Decision Tree and Execution Mode** - Tier selection dialog, Quick/Medium/GSD flows, "What's next?" execution guidance (completed 2026-03-28)
 - [ ] **Phase 15: .planning/ Folder Sync** - ROADMAP.md parsing, file watcher, one-way disk-to-database sync for GSD tier
 
 ## Phase Details
@@ -106,6 +106,16 @@ Plans:
 - [ ] 15-01-PLAN.md — Rust ROADMAP.md parser, content hashing, DB sync engine, PlanningWatcherState and watcher commands
 - [ ] 15-02-PLAN.md — Frontend integration: API bindings, event listeners, auto-import/watcher lifecycle, GSD badges, read-only gating
 
+### Phase 16: Onboarding Skill and Context Delivery
+
+**Goal:** Create a Claude Code skill that explains what Element is, its capabilities, and how to use it. The skill content is delivered through the context.md file at AI initialization so the AI assistant has full product knowledge when helping users.
+**Requirements:** TBD
+**Depends on:** Phase 13
+**Plans:** 4/4 plans complete
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 16 to break down)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -124,8 +134,9 @@ Plans:
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 | 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Planned    |  |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 0/2 | Planning | - |
+| 16. Onboarding Skill and Context Delivery | v1.2 | 0/0 | Not Planned | - |
 
 ## Backlog
 
@@ -173,3 +184,4 @@ Plans:
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
+

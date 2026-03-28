@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: Ready to execute
+status: Ready to plan
 stopped_at: Completed 14-00-PLAN.md
-last_updated: "2026-03-28T00:58:41.824Z"
+last_updated: "2026-03-28T01:13:51.507Z"
 progress:
-  total_phases: 9
-  completed_phases: 2
+  total_phases: 10
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 3
+  completed_plans: 7
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 
 ## Current Position
 
-Phase: 14 (planning-tier-decision-tree-and-execution-mode) — EXECUTING
-Plan: 2 of 4
+Phase: 15
+Plan: Not started
 
 ## Performance Metrics
 
@@ -58,6 +58,10 @@ Recent decisions affecting current work:
 - [Phase 12]: planning_tier CHECK constraint: quick/medium/full; source CHECK: user/sync
 - [Phase 13]: Output contract rendered only in NoPlan state for Quick/Medium tiers
 - [Phase 14]: Used it.todo() stubs for Wave-0 Nyquist compliance before implementation
+
+### Roadmap Evolution
+
+- Phase 16 added: Onboarding Skill and Context Delivery — skill that explains Element, delivered through context.md at AI initialization
 
 ### Pending Todos
 
