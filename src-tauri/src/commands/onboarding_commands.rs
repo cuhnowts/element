@@ -179,9 +179,44 @@ pub async fn get_app_setting(
 }
 
 #[tauri::command]
+pub async fn batch_create_tasks(
+    app: AppHandle,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    project_id: String,
+    tasks: Vec<crate::models::onboarding::PendingTaskInput>,
+) -> Result<BatchCreateResult, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let tx = db
+        .conn()
+        .unchecked_transaction()
+        .map_err(|e| e.to_string())?;
+
+    let mut task_count = 0i32;
+    for task in &tasks {
+        let task_id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+        tx.execute(
+            "INSERT INTO tasks (id, project_id, phase_id, title, description, created_at, updated_at) VALUES (?1, ?2, NULL, ?3, ?4, ?5, ?6)",
+            rusqlite::params![task_id, project_id, task.title, task.description.as_deref().unwrap_or(""), now, now],
+        )
+        .map_err(|e| e.to_string())?;
+        task_count += 1;
+    }
+
+    tx.commit().map_err(|e| e.to_string())?;
+    let _ = app.emit("plan-saved", &project_id);
+    Ok(BatchCreateResult {
+        phase_count: 0,
+        task_count,
+    })
+}
+
+#[tauri::command]
 pub async fn generate_context_file(
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     project_id: String,
+    tier_override: Option<String>,
+    description_override: Option<String>,
 ) -> Result<String, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
 
@@ -189,7 +224,11 @@ pub async fn generate_context_file(
         .get_project(&project_id)
         .map_err(|e| format!("Failed to get project: {}", e))?;
 
-    let tier = project.planning_tier.as_deref().unwrap_or("quick").to_string();
+    let tier = tier_override
+        .or_else(|| project.planning_tier.clone())
+        .unwrap_or_else(|| "quick".to_string());
+    let effective_description = description_override
+        .unwrap_or_else(|| project.description.clone());
 
     let directory_path = project
         .directory_path
@@ -269,7 +308,7 @@ pub async fn generate_context_file(
 
     let context_data = crate::models::onboarding::ProjectContextData {
         project_name: project.name,
-        project_description: project.description,
+        project_description: effective_description,
         phases: phase_data,
         unassigned_tasks,
         total_tasks,
