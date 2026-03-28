@@ -32,7 +32,7 @@ v1.0 delivered: task/project CRUD, multi-panel workspace, time-aware today view,
 
 v1.1 delivered: theme system with DnD reorder, project phases with directory linking, file explorer with live updates and gitignore filtering, embedded PTY terminal, AI plan review with inline editing, "Open AI" button that seeds full project context into terminal, and per-project workspace state restore.
 
-v1.2 progress: Phase 13 complete — context file now adapts content based on 4 project states × 3 planning tiers with progressive phase collapse for token budget.
+v1.2 progress: Phase 14 complete — users now choose Quick/Medium/GSD tier before first AI session. TierSelectionDialog gates "Open AI" for new projects. Quick tier creates flat tasks without phases. Backend generates tier-appropriate context files with execution mode. D-07: context file regenerates to "What's Next?" after plan confirmation.
 
 ## Requirements
 
