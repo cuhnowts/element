@@ -32,7 +32,7 @@ v1.0 delivered: task/project CRUD, multi-panel workspace, time-aware today view,
 
 v1.1 delivered: theme system with DnD reorder, project phases with directory linking, file explorer with live updates and gitignore filtering, embedded PTY terminal, AI plan review with inline editing, "Open AI" button that seeds full project context into terminal, and per-project workspace state restore.
 
-v1.2 progress: Phase 15 complete — GSD-tier projects now auto-sync their .planning/ROADMAP.md into Element's UI. ROADMAP parser extracts phases and success criteria as tasks, SHA-256 content hashing prevents sync loops, file watcher detects changes automatically, and synced records display GSD badges with read-only gating.
+v1.2 progress: Phase 16 complete — AI context file now starts with an "About Element" product orientation section. The section explains what Element is, its core concepts (themes, projects, phases, tasks), and frames the AI's role. CLI tool name and planning tier are dynamically injected from settings. Prior: .planning/ folder sync (Phase 15), adaptive context builder (Phase 13), CLI settings UI (Phase 12).
 
 ## Requirements
 
@@ -121,7 +121,7 @@ v1.2 progress: Phase 15 complete — GSD-tier projects now auto-sync their .plan
 | Per-project AI mode removed | Replaced with simpler "Open AI" button — user controls when to invoke AI | ✓ Good — less ceremony |
 | Simplified workspace (not full IDE) | File tree + terminal, external editing — 90% value at 20% cost | ✓ Good — file tree + terminal delivered |
 | AI-driven project onboarding | Structured entry fields + AI questioning for project breakdown | ✓ Good — AiPlanReview with DnD |
-| Hardcoded claude CLI | Use `claude --dangerously-skip-permissions` for now, configurable later | ⚠️ Revisit — add settings UI |
+| Hardcoded claude CLI | Use `claude --dangerously-skip-permissions` for now, configurable later | ✓ Resolved — Phase 12 added settings UI, Phase 16 wires it into context |
 
 ## Known Tech Debt
 
@@ -131,7 +131,7 @@ v1.2 progress: Phase 15 complete — GSD-tier projects now auto-sync their .plan
 - File > New Task menu event handler is empty (Cmd+N works)
 - 3 pre-existing TS errors in ThemeSidebar.tsx and UncategorizedSection.tsx (runtime unaffected)
 - Orphaned files: ScopeInputForm.tsx, OnboardingWaitingCard.tsx (zero importers after Phase 11)
-- CLI tool hardcoded to `claude --dangerously-skip-permissions` (needs configurable setting)
+- ~~CLI tool hardcoded~~ — resolved: Phase 12 added settings UI, Phase 16 wires setting into AI context
 
 ## Evolution
 
@@ -151,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 15 completion*
+*Last updated: 2026-03-28 after Phase 16 completion*
