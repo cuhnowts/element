@@ -42,15 +42,23 @@ vi.mock("@/stores/useWorkspaceStore", () => ({
 
 import { OpenAiButton } from "./OpenAiButton";
 
+const defaultProps = {
+  projectId: "proj-1",
+  planningTier: "quick" as const,
+  hasContent: true,
+  onTierDialogOpen: vi.fn(),
+};
+
 describe("OpenAiButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockToast.error = vi.fn();
+    defaultProps.onTierDialogOpen = vi.fn();
   });
 
   it("shows error toast when no directory linked", async () => {
     const user = userEvent.setup();
-    render(<OpenAiButton projectId="proj-1" directoryPath={null} />);
+    render(<OpenAiButton {...defaultProps} directoryPath={null} />);
 
     await user.click(screen.getByRole("button", { name: /open ai/i }));
 
@@ -64,7 +72,7 @@ describe("OpenAiButton", () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockResolvedValue(null);
 
-    render(<OpenAiButton projectId="proj-1" directoryPath="/some/dir" />);
+    render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
     await user.click(screen.getByRole("button", { name: /open ai/i }));
 
@@ -83,7 +91,7 @@ describe("OpenAiButton", () => {
     );
     mockValidateCliTool.mockResolvedValue(false);
 
-    render(<OpenAiButton projectId="proj-1" directoryPath="/some/dir" />);
+    render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
     await user.click(screen.getByRole("button", { name: /open ai/i }));
 
@@ -106,13 +114,13 @@ describe("OpenAiButton", () => {
     mockGenerateContextFile.mockResolvedValue("/path/.element/context.md");
     mockStartPlanWatcher.mockResolvedValue(undefined);
 
-    render(<OpenAiButton projectId="proj-1" directoryPath="/some/dir" />);
+    render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
     await user.click(screen.getByRole("button", { name: /open ai/i }));
 
     await waitFor(() => {
       expect(mockValidateCliTool).toHaveBeenCalledWith("claude");
-      expect(mockGenerateContextFile).toHaveBeenCalledWith("proj-1");
+      expect(mockGenerateContextFile).toHaveBeenCalledWith("proj-1", "quick");
       expect(mockStartPlanWatcher).toHaveBeenCalledWith("/some/dir");
       expect(mockLaunchTerminalCommand).toHaveBeenCalledWith("claude", [
         "--fast",
@@ -145,7 +153,7 @@ describe("OpenAiButton", () => {
     mockValidateCliTool.mockResolvedValue(true);
     mockGenerateContextFile.mockRejectedValue(new Error("File write failed"));
 
-    render(<OpenAiButton projectId="proj-1" directoryPath="/some/dir" />);
+    render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
     await user.click(screen.getByRole("button", { name: /open ai/i }));
 

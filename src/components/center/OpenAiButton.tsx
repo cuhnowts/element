@@ -8,15 +8,31 @@ import { toast } from "sonner";
 interface OpenAiButtonProps {
   projectId: string;
   directoryPath: string | null;
+  planningTier: string | null;
+  hasContent: boolean;
+  onTierDialogOpen: () => void;
 }
 
-export function OpenAiButton({ projectId, directoryPath }: OpenAiButtonProps) {
+export function OpenAiButton({
+  projectId,
+  directoryPath,
+  planningTier,
+  hasContent,
+  onTierDialogOpen,
+}: OpenAiButtonProps) {
   const [isLaunching, setIsLaunching] = useState(false);
   const launchTerminalCommand = useWorkspaceStore((s) => s.launchTerminalCommand);
 
   const handleOpenAi = async () => {
     if (!directoryPath) {
       toast.error("Link a project directory first. The AI tool needs a directory to work in.");
+      return;
+    }
+
+    // Phase 14: Check if tier dialog needed (per D-02)
+    const needsTierDialog = !planningTier && !hasContent;
+    if (needsTierDialog) {
+      onTierDialogOpen();
       return;
     }
 
@@ -39,11 +55,14 @@ export function OpenAiButton({ projectId, directoryPath }: OpenAiButtonProps) {
         return;
       }
 
-      // 4. Generate context file (writes .element/context.md)
-      const contextPath = await api.generateContextFile(projectId);
+      // 4. Generate context file with tier
+      const effectiveTier = planningTier ?? "quick";
+      const contextPath = await api.generateContextFile(projectId, effectiveTier);
 
-      // 5. Start plan watcher (picks up plan-output.json for AiPlanReview)
-      await api.startPlanWatcher(directoryPath);
+      // 5. Start plan watcher only for Quick/Medium (D-09: skip GSD)
+      if (effectiveTier !== "full") {
+        await api.startPlanWatcher(directoryPath);
+      }
 
       // 6. Build full command + args
       const fullArgs: string[] = [];
