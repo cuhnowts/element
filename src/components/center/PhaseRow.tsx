@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/context-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { TaskRow } from "./TaskRow";
 import type { Phase, Task, TaskStatus } from "@/lib/types";
 
@@ -39,6 +40,7 @@ export function PhaseRow({
   onSetTaskPhase,
   isDropTarget,
 }: PhaseRowProps) {
+  const isSynced = phase.source === "sync";
   const [isOpen, setIsOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameName, setRenameName] = useState(phase.name);
@@ -139,7 +141,14 @@ export function PhaseRow({
                       className="h-7 text-sm border-none shadow-none px-1 focus-visible:ring-0 bg-transparent flex-1"
                     />
                   ) : (
-                    <span className="text-sm flex-1 text-left">{phase.name}</span>
+                    <span className="text-sm flex-1 text-left flex items-center gap-2">
+                      {phase.name}
+                      {isSynced && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                          GSD
+                        </Badge>
+                      )}
+                    </span>
                   )}
                 </CollapsibleTrigger>
                 <div className="w-20 h-1 bg-secondary rounded-full flex-shrink-0">
@@ -154,13 +163,17 @@ export function PhaseRow({
               </div>
             </ContextMenuTrigger>
             <ContextMenuContent>
-              <ContextMenuItem onClick={handleStartRename}>Rename</ContextMenuItem>
-              <ContextMenuItem
-                variant="destructive"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                Delete
-              </ContextMenuItem>
+              {!isSynced && (
+                <>
+                  <ContextMenuItem onClick={handleStartRename}>Rename</ContextMenuItem>
+                  <ContextMenuItem
+                    variant="destructive"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    Delete
+                  </ContextMenuItem>
+                </>
+              )}
             </ContextMenuContent>
           </ContextMenu>
 
@@ -177,37 +190,41 @@ export function PhaseRow({
                   onSetTaskPhase={onSetTaskPhase}
                 />
               ))}
-              {isAddingTask ? (
-                <div className="pl-10 pr-2 py-1">
-                  <Input
-                    autoFocus
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddTask();
-                      if (e.key === "Escape") {
-                        setIsAddingTask(false);
+              {!isSynced && (
+                <>
+                  {isAddingTask ? (
+                    <div className="pl-10 pr-2 py-1">
+                      <Input
+                        autoFocus
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleAddTask();
+                          if (e.key === "Escape") {
+                            setIsAddingTask(false);
+                            setNewTaskTitle("");
+                          }
+                        }}
+                        onBlur={handleAddTask}
+                        placeholder="Task name..."
+                        className="h-7 text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground pl-10"
+                      onClick={() => {
+                        setIsAddingTask(true);
                         setNewTaskTitle("");
-                      }
-                    }}
-                    onBlur={handleAddTask}
-                    placeholder="Task name..."
-                    className="h-7 text-sm"
-                  />
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-muted-foreground pl-10"
-                  onClick={() => {
-                    setIsAddingTask(true);
-                    setNewTaskTitle("");
-                  }}
-                >
-                  <Plus className="size-3 mr-1" />
-                  Add task
-                </Button>
+                      }}
+                    >
+                      <Plus className="size-3 mr-1" />
+                      Add task
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </CollapsibleContent>

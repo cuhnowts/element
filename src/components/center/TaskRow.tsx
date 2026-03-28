@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { GripVertical, Circle, CheckCircle2, Clock, Ban, ArrowRightLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Task, TaskStatus, Phase } from "@/lib/types";
 
 interface TaskRowProps {
@@ -31,6 +32,7 @@ export function TaskRow({
   onToggleTaskStatus,
   onSetTaskPhase,
 }: TaskRowProps) {
+  const isSynced = task.source === "sync";
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -82,9 +84,11 @@ export function TaskRow({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onToggleTaskStatus(task.id, task.status);
+          if (!isSynced) {
+            onToggleTaskStatus(task.id, task.status);
+          }
         }}
-        className="flex-shrink-0 hover:scale-110 transition-transform"
+        className={`flex-shrink-0 ${isSynced ? "cursor-default opacity-60" : "hover:scale-110 transition-transform"}`}
       >
         <StatusIcon status={task.status} />
       </button>
@@ -94,18 +98,23 @@ export function TaskRow({
         className="flex-1 text-left"
       >
         <span
-          className={
+          className={`flex items-center gap-2 ${
             task.status === "complete"
               ? "line-through text-muted-foreground"
               : ""
-          }
+          }`}
         >
           {task.title}
+          {isSynced && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+              GSD
+            </Badge>
+          )}
         </span>
       </button>
 
-      {/* Move to phase button — visible on hover */}
-      {moveOptions.length > 0 && (
+      {/* Move to phase button — visible on hover (hidden for synced tasks) */}
+      {!isSynced && moveOptions.length > 0 && (
         <div className="relative" ref={menuRef}>
           <button
             type="button"
