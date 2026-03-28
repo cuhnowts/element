@@ -121,7 +121,7 @@ export function useTerminal(
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(`Could not start ${shell}. Ensure $SHELL is set or restart the app. (${message})`);
+      setError(`Could not start /bin/zsh. Ensure $SHELL is set or restart the app. (${message})`);
       setIsReady(false);
     }
 
