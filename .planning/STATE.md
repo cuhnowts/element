@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Intelligent Planning
-status: Ready to plan
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-28T00:55:04.040Z"
+status: Ready to execute
+stopped_at: Completed 14-00-PLAN.md
+last_updated: "2026-03-28T00:58:41.824Z"
 progress:
   total_phases: 9
   completed_phases: 2
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 13 — adaptive-context-builder
+**Current focus:** Phase 14 — planning-tier-decision-tree-and-execution-mode
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: 14 (planning-tier-decision-tree-and-execution-mode) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - [Phase 12]: validate_cli_tool returns Ok(false) for missing tools, not Err
 - [Phase 12]: planning_tier CHECK constraint: quick/medium/full; source CHECK: user/sync
 - [Phase 13]: Output contract rendered only in NoPlan state for Quick/Medium tiers
+- [Phase 14]: Used it.todo() stubs for Wave-0 Nyquist compliance before implementation
 
 ### Pending Todos
 
@@ -70,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T00:52:14.182Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-03-28T00:58:41.822Z
+Stopped at: Completed 14-00-PLAN.md
 Resume file: None

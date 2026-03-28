@@ -124,7 +124,7 @@ Plans:
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
 | 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/3 | Planning | - |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Planned    |  |
 | 15. .planning/ Folder Sync | v1.2 | 0/2 | Planning | - |
 
 ## Backlog
@@ -133,7 +133,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 1/1 plans complete
+**Plans:** 0/4 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
