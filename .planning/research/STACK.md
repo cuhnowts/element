@@ -1,354 +1,177 @@
 # Stack Research
 
-**Domain:** Intelligent planning features (tiered AI, .planning/ sync, context-adaptive markdown, CLI tool config)
-**Researched:** 2026-03-25
-**Confidence:** HIGH (existing patterns extended, no new paradigms)
+**Domain:** Desktop workflow orchestration -- multi-terminal, background execution, notifications
+**Researched:** 2026-03-29
+**Confidence:** HIGH
 
 ## Scope
 
-This document covers ONLY stack additions/changes for v1.2 features. The existing validated stack (Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, notify v8, reqwest, tokio, keyring) is unchanged.
-
----
-
-## Key Insight: No New Dependencies Needed
-
-The v1.2 milestone is architecturally unique -- it requires almost zero new library dependencies. The features are primarily:
-
-1. **Rust string manipulation** (markdown generation/parsing)
-2. **SQLite schema additions** (settings, planning state)
-3. **Reuse of existing `notify` crate** (already v8 with debouncer)
-4. **React component composition** (decision tree UI, settings form)
-
-The real "stack" work is in **design patterns**, not library choices.
-
----
+This research covers ONLY new stack additions for v1.3. The existing stack (Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind, xterm.js, tauri-plugin-pty, tokio, notify) is validated and not re-evaluated.
 
 ## Recommended Stack Additions
 
-### Rust: Markdown Parsing for ROADMAP.md Sync
+### Core Technologies
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| `pulldown-cmark` | 0.13.3 | Parse ROADMAP.md into structured phase data | De facto standard Rust CommonMark parser (62M+ downloads). Pull-parser design means zero allocations for streaming. Handles GFM extensions (task lists `- [x]`, tables) which are exactly what ROADMAP.md uses. Already pure Rust, no unsafe blocks. |
+| tauri-plugin-notification | 2 (latest ~2.3.3) | OS-native desktop notifications | Official Tauri plugin. Covers macOS/Windows/Linux. Builder pattern on Rust side, JS API for frontend-triggered notifications. Already in the Tauri plugin ecosystem so zero friction to add. |
+| tokio::sync::mpsc | (bundled with tokio 1.x) | Background orchestrator communication | Already available via `tokio = { features = ["full"] }` in Cargo.toml. Standard pattern for async task control: send commands to background loop, receive status updates. No new dependency. |
+| tokio_util::sync::CancellationToken | (bundled with tokio-util) | Graceful shutdown of background orchestrator | Clean cancellation of long-running tokio::spawn tasks. Drop the token to signal all listeners. Better than ad-hoc booleans. |
 
-**Why pulldown-cmark over alternatives:**
-- `comrak` is more full-featured but heavier (wraps C code) -- overkill for extracting headings and checkbox lists
-- `markdown-rs` is newer but less battle-tested
-- Regex-only parsing is fragile and breaks on edge cases (nested lists, inline code in headings)
+### Supporting Libraries
 
-**What it does for us:** The `.planning/ROADMAP.md` file uses a predictable structure (H2 headings for sections, `- [x]`/`- [ ]` task lists for phases, Markdown tables for progress). pulldown-cmark's event iterator lets us walk this structure and extract phase names, completion status, and plan counts into Rust structs that map to SQLite rows.
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| tokio-util | 0.7 | CancellationToken for background task lifecycle | Add to Cargo.toml. Use for orchestrator start/stop/restart. Lightweight, maintained by tokio team. |
+| sonner | 2.0.7 (already installed) | In-app toast notifications | Already in package.json. Use for non-critical in-app alerts (task completed, phase advanced). Pairs with OS notifications for critical items. |
 
-**Integration point:** New module `src-tauri/src/planning/roadmap_parser.rs`. The parser walks `Event::Start(Tag::Heading)`, `Event::TaskListMarker(bool)`, and `Event::Start(Tag::Item)` events to build a `Vec<RoadmapPhase>` struct.
+### No New Frontend Dependencies Needed
 
-```toml
-# Add to Cargo.toml [dependencies]
-pulldown-cmark = { version = "0.13", default-features = false }
+The following features can be built with existing dependencies:
+
+| Feature | Built With | Already Available |
+|---------|-----------|-------------------|
+| Multi-terminal tabs | `tauri-pty` 0.2.1 + `@xterm/xterm` 6.0 + Zustand | Yes -- `spawn()` returns independent `IPty` instances with `kill()`, `resize()`, `onData`, `onExit` |
+| Collapsible sidebar sections | shadcn/ui Collapsible or manual with Tailwind transitions | Yes -- `@radix-ui/react-collapsible` ships with shadcn/ui |
+| Simplified task view | shadcn/ui existing primitives | Yes |
+| Session tabs UI | Existing Tailwind + lucide-react icons | Yes |
+| Background task status | Zustand store + Tauri event listener | Yes -- `@tauri-apps/api` event system |
+
+## Architecture Decisions for New Features
+
+### 1. Multi-Terminal PTY Management
+
+**Approach:** Frontend-managed session map in Zustand, one `spawn()` call per tab.
+
+The existing `useTerminal` hook creates a single PTY session tied to a React effect lifecycle. For multi-terminal:
+
+- **Session store (Zustand):** Map of `sessionId -> { name, projectId, cwd, status, ptyRef }`. Each project gets its own namespace.
+- **Per-tab component:** Each tab mounts its own `<TerminalInstance>` with a dedicated `containerRef` and `IPty`. The `IPty` reference is owned by the component, not the store (DOM refs cannot live in Zustand).
+- **Tab lifecycle:** Create tab = `spawn()` new PTY. Close tab = `pty.kill()` + `term.dispose()`. Switch tab = hide/show containers (keep PTY alive in background).
+- **Session key pattern:** `{projectId}:{sessionName}` -- enables per-project terminal isolation.
+
+**Why not a Rust-side PTY manager?** `tauri-plugin-pty` already manages PTY processes on the Rust side. The JS `spawn()` function communicates with the Rust plugin via Tauri's IPC. Adding another Rust layer would duplicate what the plugin already does. Keep session orchestration in the frontend.
+
+**Verified API surface** (from `tauri-pty` 0.2.1 type definitions):
+- `spawn(file, args, options)` -- returns `IPty` with `pid`, `cols`, `rows`
+- `IPty.kill(signal?)` -- terminate the session
+- `IPty.resize(cols, rows)` -- resize individual session
+- `IPty.onData` / `IPty.onExit` -- per-session event listeners
+- `IPty.write(data)` -- write to individual session
+
+Multiple `spawn()` calls create fully independent sessions. No shared state or conflicts.
+
+### 2. Background AI Orchestrator (Rust Side)
+
+**Approach:** Single `tokio::spawn` loop in Rust, controlled via `mpsc` channels, communicates to frontend via Tauri events.
+
+```
+Frontend                    Rust Backend
+   |                            |
+   |-- invoke "start_orchestrator" -->  spawns tokio task
+   |                            |       loop {
+   |<-- event "orchestrator:status" --    poll project state
+   |<-- event "orchestrator:action" --    determine next action
+   |                            |         if auto-executable: spawn CLI
+   |<-- event "orchestrator:notify" --    if human-needed: emit notification
+   |                            |         sleep(interval)
+   |-- invoke "stop_orchestrator" -->   cancel via CancellationToken
+   |                            |       }
 ```
 
-### Frontend: No New Dependencies
+**Key components:**
+- **OrchestratorState** managed in Tauri app state: `Arc<tokio::sync::Mutex<Option<OrchestratorHandle>>>`
+- **OrchestratorHandle** holds: `CancellationToken`, `mpsc::Sender<OrchestratorCommand>`
+- **OrchestratorCommand** enum: `Start { project_id }`, `Stop`, `Pause`, `SetInterval(Duration)`
+- **Poll loop:** Read project phases/tasks from DB, determine if current phase has actionable work, check if it requires human input or can auto-execute
 
-All v1.2 UI features build on the existing stack:
+**Why tokio::spawn, not std::thread?** The app already uses tokio throughout (scheduler, calendar sync, workflow execution). Staying in the async runtime avoids thread-pool bloat and integrates naturally with existing `Arc<Mutex<Database>>` access patterns. The orchestrator is I/O-bound (DB reads, process spawning), not CPU-bound.
 
-| Feature | Built With | Notes |
-|---------|-----------|-------|
-| Planning decision tree | React state machine + existing shadcn Dialog/Card | No router needed -- modal flow within ProjectDetail |
-| Settings UI for CLI tool | shadcn Input + Select + Form | Already have get/set_app_setting Tauri commands |
-| Progress display | Existing phase/task components | Just new data sources from .planning/ sync |
-| Tier selection | shadcn RadioGroup or Card grid | Simple selection UI, no new lib |
+**CLI execution:** Use `tokio::process::Command` to spawn the configured CLI tool (e.g., `claude`). Capture stdout/stderr via piped streams. Emit progress events to frontend. This is separate from the PTY terminals -- orchestrator-spawned processes are headless/background, not interactive.
 
-### Rust: No New Backend Dependencies
+### 3. Notification System (Dual-Layer)
 
-| Feature | Built With | Notes |
-|---------|-----------|-------|
-| .planning/ watcher | Existing `notify` v8 + `notify-debouncer-mini` 0.7 | Same pattern as `start_file_watcher` and `start_plan_watcher` -- add a third watcher for `.planning/` |
-| Context file generation | String concatenation (existing pattern) | `generate_context_file_content` already does this -- extend with tier-aware sections |
-| ROADMAP.md parsing | `pulldown-cmark` (new, see above) | Only new dependency |
-| CLI tool config | Existing `app_settings` table | `get_app_setting`/`set_app_setting` already wired |
+**Approach:** Two notification channels serving different purposes.
 
----
+| Channel | Technology | When Used | Example |
+|---------|-----------|-----------|---------|
+| In-app toast | sonner (already installed) | Non-critical, app-focused | "Phase 3 auto-completed", "Terminal exited" |
+| OS notification | tauri-plugin-notification | Human attention needed, app may be in background | "Phase 4 blocked -- needs manual review", "Orchestrator error" |
 
-## Architecture Patterns (The Real Stack)
+**Rust-side notification:** The orchestrator emits Tauri events. A thin Tauri command or the orchestrator itself calls `app.notification().builder().title(...).body(...).show()` for critical items. No frontend involvement needed for OS notifications from background tasks.
 
-### Pattern 1: Context File as Cross-Tool Protocol
+**Frontend notification:** sonner's `toast()` function for in-app feedback. Already wired (package installed). Listen to Tauri events and translate to toasts where appropriate.
 
-This is the critical architectural decision for v1.2. The context file written to `.element/context.md` must work with ANY AI CLI tool, not just Claude Code.
+**Permission handling:** `tauri-plugin-notification` requires permission on macOS. Call `isPermissionGranted()` at app startup; if not granted, call `requestPermission()`. Fall back to in-app-only if denied.
 
-**Current state:** Hardcoded `claude --dangerously-skip-permissions` with context.md as argument.
+### 4. UI Polish (No New Dependencies)
 
-**Target state:** Configurable CLI tool where context.md serves as a universal instruction document.
+All UI improvements use existing stack:
 
-**How AI CLI tools consume context:**
-
-| Tool | How It Reads Context | Entry Point |
-|------|---------------------|-------------|
-| Claude Code | `claude [file]` reads file as initial prompt | Direct file argument |
-| Cursor (terminal) | Reads `.cursorrules` or paste into chat | Would need manual paste or symlink |
-| GitHub Copilot CLI | `gh copilot suggest` reads piped input | `cat context.md \| gh copilot suggest` |
-| Aider | `aider --read context.md` | `--read` flag for read-only context |
-| OpenAI Codex CLI | Reads `AGENTS.md` in project root | Place as AGENTS.md or pass as prompt |
-| Ollama CLI | Pipe into prompt | `cat context.md \| ollama run model` |
-
-**Recommendation:** The context file should be written as **tool-agnostic markdown** that works when:
-1. Passed as a file argument (`claude context.md`)
-2. Piped as stdin (`cat context.md | tool`)
-3. Placed at a known path that tools auto-discover (`.element/context.md`)
-
-The CLI tool setting should store: `{ command: "claude", args: ["--dangerously-skip-permissions", "{context_file}"], env: {} }` where `{context_file}` is a template variable replaced at launch time.
-
-### Pattern 2: Tiered Context Generation (Decision Tree in Markdown)
-
-The GSD skill pattern reveals how to embed workflow logic into markdown without slash commands:
-
-**GSD's approach:**
-- SKILL.md files use plain markdown with structured sections (## Your Task, ## Output Contract)
-- Decision trees are expressed as conditional prose: "If X, do Y. Otherwise, do Z."
-- Output contracts specify JSON schemas the AI should write to a known file path
-- File watchers detect the output and parse it back into the app
-
-**This pattern maps directly to Element's tiers:**
-
-| Tier | Context File Strategy | Output Contract |
-|------|----------------------|-----------------|
-| Quick | Short context, flat task list request, write to `.element/plan-output.json` | `{ "tasks": [{ "title": "...", "description": "..." }] }` |
-| Medium | Medium context with questioning section, phases + tasks, write to `.element/plan-output.json` | Existing `PlanOutput` schema (phases array) |
-| GSD | Full GSD workflow instructions embedded in context.md, write to `.planning/ROADMAP.md` + phase dirs | ROADMAP.md in standard GSD format |
-
-**Key insight from GSD analysis:** GSD's SKILL.md files prove that **plain markdown with clear instructions and output contracts is sufficient** to drive complex multi-step workflows in any AI tool. No special format, no YAML frontmatter, no template engine needed. The "template engine" is the AI itself -- you write instructions, the AI follows them.
-
-### Pattern 3: Structured Markdown Generation (Not Templates)
-
-**Do NOT use a template engine.** Here's why:
-
-The existing `generate_context_file_content()` function in `onboarding.rs` already uses Rust string building with conditional sections. This is the right approach because:
-
-1. **Context files are AI-consumed, not human-consumed.** The AI doesn't care about pixel-perfect formatting.
-2. **Conditional logic is simple.** "If project is empty, show onboarding instructions. If populated, show progress + what's next." This is a 3-way branch, not a complex template.
-3. **Template engines add indirection.** Tera, Handlebars, or Liquid would add a dependency, a template directory, and a debugging layer for zero benefit.
-4. **The existing pattern works.** `generate_context_file_content` is already tested and shipping.
-
-**Extend the existing pattern** with a new function signature:
-
-```rust
-pub fn generate_context_file_content_v2(
-    data: &ProjectContextData,
-    mode: ContextMode,       // Planning | Execution | WhatNext
-    tier: Option<PlanTier>,  // Quick | Medium | GSD (only for Planning mode)
-    cli_tool: &CliToolConfig, // Affects output contract paths and instructions
-) -> String
-```
-
-### Pattern 4: .planning/ Folder Watcher
-
-Reuse the exact `notify` + `notify-debouncer-mini` pattern from `start_file_watcher`:
-
-```rust
-pub struct PlanningWatcherState {
-    pub watcher: Mutex<Option<Debouncer<RecommendedWatcher>>>,
-}
-```
-
-**What to watch for:**
-- `ROADMAP.md` changes -> re-parse phases, sync to SQLite
-- `STATE.md` changes -> update progress display
-- `phases/*/` directory changes -> detect new plans/summaries
-- `plan-output.json` -> already handled by existing PlanWatcherState
-
-**Watch `.planning/` recursively** with a 1-second debounce (longer than file explorer's 500ms because GSD writes multiple files in rapid succession during phase transitions).
-
-**Event routing in the callback:**
-```rust
-// In the debouncer callback
-if path.ends_with("ROADMAP.md") {
-    app.emit("planning-roadmap-changed", path);
-} else if path.ends_with("STATE.md") {
-    app.emit("planning-state-changed", path);
-} else if path.ends_with("plan-output.json") {
-    // Already handled by PlanWatcherState -- skip to avoid double-processing
-}
-```
-
-### Pattern 5: CLI Tool Configuration Schema
-
-Store in the existing `app_settings` table:
-
-```json
-{
-  "cli_tool": {
-    "command": "claude",
-    "args": ["--dangerously-skip-permissions", "{context_file}"],
-    "label": "Claude Code"
-  }
-}
-```
-
-**Preset options for the Settings UI:**
-
-| Preset | Command | Args |
-|--------|---------|------|
-| Claude Code | `claude` | `["--dangerously-skip-permissions", "{context_file}"]` |
-| Aider | `aider` | `["--read", "{context_file}"]` |
-| Custom | (user input) | (user input with `{context_file}` placeholder) |
-
-The `{context_file}` placeholder gets replaced with the absolute path to `.element/context.md` at launch time.
-
----
-
-## What NOT to Add
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| Tera / Handlebars / Liquid (template engines) | Unnecessary complexity for conditional string building. The AI is the "template engine" -- it interprets markdown instructions. | Rust `format!` + conditional string building (existing pattern) |
-| pulldown-cmark-to-cmark (markdown writer) | We're generating markdown from data, not transforming markdown-to-markdown | Direct string building |
-| YAML parser (serde_yaml) | Deprecated; ROADMAP.md uses markdown structure not YAML frontmatter | pulldown-cmark for parsing, string building for generation |
-| gray-matter or front-matter crate | STATE.md has YAML frontmatter but it's simpler to parse with a regex for the `---` delimiters + serde_yaml for just that block | Regex split + `serde_json` (already in deps) or just parse the markdown body |
-| Any React markdown renderer (react-markdown, remark) | Context files are written TO disk for CLI tools, not rendered in-browser | Not applicable -- these are output files |
-| WebSocket / SSE for watcher events | Tauri's `app.emit()` already provides event bridge to frontend | Existing Tauri event system |
-| State machine library (xstate, zustand-fsm) | Decision tree has 3 tiers with linear flows -- React useState + switch is sufficient | useState + conditional rendering |
-
----
+- **Collapsible sidebar:** Radix Collapsible primitive (ships with shadcn/ui) or a simple `useState` + CSS `max-height` transition. Radix is cleaner for accessibility.
+- **Simplified task view:** Existing shadcn/ui Card, Badge, and layout primitives.
+- **Smart AI button labels:** Zustand state + conditional rendering. No new deps.
+- **Terminal defaults:** Configuration stored in SQLite via existing `app_settings` table.
 
 ## Installation
 
-```toml
-# Add to src-tauri/Cargo.toml [dependencies]
-pulldown-cmark = { version = "0.13", default-features = false }
-```
-
 ```bash
-# No new npm dependencies needed
-# Frontend is pure composition of existing shadcn/ui + Zustand
+# Rust -- add to src-tauri/Cargo.toml [dependencies]
+# tauri-plugin-notification = "2"
+# tokio-util = { version = "0.7", features = ["rt"] }
+
+# Frontend -- add to package.json
+npm install @tauri-apps/plugin-notification
 ```
 
----
+```json
+// src-tauri/capabilities/default.json -- add to permissions array:
+// "notification:default"
+```
+
+```rust
+// src-tauri/src/lib.rs -- add plugin registration:
+// .plugin(tauri_plugin_notification::init())
+```
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| pulldown-cmark (parse ROADMAP.md) | Regex-based parsing | If ROADMAP.md format is 100% stable and never changes. Regex is faster to implement but breaks on format evolution. |
-| Rust string building (context gen) | Tera template engine | If context files grow beyond ~200 lines of conditional logic or if non-developers need to edit templates. |
-| notify v8 recursive watch | Polling with `std::fs::metadata` | If notify has platform-specific bugs on Windows (unlikely -- v8 is mature). Polling at 2s interval is a fallback. |
-| Single `app_settings` JSON blob | Dedicated `cli_tools` SQLite table | If users need multiple CLI tool profiles (switch between Claude/Aider per project). Overkill for v1.2 -- one global setting is enough. |
-| Hardcoded presets + custom | Full plugin system for CLI tools | If the CLI tool ecosystem grows beyond 3-4 options. For v1.2, presets + custom covers all cases. |
+| tauri-plugin-notification (official) | tauri-plugin-notifications (community, 0.4.3) | Only if you need push notifications via FCM/APNs on mobile. Element is desktop-only, so the official plugin is simpler and better maintained. |
+| tokio mpsc + CancellationToken | crossbeam channels + Arc<AtomicBool> | Only if leaving the async runtime. Element is fully async/tokio, so staying in-ecosystem is cleaner. |
+| Frontend-managed PTY sessions | Custom Rust-side PTY manager | Only if you need PTY sessions that survive frontend reloads. Element's terminals are ephemeral per-project, so frontend management is simpler. |
+| sonner (in-app toasts) | react-hot-toast, react-toastify | No reason to switch. sonner is already installed, well-maintained (2.0.7), and has the best API for shadcn/ui integration. |
+| No React terminal wrapper lib | react-xtermjs, xterm-react | Element already has a working custom hook (`useTerminal`). Adding a wrapper library would conflict with the existing PTY integration pattern. Extend the hook instead. |
 
----
+## What NOT to Use
 
-## Stack Patterns by Feature
-
-### Tiered Planning Decision Tree
-
-**If Quick tier:**
-- Context file: Short, flat task request, 30-50 lines
-- Output: `.element/plan-output.json` with `{ "tasks": [...] }` (no phases)
-- UI: Single modal step -> AI generates -> review list
-
-**If Medium tier:**
-- Context file: Medium with questioning prompts + phase structure request, 50-100 lines
-- Output: `.element/plan-output.json` with existing `PlanOutput` schema
-- UI: Modal step -> AI questions (in terminal) -> AI generates -> AiPlanReview
-
-**If GSD tier:**
-- Context file: Full GSD instructions embedded, 100-200 lines
-- Output: `.planning/ROADMAP.md` + phase directories (standard GSD structure)
-- UI: Modal step -> AI runs in terminal (full GSD workflow) -> .planning/ watcher syncs results
-
-### .planning/ Folder Sync
-
-**Stack:** `notify` v8 (existing) + `pulldown-cmark` (new) + SQLite (existing)
-**Flow:** File change event -> debounced callback -> parse changed file -> update SQLite -> emit Tauri event -> React re-renders
-
-### Context-Adaptive Markdown
-
-**Stack:** Pure Rust string building (existing pattern)
-**Key decision:** Context file structure varies by mode:
-
-```
-Planning mode (empty project):     "Help plan this project. [tier instructions]. Write output to [path]."
-Planning mode (has phases):        "Project has phases but needs more detail. [tier instructions]."
-Execution mode (has plan):         "Here's where we are. What's next? [progress data]."
-```
-
-### CLI Tool Configuration
-
-**Stack:** SQLite `app_settings` (existing) + shadcn Select/Input (existing)
-**Schema:** Single JSON setting: `cli_tool_config` = `{ command, args, label }`
-
----
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| react-xtermjs / xterm-react | Adds abstraction layer over xterm.js that conflicts with direct `tauri-pty` spawn() integration. Element already has `useTerminal` hook that works. | Extend existing `useTerminal` hook to support session IDs |
+| tauri-plugin-shell for orchestrator | Shell plugin is for simple command execution, not long-running monitored processes. No stdout streaming, no cancellation. | `tokio::process::Command` with piped stdout/stderr in the orchestrator loop |
+| Electron-style IPC for orchestrator | Tauri events are lighter weight and already used throughout the app. Don't invent a custom message bus. | `app.emit()` / `app.listen()` Tauri event system |
+| std::process::Command | Blocks the thread. The orchestrator needs async. | `tokio::process::Command` for async process spawning |
+| Separate notification micro-service | Over-engineering for a desktop app. | Direct tauri-plugin-notification calls from the orchestrator |
 
 ## Version Compatibility
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| pulldown-cmark 0.13 | Rust 1.71+ (we use latest stable) | No MSRV conflict |
-| pulldown-cmark 0.13 | serde_json 1.x (for structured output) | pulldown-cmark doesn't depend on serde; we use serde_json separately to serialize parsed data |
-| notify 8.x | notify-debouncer-mini 0.7 | Already validated in v1.1 file explorer |
-
----
-
-## Cross-Tool Context File Design
-
-### Research Finding: How GSD Skills Work
-
-GSD (Get Shit Done) uses `.claude/get-shit-done/workflows/` with markdown files containing:
-
-1. **Purpose block** (`<purpose>`) -- what the workflow does
-2. **Process steps** (`<step>`) -- sequential instructions with decision points
-3. **Output contracts** -- exact JSON schemas or file formats the AI must produce
-4. **Required reading** -- files to load before starting
-5. **Routing logic** -- "If X, then do Y" expressed in plain prose
-
-These work because Claude Code has `/slash-command` routing built in. But **bare API calls, Cursor, Copilot CLI, and Aider have no slash commands** -- they just read markdown and follow instructions.
-
-### Design: Portable Workflow Instructions
-
-The context file Element generates must encode the same workflow logic as GSD skills but without assuming any tool-specific features. The pattern:
-
-```markdown
-# Project Context: {name}
-
-## Current State
-{progress data, phase status, task list}
-
-## Your Task
-{mode-specific instructions}
-
-### If you need to plan this project:
-{tier-specific planning instructions}
-
-### If you need to execute:
-{what's-next guidance with current phase context}
-
-## Output Contract
-When complete, write results to `.element/plan-output.json`:
-{JSON schema}
-
-IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
-```
-
-**Why this works across tools:**
-- Every AI tool can read markdown and follow instructions
-- The "Output Contract" section gives the AI a clear target (file path + schema)
-- The file watcher picks up the output regardless of which tool wrote it
-- No slash commands, no special syntax, no tool-specific features assumed
-- Decision trees are expressed as conditional prose ("If X, do Y") which any LLM can follow
-
-**What makes GSD's pattern transferable:**
-- GSD SKILL.md files are just markdown with clear structure
-- The magic is in the **output contract** (write JSON to a known path) + **file watcher** (detect and parse the output)
-- This contract pattern works identically whether Claude Code, Aider, or bare `ollama` writes the file
-
----
+| tauri-plugin-notification 2.x | tauri ~2.10 | Must match Tauri 2.x major version. The `"2"` version spec in Cargo.toml auto-resolves. |
+| tokio-util 0.7 | tokio 1.x | Direct compatibility. tokio-util tracks tokio major versions. |
+| @tauri-apps/plugin-notification (npm) | @tauri-apps/api ^2.10.1 | Must match the Tauri API version already in package.json. |
+| @xterm/xterm 6.0 | tauri-pty 0.2.1 | Already working together in current codebase. No changes needed. |
 
 ## Sources
 
-- pulldown-cmark 0.13.3 -- [docs.rs](https://docs.rs/crate/pulldown-cmark/latest) -- HIGH confidence (official docs)
-- notify v8 -- already validated in codebase (`src-tauri/Cargo.toml` line 30) -- HIGH confidence
-- AI tool context files -- [DeployHQ guide](https://www.deployhq.com/blog/ai-coding-config-files-guide) -- MEDIUM confidence (third-party but comprehensive)
-- AGENTS.md standard -- [Layer5 blog](https://layer5.io/blog/ai/agentsmd-one-file-to-guide-them-all/) -- MEDIUM confidence
-- GSD skill pattern -- analyzed from `~/.claude/plugins/.../skill-creator/skills/skill-creator/SKILL.md` and `~/.claude/get-shit-done/workflows/` -- HIGH confidence (primary source)
-- Claude Code best practices -- [official docs](https://code.claude.com/docs/en/best-practices) -- HIGH confidence
-- Cross-tool context strategy -- [agentrulegen.com comparison](https://www.agentrulegen.com/guides/cursorrules-vs-claude-md) -- LOW confidence (needs validation per-tool)
+- [Tauri Notification Plugin docs](https://v2.tauri.app/plugin/notification/) -- installation, API, permissions (HIGH confidence)
+- [tauri-plugin-pty GitHub](https://github.com/Tnze/tauri-plugin-pty) -- plugin capabilities (HIGH confidence)
+- `tauri-pty` 0.2.1 TypeScript definitions (`node_modules/tauri-pty/dist/types/index.d.ts`) -- verified IPty API: spawn, kill, resize, onData, onExit (HIGH confidence)
+- [Long-running async tasks in Tauri v2](https://sneakycrow.dev/blog/2024-05-12-running-async-tasks-in-tauri-v2) -- spawn + event pattern (MEDIUM confidence)
+- [Tauri async_runtime docs](https://docs.rs/tauri/latest/tauri/async_runtime/index.html) -- official Tauri async patterns (HIGH confidence)
+- Existing codebase: `src/hooks/useTerminal.ts`, `src-tauri/src/lib.rs`, `Cargo.toml`, `package.json` -- current integration points (HIGH confidence)
 
 ---
-*Stack research for: v1.2 Intelligent Planning*
-*Researched: 2026-03-25*
+*Stack research for: Element v1.3 Foundation & Execution*
+*Researched: 2026-03-29*

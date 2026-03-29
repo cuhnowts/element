@@ -1,188 +1,195 @@
 # Project Research Summary
 
-**Project:** Element v1.2 — Intelligent Planning
-**Domain:** Tiered AI planning, .planning/ folder sync, context-adaptive AI execution guidance for Tauri desktop app
-**Researched:** 2026-03-25
+**Project:** Element v1.3 — Foundation & Execution
+**Domain:** Tauri 2.x desktop app — multi-terminal, background AI orchestration, contextual UI
+**Researched:** 2026-03-29
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element v1.2 adds intelligent planning capability to the existing Tauri 2.x + React 19 + SQLite desktop app. The milestone is architecturally lean: only one new dependency (`pulldown-cmark` for markdown parsing) is needed, and the primary work is design pattern implementation — tiered context file generation, a .planning/ folder file watcher, and a configurable CLI tool setting. The recommended approach is to extend the existing `generate_context_file_content` pattern into a `context_builder` module with five named modes (planning-quick, planning-medium, planning-gsd, execution, execution-done), and build tier selection as a discriminated enum with a strategy pattern to avoid branching spaghetti across code paths.
+Element v1.3 is a Tauri 2.x desktop project-management app that needs to evolve from a single-terminal, manual-AI-launch tool into a multi-terminal workspace with a background AI orchestrator. The research confirms that the existing stack (Tauri 2.x, React 19, SQLite, Zustand, xterm.js, tauri-plugin-pty, tokio) requires minimal net-new dependencies: only `tauri-plugin-notification` (for OS-native alerts) and `tokio-util` (for `CancellationToken`) need to be added. All terminal, UI, and execution features can be built on what is already installed. The recommended approach is a layered build order: fix tech debt and existing state-management bugs first, add multi-terminal sessions second, wire in the notification system third, and build the background orchestrator last — because every later phase depends on the earlier ones being stable.
 
-The key differentiators — tiered planning (Quick/Medium/GSD), .planning/ folder sync, and progress-aware execution mode — are achievable through plain markdown context files with output contracts. GSD's workflow system proves that well-structured markdown with conditional instructions and a known output file path is sufficient to drive complex multi-step AI workflows across any tool (Claude Code, Aider, Codex, etc.) without slash commands or tool-specific features. The hardcoded `claude --dangerously-skip-permissions` command must become a configurable setting immediately; it is known tech debt that blocks all non-Claude users and has a confirmed version-specific flag regression after v2.1.77.
+The core architectural pattern is React-managed terminal sessions (via a Zustand `terminalSessions` store keyed by project ID) combined with a Rust-side tokio daemon that polls project state and communicates exclusively through Tauri events. The "Open AI" button becomes a state-machine-driven action surface that reflects the full project lifecycle (`NO_DIRECTORY` → `NO_PLAN` → `READY` → `AI_RUNNING` → `NEEDS_ATTENTION` → `ALL_COMPLETE`). This is the primary UX differentiator — one button that always shows the right next action.
 
-The highest-risk area is the .planning/ folder sync, which must solve a bidirectional sync infinite loop problem, a file descriptor exhaustion risk from file watchers, and database lock contention during batch sync operations. All three must be addressed in the foundation phase before any feature code touches them. The one-way sync contract — disk owns structure, database owns task status and user additions — cleanly avoids conflict scenarios. ROADMAP.md parsing should use regex-based line parsing (not a full AST) given the predictable GSD-generated format, with graceful tolerance for unexpected content.
+The most critical risk is the existing "Open AI" navigation bug (state race in `launchTerminalCommand` / `restoreProjectState`) which will be amplified by every multi-terminal state transition added later. This must be resolved before multi-terminal work begins. The second major risk is runaway AI execution cost: the orchestrator MVP must ship in "suggest and approve" (dry-run) mode before enabling autonomous execution. Treat cost controls as a launch blocker, not a nice-to-have.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is completely unchanged. The only addition is `pulldown-cmark = { version = "0.13", default-features = false }` in `Cargo.toml` — though ARCHITECTURE.md ultimately recommends regex-based parsing over AST parsing for ROADMAP.md given its predictable GSD-generated structure. All frontend features build on existing shadcn/ui components and Zustand. No new npm packages are needed.
+The existing stack is validated and unchanged. Two small additions unlock all v1.3 features: `tauri-plugin-notification = "2"` in Cargo.toml (plus `@tauri-apps/plugin-notification` npm package) for OS-native toasts, and `tokio-util = "0.7"` for `CancellationToken` to cleanly shut down the orchestrator daemon. `sonner` for in-app toasts is already installed at 2.0.7. All terminal, sidebar, and UI features build on existing shadcn/ui primitives, Zustand, and the verified `tauri-pty` 0.2.1 API (`spawn`, `kill`, `resize`, `onData`, `onExit`, `write`).
 
 **Core technologies:**
-- `pulldown-cmark` 0.13 (conditional): ROADMAP.md parsing — de facto standard Rust CommonMark parser, zero allocations, pure Rust. May be superseded by regex parsing depending on format stability.
-- `notify` v8 (existing): .planning/ folder watcher — same debouncer pattern as existing `start_file_watcher`; extend with a new `PlanningWatcherState`
-- `rusqlite` (existing): schema additions — three new columns: `phases.source`, `phases.external_ref`, `projects.planning_tier`
-- Rust `format!` string building (existing): context file generation — no template engine needed; the AI interprets markdown instructions as its "template engine"
-
-**What NOT to add:** Tera/Handlebars/Liquid template engines, serde_yaml, bidirectional .planning/ write-back, WebSocket/SSE for watcher events, React markdown renderers, xstate or other FSM libraries.
+- `tauri-plugin-notification 2.x`: OS-native desktop notifications — official Tauri plugin, zero friction, covers macOS/Windows/Linux
+- `tokio::sync::mpsc` + `CancellationToken`: background orchestrator lifecycle control — already available via `tokio = { features = ["full"] }`, no new async runtime needed
+- `tauri-pty 0.2.1` (existing): multi-terminal sessions — each `spawn()` call creates a fully independent PTY; no Rust-side pool needed
+- `sonner 2.0.7` (existing): in-app toasts for non-critical informational notifications
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Planning decision tree on first "Open AI" — detect project state, route to tier selection or execution mode
-- Quick tier (flat todo list) — same-week work should not require phase ceremony; uses existing `plan-output.json` contract
-- Progress-aware context file — execution mode seeds current state (what's done, what's next), not static structure; already partially built
-- Structured output contract — AI produces machine-parseable JSON; extend existing `plan-output.json` pattern per tier
-- Configurable CLI tool — unblocks non-Claude users; known tech debt; trivial implementation (string setting + UI)
+Research confirms a clear P1/P2/P3 split. The foundational dependency is the `TerminalSession` store refactor — everything else (named AI sessions, background orchestrator, contextual button) builds on it.
 
-**Should have (differentiators):**
-- Medium tier with focused questioning — AI asks 3-5 domain-specific questions before generating phases/tasks (GSD `questioning.md` pattern adapted to pure markdown)
-- GSD tier (full research + milestones) — killer differentiator; requires .planning/ sync to be useful; defer until sync is working
-- .planning/ folder sync — GSD writes ROADMAP.md; Element reads and syncs phase/task structure to database via file watcher
-- "What's next?" execution mode — progress-aware context guides AI to the next action based on task completion state
-- Tool-agnostic context files — portable markdown instructions + output contracts work with any AI CLI tool
-- Smart context adaptation — 5 context modes based on `planning_tier` + task completion state
+**Must have for v1.3 (P1):**
+- Direct project-click navigation (single-click navigates, right-click = context menu) — most basic UI convention, currently violated
+- Collapsible sidebar sections with chevron toggle — standard pattern, currently non-standard slider
+- Simplified task detail view (progressive disclosure) — reduces cognitive overload
+- Smart AI button with full 7-state machine — primary UX differentiator
+- Multi-terminal tabs with per-project session registry — foundational for everything else
+- Named AI session terminals (Bot icon, distinct from manual shells) — users need to know which tab the AI is in
+- Kill/respawn per tab + tab naming — every terminal app expects this
+- Terminal as default drawer tab — it is the primary workspace tool
+- Basic notification system (OS + in-app) — required by orchestrator
+- Background orchestrator MVP in approve-only mode — core product value proposition
 
-**Defer (v2+):**
-- AGENTS.md generation at project root (tool auto-discovery; nice-to-have after core context system is solid)
-- Multi-tool orchestration (one configured tool per session is the right constraint)
-- Built-in AI chat UI (Element orchestrates, external tools execute — never duplicate this)
+**Should have for v1.3.x (P2):**
+- Risk-tiered auto-execution (once orchestrator is stable)
+- Execution progress drawer tab (richer agent visibility)
+- Notification badges on sidebar projects
+- Session persistence across project switches (hidden DOM approach)
+
+**Defer to v2+ (P3):**
+- Launch configurations / saved terminal presets (Warp-style)
+- Autonomy slider (user calibrates AI autonomy level)
+- Inter-agent coordination (multiple parallel AI sessions)
+- Split-pane terminals, in-app code editor/diff viewer, push notifications
 
 ### Architecture Approach
 
-The architecture extends existing patterns with four new Rust modules (`planning_sync.rs`, `context_builder.rs`, `planning_commands.rs`, `PlanningWatcherState`) and three new frontend components (`PlanningTierDialog`, `CliSettingsForm`, `planningSlice`). Quick and Medium tiers use the existing `plan-output.json` contract and existing plan watcher; only the GSD tier uses the new planning watcher and .planning/ sync path. This keeps two code paths cleanly separated and coexistent.
+The architecture is three independent layers built in strict dependency order. The terminal layer is entirely frontend-managed: a Zustand `terminalSessions: Record<ProjectId, TerminalSession[]>` store replaces the current global `terminalSessionKey`, and all sessions for the active project are mounted simultaneously with CSS `display: none` on inactive ones to preserve scrollback. The orchestrator layer is a Rust-side `tokio::spawn` daemon that reads project/phase/task state from the shared `Arc<Mutex<Database>>`, determines the next action, and communicates exclusively via `app.emit()` events — never by directly mutating frontend state. The notification layer bridges these two: Rust-side `tauri-plugin-notification` for OS alerts when the orchestrator needs human input, `sonner` toasts for foreground informational feedback, and a Zustand `notificationSlice` for persistent in-app notification history.
 
 **Major components:**
-1. `context_builder.rs` — determines context mode from project state, generates tier-appropriate markdown with embedded output contract
-2. `planning_sync.rs` — parses ROADMAP.md via regex line-by-line, diffs against DB, applies one-way sync (disk structure → DB)
-3. `PlanningWatcherState` + `planning_commands.rs` — watches `.planning/` with 1000ms debounce (longer than .element/'s 500ms; GSD writes multiple files in rapid succession), triggers sync on ROADMAP changes only
-4. `PlanningTierDialog.tsx` — first-time "Open AI" flow; selected tier saved to `projects.planning_tier`
-5. `CliSettingsForm.tsx` — stores `cli_tool_command` in `app_settings`, replaces hardcoded `claude --dangerously-skip-permissions`
+1. `TerminalSessionStore` (Zustand slice) — `Map<ProjectId, TerminalSession[]>`, active session per project, replaces `terminalSessionKey`
+2. `TerminalTabBar` + `TerminalPane` (React) — tab management UI; N panes mounted simultaneously, only active one visible
+3. `orchestrator/` (Rust module) — daemon loop, action determination, CLI tool execution via `tokio::process::Command`
+4. `OrchestratorCommands` (Tauri commands) — `start`, `stop`, `pause`, `approve` — frontend-to-orchestrator control
+5. `NotificationBridge` (Rust + React) — routes orchestrator events to OS notifications and Zustand notification slice
+6. `NotificationTray` (React) — bell icon with badge count, dropdown history, action buttons
 
-**Suggested build order (from ARCHITECTURE.md):** Foundation (CLI settings + schema) → Adaptive context builder → Planning tier decision tree → .planning/ folder sync
+**New DB tables:** `orchestrator_runs` (execution history) and `orchestrator_config` (per-project orchestrator settings including `enabled`, `auto_execute`, `poll_interval_secs`).
 
 ### Critical Pitfalls
 
-1. **Bidirectional sync infinite loop** — Never write back to .planning/ files from the app. Use a content-hash write guard (not timestamp suppression, which is unreliable across macOS FSEvents/Linux inotify/Windows ReadDirectoryChangesW) if any write-back ever occurs. Sync is strictly one-way: disk → DB. Must be solved in Phase 1 before any sync code is written.
+1. **"Open AI" navigation state race** — `launchTerminalCommand` and `restoreProjectState` fight over the same Zustand keys; multi-terminal adds more transitions and amplifies the bug. Fix: separate terminal-launch state from navigation state; add a behavioral test asserting ProjectDetail stays visible after "Open AI" click. Must be resolved BEFORE multi-terminal work.
 
-2. **Context file exceeds AI token budget** — Mode-aware context is mandatory from day one. Token budgets: ~2,000 tokens (Quick), ~4,000 (Medium), ~8,000 (GSD). Collapse completed phases to a single summary line. Never dump the full task list into the context file. Hard ceiling: truncate completed phase details first, then task descriptions.
+2. **PTY zombie processes on close** — `pty.kill()` sends SIGHUP but child processes (e.g., Claude Code) that ignore it survive. With N terminals this multiplies. Fix: track all PTY PIDs in a Rust-side registry; on `tauri::RunEvent::ExitRequested` force-kill all with SIGKILL fallback after 2s SIGTERM.
 
-3. **ROADMAP.md parse fragility** — Use generous tolerance: H2 headings are phases, checkbox list items are tasks, everything else is skipped with a warning (not a failure). Log but don't crash on unexpected content. Never auto-apply sync without logging what changed; surface user-facing conflict messages for external edits.
+3. **xterm.js instance memory growth** — each Terminal with WebGL renderer and 5000-line scrollback consumes ~34MB. Five terminals per project × 3 projects = ~510MB minimum. `Terminal.dispose()` does not fully GC due to document-level listener leaks (xterm.js issue #1518). Fix: cap at 5 total instances; use canvas renderer for background terminals; serialize inactive scrollback to a string array and re-create on tab focus.
 
-4. **GSD CLI not installed or wrong version** — Add pre-flight `which <command>` check before launching. Warn on known-incompatible flag versions (`--dangerously-skip-permissions` confirmed broken after v2.1.77; support `--permission-mode bypassPermissions`). GSD tier must be visibly disabled (greyed out, not silently broken) when GSD framework is absent.
+4. **Runaway AI execution costs** — background AI with no budget controls can consume hundreds of dollars before the user notices. Fix: ship orchestrator MVP in approve-only mode; add per-execution token budget, 30-minute wall-clock timeout, and 3-attempt retry cap before escalating to human. Cost controls are a launch blocker.
 
-5. **File watcher resource exhaustion** — Watch `.element/` and `.planning/` specifically with `NonRecursive` mode. Never watch the project root recursively. Enforce cleanup on every project switch. Single `SyncWatcherState` manages all watcher instances.
-
-6. **Database lock contention during sync** — Minimize critical section: read current state → release lock → compute diff in memory → re-acquire → apply changes. Confirm SQLite WAL mode is enabled. Break batch sync into per-phase transactions. Show sync status indicator in UI so users see "Syncing..." rather than unexplained lag.
+5. **Notification spam / fatigue** — without a taxonomy defined upfront, every feature author adds notifications and users disable them entirely, missing critical "human input needed" alerts. Fix: define Critical / Informational / Silent taxonomy before implementation; coalesce batched events; never use OS notifications for success states.
 
 ## Implications for Roadmap
 
-Research converges on a 4-phase structure driven by hard dependencies. Each phase is a releasable increment. None can be safely reordered.
+Based on the dependency graph in FEATURES.md and the pitfall-to-phase mapping in PITFALLS.md, the research strongly supports a four-phase build order.
 
-### Phase 1: Foundation — CLI Settings, Schema, and Sync Architecture
+### Phase 1: Tech Debt & Navigation Fixes
 
-**Rationale:** All subsequent features depend on this foundation. Configurable CLI tool unblocks non-Claude users immediately. The three schema columns (`projects.planning_tier`, `phases.source`, `phases.external_ref`) must exist before any tier or sync logic can be stored. Most critically, the file watcher architecture, sync safety patterns (write guard, lock strategy), and watcher cleanup discipline must be designed and reviewed here — rearchitecting after features are built on top has HIGH recovery cost.
+**Rationale:** The "Open AI" navigation bug and existing TypeScript errors will compound with every new feature added. Research explicitly identifies this as a must-fix-first. The bug is a state-management race; adding multi-terminal state transitions before fixing it guarantees regression amplification.
 
-**Delivers:** CLI tool settings UI (`CliSettingsForm`, `app_settings` key `cli_tool_command`); pre-flight CLI validation before launch; migration 010 adding schema columns; `set_project_planning_tier` / `get_project_planning_tier` commands; `PlanningWatcherState` scaffold with cleanup-on-project-switch; confirmed SQLite WAL mode; updated `Project` TypeScript type with `planningTier` field.
+**Delivers:** Stable foundation — zero TS errors, reliable project navigation, "Open AI" keeps user on ProjectDetail view, confirmed no orphaned file imports.
 
-**Addresses:** Configurable CLI tool (table stakes), watcher resource exhaustion (critical pitfall), DB lock contention (critical pitfall), sync loop prevention (critical pitfall), GSD CLI pre-flight validation (critical pitfall).
+**Addresses:** Direct project-click navigation, Link Directory on same line as AI button (low-effort layout fixes bundled here), sidebar collapsible with chevron toggle.
 
-### Phase 2: Adaptive Context Builder
+**Avoids:** Tech debt regression cascade (Pitfall 5), navigation bug amplification (Pitfall 4).
 
-**Rationale:** Refactors the existing `onboarding.rs` context generation before any new features depend on it. Extracting `context_builder.rs` first means every subsequent tier is built on a tested, mode-aware foundation. Establishing token budget enforcement now prevents the "bolt it on later" failure mode documented in PITFALLS.md.
+**Research flag:** Skip research-phase. Patterns are well-documented; this is codebase-specific debugging and cleanup.
 
-**Delivers:** `context_builder.rs` with 5 modes (PlanningQuick, PlanningMedium, PlanningGsd, Execution, ExecutionDone); `determine_context_mode()` pure function; per-tier token budget enforcement; backward-compatible `generate_context_file` command with optional `mode` parameter; all existing "Open AI" behavior preserved.
+### Phase 2: Multi-Terminal Sessions
 
-**Uses:** Rust `format!` string building (existing pattern); no new dependencies.
+**Rationale:** Everything downstream (named AI sessions, the orchestrator, the contextual button's "View AI" state) depends on the session registry existing. This is the foundational refactor that enables the rest of v1.3.
 
-**Avoids:** Context file bloat (token budget enforced from day one), using same context for all tiers.
+**Delivers:** `TerminalSessionStore`, `TerminalTabBar`, `TerminalPane`, per-project PTY isolation, kill/respawn per tab, tab naming, terminal as default drawer tab, named AI session terminals, updated `launchTerminalCommand` that creates new sessions instead of killing existing ones.
 
-### Phase 3: Planning Tier Decision Tree
+**Uses:** `tauri-pty 0.2.1` verified spawn/kill API, Zustand, existing xterm.js, Radix Collapsible for sidebar.
 
-**Rationale:** Combines Phase 1 (tier storage) + Phase 2 (context modes) into the user-facing flow. Quick and Medium tiers are implemented here; GSD tier is wired to the context builder but requires Phase 4's sync for the full output loop. This phase delivers the most immediately visible user value in v1.2.
+**Avoids:** Terminal session bleed between projects (Pitfall 6), PTY zombie processes (Pitfall 1), xterm.js memory growth (Pitfall 2) — instance pooling must be designed in, not added later.
 
-**Delivers:** `PlanningTierDialog` component (Quick/Medium/GSD selection with one-line descriptions); `planningSlice` store; modified `OpenAiButton` with full decision tree (no tier → show dialog; has tier + no tasks → planning mode; has tier + has tasks → execution "What's next?" mode); Quick tier end-to-end (`plan-output.json` output, existing `AiPlanReview` unchanged); Medium tier with questioning framework embedded in context markdown; execution mode context showing progress and next-action framing; CLI tool setting used (not hardcoded `claude`).
+**Research flag:** Skip research-phase. Architecture is well-specified; the hidden-mount pattern and session data model are fully designed in ARCHITECTURE.md.
 
-**Addresses:** Planning decision tree (table stakes), Quick tier (table stakes), Medium tier with questioning (differentiator), "What's next?" execution mode (differentiator), tool-agnostic context files (differentiator).
+### Phase 3: Notification System
 
-**Avoids:** Tier logic scattered across files (strategy pattern from start); auto-selecting tier without explanation; GSD tier silently broken when framework absent.
+**Rationale:** The orchestrator (Phase 4) needs notifications to communicate human-needed events. Building notifications separately ensures they are stable and properly taxonomized before the orchestrator generates high-volume events. Standalone value: existing workflow events (workflow-run-completed, workflow-step-failed) can be wired through the new system immediately.
 
-**Research flag:** Medium tier question quality depends on how the questioning framework is embedded in the context markdown. GSD's `questioning.md` reference file is the direct model — read it before finalizing the template. Budget iteration time; prompt quality cannot be fully assessed from research alone.
+**Delivers:** `tauri-plugin-notification` integration, `notificationSlice` in Zustand, `NotificationTray` (bell + badge + dropdown), `ToastProvider` listening to Tauri events, notification taxonomy (Critical / Informational / Silent), coalescing logic, existing workflow event wiring.
 
-### Phase 4: .planning/ Folder Sync (GSD Tier)
+**Uses:** `tauri-plugin-notification 2.x` (new dependency), `sonner 2.0.7` (existing), Tauri event system.
 
-**Rationale:** The most architecturally complex feature and has the narrowest initial audience (GSD users only). Must come last because it requires schema (Phase 1), context builder (Phase 2), and tier system (Phase 3) to be in place. The sync architecture safety patterns validated in Phase 1 are the foundation for this phase's implementation.
+**Avoids:** Notification spam / fatigue (Pitfall 7) — taxonomy must be locked before any events are wired.
 
-**Delivers:** `planning_sync.rs` with regex ROADMAP.md parser and incremental diff engine; `find_active_roadmap()` to locate the most recent ROADMAP.md in `.planning/milestones/`; `sync_planning_to_db` one-way sync (disk structure → DB, never reverse); `PlanningWatcherState` activated watching `.planning/` recursively at 1000ms debounce; `planning-synced` Tauri event; frontend `planningSlice` refresh on sync event; GSD tier in decision tree starts the planning watcher; sync status indicator in UI.
+**Research flag:** Skip research-phase. Dual-channel pattern is well-documented; taxonomy is fully specified in FEATURES.md notification categories table.
 
-**Addresses:** .planning/ folder sync (differentiator), GSD tier (differentiator).
+### Phase 4: Background Orchestrator MVP
 
-**Avoids:** Bidirectional sync write-back, full AST parsing (regex is sufficient for predictable GSD format), storing raw ROADMAP content in DB.
+**Rationale:** Depends on Phases 2 (session registry — orchestrator needs to launch AI in named terminals) and 3 (notification system — orchestrator communicates via human-needed events). Most complex piece; benefits from all prior phases being stable. Ship in approve-only mode first.
 
-**Research flag:** Regex patterns in `planning_sync.rs` must be validated against actual current GSD output before declaring complete. Test against `.planning/milestones/v1.0-ROADMAP.md` and `.planning/milestones/v1.1-ROADMAP.md` (both present in the project directory). Edge cases to cover: phase numbers with decimals (2.1), special characters in phase names, completed-date format variations, subdirectory nesting changes across GSD versions.
+**Delivers:** Rust `orchestrator/` module (daemon, actions, executor), `orchestrator_runs` and `orchestrator_config` DB tables, `OrchestratorCommands` Tauri commands, approve-only execution mode with notification-based approval flow, smart AI button full state machine (`NO_DIRECTORY` → `ALL_COMPLETE`), minimal orchestrator UI (enable/disable toggle, status indicator), token budget enforcement and wall-clock timeout.
+
+**Uses:** `tokio-util` CancellationToken (new dependency), `tokio::process::Command`, `Arc<Mutex<Database>>` (same pattern as existing scheduler), Tauri event system.
+
+**Avoids:** Runaway AI costs (Pitfall 3) — approve-only mode ships first; autonomous execution is a v1.3.x follow-up.
+
+**Research flag:** Needs research-phase during planning. The orchestrator `determine_next_action` logic (reading `.planning/` structure, classifying what is actionable vs. human-needed) requires deeper specification based on the actual project/phase/task schema. The integration between CLI tool output parsing and task status updates also needs definition.
 
 ### Phase Ordering Rationale
 
-- **Foundation first:** PITFALLS.md classifies four of its eight pitfalls as requiring Phase 1 prevention. All involve sync architecture and watcher design. Retrofitting these patterns after features are built on top has HIGH to MEDIUM recovery cost.
-- **Refactor before feature:** Context builder extraction (Phase 2) must precede tier implementation (Phase 3). Building tiers directly on top of `onboarding.rs`'s hardcoded template would make subsequent mode additions increasingly expensive.
-- **User-facing before complex backend:** Phase 3 delivers Quick tier, Medium tier, and execution mode — real user value — before the most complex engineering work in Phase 4. This allows usable releases at each phase boundary.
-- **GSD tier last:** The GSD tier context file (Phase 3) instructs the AI to write to `.planning/`; without the sync layer (Phase 4), those files are written but never reflected in Element's UI. Building GSD tier end-to-end requires both phases. Phase 3 delivers the context generation; Phase 4 closes the loop.
+- **Phases must be sequential:** Multi-terminal (Phase 2) requires the navigation bug to be fixed (Phase 1) or risk regression amplification. The orchestrator (Phase 4) requires both the session registry (Phase 2) and notifications (Phase 3). There is no safe reordering.
+- **Notification system as a bridge (Phase 3):** Building it standalone rather than inside the orchestrator phase keeps Phase 4 scope manageable and allows existing workflow events to benefit immediately.
+- **Approve-only mode for orchestrator MVP:** Research (FEATURES.md, PITFALLS.md) converges on shipping conservative defaults. Risk-tiered auto-execution is a v1.3.x iteration after the orchestrator is proven stable.
+- **UI polish is distributed:** Low-effort P1 UI fixes (collapsible sidebar, task detail simplification) are bundled into Phase 1 tech debt cleanup to deliver visible value immediately without requiring the session registry to be done first.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-
-- **Phase 3 (Medium tier questioning framework):** The quality of AI questions depends entirely on how the questioning framework is embedded in the context markdown. GSD's `questioning.md` at `~/.claude/get-shit-done/references/questioning.md` is the primary model — read it directly before planning this phase. Expect to iterate.
-- **Phase 4 (ROADMAP.md regex patterns):** Patterns must be validated against actual current-version GSD output. The two existing ROADMAP files in `.planning/milestones/` are the test corpus. Run the parser against both before finalizing the implementation plan.
+Phases likely needing `/gsd:research-phase` during planning:
+- **Phase 4 (Orchestrator MVP):** The `determine_next_action` logic must be specified against the actual DB schema (project/phase/task state fields, status enums). CLI tool output parsing to detect completion vs. failure vs. human-needed states is domain-specific and sparsely documented. Token budget tracking mechanism needs definition.
 
 Phases with standard patterns (skip research-phase):
-
-- **Phase 1 (CLI settings + schema):** SQLite migration + shadcn form + `app_settings` table = established patterns already in the codebase. No novel territory.
-- **Phase 2 (context builder):** Pure Rust string building refactor. The existing `generate_context_file_content` function in `onboarding.rs` is the direct model; this is extraction, extension, and mode-awareness, not invention.
+- **Phase 1 (Tech Debt):** Codebase-specific debugging; no external research needed.
+- **Phase 2 (Multi-Terminal):** Architecture is fully specified; `tauri-pty` API is verified against type definitions in `node_modules`.
+- **Phase 3 (Notifications):** Both notification channels have official documentation; taxonomy and coalescing patterns are well-established.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Only one potential new dependency (pulldown-cmark). All others are existing and validated. No MSRV conflicts. ARCHITECTURE.md may eliminate even that dependency by choosing regex over AST. |
-| Features | HIGH | Directly derived from GSD codebase analysis (primary source — 56 workflows, 15 references, 32+ templates analyzed) + existing Element codebase. Table stakes and differentiators have clear implementation paths. |
-| Architecture | HIGH | Based on existing codebase patterns: notify watcher, plan watcher, app_settings, onboarding command structure. No novel architecture required. Build order driven by actual code dependencies. |
-| Pitfalls | MEDIUM-HIGH | Sync loop and watcher pitfalls verified against existing code and engineering literature. CLI flag regression confirmed via GitHub issue #36168. Context token budget validated against industry patterns. DB lock contention observed pattern in existing `batch_create_plan`. |
+| Stack | HIGH | All existing dependencies verified against installed versions; new dependencies (`tauri-plugin-notification`, `tokio-util`) verified against official Tauri 2.x docs and compatibility matrix |
+| Features | MEDIUM-HIGH | Table-stakes and differentiator features well-grounded in competitor analysis (VS Code, Warp, Cursor, Devin); background orchestrator patterns are emerging territory (2026 agentic AI) |
+| Architecture | HIGH | Hidden-mount terminal pattern, event-driven orchestrator, and dual-channel notifications are all verified against existing codebase patterns (`scheduler.rs`, `useTerminal.ts`) and official Tauri docs |
+| Pitfalls | HIGH | PTY and xterm.js pitfalls sourced from open GitHub issues with specific issue numbers; cost-control patterns sourced from LangChain State of Agent Engineering 2026; navigation bug based on codebase analysis |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Cross-tool context file quality:** The portability strategy (markdown instructions + output contract) is sound in principle, but actual testing with Aider, Codex CLI, and Cursor has not been done. The STACK.md source for cross-tool compatibility is LOW confidence (single third-party guide). Validate with real tool invocations during Phase 3.
-- **GSD framework detection:** How to reliably detect whether GSD is installed in the user's Claude Code config is unspecified. Options: check for `~/.claude/get-shit-done/` directory existence, check that `claude` CLI version supports GSD commands, or provide a manual toggle. Decide during Phase 3 planning.
-- **Tier migration path:** What happens when a user starts with Quick tier and outgrows it is flagged in PITFALLS.md as a UX concern but is not addressed in FEATURES.md or ARCHITECTURE.md. Treat as deferred to v1.3 unless user testing reveals it blocks adoption during Phase 3.
-- **pulldown-cmark vs regex:** STACK.md recommends pulldown-cmark; ARCHITECTURE.md recommends regex. The resolution is: use regex for ROADMAP.md (predictable GSD-generated format), use pulldown-cmark if other .planning/ files require AST-level parsing. Confirm this decision in Phase 4 planning.
+- **Orchestrator action classification logic:** Research describes the `determine_next_action` interface but not its implementation. Specifically: what project/phase/task state fields determine "actionable," "human-needed," or "nothing to do"? This needs to be resolved during Phase 4 planning by reviewing the actual DB schema and current `phases`/`tasks` status enum values.
+- **CLI tool output parsing strategy:** The orchestrator must determine from AI CLI output whether a phase is complete, failed, or needs human input. The parsing approach (structured output, exit codes, log pattern matching) is not specified. Needs definition in Phase 4 planning.
+- **Windows cross-platform compatibility:** Research notes that `pty.kill()` on Windows has documented issues (Tauri issue #5611), and hardcoded `/bin/zsh` breaks on Windows. The fix (`$SHELL` env var with fallback chain, process-group kill) is specified, but Windows-specific testing is needed during Phase 2 to confirm behavior. This is flagged as a known risk, not a blocker.
+- **Token budget tracking mechanism:** The orchestrator must track per-execution token consumption to enforce budgets. The AI CLI tools (Claude Code) may or may not expose token counts via stdout. The exact tracking approach depends on which CLI tools are supported and needs to be validated during Phase 4 planning.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- GSD codebase at `$HOME/.claude/get-shit-done/` — 56 workflows, 15 references, 32+ templates, 18 agents (direct analysis)
-- Element codebase — `onboarding_commands.rs`, `onboarding.rs`, `OpenAiButton.tsx`, `file_explorer_commands.rs` (direct analysis)
-- GSD ROADMAP format — `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.1-ROADMAP.md` (direct analysis)
-- pulldown-cmark 0.13.3 — [docs.rs](https://docs.rs/crate/pulldown-cmark/latest)
-- notify v8 — validated in `src-tauri/Cargo.toml`
-- Claude Code permissions — [official docs](https://code.claude.com/docs/en/permissions)
-- BUG: --dangerously-skip-permissions broken after v2.1.77 — [GitHub issue #36168](https://github.com/anthropics/claude-code/issues/36168)
+- [Tauri Notification Plugin docs](https://v2.tauri.app/plugin/notification/) — installation, API, permissions
+- [tauri-plugin-pty GitHub](https://github.com/Tnze/tauri-plugin-pty) — spawn API, direct JS binding model
+- `tauri-pty 0.2.1` TypeScript definitions (`node_modules/tauri-pty/dist/types/index.d.ts`) — verified IPty API surface
+- [Tauri async_runtime docs](https://docs.rs/tauri/latest/tauri/async_runtime/index.html) — tokio daemon patterns
+- [Tauri Event System](https://v2.tauri.app/develop/calling-rust/#event-system) — backend-to-frontend communication
+- Existing codebase: `src/hooks/useTerminal.ts`, `src-tauri/src/lib.rs`, `engine/scheduler.rs`, `engine/executor.rs`, `Cargo.toml`, `package.json`
+- [Tauri issue #5611](https://github.com/tauri-apps/tauri/issues/5611) — PTY process kill on Windows
+- [xterm.js issue #1518](https://github.com/xtermjs/xterm.js/issues/1518) — Terminal.dispose memory leak
 
 ### Secondary (MEDIUM confidence)
-- [AGENTS.md specification](https://agents.md/) — Linux Foundation standard for tool-agnostic AI context
-- [Claude Code best practices](https://code.claude.com/docs/en/best-practices)
-- [MarkdownDB](https://markdowndb.com/) — validates parse-markdown-to-DB approach
-- [notify crate docs](https://docs.rs/notify/latest/notify/)
-- [The Engineering Challenges of Bi-Directional Sync](https://www.stacksync.com/blog/the-engineering-challenges-of-bi-directional-sync-why-two-one-way-pipelines-fail)
-- [Context Window Management Strategies](https://www.getmaxim.ai/articles/context-window-management-strategies-for-long-context-ai-agents-and-chatbots/)
-- [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf)
+- [VS Code Terminal docs](https://code.visualstudio.com/docs/terminal/advanced) — competitor multi-terminal patterns
+- [Warp Session Management](https://docs.warp.dev/terminal/sessions) — competitor session persistence patterns
+- [Cursor Background Agents](https://ameany.io/cursor-background-agents/) — agentic execution model comparison
+- [Designing for Agentic AI (Smashing Magazine)](https://www.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/) — human-in-the-loop UX patterns
+- [LangChain State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering) — cost control patterns
+- [Long-running async tasks in Tauri v2](https://sneakycrow.dev/blog/2024-05-12-running-async-tasks-in-tauri-v2) — tokio spawn + event pattern
 
 ### Tertiary (LOW confidence)
-- [AI tool context file comparison](https://www.agentrulegen.com/guides/cursorrules-vs-claude-md) — cross-tool context strategy; needs per-tool validation
-- [Context Management for Windsurf](https://iceberglakehouse.com/posts/2026-03-context-windsurf/) — how rules/memories files are consumed; informational only
+- [Google Cloud Agentic AI Design Patterns](https://docs.google.com/architecture/choose-design-pattern-agentic-ai-system) — risk-tiered execution model (validates direction; not specific to Tauri)
+- [NN/g Button States](https://www.nngroup.com/articles/button-states-communicate-interaction/) — smart button UX rationale
 
 ---
-*Research completed: 2026-03-25*
+*Research completed: 2026-03-29*
 *Ready for roadmap: yes*

@@ -1,678 +1,444 @@
-# Architecture Research: v1.2 Intelligent Planning Integration
+# Architecture Research
 
-**Domain:** Tiered AI planning, .planning/ folder sync, context-adaptive AI, CLI settings
-**Researched:** 2026-03-25
-**Confidence:** HIGH (based on existing codebase analysis, proven patterns from v1.0/v1.1)
+**Domain:** Multi-terminal sessions, background execution orchestrator, and notification system for Tauri 2.x desktop app
+**Researched:** 2026-03-29
+**Confidence:** HIGH
 
-## System Overview: What Changes
-
-The v1.2 milestone adds four capabilities to the existing architecture. The diagram below shows new components (marked with `*`) integrated into the existing system.
+## System Overview
 
 ```
-┌─ React Frontend ──────────────────────────────────────────────────────┐
-│                                                                       │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────┐   │
-│  │ OpenAiButton     │  │ *PlanningTierDlg │  │ *CliSettingsForm  │   │
-│  │ (MODIFY)         │  │ (NEW)            │  │ (NEW)             │   │
-│  └────────┬─────────┘  └────────┬─────────┘  └────────┬──────────┘   │
-│           │                      │                      │             │
-│  ┌────────┴──────────────────────┴──────────────────────┴──────────┐  │
-│  │                    Zustand Store Layer                          │  │
-│  │  ┌─────────────────┐  ┌───────────────────┐                    │  │
-│  │  │ *planningSlice  │  │ onboardingSlice   │                    │  │
-│  │  │ (NEW)           │  │ (MODIFY)          │                    │  │
-│  │  └────────┬────────┘  └───────────────────┘                    │  │
-│  └───────────┼────────────────────────────────────────────────────┘  │
-│              │                                                        │
-│  ┌───────────┼────────────────────────────────────────────────────┐  │
-│  │           │           api (lib/tauri.ts)                       │  │
-│  │           │ invoke() — NEW commands added                      │  │
-│  └───────────┼────────────────────────────────────────────────────┘  │
-└──────────────┼────────────────────────────────────────────────────────┘
-               │ Tauri IPC boundary
-┌──────────────┼────────────────────────────────────────────────────────┐
-│ Rust Backend │                                                        │
-│  ┌───────────┴───────────────────────────────────────────────────┐   │
-│  │                    Tauri Commands                             │   │
-│  │  *planning_commands.rs  onboarding_commands.rs (MODIFY)       │   │
-│  └────────────┬──────────────────────┬───────────────────────────┘   │
-│               │                      │                               │
-│  ┌────────────┴──────────────────────┴───────────────────────────┐   │
-│  │                    Models + Sync Engine                        │   │
-│  │  *planning_sync.rs     *context_builder.rs    onboarding.rs   │   │
-│  │  (NEW: .planning/      (NEW: adaptive        (MODIFY)         │   │
-│  │   folder parser)        context gen)                          │   │
-│  └────────────┬──────────────────────┬───────────────────────────┘   │
-│               │                      │                               │
-│  ┌────────────┴──────────────────────┴───────────────────────────┐   │
-│  │  Database (rusqlite)     File System (notify)                 │   │
-│  │  projects, phases,       .planning/ watcher                    │   │
-│  │  tasks, app_settings     (RecursiveMode)                      │   │
-│  └───────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────┘
++---------------------------------------------------------------+
+|                     React 19 Frontend                         |
+|  +-------------+  +------------------+  +------------------+  |
+|  | TerminalMgr |  | NotificationTray |  | OrchestratorUI   |  |
+|  | (tab bar +  |  | (toast + badge)  |  | (status, pause,  |  |
+|  |  N xterm.js)|  |                  |  |  approve)         |  |
+|  +------+------+  +--------+---------+  +--------+---------+  |
+|         |                  |                      |            |
++---------|------------------|----------------------|------------+
+          | spawn/write/kill | listen events        | invoke cmds
++---------|------------------|----------------------|------------+
+|         v                  v                      v            |
+|  +------+------+  +-------+--------+  +-----------+--------+  |
+|  | tauri-pty   |  | Tauri Emitter  |  | Tauri Commands     |  |
+|  | (N spawns)  |  | (event bus)    |  | (orchestrator_*)   |  |
+|  +-------------+  +-------+--------+  +-----------+--------+  |
+|                            |                      |            |
+|                    +-------+----------------------+-------+    |
+|                    |       Orchestrator Daemon             |    |
+|                    |  (tokio::spawn, runs in app setup)   |    |
+|                    |  - poll loop on interval              |    |
+|                    |  - reads project/phase/task state     |    |
+|                    |  - spawns CLI tools via Command       |    |
+|                    |  - emits events for UI updates        |    |
+|                    +------------------+-------------------+    |
+|                                       |                        |
+|                    +------------------+-------------------+    |
+|                    |     Arc<Mutex<Database>> (SQLite)     |    |
+|                    +--------------------------------------+    |
+|                         Rust Backend (Tauri 2.x)               |
++---------------------------------------------------------------+
 ```
 
-## New vs Modified Components
+## Component Responsibilities
 
-### Rust Backend -- New Modules
+| Component | Responsibility | New vs Modified |
+|-----------|----------------|-----------------|
+| `TerminalSessionStore` (Zustand) | Track N terminal sessions per project: id, name, PTY ref, alive status | **NEW** slice in `useWorkspaceStore` |
+| `TerminalTabBar` | Render tab bar above terminal area, add/close/rename sessions | **NEW** component |
+| `TerminalPane` | Render active xterm.js, keep others mounted but hidden (preserve scrollback) | **MODIFIED** from `TerminalTab` |
+| `useTerminalSession` | Manage single PTY lifecycle, extracted from `useTerminal` with session ID tracking | **MODIFIED** from `useTerminal` |
+| `OutputDrawer` | Host terminal tab bar + pane instead of single TerminalTab | **MODIFIED** |
+| `Orchestrator` (Rust) | Background daemon: poll project state, invoke AI CLI, track execution runs | **NEW** module `src-tauri/src/orchestrator/` |
+| `OrchestratorCommands` | Tauri commands: start/stop/pause orchestrator, approve human-needed items | **NEW** command module |
+| `NotificationBridge` | Dual-mode: native OS notifications (tauri-plugin-notification) + in-app toast | **NEW** Rust + React |
+| `NotificationTray` (React) | In-app notification center: badge count, dropdown list, action buttons | **NEW** component |
 
-| Module | File | Responsibility |
-|--------|------|----------------|
-| `planning_sync` | `src-tauri/src/models/planning_sync.rs` | Parse .planning/ ROADMAP.md, extract phases + tasks, diff against DB, apply sync |
-| `context_builder` | `src-tauri/src/models/context_builder.rs` | Adaptive context file generation (replaces hardcoded templates in onboarding.rs) |
-| `planning_commands` | `src-tauri/src/commands/planning_commands.rs` | Tauri commands: start/stop planning watcher, trigger sync, get planning tier |
+## Recommended Architecture
 
-### Rust Backend -- Modified Modules
+### 1. Multi-Terminal Sessions
 
-| Module | File | Change |
-|--------|------|--------|
-| `onboarding_commands` | `commands/onboarding_commands.rs` | `generate_context_file` delegates to `context_builder` with mode param; plan watcher expanded to handle .planning/ dir |
-| `onboarding` | `models/onboarding.rs` | Context generation logic moves to `context_builder.rs`; add planning tier enum |
-| `lib.rs` | `src-tauri/src/lib.rs` | Register new commands, manage `PlanningWatcherState` |
+**Approach: React-side session management with direct `tauri-pty` spawn calls.**
 
-### Frontend -- New Components
+The current `useTerminal` hook calls `spawn()` from `tauri-pty` directly in the React layer. Each call creates an independent PTY process on the Rust side. There is no need for a Rust-side "PTY pool" because:
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `PlanningTierDialog` | `components/center/PlanningTierDialog.tsx` | First-time "Open AI" flow: choose Quick/Medium/GSD |
-| `CliSettingsForm` | `components/settings/CliSettingsForm.tsx` | Configure CLI tool command in Settings |
+- `tauri-plugin-pty` already manages PTY lifecycle per spawn call
+- The frontend needs to own the xterm.js <-> PTY data binding (bidirectional `onData`)
+- Session metadata (name, project, CWD) is UI-level state, not backend state
+- A Rust pool would add IPC overhead for every keystroke (PTY data flows through Tauri events rather than direct binding)
 
-### Frontend -- Modified Components
+**Session model:**
 
-| Component | File | Change |
-|-----------|------|--------|
-| `OpenAiButton` | `components/center/OpenAiButton.tsx` | Decision tree: check if plan exists, show tier dialog vs "what's next?" mode |
-| `SettingsPage` | `components/settings/SettingsPage.tsx` | Add "CLI Tool" nav entry |
-| `SettingsNav` | `components/settings/SettingsNav.tsx` | Add CLI tab |
-
-### Frontend -- New/Modified Stores
-
-| Store | File | Change |
-|-------|------|--------|
-| `planningSlice` (NEW) | `stores/planningSlice.ts` | Planning tier state, sync status, planning watcher lifecycle |
-| `onboardingSlice` (MODIFY) | `stores/onboardingSlice.ts` | Adapt for tiered planning flow; merge with planning state or keep separate |
-
-## Detailed Architecture: .planning/ Folder Sync
-
-This is the most architecturally complex feature. Here is the recommended approach.
-
-### What Gets Parsed
-
-The GSD `.planning/` folder has this structure:
-
-```
-project-dir/
-└── .planning/
-    ├── PROJECT.md              # Project metadata (not synced -- Element owns this)
-    └── milestones/
-        └── v1.2-ROADMAP.md     # <-- PRIMARY SYNC TARGET
+```typescript
+interface TerminalSession {
+  id: string;              // uuid
+  projectId: string;       // scoped to project
+  name: string;            // user-editable, default "Terminal 1"
+  cwd: string;             // project directory
+  createdAt: number;       // for ordering
+  initialCommand?: { command: string; args: string[] } | null;
+}
 ```
 
-The ROADMAP.md contains the phase list with checkbox status. Example:
+**State management:** Add a `terminalSessions` map to `useWorkspaceStore`, keyed by `projectId -> TerminalSession[]`. The active session ID per project is tracked separately. This replaces the current single `terminalSessionKey` / `terminalInitialCommand` pattern.
 
-```markdown
-## Phases
-- [x] **Phase 1: Desktop Shell** - Description (completed 2026-03-16)
-- [ ] **Phase 2: Task UI** - Description
-- [ ] **Phase 3: Workflows** - Description
+**xterm.js instance management:** Mount all sessions for the current project but only show the active one via CSS `display: none/block` (same pattern already used for drawer tabs in `OutputDrawer`). This preserves scrollback and PTY state when switching tabs. Unmount sessions only on explicit close or project switch.
 
-## Phase Details
-### Phase 1: Desktop Shell
-**Goal**: ...
-Plans:
-- [x] 01-01-PLAN.md -- Plan description
-- [ ] 01-02-PLAN.md -- Plan description
+**Key change from current architecture:** The `launchTerminalCommand` action currently kills the previous terminal by incrementing `terminalSessionKey` (which changes the React key, causing unmount/remount). The new architecture spawns a NEW session instead, leaving existing ones alive. The "Open AI" button creates a new session named after the AI tool rather than destroying the current one.
+
+### 2. Background Execution Orchestrator
+
+**Approach: Rust-side tokio daemon spawned in `app.setup()`, communicating via Tauri events.**
+
+The orchestrator runs as a long-lived tokio task, similar to the existing `init_scheduler` pattern. Frontend polling is wrong here because:
+
+- The orchestrator needs to run even when no frontend window is focused
+- It must invoke CLI tools (`tokio::process::Command`) which requires async Rust
+- It shares the `Arc<Mutex<Database>>` for reading project/phase/task state
+- Tauri events push updates to the frontend without polling overhead
+
+**Orchestrator state machine:**
+
+```
+IDLE -> CHECKING -> EXECUTING -> WAITING_HUMAN -> IDLE
+         |                          |
+         +-- nothing to do ---------+-- user approves --> EXECUTING
 ```
 
-### Parsing Strategy: Regex Over AST
-
-Use regex-based line parsing, not a full markdown AST. Rationale:
-
-1. **The ROADMAP format is structured and predictable** -- GSD generates it from templates
-2. **pulldown-cmark adds dependency weight** for minimal benefit here
-3. **The existing `parse_plan_output_file` uses serde_json** -- regex parsing follows the "simple tool for simple job" pattern
-4. **Maintenance**: regex patterns are easier to update if the GSD format evolves
+**Core loop (simplified):**
 
 ```rust
-// models/planning_sync.rs
+pub async fn orchestrator_loop(app: AppHandle) {
+    let mut interval = tokio::time::interval(Duration::from_secs(30));
+    loop {
+        interval.tick().await;
 
-/// A phase extracted from ROADMAP.md
-#[derive(Debug, Clone)]
-pub struct ParsedPhase {
-    pub number: String,          // "1", "2.1", etc.
-    pub name: String,            // "Desktop Shell and Task Foundation"
-    pub description: String,     // "Description after the dash"
-    pub completed: bool,         // [x] vs [ ]
-    pub completed_date: Option<String>,
-    pub plans: Vec<ParsedPlan>,
-}
+        // Check if orchestrator is enabled (user can pause)
+        if !is_enabled(&app) { continue; }
 
-#[derive(Debug, Clone)]
-pub struct ParsedPlan {
-    pub filename: String,        // "01-01-PLAN.md"
-    pub description: String,     // "Plan description"
-    pub completed: bool,
-}
+        // Read project states from DB
+        let projects = get_actionable_projects(&app);
 
-/// Parse ROADMAP.md phases section
-pub fn parse_roadmap(content: &str) -> Result<Vec<ParsedPhase>, String> {
-    // Phase line pattern:
-    // - [x] **Phase 1: Desktop Shell** - Description (completed 2026-03-16)
-    // - [ ] **Phase 2: Task UI** - Description
-    let phase_re = regex::Regex::new(
-        r"^-\s+\[([ x])\]\s+\*\*Phase\s+([\d.]+):\s+(.+?)\*\*\s*-?\s*(.*?)(?:\(completed\s+([\d-]+)\))?$"
-    ).unwrap();
-
-    // Plan line pattern:
-    // - [x] 01-01-PLAN.md -- Description
-    let plan_re = regex::Regex::new(
-        r"^-\s+\[([ x])\]\s+(\d[\d.]*-\d+-PLAN\.md)\s+--?\s+(.+)$"
-    ).unwrap();
-
-    // Parse line by line, building phases
-    // ... (implementation in actual code)
+        for project in projects {
+            // Determine next action for project
+            match determine_next_action(&app, &project) {
+                Action::AutoExecute(phase, task) => {
+                    // Spawn CLI tool (e.g., claude) in background
+                    let result = execute_task(&app, &project, &phase, &task).await;
+                    // Record result, emit event
+                    app.emit("orchestrator:task-complete", &result);
+                }
+                Action::NeedsHuman(phase, task, reason) => {
+                    // Emit notification, don't execute
+                    app.emit("orchestrator:needs-human", &HumanNeeded {
+                        project_id: project.id,
+                        task_id: task.id,
+                        reason,
+                    });
+                }
+                Action::None => {}
+            }
+        }
+    }
 }
 ```
 
-### Sync Algorithm: Incremental Diff
+**Database interaction:** The orchestrator accesses the same `Arc<Mutex<Database>>` managed by Tauri state. Lock contention is minimal because:
+- The orchestrator polls every 30s (not continuous)
+- DB reads are fast (SQLite local file)
+- Writes are infrequent (only on status changes)
+- The existing codebase already uses this pattern successfully in `scheduler.rs`
 
-The sync must handle: (a) initial import, (b) GSD updates phases on disk, (c) user edits phases in Element UI.
+**CLI tool execution:** Use `tokio::process::Command` (same as `cli_commands.rs`) to invoke the configured AI CLI tool. Stream stdout/stderr via Tauri events for optional live monitoring. Record execution results in the existing `execution_records` / `execution_logs` tables.
 
-**Decision: Disk is source of truth for structure, DB is source of truth for task status.**
-
-```
-Sync Flow:
-1. Parse ROADMAP.md -> Vec<ParsedPhase>
-2. Load DB phases for project -> Vec<Phase>
-3. Match by phase name (fuzzy: trim, lowercase compare)
-4. For each parsed phase:
-   a. EXISTS in DB with same name? -> Update sort_order if changed
-   b. NEW (not in DB)? -> Insert new phase
-   c. Parsed phase marked completed? -> Mark all tasks complete
-5. For each DB phase:
-   a. NOT in parsed phases? -> Keep (don't delete user-created phases)
-6. Convert plans to tasks:
-   a. Plan title -> task title
-   b. Plan completed -> task status
-7. Emit "planning-synced" event -> frontend refreshes
-```
-
-**Why not delete missing phases:** The user may have added phases manually in Element UI. Deleting them because GSD removed a phase from ROADMAP would cause data loss. Instead, phases from ROADMAP get a `source = 'planning'` marker (new column) so we know which ones are GSD-managed.
-
-### Schema Change
+**New DB tables needed:**
 
 ```sql
--- Migration 010_planning_sync.sql
-ALTER TABLE phases ADD COLUMN source TEXT NOT NULL DEFAULT 'user'
-    CHECK(source IN ('user', 'planning'));
-
-ALTER TABLE phases ADD COLUMN external_ref TEXT;
--- Stores the phase number from ROADMAP (e.g., "1", "2.1")
--- Used for matching during sync
-
-ALTER TABLE projects ADD COLUMN planning_tier TEXT
-    CHECK(planning_tier IN ('quick', 'medium', 'gsd'));
--- NULL = not yet decided (triggers tier dialog)
-```
-
-### File Watcher Architecture
-
-Reuse the existing `notify_debouncer_mini` pattern from `PlanWatcherState` and `FileWatcherState`, but watch the `.planning/` directory recursively.
-
-```rust
-// commands/planning_commands.rs
-
-pub struct PlanningWatcherState(
-    pub StdMutex<Option<notify_debouncer_mini::Debouncer<notify::RecommendedWatcher>>>
+CREATE TABLE orchestrator_runs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id),
+    phase_id TEXT REFERENCES phases(id),
+    task_id TEXT REFERENCES tasks(id),
+    status TEXT NOT NULL DEFAULT 'pending',  -- pending, running, complete, failed, needs_human
+    started_at TEXT,
+    completed_at TEXT,
+    output_summary TEXT,
+    error_message TEXT,
+    human_reason TEXT  -- why human input is needed
 );
 
-#[tauri::command]
-pub async fn start_planning_watcher(
-    app: AppHandle,
-    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
-    watcher_state: State<'_, PlanningWatcherState>,
-    project_id: String,
-    project_dir: String,
-) -> Result<(), String> {
-    let planning_dir = PathBuf::from(&project_dir).join(".planning");
-    if !planning_dir.exists() {
-        return Ok(()); // No .planning/ dir -- nothing to watch
-    }
+CREATE TABLE orchestrator_config (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id),
+    enabled INTEGER NOT NULL DEFAULT 0,
+    auto_execute INTEGER NOT NULL DEFAULT 0,  -- 0=notify only, 1=auto-execute
+    poll_interval_secs INTEGER NOT NULL DEFAULT 30,
+    cli_tool TEXT,  -- override per-project CLI tool
+    last_check_at TEXT
+);
+```
 
-    let db = state.inner().clone();
-    let pid = project_id.clone();
-    let app_handle = app.clone();
+### 3. Notification Architecture
 
-    let mut debouncer = new_debouncer(
-        Duration::from_millis(1000), // Longer debounce -- GSD writes multiple files
-        move |events: Result<Vec<DebouncedEvent>, notify::Error>| {
-            if let Ok(events) = events {
-                let roadmap_changed = events.iter().any(|e| {
-                    e.path.extension().map_or(false, |ext| ext == "md")
-                        && e.path.to_string_lossy().contains("ROADMAP")
-                });
-                if roadmap_changed {
-                    // Sync on ROADMAP changes only
-                    if let Ok(db_lock) = db.lock() {
-                        match sync_planning_to_db(&db_lock, &pid, &planning_dir) {
-                            Ok(result) => {
-                                let _ = app_handle.emit("planning-synced", &result);
-                            }
-                            Err(e) => {
-                                let _ = app_handle.emit("planning-sync-error", &e);
-                            }
-                        }
-                    }
-                }
-            }
-        },
-    ).map_err(|e| e.to_string())?;
+**Approach: Dual-layer -- native OS notifications for background alerts, in-app toast for foreground actions.**
 
-    debouncer.watcher()
-        .watch(&planning_dir, notify::RecursiveMode::Recursive)
-        .map_err(|e| e.to_string())?;
+Use `tauri-plugin-notification` for native OS toast notifications (works on macOS and Windows). These fire when the app is backgrounded or the user is in a different part of the UI. Use an in-app toast system (React component) for transient feedback when the user is actively looking at the app.
 
-    let mut ws = watcher_state.0.lock().map_err(|e| e.to_string())?;
-    *ws = Some(debouncer);
-    Ok(())
+**When to use which:**
+
+| Scenario | Channel | Why |
+|----------|---------|-----|
+| Orchestrator needs human input | Native OS + in-app badge | User might not be looking at Element |
+| Task auto-completed | In-app toast only | Informational, not urgent |
+| Orchestrator error/failure | Native OS + in-app toast | Needs attention |
+| Terminal session exited | In-app toast only | Already in the app context |
+| Background sync complete | In-app badge update only | No interruption needed |
+
+**In-app notification center:**
+
+```typescript
+interface AppNotification {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error' | 'action';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  actionPayload?: {
+    type: 'approve-task' | 'view-project' | 'view-terminal';
+    projectId?: string;
+    taskId?: string;
+    sessionId?: string;
+  };
 }
 ```
 
-**Key design decisions:**
-- **1000ms debounce** (vs 500ms for plan watcher) because GSD writes multiple files in rapid succession during phase transitions
-- **Only trigger on ROADMAP.md changes** -- individual plan files changing don't affect the phase/task structure
-- **RecursiveMode::Recursive** -- ROADMAP.md may be in `milestones/` subdirectory
-- **Lock DB inside callback** -- follows existing pattern from plan watcher
+**React-side:** Add a `notificationSlice` to the main Zustand store. Listen for Tauri events (`orchestrator:needs-human`, `orchestrator:task-complete`, `orchestrator:error`) and push to the notification list. Render a bell icon with badge count in the app header. Toast component uses shadcn/ui's `Sonner` (already a shadcn component, likely available).
 
-### ROADMAP Discovery
+**Rust-side:** The orchestrator calls `app.notification().builder().title(...).body(...).show()` for native notifications via `tauri-plugin-notification`. This requires adding the plugin dependency.
 
-The `.planning/` directory may have ROADMAP files at different paths:
+## Data Flow
+
+### Multi-Terminal Data Flow
 
 ```
-.planning/milestones/v1.0-ROADMAP.md
-.planning/milestones/v1.1-ROADMAP.md
-.planning/milestones/v1.2-ROADMAP.md
-```
-
-Strategy: Find the most recent ROADMAP.md (by milestone version) and sync from it. A project may only have one active roadmap at a time.
-
-```rust
-fn find_active_roadmap(planning_dir: &Path) -> Option<PathBuf> {
-    let milestones_dir = planning_dir.join("milestones");
-    if !milestones_dir.exists() {
-        return None;
-    }
-
-    // Find all *-ROADMAP.md files, sort by version, take latest
-    let mut roadmaps: Vec<PathBuf> = std::fs::read_dir(&milestones_dir)
-        .ok()?
-        .filter_map(|e| e.ok())
-        .map(|e| e.path())
-        .filter(|p| p.file_name()
-            .map_or(false, |n| n.to_string_lossy().ends_with("-ROADMAP.md")))
-        .collect();
-
-    roadmaps.sort(); // Lexicographic sort works for v1.0, v1.1, v1.2
-    roadmaps.last().cloned()
-}
-```
-
-## Detailed Architecture: Planning Tier Decision Tree
-
-### Flow
-
-```
-User clicks "Open AI"
+User types in xterm.js
     |
-    +-- Project has planning_tier set?
-    |   +-- YES -> Has phases/tasks?
-    |   |         +-- YES -> "What's next?" mode (execution context)
-    |   |         +-- NO  -> Re-run planning with saved tier
-    |   +-- NO  -> Show PlanningTierDialog
-    |             User selects: Quick / Medium / GSD
-    |             |
-    |             +-- Quick  -> Generate flat todo context, launch CLI
-    |             +-- Medium -> Generate question-asking context, launch CLI
-    |             +-- GSD    -> Generate full GSD context, launch CLI
+    v
+term.onData(data) --> pty.write(data) --> PTY process (zsh)
+                                              |
+                                              v
+                                    pty.onData(output)
+                                              |
+                                              v
+                                    term.write(output) --> xterm.js renders
+```
+
+Each session has its own independent `Terminal` + `PTY` pair. No data crosses between sessions. The React component manages which session is visible.
+
+### Orchestrator Data Flow
+
+```
+orchestrator_loop (every 30s)
     |
-    +-- Save planning_tier to project
+    v
+Arc<Mutex<Database>>.lock() --> read projects, phases, tasks
+    |
+    v
+determine_next_action() --> Action::AutoExecute | Action::NeedsHuman | Action::None
+    |                                |
+    v                                v
+tokio::process::Command         app.emit("orchestrator:needs-human")
+  (run AI CLI tool)                  |
+    |                                v
+    v                        Frontend listener --> notificationSlice --> toast + badge
+app.emit("orchestrator:task-complete")       native notification via tauri-plugin-notification
+    |
+    v
+Update task/phase status in DB
+    |
+    v
+app.emit("project-updated") --> Frontend refetches project state
 ```
 
-### Implementation: OpenAiButton Changes
+### Notification Data Flow
 
-The OpenAiButton currently does three things:
-1. Generate context file
-2. Start plan watcher
-3. Launch terminal command
+```
+Rust event emitter
+    |
+    +-- "orchestrator:needs-human" --> NotificationBridge
+    +-- "orchestrator:task-complete"       |
+    +-- "orchestrator:error"               v
+                                    +------+------+
+                                    | In-app toast |  (if window focused)
+                                    | OS native    |  (if needs-human or error)
+                                    | Badge count  |  (always increment)
+                                    +-------------+
+```
 
-For v1.2, it needs to:
-1. Check project state (planning_tier, has phases/tasks)
-2. If no tier: show PlanningTierDialog (returns selected tier)
-3. Generate context file **with mode parameter** (planning vs execution)
-4. Start appropriate watcher (.element/ for quick/medium, .planning/ for GSD)
-5. Launch terminal command (using configured CLI tool, not hardcoded `claude`)
+## Architectural Patterns
 
+### Pattern 1: Hidden-Mount Terminal Multiplexing
+
+**What:** Mount all terminal sessions for the active project simultaneously, hide inactive ones with CSS `display: none`.
+**When to use:** When you need instant tab switching without PTY restart or scrollback loss.
+**Trade-offs:** Uses more memory (each xterm.js + WebGL context stays alive), but terminals are lightweight (~2-5MB each). Acceptable for 3-8 concurrent sessions.
+
+**Example:**
 ```typescript
-// OpenAiButton.tsx (modified)
-const handleOpenAi = async () => {
-  if (!directoryPath) { toast.error("..."); return; }
-
-  const project = projects.find(p => p.id === projectId);
-  const hasWork = phases.length > 0 || tasks.length > 0;
-
-  if (!project?.planningTier) {
-    // Show tier selection dialog
-    setShowTierDialog(true);
-    return;
-  }
-
-  if (hasWork) {
-    // Execution mode: "What's next?"
-    await launchExecutionMode(projectId, directoryPath);
-  } else {
-    // Planning mode with saved tier
-    await launchPlanningMode(projectId, directoryPath, project.planningTier);
-  }
-};
+// In the terminal pane area of OutputDrawer
+{sessions.map((session) => (
+  <div
+    key={session.id}
+    style={{ display: session.id === activeSessionId ? 'block' : 'none' }}
+    className="h-full"
+  >
+    <TerminalPane session={session} isVisible={session.id === activeSessionId} />
+  </div>
+))}
 ```
 
-## Detailed Architecture: Adaptive Context Builder
+### Pattern 2: Event-Driven Orchestrator with Manual Gating
 
-The current `generate_context_file_content` produces one of two templates (empty project vs populated). v1.2 needs five modes:
+**What:** Background daemon auto-executes tasks but pauses at "human-needed" boundaries, emitting events for approval.
+**When to use:** When you want automation with human oversight -- not fully autonomous.
+**Trade-offs:** More complex than pure automation or pure manual, but matches the product vision ("orchestrates, external tools execute"). The manual gate prevents runaway AI execution.
 
-| Mode | Trigger | Template Focus |
-|------|---------|----------------|
-| `planning-quick` | No plan, Quick tier | "Generate a flat task list" |
-| `planning-medium` | No plan, Medium tier | "Ask questions, generate phases + tasks" |
-| `planning-gsd` | No plan, GSD tier | "Run full GSD workflow" |
-| `execution` | Has plan, incomplete | "Here's progress, what's next?" |
-| `execution-done` | All tasks complete | "All done, review and close out" |
+### Pattern 3: Dual-Channel Notifications
 
-### Refactoring onboarding.rs
+**What:** Route notifications through both native OS and in-app channels based on urgency and app focus state.
+**When to use:** Desktop apps where the user may not be looking at the window.
+**Trade-offs:** Requires two notification systems, but each is simple. Native notifications are ~20 lines of Rust. In-app toasts are a standard React pattern.
 
-Extract context generation into `models/context_builder.rs`:
+## Anti-Patterns
 
-```rust
-// models/context_builder.rs
+### Anti-Pattern 1: Rust-Side PTY Pool with IPC Bridging
 
-pub enum ContextMode {
-    PlanningQuick,
-    PlanningMedium,
-    PlanningGsd,
-    Execution,
-    ExecutionDone,
-}
+**What people do:** Create a PTY manager in Rust that pools sessions, then bridge all terminal I/O through Tauri IPC commands/events.
+**Why it's wrong:** Every keystroke becomes an IPC roundtrip. The existing `tauri-plugin-pty` already provides direct JS-to-PTY binding via its `spawn` API, bypassing Tauri's command system for data flow. A Rust pool adds latency and complexity for no benefit.
+**Do this instead:** Let React own session lifecycle. Call `spawn()` directly from the hook. Track sessions in Zustand.
 
-pub fn determine_context_mode(
-    planning_tier: Option<&str>,
-    total_tasks: usize,
-    completed_tasks: usize,
-) -> ContextMode {
-    match planning_tier {
-        None => ContextMode::PlanningMedium, // Default fallback
-        Some(tier) if total_tasks == 0 => match tier {
-            "quick" => ContextMode::PlanningQuick,
-            "medium" => ContextMode::PlanningMedium,
-            "gsd" => ContextMode::PlanningGsd,
-            _ => ContextMode::PlanningMedium,
-        },
-        Some(_) if completed_tasks == total_tasks && total_tasks > 0 => {
-            ContextMode::ExecutionDone
-        }
-        Some(_) => ContextMode::Execution,
-    }
-}
+### Anti-Pattern 2: Frontend Polling for Orchestrator State
 
-pub fn generate_context(data: &ProjectContextData, mode: ContextMode) -> String {
-    match mode {
-        ContextMode::PlanningQuick => generate_quick_planning_context(data),
-        ContextMode::PlanningMedium => generate_medium_planning_context(data),
-        ContextMode::PlanningGsd => generate_gsd_planning_context(data),
-        ContextMode::Execution => generate_execution_context(data),
-        ContextMode::ExecutionDone => generate_done_context(data),
-    }
-}
-```
+**What people do:** Use `setInterval` in React to poll a Tauri command for orchestrator updates.
+**Why it's wrong:** Wasteful, introduces latency (poll interval), and the orchestrator may need to notify even when no component is polling.
+**Do this instead:** Orchestrator pushes updates via `app.emit()`. Frontend subscribes with `listen()`. This is the established Tauri pattern already used for workflow events.
 
-### Output Contracts by Tier
+### Anti-Pattern 3: Single Global Terminal Session
 
-Each tier uses a different output contract for the CLI tool:
+**What people do:** Keep the current single-terminal architecture and "reset" it when switching projects.
+**Why it's wrong:** Kills running processes (AI sessions), loses scrollback, forces users to restart context. The current `terminalSessionKey` increment pattern is explicitly identified as tech debt (backlog 999.6).
+**Do this instead:** Per-project session arrays with independent PTY lifecycles.
 
-- **Quick**: Write to `.element/plan-output.json` (same as current, flat list treated as single phase)
-- **Medium**: Write to `.element/plan-output.json` (same format, phases + tasks)
-- **GSD**: Writes to `.planning/` directory (Element watches and syncs via planning_sync)
+### Anti-Pattern 4: Orchestrator Directly Modifying Frontend State
 
-This means the **existing plan watcher** handles Quick and Medium, while the **new planning watcher** handles GSD. Both can coexist.
-
-## Detailed Architecture: CLI Tool Settings
-
-### Schema
-
-Already exists: `app_settings` table with key/value pairs. Use key `cli_tool_command` with default value `claude --dangerously-skip-permissions`.
-
-### Settings UI
-
-New component in Settings page:
-
-```typescript
-// components/settings/CliSettingsForm.tsx
-// - Text input for CLI command (e.g., "claude", "aider", "cursor")
-// - Text input for additional args (e.g., "--dangerously-skip-permissions")
-// - "Test" button: spawns `<command> --version` to verify it exists
-// - "Reset to Default" button
-```
-
-### Integration with OpenAiButton
-
-Currently hardcoded:
-```typescript
-launchTerminalCommand("claude", ["--dangerously-skip-permissions", contextPath]);
-```
-
-Change to:
-```typescript
-const cliSetting = await api.getAppSetting("cli_tool_command");
-const [command, ...baseArgs] = (cliSetting ?? "claude --dangerously-skip-permissions").split(" ");
-launchTerminalCommand(command, [...baseArgs, contextPath]);
-```
-
-## Data Flow: Complete v1.2 Lifecycle
-
-### Planning Flow (New Project)
-
-```
-1. User creates project, links directory
-2. User clicks "Open AI" -> no planning_tier -> PlanningTierDialog
-3. User selects "Medium" -> saved to DB
-4. generate_context_file(projectId, mode="planning-medium")
-   -> writes .element/context.md with questioning template
-5. start_plan_watcher(projectDir) -> watches .element/plan-output.json
-6. launchTerminalCommand(cliTool, [contextPath])
-   -> terminal opens, AI asks questions, generates plan
-7. AI writes .element/plan-output.json
-8. Plan watcher detects -> emits "plan-output-detected"
-9. Frontend shows AiPlanReview -> user confirms
-10. batch_create_plan -> phases + tasks in DB
-11. project now has work -> next "Open AI" click enters execution mode
-```
-
-### Planning Flow (GSD Tier)
-
-```
-1-3. Same as above, but user selects "GSD"
-4. generate_context_file(projectId, mode="planning-gsd")
-   -> writes .element/context.md with GSD instructions
-5. start_planning_watcher(projectDir) -> watches .planning/ recursively
-6. launchTerminalCommand(cliTool, [contextPath])
-   -> terminal opens, GSD runs full planning workflow
-7. GSD writes .planning/milestones/vX.Y-ROADMAP.md
-8. Planning watcher detects ROADMAP change -> triggers sync
-9. sync_planning_to_db parses ROADMAP -> creates/updates phases + tasks
-10. Emits "planning-synced" -> frontend refreshes phase/task lists
-11. Further GSD updates (phase transitions) -> watcher re-syncs automatically
-```
-
-### Execution Flow ("What's next?")
-
-```
-1. User clicks "Open AI" -> has planning_tier AND has tasks
-2. generate_context_file(projectId, mode="execution")
-   -> writes .element/context.md with progress summary + "what's next?"
-3. launchTerminalCommand(cliTool, [contextPath])
-   -> AI sees progress, guides next steps
-4. No watcher needed -- execution mode is advisory only
-```
-
-## New Tauri Commands
-
-| Command | Module | Parameters | Returns |
-|---------|--------|------------|---------|
-| `start_planning_watcher` | planning_commands | project_id, project_dir | () |
-| `stop_planning_watcher` | planning_commands | - | () |
-| `sync_planning_folder` | planning_commands | project_id, project_dir | SyncResult |
-| `set_project_planning_tier` | planning_commands | project_id, tier | Project |
-| `get_project_planning_tier` | planning_commands | project_id | Option<String> |
-
-The `generate_context_file` command in `onboarding_commands.rs` gains an optional `mode` parameter (backward-compatible: defaults to auto-detection).
-
-## Project Structure: New Files
-
-```
-src-tauri/src/
-├── models/
-│   ├── planning_sync.rs       # NEW: ROADMAP parser, diff engine, sync logic
-│   ├── context_builder.rs     # NEW: Adaptive context generation (5 modes)
-│   └── onboarding.rs          # MODIFY: Delegate to context_builder
-├── commands/
-│   ├── planning_commands.rs   # NEW: Planning watcher, sync, tier commands
-│   └── onboarding_commands.rs # MODIFY: generate_context_file gains mode param
-├── db/
-│   └── sql/
-│       └── 010_planning_sync.sql  # NEW: phases.source, phases.external_ref, projects.planning_tier
-└── lib.rs                     # MODIFY: Register new commands + PlanningWatcherState
-
-src/
-├── stores/
-│   └── planningSlice.ts       # NEW: Planning tier, sync status, watcher lifecycle
-├── components/
-│   ├── center/
-│   │   ├── OpenAiButton.tsx   # MODIFY: Decision tree + tier dialog trigger
-│   │   └── PlanningTierDialog.tsx  # NEW: Quick/Medium/GSD selection
-│   └── settings/
-│       ├── CliSettingsForm.tsx     # NEW: CLI tool configuration
-│       ├── SettingsPage.tsx        # MODIFY: Add CLI tab
-│       └── SettingsNav.tsx         # MODIFY: Add CLI nav entry
-├── lib/
-│   ├── tauri.ts               # MODIFY: Add new API methods
-│   └── types.ts               # MODIFY: Add PlanningTier type, update Project
-└── types/
-    └── planning.ts            # NEW: Planning-specific types
-```
-
-## Suggested Build Order
-
-Build order is driven by dependencies. Each phase produces a testable increment.
-
-### Phase 1: CLI Settings + Planning Tier Schema (Foundation)
-
-**Why first:** No new watchers or complex logic. Lays schema foundation that everything else depends on.
-
-1. Migration 010: Add `planning_tier` to projects, `source`/`external_ref` to phases
-2. `CliSettingsForm` component + Settings page integration
-3. `set_project_planning_tier` / `get_project_planning_tier` commands
-4. Update `Project` type on frontend with `planningTier` field
-
-**Tests:** Settings persist, migration runs, tier saves to DB.
-
-### Phase 2: Adaptive Context Builder (Unlocks Planning Modes)
-
-**Why second:** Refactors existing code (context generation) before adding new features that depend on it.
-
-1. Extract `context_builder.rs` from `onboarding.rs`
-2. Implement 5 context modes
-3. Update `generate_context_file` command with mode param
-4. Verify existing "Open AI" button still works (backward compat)
-
-**Tests:** Each mode generates correct markdown template. Existing tests pass.
-
-### Phase 3: Planning Tier Decision Tree (User-Facing Flow)
-
-**Why third:** Combines Phase 1 (tier storage) + Phase 2 (context modes) into the user flow.
-
-1. `PlanningTierDialog` component
-2. `planningSlice.ts` store
-3. Modify `OpenAiButton` with decision tree logic
-4. Wire tier selection -> DB save -> context generation -> terminal launch
-5. Use configured CLI tool from settings (not hardcoded claude)
-
-**Tests:** Decision tree branches correctly. Tier dialog renders. CLI setting used.
-
-### Phase 4: .planning/ Folder Sync (Most Complex)
-
-**Why last:** Depends on schema (Phase 1), is the most complex, and has the narrowest user impact (only GSD tier users).
-
-1. `planning_sync.rs`: ROADMAP parser + regex patterns
-2. `planning_sync.rs`: Diff engine (parsed vs DB)
-3. `planning_commands.rs`: Watcher setup (reuse notify pattern)
-4. Frontend: Listen for `planning-synced` event, refresh phases/tasks
-5. Integration: GSD tier in decision tree starts planning watcher
-
-**Tests:** Parser handles all ROADMAP format variations. Diff correctly identifies adds/updates. Watcher triggers on file changes.
-
-## Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Full Markdown AST for ROADMAP Parsing
-
-**What people do:** Use pulldown-cmark or comrak to parse ROADMAP.md into an AST, then walk the tree to extract phases.
-**Why it's wrong:** The ROADMAP format is line-oriented and predictable. An AST parser adds complexity (node traversal, edge cases with nested formatting) for a problem that regex solves in 20 lines.
-**Do this instead:** Regex-based line parsing with clear patterns. If GSD changes format, update the regex -- it is simpler than updating AST traversal logic.
-
-### Anti-Pattern 2: Bidirectional Sync
-
-**What people do:** Try to write changes back to ROADMAP.md when the user edits in the UI.
-**Why it's wrong:** GSD manages the .planning/ directory. Writing back creates conflicts (GSD overwrites Element's changes, or vice versa). File format fidelity is nearly impossible to maintain.
-**Do this instead:** Disk is source of truth for structure (phases, plan titles). DB is source of truth for task status and user additions. One-way sync: disk to DB.
-
-### Anti-Pattern 3: Separate Watcher Per Feature
-
-**What people do:** Create independent watchers for .element/plan-output.json, .planning/ROADMAP.md, and file explorer.
-**Why it's wrong:** Three watchers on overlapping directories waste OS resources and create ordering issues.
-**Do this instead:** For v1.2, keep the existing PlanWatcherState (watches .element/) and add PlanningWatcherState (watches .planning/). They watch different directories so no conflict. The FileWatcherState watches the project root but filters by relevance.
-
-### Anti-Pattern 4: Storing Full ROADMAP Content in DB
-
-**What people do:** Store raw markdown in a `planning_content` column for "offline" access.
-**Why it's wrong:** The .planning/ directory is on disk in the project. Duplicating it in SQLite creates stale data and doubles storage.
-**Do this instead:** Read from disk on demand. Cache parsed results in memory if needed for performance.
+**What people do:** Have the orchestrator call Tauri commands that directly mutate Zustand stores.
+**Why it's wrong:** Tauri commands are invoked by the frontend, not the backend. The backend can only communicate via events.
+**Do this instead:** Orchestrator emits events. Frontend event listeners update Zustand stores. This maintains the unidirectional data flow.
 
 ## Integration Points
+
+### New Dependencies Required
+
+| Dependency | Type | Purpose |
+|------------|------|---------|
+| `tauri-plugin-notification` | Rust + JS | Native OS toast notifications |
+| `sonner` (via shadcn/ui) | JS | In-app toast component |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| PlanningWatcher -> DB | Direct rusqlite call inside callback | Same thread as watcher callback; must lock Arc<Mutex<Database>> |
-| PlanningWatcher -> Frontend | Tauri event `planning-synced` | Frontend listens via `listen()`, triggers store refresh |
-| OpenAiButton -> PlanningTierDialog | React state (showTierDialog) | Dialog returns tier, button continues flow |
-| CliSettingsForm -> OpenAiButton | Via app_settings in DB | Button reads setting at launch time |
-| context_builder -> onboarding_commands | Direct function call | No IPC -- same Rust process |
+| Orchestrator -> Frontend | Tauri events (`app.emit`) | `orchestrator:*` event namespace |
+| Frontend -> Orchestrator | Tauri commands (`orchestrator_start`, `orchestrator_pause`, `orchestrator_approve`) | Standard invoke pattern |
+| Orchestrator -> Database | `Arc<Mutex<Database>>` (shared) | Same pattern as existing scheduler |
+| Orchestrator -> CLI tools | `tokio::process::Command` | Same pattern as `cli_commands.rs` |
+| Terminal sessions -> PTY | Direct `tauri-pty` spawn | No IPC, direct JS binding |
+| Notification Rust -> OS | `tauri-plugin-notification` | Native toast API |
+| Notification React -> UI | Zustand `notificationSlice` | Event listener populates store |
 
-### Event Bus (Tauri Events)
+### Modified Existing Components
 
-| Event | Emitter | Listener | Payload |
-|-------|---------|----------|---------|
-| `planning-synced` | PlanningWatcher | planningSlice | `{ projectId, phasesAdded, phasesUpdated }` |
-| `planning-sync-error` | PlanningWatcher | planningSlice | `String` (error message) |
-| `plan-output-detected` | PlanWatcher (existing) | onboardingSlice | `PlanOutput` |
+| Component | Current | Change |
+|-----------|---------|--------|
+| `useTerminal.ts` | Single PTY hook | Refactor to `useTerminalSession(sessionId, ...)` -- accept session config instead of raw CWD |
+| `TerminalTab.tsx` | Single terminal renderer | Split into `TerminalTabBar` (tab management) + `TerminalPane` (single session renderer) |
+| `OutputDrawer.tsx` | Renders single `TerminalTab` | Renders `TerminalTabBar` + N `TerminalPane` instances, manages active session |
+| `useWorkspaceStore.ts` | `terminalSessionKey` + `terminalInitialCommand` | Replace with `terminalSessions: Record<string, TerminalSession[]>`, `activeTerminalSession: Record<string, string>` |
+| `DrawerHeader.tsx` | Static "Terminal" tab button | Add session count badge to terminal tab |
+| `lib.rs` | No orchestrator setup | Add orchestrator spawn in `setup()`, add `tauri-plugin-notification` |
+| `commands/mod.rs` | No orchestrator commands | Add `orchestrator_commands` module |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `src-tauri/src/orchestrator/mod.rs` | Orchestrator module root |
+| `src-tauri/src/orchestrator/daemon.rs` | Main loop, state machine, polling logic |
+| `src-tauri/src/orchestrator/actions.rs` | Action determination logic (what to execute next) |
+| `src-tauri/src/orchestrator/executor.rs` | CLI tool invocation, output capture |
+| `src-tauri/src/commands/orchestrator_commands.rs` | Tauri commands for orchestrator control |
+| `src/components/output/TerminalTabBar.tsx` | Tab bar for terminal sessions |
+| `src/components/output/TerminalPane.tsx` | Single terminal session renderer (refactored from TerminalTab) |
+| `src/components/notifications/NotificationTray.tsx` | Bell icon + dropdown notification list |
+| `src/components/notifications/ToastProvider.tsx` | Sonner/toast wrapper with Tauri event listeners |
+| `src/stores/notificationSlice.ts` | Notification state and actions |
+
+## Build Order (Dependency-Aware)
+
+The following order respects technical dependencies -- each phase can be shipped and tested independently.
+
+### Phase 1: Multi-Terminal Sessions
+
+**Why first:** No backend changes needed. Pure frontend refactor. Unblocks "Open AI" creating sessions without killing existing ones. Resolves backlog 999.6.
+
+1. Add `TerminalSession` type and session management to `useWorkspaceStore`
+2. Refactor `useTerminal` -> `useTerminalSession` (accept session config)
+3. Build `TerminalTabBar` component (add/close/rename tabs)
+4. Build `TerminalPane` component (from existing `TerminalTab`)
+5. Update `OutputDrawer` to render tab bar + N panes
+6. Update `launchTerminalCommand` to create new session instead of kill/respawn
+7. Update per-project state save/restore to include terminal sessions
+
+### Phase 2: Notification System
+
+**Why second:** Needed by the orchestrator (Phase 3) but also useful standalone for existing workflow events.
+
+1. Add `tauri-plugin-notification` to Rust dependencies and `lib.rs` plugin registration
+2. Add `sonner` toast component (via shadcn/ui)
+3. Create `notificationSlice` in Zustand store
+4. Build `NotificationTray` component (bell + dropdown)
+5. Build `ToastProvider` that listens to Tauri events and shows toasts
+6. Wire existing workflow events (`workflow-run-completed`, `workflow-step-failed`) through notification system
+
+### Phase 3: Execution Orchestrator MVP
+
+**Why third:** Depends on notification system for alerting. Most complex piece, benefits from Phases 1-2 being stable.
+
+1. Create `orchestrator` Rust module with daemon loop
+2. Add `orchestrator_runs` and `orchestrator_config` DB tables (migration)
+3. Implement `determine_next_action` logic (read project/phase/task state)
+4. Implement CLI tool execution via `tokio::process::Command`
+5. Add orchestrator Tauri commands (start/stop/pause/approve)
+6. Wire orchestrator events to notification system
+7. Build minimal orchestrator UI (enable/disable toggle, status indicator)
+8. Add "needs human" approval flow (notification action -> approve command)
+
+## Scaling Considerations
+
+| Concern | At 1-3 projects | At 10+ projects | Mitigation |
+|---------|-----------------|-----------------|------------|
+| Terminal memory | ~10-30MB (3-9 sessions) | ~50-100MB | Cap at 5 sessions per project, warn on more |
+| Orchestrator DB reads | Negligible | ~10 queries/30s | Batch queries, read all actionable state in one pass |
+| PTY processes | 3-9 OS processes | 10-30 processes | Auto-close idle sessions after configurable timeout |
+| Notification volume | Low | Could flood | Rate-limit notifications, batch similar events |
 
 ## Sources
 
-- Existing codebase analysis: `onboarding_commands.rs`, `onboarding.rs`, `file_explorer_commands.rs` patterns
-- [notify crate docs](https://docs.rs/notify/latest/notify/)
-- [notify-debouncer-mini](https://lib.rs/crates/notify-debouncer-mini)
-- [pulldown-cmark-frontmatter](https://lib.rs/crates/pulldown-cmark-frontmatter) (evaluated, not recommended for this use case)
-- GSD ROADMAP format: analyzed from `.planning/milestones/v1.0-ROADMAP.md` and `.planning/milestones/v1.1-ROADMAP.md`
+- [tauri-plugin-pty GitHub](https://github.com/Tnze/tauri-plugin-pty) -- PTY spawn API, direct JS binding
+- [Tauri Notification Plugin](https://v2.tauri.app/plugin/notification/) -- native OS notification API
+- [Tauri Event System](https://v2.tauri.app/develop/calling-rust/#event-system) -- backend-to-frontend communication
+- Existing codebase: `engine/scheduler.rs` (tokio daemon pattern), `engine/executor.rs` (pipeline execution), `cli_commands.rs` (CLI tool invocation), `useTerminal.ts` (current PTY integration)
 
 ---
-*Architecture research for: Element v1.2 Intelligent Planning*
-*Researched: 2026-03-25*
+*Architecture research for: Element v1.3 Foundation & Execution*
+*Researched: 2026-03-29*

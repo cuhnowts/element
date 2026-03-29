@@ -1,293 +1,308 @@
 # Pitfalls Research
 
-**Domain:** Adding tiered AI planning, bidirectional .planning/ folder sync, and context-adaptive AI execution guidance to existing Tauri 2.x + React 19 + SQLite desktop app
-**Researched:** 2026-03-25
-**Confidence:** MEDIUM-HIGH (verified against existing codebase patterns, file watcher implementation, sync engineering literature)
+**Domain:** Adding multi-terminal, background AI execution, notifications, and tech debt cleanup to a Tauri 2.x desktop app
+**Researched:** 2026-03-29
+**Confidence:** HIGH (based on codebase analysis + ecosystem research)
 
 ## Critical Pitfalls
 
-### Pitfall 1: Bidirectional Sync Infinite Loop
+### Pitfall 1: PTY Zombie Processes on Terminal Kill/Respawn
 
 **What goes wrong:**
-The app writes to a .planning/ markdown file (e.g., updating ROADMAP.md after a task status change in the UI). The file watcher detects the change. The watcher triggers a database update. The database update triggers a re-write of the markdown file. The watcher fires again. This creates an infinite event loop that locks the mutex, spins the CPU, and can corrupt data if writes overlap.
+The current `useTerminal.ts` spawns a PTY via `tauri-pty` and kills it on cleanup (`ptyRef.current?.kill()`). When moving to multi-terminal, the kill/respawn pattern (already used via `terminalSessionKey` increment in `useWorkspaceStore`) creates a race: if the React effect cleanup fires but the PTY process tree is not fully terminated (e.g., a running `claude` subprocess), zombie processes accumulate. On macOS this manifests as orphaned zsh/claude processes in Activity Monitor; on Windows it is worse -- Tauri issue #5611 documents that closing the window does not kill sidecar processes, and PTY daemon processes accumulate in Task Manager.
 
 **Why it happens:**
-The existing `PlanWatcherState` in `onboarding_commands.rs` uses `notify_debouncer_mini` with a 500ms debounce -- but debouncing only collapses rapid-fire events, it does not distinguish between "external edit" and "our own write." Every bidirectional sync system that uses two one-way pipes hits this. The naive assumption is "I'll just ignore events right after I write" but timing is unreliable across file systems (especially on macOS where FSEvents can batch and delay).
+`pty.kill()` sends SIGHUP to the PTY master, but child processes that ignore SIGHUP (common in CLI tools) survive. The current code has no process-group kill or SIGKILL fallback. With a single terminal this is manageable (one orphan per session). With N terminals, it multiplies.
 
 **How to avoid:**
-- Implement a write guard: before writing a file, register its path + a nonce (hash of content about to be written) in a shared `HashSet<PathBuf>` behind `Arc<Mutex<>>`. When the watcher fires, check if the changed file is in the guard set AND the content hash matches. If so, remove from guard and skip processing. If content differs (external edit happened between our write and the event), process it.
-- Never use timestamp-based suppression (e.g., "ignore events within 1s of our write"). File system event delivery timing varies wildly between macOS FSEvents, Linux inotify, and Windows ReadDirectoryChangesW.
-- Use a single-direction-at-a-time lock: when the app is writing to disk, queue incoming file events. When processing file events, queue outgoing writes. Process the queue after the current direction completes.
+- Kill the entire process group, not just the PTY master. On POSIX, use `killpg(pgid, SIGTERM)` followed by a timed `SIGKILL` fallback. This requires a Rust-side command since `tauri-pty`'s JS API only exposes `kill()`.
+- Track all spawned PTY PIDs in a Rust-side registry (HashMap<SessionId, PtyHandle>). On app close (`tauri::RunEvent::ExitRequested`), iterate and force-kill all.
+- Implement a PTY health check: if a PTY's `onExit` fires but the process group is still alive after 2 seconds, escalate to SIGKILL.
+- On project switch, decide policy: keep background terminals alive (tab model) or kill them (single-session model). Do not leave them in limbo.
 
 **Warning signs:**
-- CPU spikes when changing a task status in the UI
-- SQLite "database is locked" errors in logs
-- File content oscillating between two states when viewed in an external editor
-- Watcher events logged in rapid succession with identical paths
+- Activity Monitor shows growing zsh/node/claude processes after repeated "Open AI" clicks
+- Memory usage climbs without corresponding UI state
+- `ps aux | grep -c zsh` returns more processes than open terminals
 
 **Phase to address:**
-Phase 1 (sync architecture). This MUST be solved in the foundational sync layer before any feature code touches it.
+Multi-terminal sessions phase. Must be the first thing designed -- the session registry is the foundation for everything else.
 
 ---
 
-### Pitfall 2: Context File Exceeds AI Token Budget
+### Pitfall 2: Unbounded xterm.js Instance Memory Growth
 
 **What goes wrong:**
-The context.md file grows unboundedly as projects accumulate phases and tasks. A project with 8 phases and 40 tasks already produces ~3-4KB of markdown. Add task descriptions, "What Needs Attention" sections, and the output contract, and it easily hits 8-10KB (roughly 2,500+ tokens). When the planning tier adds GSD-style research summaries, architecture notes, and roadmap data from .planning/, the context file balloons to 20-50KB (6,000-15,000 tokens). Claude Code's effective working context gets crowded, reducing response quality and increasing cost.
+Each xterm.js `Terminal` instance with 5000-line scrollback and WebGL renderer consumes ~34MB when the buffer is full. With 5 concurrent terminals per project and 3 projects visited in a session, that is 15 Terminal instances = ~510MB just for terminal buffers. The WebGL addon allocates GPU textures per instance. The current code creates a new Terminal on every mount (the `useEffect` in `useTerminal.ts` runs on `[containerRef, cwd, initialCommand]` changes).
 
 **Why it happens:**
-The current `generate_context_file_content` in `onboarding.rs` concatenates everything: all phases, all tasks with statuses, descriptions, attention items, AND the output contract. This was fine for v1.1's single-purpose "plan this project" flow, but v1.2 adds multiple modes (planning vs execution) and multiple tiers (quick/medium/GSD). Each mode needs different context, but the temptation is to "just add more sections" to the same file. The output contract section alone is ~250 tokens of boilerplate repeated every time.
+xterm.js issue #1518 documents that `Terminal.dispose()` does not fully release DOM event listeners -- document-level listeners retain references to the Terminal object, preventing GC. The WebGL addon compounds this by retaining GPU texture references. Developers assume `dispose()` is a complete cleanup, but it is not.
 
 **How to avoid:**
-- Cap the context file at a token budget (target: 2,000 tokens for quick tier, 4,000 for medium, 8,000 for GSD). Calculate approximate tokens as `content.len() / 4`.
-- Make context generation mode-aware: planning mode includes project description + current state summary + output contract. Execution mode includes only current phase detail + next 3 incomplete tasks + blockers. Never dump the full task list.
-- For completed phases, collapse to a single summary line ("Phase 1: Setup [3/3 complete]") instead of listing every completed task.
-- Move the output contract to a separate file (.element/contracts/plan-output.md) and reference it with "See .element/contracts/plan-output.md for the output format" -- Claude Code can read it on demand.
-- Add a hard ceiling check: if generated content exceeds the budget, truncate older/completed phase details first, then task descriptions, then task titles for completed items.
+- Cap maximum concurrent Terminal instances (recommend: 5 total, not per-project). Use a tab UI that shows terminal metadata but only mounts the active Terminal's DOM element.
+- For inactive terminals: keep the PTY alive (so processes continue) but dispose the xterm.js Terminal instance and store the scrollback buffer as a plain string array. Re-create the Terminal and replay the buffer when the tab becomes active.
+- Reduce scrollback from 5000 to 2000 for non-focused terminals (or 1000 for background terminals).
+- After `Terminal.dispose()`, explicitly null out all addon references and remove any document-level event listeners the WebGL addon may have attached.
+- Use the canvas renderer instead of WebGL for background terminals -- WebGL per-instance GPU cost is not justified for terminals the user is not looking at.
 
 **Warning signs:**
-- Context file exceeds 5KB for a medium-complexity project
-- AI responses start ignoring instructions at the bottom of the context file (the "lost in the middle" effect)
-- AI asks questions that are answered in the context file (it didn't process the whole thing)
-- Token costs spike for routine "what's next?" queries
+- Electron/Tauri process memory exceeds 1GB after extended use
+- WebGL context lost errors in console (GPU texture exhaustion)
+- UI becomes sluggish when switching between terminal tabs
 
 **Phase to address:**
-Phase 1 (context file generation). Token budget enforcement should be a core constraint from day one, not bolted on after bloat appears.
+Multi-terminal sessions phase. The terminal manager architecture must include instance pooling from day one.
 
 ---
 
-### Pitfall 3: ROADMAP.md Parse Fragility
+### Pitfall 3: Runaway AI Background Execution Costs
 
 **What goes wrong:**
-The sync system parses ROADMAP.md (or other .planning/ markdown files) expecting a specific structure. GSD updates the file with slightly different formatting -- an extra blank line, a different heading level, a task with special characters in the title, or a markdown table instead of a list. The parser breaks silently, either skipping phases/tasks or creating duplicates. The database diverges from the file. User edits the file manually and the parser fails entirely.
+The execution pipeline MVP will spawn background AI processes (likely Claude Code or similar) that auto-execute phases. Without cost controls, a single stuck loop -- e.g., an AI agent retrying a failing build command indefinitely -- can consume hundreds of dollars in API tokens in hours. The user is not watching because it is a background process.
 
 **Why it happens:**
-Markdown is not a structured data format. There is no schema. GSD's output format can vary between versions, and users can (and will) hand-edit .planning/ files. Regex-based or line-by-line markdown parsers are inherently brittle. The current `parse_plan_output_file` uses JSON (serde_json) which is reliable, but .planning/ files are markdown -- a fundamentally different parsing challenge.
+AI agents have no inherent concept of "this is taking too long" or "I have spent too much." The orchestrator hands off work and does not enforce budgets. Token consumption is invisible until the bill arrives. The 2026 industry consensus is that this is the #1 operational risk with agentic AI.
 
 **How to avoid:**
-- Parse with a proper markdown AST library (pulldown-cmark for Rust). Walk the AST looking for heading nodes and list items rather than string matching. This handles formatting variations, extra whitespace, and nested structures.
-- Define a minimal expected structure with generous tolerance: "H2 headings are phases, checkbox list items under them are tasks, anything else is ignored." Do not fail on unexpected content -- skip it and log a warning.
-- Include a machine-readable frontmatter block (YAML between `---` fences) in every .planning/ file that the app manages. Use frontmatter for IDs and metadata, markdown body for human-readable content. When syncing, prefer frontmatter data over parsed markdown.
-- Never delete content from a .planning/ file that the parser didn't understand. Preserve unknown sections verbatim on write-back.
-- Add a validation step that compares parsed result against current database state and shows the user a diff before applying, rather than auto-applying blindly.
+- **Token budget per execution**: Set a max token count per phase execution (e.g., 100K input + 50K output). The Rust orchestrator must track cumulative usage and kill the process when exceeded.
+- **Wall-clock timeout**: No single AI execution should run longer than 30 minutes without human check-in. Use `tokio::time::timeout` on the process spawn.
+- **Iteration cap**: If the AI agent has attempted the same command more than 3 times with failures, abort and notify the user.
+- **Cost estimation before launch**: Show the user an estimated token cost range before starting auto-execution. Require confirmation for executions estimated above a threshold (e.g., $5).
+- **Kill switch**: A prominent "Stop All AI" button in the UI that sends SIGKILL to all AI processes. This must work even if the UI is partially frozen.
+- **Dry-run mode**: The first implementation should be "suggest and wait for approval" rather than fully autonomous execution.
 
 **Warning signs:**
-- Task counts in the database don't match what's visible in ROADMAP.md
-- Phase names have leading/trailing whitespace or duplicate entries
-- Manual edits to .planning/ files are "lost" after the app processes them
-- Parse errors in logs after GSD runs (different GSD version, different formatting)
+- AI process running for more than 10 minutes without producing a commit or output
+- Repeated error messages in AI output logs
+- Token counter climbing rapidly (if tracked)
 
 **Phase to address:**
-Phase 1 (sync architecture) for the parser, Phase 2 (planning tiers) for GSD-specific format handling.
+Execution pipeline MVP phase. Cost controls are not a "nice to have" -- they are a launch blocker. Ship the dry-run/approval mode first, autonomous execution second.
 
 ---
 
-### Pitfall 4: GSD CLI Not Installed or Wrong Version
+### Pitfall 4: "Open AI" Navigation Bug Masks Deeper State Management Issue
 
 **What goes wrong:**
-The app invokes `claude --dangerously-skip-permissions` (or a configured CLI command) and it either: (a) isn't installed, (b) is installed but the `--dangerously-skip-permissions` flag is broken in the user's version (reported broken in versions after v2.1.77), (c) requires authentication the user hasn't set up, or (d) the GSD framework (`/gsd:new-project` etc.) isn't configured in the user's Claude Code installation. The terminal shows an error, the user sees a broken experience, and the app has no fallback.
+The known bug -- "Open AI navigates to home screen instead of showing toast" -- is intermittent and undiagnosed. Based on code analysis, the likely cause is a state race in `launchTerminalCommand()`. This function calls `set()` with `drawerOpen: true` and `activeDrawerTab: "terminal"`, but if another effect (e.g., `restoreProjectState` or a sidebar click handler) runs in the same React render cycle, the state update can be overwritten. The `terminalSessionKey` increment triggers a terminal remount, and during remount, if the project context changes (sidebar click registered first), the whole view resets to the home/today screen.
 
 **Why it happens:**
-The current code in `OpenAiButton.tsx` hardcodes `claude --dangerously-skip-permissions` with no validation. There is no pre-flight check. The app assumes the CLI exists at a known path, that the flag works, and that GSD commands are available. Claude Code's `--dangerously-skip-permissions` flag has had breaking changes across versions. GSD is a separate framework installed into the user's Claude Code config, not bundled with Element.
+Zustand's `set()` is synchronous but React batches renders. Multiple `set()` calls in rapid succession during the same event loop tick get batched, and the last write wins for conflicting keys. The workspace store mixes global state (drawerOpen, activeDrawerTab) with project-scoped state (projectStates), creating implicit coupling.
 
 **How to avoid:**
-- Add a pre-flight validation command before launching: run `which claude` (or the configured CLI path) and parse the output. If not found, show a helpful error with install instructions instead of a terminal error.
-- Check the CLI version: run `claude --version` and parse the semver. Warn if the version is known-incompatible.
-- Degrade gracefully across tiers: if GSD is unavailable, the GSD tier should be disabled (greyed out with tooltip "Requires GSD framework"). Quick and Medium tiers should work with just Claude Code (no GSD dependency). Only the full GSD tier needs the GSD framework.
-- Store the CLI tool path in `app_settings` (the table already exists from migration 009) and expose it in Settings UI. Default to "claude" but let users override with full path.
-- Never assume `--dangerously-skip-permissions` is the only way. Support `--permission-mode bypassPermissions` as an alternative flag. Better yet, let the user configure the full flag set.
-- Handle the case where the terminal command starts but the CLI prompts for authentication (API key). Detect "authentication required" or "API key" in terminal output and surface guidance.
+- Reproduce first: Add `console.log` to `launchTerminalCommand`, `restoreProjectState`, and the sidebar click handler. Log the call stack and current state. The intermittent nature suggests a click event bubbling issue or a useEffect dependency triggering a project switch.
+- Separate terminal launch state from navigation state. The terminal command should not also control drawer visibility -- those should be two sequential operations with the navigation completing first.
+- Consider using Zustand's `subscribeWithSelector` to trace which state changes trigger re-renders during "Open AI" flow.
+- Add a behavioral test: click "Open AI" while on ProjectDetail, assert that ProjectDetail remains visible and terminal tab opens in drawer.
 
 **Warning signs:**
-- "command not found" errors in the terminal after clicking "Open AI"
-- Terminal hangs with no output (CLI waiting for interactive auth)
-- GSD tier produces planning output but it doesn't match the expected .planning/ structure
-- Users report "it works on my machine but not on my other machine"
+- Bug frequency increases after adding multi-terminal (more state changes per terminal operation)
+- Users reporting "lost my place" after AI actions
 
 **Phase to address:**
-Phase 1 (configurable CLI tool in Settings). Pre-flight checks should gate all AI features.
+Tech debt cleanup phase -- this MUST be fixed before multi-terminal work begins. Multi-terminal will add more state transitions to the same store, amplifying the race condition.
 
 ---
 
-### Pitfall 5: Planning Tier Decision Tree Becomes Unmaintainable
+### Pitfall 5: Tech Debt Cleanup Causes Regression Cascade
 
 **What goes wrong:**
-The tier selection logic (Quick/Medium/GSD) starts simple but accumulates special cases: "if project has existing phases but no tasks, treat as Medium," "if description is >500 chars, suggest GSD," "if user previously used GSD, default to GSD." The decision tree becomes a nested if/else chain that no one can reason about. Adding a new tier or modifying behavior requires touching 5+ code paths. The UI surface for selecting tiers diverges from the actual behavior.
+The 3 TS errors in ThemeSidebar.tsx and UncategorizedSection.tsx have been present since Phase 6. They are "runtime unaffected" because TypeScript errors do not block Vite builds. Fixing them may require changing prop types or component interfaces, which can ripple through the sidebar component tree. Deleting orphaned files (ScopeInputForm.tsx, OnboardingWaitingCard.tsx) seems safe but may break dynamic imports, lazy routes, or barrel exports that are not caught by static analysis.
 
 **Why it happens:**
-Tier selection is a classification problem being implemented as imperative branching. Each tier affects: (1) the context file content, (2) the terminal command/flags, (3) the output contract (JSON plan vs .planning/ folder), (4) the post-processing pipeline (parse JSON vs parse markdown vs watch folder). Without a clean abstraction, each of these 4 concerns implements its own tier check independently.
+TS errors that "don't affect runtime" get deprioritized, but they mask real type mismatches. The longer they persist, the more code is written assuming the broken types are correct. Deleting "orphaned" files based on import analysis misses: dynamic `import()` calls, string-based component registries, test files that import the component, and storybook stories.
 
 **How to avoid:**
-- Model tiers as a discriminated union / enum with exhaustive matching. In Rust: `enum PlanningTier { Quick, Medium, Gsd }` with methods for `context_template()`, `command_args()`, `output_contract()`, `post_processor()`. In TypeScript: `type PlanningTier = 'quick' | 'medium' | 'gsd'` with a tier config object.
-- Use a strategy pattern: each tier is a struct implementing a `PlanningStrategy` trait with methods for each concern. Adding a new tier means adding one struct, not modifying existing code.
-- Keep tier detection (the "which tier?" decision) separate from tier execution (the "do the tier" behavior). Detection is a pure function of project state. Execution is the strategy.
-- Limit auto-detection to 3 clear signals: (1) has existing .planning/ folder with ROADMAP.md = suggest GSD, (2) has phases/tasks in database = suggest execution mode, (3) empty project = ask user. Don't over-engineer detection heuristics.
+- Fix TS errors one file at a time, with a passing test suite between each fix. Do not batch all 3 into one commit.
+- Before deleting any file: `grep -r "ScopeInputForm" --include="*.ts" --include="*.tsx" --include="*.test.*"` across the entire project, including test files and config files.
+- Run the full app manually after each deletion -- dynamic imports will not be caught by `tsc`.
+- Enable `strict: true` in tsconfig as part of this phase (if not already enabled) to prevent future drift. If too many errors, enable strict checks incrementally (`strictNullChecks`, then `noImplicitAny`, etc.).
+- The navigation bug fix should happen in this phase too, since it is existing tech debt that will compound with new features.
 
 **Warning signs:**
-- The word "tier" or "mode" appears in more than 3 files outside the planning module
-- Adding a new tier requires changes to >3 files
-- Tier behavior is inconsistent between context generation and terminal command construction
-- Users report "I selected Quick but it asked GSD-level questions"
+- "Fixed TS errors" PR that touches 15+ files
+- Sidebar rendering breaks after "cleanup" merge
+- Test suite passes but app crashes on a specific route
 
 **Phase to address:**
-Phase 2 (planning tier implementation). Define the abstraction before implementing any tier.
+Tech debt cleanup phase. This must be the FIRST phase in the milestone -- cleaning up before adding new features prevents compounding.
 
 ---
 
-### Pitfall 6: File Watcher Resource Exhaustion on Large Project Directories
+### Pitfall 6: Terminal Not Scoped Per-Project Creates Session Bleed
 
 **What goes wrong:**
-The current file watcher watches `.element/` for `plan-output.json`. The new sync feature needs to watch `.planning/` for ROADMAP.md and other files. If implemented naively with `RecursiveMode::Recursive` on a large project root (to catch both `.element/` and `.planning/`), the watcher consumes a file descriptor for every file in the tree. A typical Node.js project with node_modules has 100K+ files. macOS has a default ulimit of 256 open files. The watcher silently stops working or the app crashes.
+Currently, terminal state is global in `useWorkspaceStore` -- `terminalSessionKey` and `terminalInitialCommand` are not keyed by project. When a user switches from Project A to Project B, the terminal still shows Project A's session (or kills it and starts fresh, losing context). With multi-terminal, this becomes worse: which project's terminals should be visible? If all terminals are shown globally, the user drowns in tabs. If only the current project's terminals show, switching projects feels like terminals disappear.
 
 **Why it happens:**
-The existing `start_plan_watcher` already uses `NonRecursive` on `.element/` which is correct. But extending to `.planning/` requires watching a second directory. The temptation is to watch the project root recursively "to catch everything." On Linux, inotify has a per-user watch limit (default 8192). On macOS, FSEvents is more efficient but `notify` crate's default backend may use kqueue which has the same fd problem.
+The original terminal was a single global instance. The `launchTerminalCommand` function in the workspace store has no concept of "which project owns this terminal." The per-project workspace state (`projectStates`) stores `drawerTab` but not terminal sessions.
 
 **How to avoid:**
-- Watch specific directories, never the project root. Create separate watchers for `.element/` and `.planning/` with `NonRecursive` mode.
-- If .planning/ has subdirectories that need watching (e.g., .planning/phases/), use one watcher per known subdirectory, not recursive mode on .planning/.
-- On macOS, explicitly use the FSEvents backend via `notify::RecommendedWatcher` (which already does this) but verify it handles `NonRecursive` correctly -- FSEvents is inherently recursive and `notify` simulates non-recursive by filtering events.
-- Store all watcher instances in a single managed state (extend `PlanWatcherState` or create a new `SyncWatcherState`) so they can be cleaned up on project switch or app shutdown.
-- When the user switches projects, stop all watchers for the old project before starting watchers for the new one. Never accumulate watchers across project switches.
+- Design the terminal registry as `Map<ProjectId, TerminalSession[]>` from the start. Each project owns its terminals.
+- When switching projects: hide (not destroy) the previous project's terminals, show the new project's terminals. PTY processes continue in background.
+- Add a visual indicator showing how many terminals are running across all projects (e.g., a badge on the terminal tab).
+- Limit total terminals across all projects (recommend: 8 max) to prevent resource exhaustion.
+- The "Open AI" button should create a terminal scoped to its project, not a global terminal.
 
 **Warning signs:**
-- "Too many open files" errors after switching projects multiple times
-- File changes in .planning/ not detected after the app has been running for a while
-- High file descriptor count visible in `lsof -p <pid> | wc -l`
-- Watcher works on small test projects but fails on real codebases
+- User runs "Open AI" on Project B and sees Project A's terminal output
+- `cd` to wrong directory because CWD belongs to another project's terminal
+- Confusion about which terminal belongs to which project
 
 **Phase to address:**
-Phase 1 (sync architecture). Watcher management must be designed before adding new watched paths.
+Multi-terminal sessions phase. The per-project scoping must be designed before any multi-terminal UI work begins.
 
 ---
 
-### Pitfall 7: Database Lock Contention During Sync Operations
+### Pitfall 7: Notification Spam from Background AI Processes
 
 **What goes wrong:**
-The app uses `Arc<Mutex<Database>>` for SQLite access. The sync operation (parsing .planning/ files and updating the database) acquires the mutex. While it holds the lock, a user interaction (clicking a task checkbox, dragging a phase) also needs the mutex. The UI freezes for the duration of the sync parse + write. For large ROADMAP.md files with many phases/tasks, this can be 100-500ms -- noticeable and frustrating.
+The execution pipeline will generate many events: "Phase started," "Step completed," "Error encountered," "Human input needed," "Phase completed." If each event produces a toast notification, the user gets overwhelmed (notification fatigue). If only errors are shown, the user has no visibility into progress. If system-level notifications (macOS Notification Center) are used for everything, the user disables them entirely and misses the critical "human input needed" alert.
 
 **Why it happens:**
-SQLite is single-writer. The `Arc<Mutex<>>` pattern serializes all database access. This was acceptable when writes were small (single task update, single phase create) but sync operations are batch writes (potentially dozens of inserts/updates in a transaction). The current `batch_create_plan` already does this -- it holds the mutex for the entire batch insert loop. Sync will be even larger because it needs to diff existing data, delete removed items, update changed items, and insert new items.
+Developers implement notifications feature-by-feature without a holistic notification strategy. Each feature author thinks "my notification is important," resulting in death by a thousand toasts.
 
 **How to avoid:**
-- Move sync operations to `spawn_blocking` with their own mutex acquisition, but keep the critical section minimal: read current state, release lock, compute diff in-memory, re-acquire lock, apply only the changes.
-- Use SQLite WAL (Write-Ahead Logging) mode if not already enabled -- it allows concurrent reads while a write is in progress. Check if the connection is opened with `PRAGMA journal_mode=WAL`.
-- Break batch sync into smaller transactions: one transaction per phase rather than one for the entire roadmap. This reduces lock hold time per acquisition.
-- Add a sync debounce at the application level (not just the file watcher level): if 3 .planning/ files change within 2 seconds, batch them into one sync operation rather than 3 separate lock acquisitions.
-- Expose sync status to the UI so users see "Syncing..." rather than unexplained lag.
+- Define a notification priority taxonomy BEFORE implementing any notifications:
+  - **Critical** (system notification + persistent banner): "Human input required," "Execution failed after retries," "Cost limit reached"
+  - **Informational** (toast, auto-dismiss 5s): "Phase completed successfully," "AI started execution"
+  - **Silent** (log only, visible in history panel): "Step completed," "File written," "Command executed"
+- Implement notification coalescing: if 5 steps complete within 10 seconds, show one toast "5 steps completed" not 5 toasts.
+- Never use system notifications for success states -- only for states that require user action.
+- Add a notification center/history panel where users can review all past notifications at their own pace.
+- Respect focus state: if the user is actively viewing the project's terminal, suppress toasts for that project's events (they can already see the output).
 
 **Warning signs:**
-- UI interactions (checkbox, drag) feel sluggish after .planning/ files change
-- "database is locked" errors in Rust logs
-- Sync operations appear as jank in the React profiler
-- Tasks briefly show stale state after a sync completes
+- Multiple toasts stacking and covering UI content
+- Users reporting "I stopped reading the notifications"
+- Critical notifications (human input needed) being ignored because they look like success toasts
 
 **Phase to address:**
-Phase 1 (sync architecture). Lock strategy must be decided before implementing sync operations.
+Execution pipeline MVP phase. The notification taxonomy must be defined in the phase plan before any implementation begins.
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Hardcoding tier behavior in if/else chains | Fast to implement first tier | Every new tier or mode requires touching all branches; risk of inconsistent behavior | Never -- use strategy pattern from the start |
-| Parsing markdown with regex instead of AST | No new dependency, quick to write | Breaks on formatting variations, impossible to round-trip (preserve unknown content on write-back) | Prototype only, must replace before sync goes live |
-| Writing full database state to .planning/ on every change | Simple implementation, always consistent | Destroys external edits, creates large diffs in git, wastes I/O | Only during initial .planning/ folder creation, not on incremental updates |
-| Ignoring watcher events for 1s after writing | Prevents sync loop quickly | Misses legitimate external edits that happen within the window; timing varies by OS | Never -- use content-hash guard instead |
-| Skipping pre-flight CLI validation | Faster to launch AI | Broken experience on machines without Claude CLI; support burden | MVP only, must add before any public release |
-| Using same context file for all tiers | One code path, simpler | Quick tier gets bloated context, GSD tier gets insufficient context, token waste across the board | Never -- mode-aware context is a core requirement |
+| Global terminal state instead of per-project | Simpler store, fewer state transitions | Session bleed between projects, impossible to manage multi-terminal | Never (the current state is tech debt, fix before extending) |
+| setTimeout(500ms) for PTY shell readiness | Works on fast machines | Fails on slow machines, Windows, or under load. Command may be sent before shell prompt renders | Only in prototype. Replace with shell prompt detection (watch for `$` or `%` in PTY output) |
+| Hardcoded `/bin/zsh` shell path | Works on macOS | Breaks on Windows (`cmd.exe`/`pwsh`), breaks on Linux with bash default | Never for cross-platform. Use `$SHELL` env var with fallback chain |
+| Killing terminal on "Open AI" (session key increment) | Clean slate for AI | Loses user's terminal history and running processes | Acceptable only if user explicitly chooses "new terminal" vs "reuse existing" |
+| Storing scrollback in xterm.js only | No extra code needed | Cannot persist terminal history across app restarts, cannot search across terminals | Acceptable for MVP, but design the Terminal interface to allow adding persistence later |
 
 ## Integration Gotchas
 
+Common mistakes when connecting components in this system.
+
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Claude Code CLI | Assuming `--dangerously-skip-permissions` works on all versions | Check version, support alternative flags (`--permission-mode bypassPermissions`), handle auth failures |
-| GSD Framework | Assuming GSD commands (`/gsd:new-project`) are always available | GSD is a user-installed Claude Code extension; detect its presence, degrade to non-GSD tiers if absent |
-| notify crate (file watcher) | Using `RecursiveMode::Recursive` on project directories | Use `NonRecursive` on specific subdirectories (.element/, .planning/) to avoid fd exhaustion |
-| SQLite via Arc<Mutex<>> | Holding mutex across entire sync operation | Minimize critical section: read state, release, compute diff, re-acquire, apply changes |
-| .planning/ markdown files | Treating markdown as a reliable data format | Use YAML frontmatter for machine-readable data, markdown body for human-readable content; parse with AST not regex |
-| Terminal PTY (existing) | Launching new CLI session without killing previous one | The existing `launchTerminalCommand` already kills/respawns, but verify this works when switching between planning and execution modes rapidly |
+| PTY + React lifecycle | Creating PTY in useEffect without proper cleanup ordering (dispose terminal before killing PTY) | Kill PTY first (stops data flow), then dispose Terminal (cleans up DOM). Current code does it in wrong order: `pty.kill()` then `term.dispose()` -- actually correct, but add a guard to stop writing to disposed terminal |
+| Zustand persist + session state | Persisting terminal session keys or project states that reference runtime resources (PTY handles) | Use `partialize` to exclude runtime state (already done correctly in current code -- maintain this discipline) |
+| xterm.js WebGL + multiple instances | Loading WebGL addon on every terminal instance | Share a single WebGL context where possible, or use canvas renderer for background terminals. WebGL has a per-browser limit (~16 contexts) |
+| Background AI process + app close | Spawning a background process and relying on React cleanup to kill it | Register all background processes with the Rust backend. Use `tauri::RunEvent::ExitRequested` to kill them on app shutdown, not frontend cleanup |
+| Toast notifications (sonner) + async operations | Showing toast for every async result | Debounce/coalesce toasts. Use `toast.promise()` for operations with loading/success/error states |
+| File watcher + terminal CWD | File watcher triggers re-render while terminal is mid-operation | Debounce file watcher events. Do not re-render terminal-containing components on file changes |
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Full context regeneration on every state change | Disk writes on every checkbox click, brief UI stall | Debounce context generation (500ms); only regenerate when launching AI, not on every state change | Immediately annoying with >10 tasks |
-| Parsing entire ROADMAP.md on every file event | Watcher fires, full parse, full diff, full DB write | Cache last-known file hash; skip parse if hash unchanged | Noticeable with ROADMAP.md >50KB |
-| Holding database lock during markdown parsing | UI freezes during sync | Parse markdown outside the lock, only hold lock for DB writes | Noticeable with >20 phases/tasks |
-| Accumulating file watchers across project switches | fd exhaustion, stale event handlers | Clean up watchers on project switch; single `SyncWatcherState` managing all watchers | After switching projects 5-10 times |
-| Context file grows unboundedly | AI quality degrades, token costs increase | Enforce token budget per tier, collapse completed phases | Projects with >30 tasks |
+| One xterm.js Terminal per tab (always mounted) | Memory grows linearly with terminal count | Virtualize: only mount active terminal, serialize inactive scrollback | At 5+ terminals |
+| ResizeObserver per terminal | Multiple resize callbacks per frame during drawer resize | Use a single ResizeObserver on the container, distribute resize events to active terminal only | At 8+ terminals with frequent resize |
+| Unbounded PTY output buffering | Memory spike when AI produces large output (e.g., `cat` a large file) | xterm.js has 50MB buffer hardcap, but PTY side can buffer too. Implement flow control per xterm.js docs | When AI outputs >10MB in one command |
+| Polling for AI process status | CPU usage from setInterval checking process state | Use event-driven: PTY onData + onExit for terminal processes, Tauri events for background orchestrator status | At 3+ concurrent AI processes |
+| Storing all execution history in memory | Zustand store grows with every execution record | Page execution history from SQLite. Keep only last 10 records in memory, load more on scroll | After 50+ executions in a session |
 
 ## Security Mistakes
 
+Domain-specific security issues for a desktop AI orchestration app.
+
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Storing CLI tool path from Settings without sanitization | Command injection via crafted settings value | Validate the settings value is a real file path (exists, is executable), never interpolate into shell strings |
-| Writing API keys or tokens to context.md | Credentials exposed in .element/ directory, possibly committed to git | Never include credentials in context files; context generation should not access keyring |
-| Passing user-edited markdown content directly to AI without escaping | Prompt injection via crafted ROADMAP.md content | Not a real risk for local-first single-user app, but note that AI instructions in context files should be clearly delimited from user content |
-| .element/ and .planning/ directories not in .gitignore | plan-output.json, context.md, and other transient files committed to version control | Auto-add `.element/` to .gitignore on first context generation; .planning/ IS intentionally tracked in git |
+| AI process inherits full user shell environment | AI agent has access to all env vars including secrets, SSH keys, cloud credentials | Spawn AI processes with a sanitized environment. Whitelist only necessary env vars (PATH, HOME, SHELL) |
+| No confirmation before AI executes destructive commands | AI could `rm -rf`, `git push --force`, or deploy to production | Implement a command allowlist/blocklist in the orchestrator. Flag destructive patterns for human approval |
+| Terminal scrollback contains secrets | API keys, passwords visible in terminal history that may be persisted | Do not persist terminal scrollback to disk by default. If persisted, encrypt at rest |
+| Background execution with `--dangerously-skip-permissions` | Claude Code runs without safety guardrails | This is a known decision (see KEY DECISIONS in PROJECT.md). Document the risk clearly to users. Add a settings toggle to disable skip-permissions |
+| Cost data not shown to user | User unaware of API spend until bill arrives | Show cumulative token usage and estimated cost in the execution panel |
 
 ## UX Pitfalls
 
+Common user experience mistakes in this domain.
+
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Auto-selecting planning tier without explanation | User doesn't understand why AI is asking detailed questions (GSD) or generating a flat list (Quick) | Show tier selection with one-line descriptions; remember last choice per project |
-| Sync conflicts shown as technical errors | "Parse error on line 47 of ROADMAP.md" means nothing to the user | Show human-readable conflict: "ROADMAP.md was edited externally. 2 phases changed. Review changes?" |
-| Context file visible in file explorer | User sees .element/context.md and edits it, but app overwrites on next "Open AI" click | Either hide .element/ from the file tree (add to hardcoded excludes) or show a "generated file" badge |
-| No feedback during sync operations | User changes a task status, wonders if .planning/ file updated | Show subtle sync indicator (checkmark/spinner) near the project name |
-| Planning tier changes mid-project with no migration | User starts with Quick tier, outgrows it, switches to GSD -- existing flat todo list doesn't map to GSD phases | Offer a "migration" path: "Convert your tasks into phases?" rather than starting from scratch |
-| "What's next?" mode gives stale advice | Context file was generated 2 hours ago, user completed 3 tasks since | Always regenerate context fresh when entering execution mode; never serve cached context |
+| Auto-switching to terminal tab on every AI event | Disrupts user who is reading code or editing tasks | Only auto-switch on explicit "Open AI" click. Background events go to notification center |
+| Terminal tabs with no identifying labels | "Terminal 1, Terminal 2" -- user cannot tell which is which | Label with project name + running command: "element: claude ...", "api: npm test" |
+| Notification toast covers the content user is interacting with | User must wait for toast to dismiss or manually close it | Position toasts in bottom-right (away from sidebar and center content). Never cover interactive elements |
+| "Stop AI" button that takes 10+ seconds to actually stop | User panic-clicks, spawns multiple kill signals, corrupts state | Kill signal should be immediate (SIGKILL after 2s SIGTERM). Show "Stopping..." state. Disable the button after first click |
+| No way to see what AI did while user was away | User returns to completed execution with no summary | Execution history with diff summary: "Modified 3 files, ran 12 commands, completed in 4m 23s" |
+| Modal confirmation for every AI action | Approval fatigue -- user starts clicking "Yes" without reading | Batch approvals: show a plan of N steps, approve all or edit. Not one-by-one |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Bidirectional sync:** Often missing write-guard to prevent infinite loop -- verify by editing ROADMAP.md externally while app is running and checking for event cascade in logs
-- [ ] **Context file:** Often missing token budget enforcement -- verify by creating a project with 50+ tasks and checking context.md size
-- [ ] **CLI pre-flight:** Often missing version check -- verify by setting CLI path to a non-existent binary and confirming graceful error
-- [ ] **Tier selection:** Often missing persistence -- verify that switching away from a project and back remembers the selected tier
-- [ ] **File watcher cleanup:** Often missing on project switch -- verify by switching projects 10 times and checking open file descriptors
-- [ ] **Sync conflict resolution:** Often missing user-facing UI -- verify by editing ROADMAP.md in an external editor while also editing phases in the app
-- [ ] **Planning-to-execution mode transition:** Often missing context regeneration -- verify that completing a task and immediately clicking "Open AI" shows updated progress
-- [ ] **GSD tier fallback:** Often missing detection of GSD availability -- verify by removing GSD framework and confirming GSD tier is disabled
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Multi-terminal:** Works with 2 tabs -- verify with 8 concurrent terminals, switching rapidly between projects. Check memory after 30 minutes.
+- [ ] **PTY cleanup:** Terminal tab closes cleanly -- verify no orphan processes with `ps aux | grep -v grep | grep zsh | wc -l` before and after closing 5 terminals.
+- [ ] **Background execution:** AI completes a phase -- verify it stops consuming tokens after completion (check API dashboard, not just UI).
+- [ ] **Notifications:** Toast shows for errors -- verify toast does NOT show for every step completion when 10 steps finish in 5 seconds.
+- [ ] **Tech debt TS fixes:** TypeScript compiles with zero errors -- verify the APP still renders correctly on every route (TS correctness != runtime correctness).
+- [ ] **Terminal per-project scoping:** Switching projects shows correct terminals -- verify by running `pwd` in each terminal after switching back and forth 3 times.
+- [ ] **Kill switch:** "Stop AI" button works -- verify by running a long AI task and clicking stop mid-execution. Check that no orphan processes remain AND no partial file writes corrupt the project.
+- [ ] **Notification coalescing:** Single notification for batch events -- verify by triggering 10 rapid events and counting toast appearances (should be 1-2, not 10).
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Sync infinite loop | LOW | Kill app, delete .element/context.md, restart. Data in SQLite is the source of truth. |
-| Context file bloat | LOW | Regenerate context file with token budget. No data loss possible -- context is always generated from DB. |
-| ROADMAP.md parse failure | MEDIUM | Fall back to database state as truth. Show user a "Sync failed" notification with option to re-export from database to .planning/. Manual markdown fix may be needed. |
-| GSD CLI not installed | LOW | Show install instructions. Quick/Medium tiers work without GSD. No data loss. |
-| Database lock contention | LOW | Restart app. SQLite WAL recovery is automatic. No manual intervention needed. |
-| File watcher resource exhaustion | LOW | Restart app. Watchers are re-established on project load. Fix the watcher scope to prevent recurrence. |
-| Tier decision tree spaghetti | HIGH | Requires refactor to strategy pattern. If caught late (after 3+ tiers implemented), expect 2-3 day rewrite. |
-| Planning data divergence (DB vs .planning/) | HIGH | Need to decide which source is truth (DB or file), export from truth to the other, and manually verify. Prevent with validation diffs before auto-applying sync. |
+| PTY zombie processes | LOW | Add a "Kill All Terminals" command that iterates the Rust-side registry and force-kills all. Can be triggered from app menu |
+| xterm.js memory bloat | MEDIUM | Implement terminal instance pooling retroactively. Requires refactoring useTerminal hook to support detach/reattach pattern |
+| Runaway AI cost | HIGH | Cannot recover spent tokens. Add monitoring dashboard and alerts. Set up provider-side spending limits (OpenAI/Anthropic dashboards) as a safety net |
+| Navigation bug amplified | MEDIUM | Revert to single-terminal while investigating. The workspace store state can be reset by clearing localStorage (`element-workspace` key) |
+| Tech debt regression | LOW | Git revert the offending commit. This is why one-file-at-a-time cleanup matters -- easy to identify which fix broke things |
+| Notification fatigue (users disabled all notifications) | MEDIUM | Cannot un-train user behavior. Must redesign notification taxonomy and re-earn user trust. Ship with conservative defaults from the start |
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Bidirectional sync infinite loop | Phase 1 (sync architecture) | Integration test: write to DB, verify file updates, verify no re-trigger of DB write |
-| Context file exceeds token budget | Phase 1 (context generation) | Unit test: generate context for 50-task project, assert size < budget |
-| ROADMAP.md parse fragility | Phase 1 (sync architecture) | Unit test: parse 5 variant ROADMAP.md files (different formatting, extra content, hand-edited) |
-| GSD CLI not installed | Phase 1 (settings + pre-flight) | Manual test: uninstall claude CLI, click "Open AI", verify graceful error |
-| Planning tier unmaintainability | Phase 2 (tier implementation) | Code review: tier logic should be in <3 files, new tier requires <3 file changes |
-| File watcher resource exhaustion | Phase 1 (sync architecture) | Manual test: switch projects 20 times, check fd count stays stable |
-| Database lock contention | Phase 1 (sync architecture) | Performance test: trigger sync while rapidly clicking checkboxes, verify no UI freeze >100ms |
-| Planning data divergence | Phase 1 (sync architecture) | Integration test: edit ROADMAP.md externally, verify app shows diff before applying |
+| Navigation bug / state race | Tech debt cleanup (FIRST phase) | Behavioral test: "Open AI" keeps user on ProjectDetail view |
+| TS error regression cascade | Tech debt cleanup (FIRST phase) | Zero TS errors + full manual smoke test of sidebar |
+| Orphaned file deletion safety | Tech debt cleanup (FIRST phase) | Full-text search for file references before deletion |
+| Terminal session bleed | Multi-terminal sessions | `pwd` test after project switch shows correct CWD |
+| PTY zombie processes | Multi-terminal sessions | Process count before/after closing all terminals matches |
+| xterm.js memory growth | Multi-terminal sessions | Memory stays under 500MB after 30 min with 5 terminals |
+| Runaway AI costs | Execution pipeline MVP | Token budget enforced, wall-clock timeout kills process |
+| Notification spam | Execution pipeline MVP | Coalescing verified: 10 rapid events = 1-2 toasts |
+| AI process orphans on app close | Execution pipeline MVP | Force-quit app during AI execution, verify no orphan processes |
+| Hardcoded `/bin/zsh` | Multi-terminal sessions | Terminal launches on Linux (bash) and Windows (pwsh) |
 
 ## Sources
 
-- [The Engineering Challenges of Bi-Directional Sync](https://www.stacksync.com/blog/the-engineering-challenges-of-bi-directional-sync-why-two-one-way-pipelines-fail) -- architectural patterns for avoiding sync loops
-- [Race Conditions in Two-Way Live Sync](https://www.linkedin.com/pulse/off-races-race-conditions-avoid-two-way-live-sync-paul-bemis) -- event-driven sync race condition taxonomy
-- [Conflict Resolution Strategies in Data Synchronization](https://mobterest.medium.com/conflict-resolution-strategies-in-data-synchronization-2a10be5b82bc) -- LWW, merge, and user intervention patterns
-- [Claude Code --dangerously-skip-permissions Safe Usage Guide](https://www.ksred.com/claude-code-dangerously-skip-permissions-when-to-use-it-and-when-you-absolutely-shouldnt/) -- flag behavior and version compatibility
-- [Claude Code Permissions Documentation](https://code.claude.com/docs/en/permissions) -- official permission modes
-- [BUG: --dangerously-skip-permissions broken after v2.1.77](https://github.com/anthropics/claude-code/issues/36168) -- known version compatibility issue
-- [Context Window Management Strategies](https://www.getmaxim.ai/articles/context-window-management-strategies-for-long-context-ai-agents-and-chatbots/) -- token budget and context rot patterns
-- [How to Build a File Watcher with Debouncing in Rust](https://oneuptime.com/blog/post/2026-01-25-file-watcher-debouncing-rust/view) -- notify crate patterns
-- Element codebase: `src-tauri/src/commands/onboarding_commands.rs` -- existing watcher + context generation patterns
-- Element codebase: `src-tauri/src/models/onboarding.rs` -- current context file generation and parse logic
+- [Tauri issue #5611: Closing window does not kill process on Windows](https://github.com/tauri-apps/tauri/issues/5611)
+- [Tauri issue #11686: Plugin-shell cannot fully terminate multi-process executables](https://github.com/tauri-apps/tauri/issues/11686)
+- [Tauri discussion #3273: Kill process on exit](https://github.com/tauri-apps/tauri/discussions/3273)
+- [xterm.js issue #1518: Memory leaks on Terminal.dispose](https://github.com/xtermjs/xterm.js/issues/1518)
+- [xterm.js issue #4175: Poor performance with wide containers](https://github.com/xtermjs/xterm.js/issues/4175)
+- [xterm.js flow control documentation](https://xtermjs.org/docs/guides/flowcontrol/)
+- [xterm.js issue #791: Buffer performance / ~34MB per full terminal](https://github.com/xtermjs/xterm.js/issues/791)
+- [Carbon Design System: Notification patterns](https://carbondesignsystem.com/patterns/notification-pattern/)
+- [NN/g: Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/)
+- [Microsoft: Toast notification UX guidance](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/toast-ux-guidance)
+- [LangChain: State of Agent Engineering (cost control patterns)](https://www.langchain.com/state-of-agent-engineering)
+- [tauri-plugin-pty GitHub (Tnze)](https://github.com/Tnze/tauri-plugin-pty)
+- Codebase analysis: `useTerminal.ts`, `useWorkspaceStore.ts`, `OpenAiButton.tsx`, `TerminalTab.tsx`
 
 ---
-*Pitfalls research for: Intelligent Planning features (v1.2) added to Element desktop app*
-*Researched: 2026-03-25*
+*Pitfalls research for: Element v1.3 Foundation & Execution milestone*
+*Researched: 2026-03-29*

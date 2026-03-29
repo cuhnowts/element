@@ -1,244 +1,252 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** Tiered AI planning, .planning/ folder sync, progress-aware execution mode for desktop project management
-**Researched:** 2026-03-25
-**Confidence:** HIGH (based on direct analysis of GSD codebase + industry context file patterns)
+**Domain:** Desktop project management with multi-terminal, background AI execution, and contextual UI
+**Researched:** 2026-03-29
+**Confidence:** MEDIUM-HIGH (multi-terminal and UI patterns well-established; background execution pipeline is emerging territory)
 
-## Table Stakes
+## Feature Landscape
 
-Features users expect. Missing = product feels incomplete.
+### Table Stakes (Users Expect These)
 
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|--------------|------------|--------------|-------|
-| Planning decision tree on first "Open AI" | Users click "Open AI" on empty project and get generic instructions. Must detect state and route appropriately. | Medium | Existing `generate_context_file`, `OpenAiButton` | Currently `is_empty` triggers a generic onboarding prompt. Needs tier detection. |
-| Quick tier (flat todo list) | Same-week work should not require multi-phase ceremony. Users will abandon if forced through complex flows for simple tasks. | Low | Context file generation | Equivalent to GSD's `/gsd:quick` — single plan, 1-3 tasks, no phases. |
-| Progress-aware context file | Once planned, "Open AI" must seed current state (what's done, what's next) not just static structure. Already partially built. | Low | Existing `generate_populated_project_context` | Current implementation already shows phases/tasks with status icons. Needs "what's next" framing. |
-| Structured output contract | AI must produce machine-parseable output (JSON) that Element can ingest. Already built for plan-output.json. | Low (exists) | `plan-output.json` schema, `start_plan_watcher` | Extend existing pattern for different tiers — same contract, different complexity levels. |
-| Configurable CLI tool | Hardcoded `claude --dangerously-skip-permissions` must become a setting. Users on Codex, Aider, or other CLI tools are locked out. | Low | Settings UI (exists), `launchTerminalCommand` | Known tech debt item. Simple string setting + UI. |
+Features users assume exist once they see a terminal or AI integration. Missing these = product feels broken.
 
-## Differentiators
+#### Multi-Terminal
 
-Features that set Element apart. Not expected, but valued.
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Multiple terminal tabs | VS Code, iTerm2, Warp all have tabs. Single terminal feels like a toy. | MEDIUM | Need terminal session registry in Zustand + per-tab PTY lifecycle. Current `useTerminal` hook couples one xterm instance to one PTY -- must refactor to session-based model. |
+| Per-project terminal isolation | Users switch projects constantly. Terminal must follow project CWD. | LOW | Already have CWD per project. Extend to per-project session list in workspace store. |
+| Terminal as default drawer tab | Terminal is the primary workspace tool. Burying it behind "Logs" is wrong. | LOW | Reorder tabs in DrawerHeader: Terminal first, Logs second, History third. Persist selection. |
+| Kill and respawn terminal | Process hangs, wrong state, need a fresh shell. Every terminal app has this. | LOW | Already have `pty.kill()` in cleanup. Add explicit kill button per tab + respawn action. |
+| Terminal tab naming | Must distinguish "AI session" from "manual shell" from "build watcher". | LOW | Auto-name from command (e.g. "claude", "zsh") + allow manual rename via double-click on tab. |
 
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Medium tier with focused questioning | AI asks 3-5 focused questions about gray areas before generating phases + tasks. Goes beyond dump-and-plan to collaborative thinking. | Medium | Context file with conditional instructions, questioning framework | GSD's questioning.md pattern is the blueprint. Must work via markdown instructions, not slash commands. |
-| GSD tier (full research + milestones) | For complex long-running projects, AI runs research, generates milestones, phases, and detailed task breakdowns. No other desktop PM tool offers this depth. | High | `.planning/` folder sync, ROADMAP.md parsing, multi-step workflow encoding | This is the killer differentiator. Must be achievable through context file instructions alone. |
-| `.planning/` folder sync | Bidirectional awareness — GSD (or any AI tool) writes ROADMAP.md/phases, Element reads them into its database. File watcher keeps them in sync as the AI executes. | High | File watcher (pattern exists for `.element/`), markdown parser, database schema extensions | MarkdownDB (JS library) validates the approach but custom parser is more appropriate for the specific ROADMAP.md format. |
-| "What's next?" execution mode | After planning, AI understands progress and guides execution: "Phase 2 task 3 is next, here's the context." Transforms from planning tool to execution companion. | Medium | Progress tracking (exists), context file adaptation | GSD's `next.md` workflow is the model — detect state, route to next action. Encode routing logic in markdown. |
-| Tool-agnostic context files | Context files work with Claude Code, Codex, Aider, Cursor, or any CLI tool that accepts a markdown file. Not locked to Claude's slash commands. | Medium | Context file architecture redesign | This is the portability challenge. GSD uses slash commands + Task() API. Element must encode the same logic in pure markdown. |
-| Smart context adaptation | Context file changes based on project state: empty project gets planning instructions, partially complete gets execution guidance, fully planned gets "what's next" mode. | Medium | State detection in Rust, template system | Three templates: onboarding, planning-in-progress, execution. Rust selects based on DB state. |
+#### UI Polish
 
-## Anti-Features
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Direct project click opens project | Click on item = navigate to it. This is the most basic UI convention. Current context-menu-on-click violates expectations. | LOW | Change sidebar click handler: single-click navigates, right-click opens context menu. |
+| Collapsible sidebar sections with +/- toggle | Every sidebar with sections has expand/collapse. Slider is non-standard. | LOW | Replace slider with simple chevron toggle. Persist collapsed state in Zustand. |
+| Simplified task detail view | Cluttered detail views cause cognitive overload. Show essentials, hide advanced behind expand. | MEDIUM | Progressive disclosure: title, status, notes visible. Due date, project link, metadata in collapsible "Details" section. |
+| Link Directory on same line as AI button | Related actions in the same row. Putting them on separate lines wastes space and breaks visual grouping. | LOW | Flexbox row with both buttons. Straightforward layout change. |
 
-Features to explicitly NOT build.
+#### Contextual AI Button
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Built-in AI chat UI for planning | Element orchestrates, external tools execute. Building a chat UI duplicates Claude Code/Cursor and is a maintenance pit. | Seed context files into the terminal. Let the AI CLI handle the conversation. |
-| GSD slash command integration | Slash commands are Claude Code-specific. Building direct integration couples to one tool. | Encode workflow logic in markdown instructions that any AI tool can follow. |
-| Automatic plan execution without user review | Users must see and approve plans before they become tasks. Autonomous execution erodes trust. | Always surface plans in AiPlanReview with inline editing and DnD before committing to database. |
-| Full ROADMAP.md bidirectional write-back | Element should not write back to .planning/ files. The AI tool owns those files; Element reads them. | Read-only sync from `.planning/` to database. Element's database is the UI source of truth; `.planning/` is the AI tool's source of truth. |
-| Multi-tool orchestration | Don't try to coordinate between Claude Code AND Cursor simultaneously. One tool per session. | Configurable CLI tool setting. User picks their tool. Context file format works with all of them. |
-| Real-time streaming of AI output into UI | Parsing streaming terminal output to show progress is fragile and tool-specific. | Use file-based contracts (plan-output.json, ROADMAP.md) as the communication channel. File watcher detects when AI has produced output. |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| State-aware button label | Users need to know what clicking will DO. "Open AI" is generic. Label should reflect current project state. | LOW | Compute label from project state: no directory = "Link Directory", no phases = "Plan Project", has phases + incomplete = "Check Progress", all complete = "Review Project". |
+| Loading/launching state feedback | NN/g button states research: users must see acknowledgment that their click registered. | LOW | Already have `isLaunching` state. Keep spinner + "Launching..." text. |
+| Disabled state with reason | Button grayed out with no explanation is hostile UX. | LOW | Tooltip on disabled button explaining why (e.g., "Link a directory first"). |
 
-## GSD Skill/Workflow Pattern Analysis
+### Differentiators (Competitive Advantage)
 
-This section analyzes how GSD structures its instruction system and how to adapt it for tool-agnostic context files.
+Features that set Element apart. These are where the product competes.
 
-### GSD Architecture (from direct codebase analysis)
+#### Multi-Terminal
 
-GSD organizes AI instructions across four layers:
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Named AI session terminals | When "Open AI" launches, it creates a named terminal tab ("AI: project-name") that's visually distinct from manual shells. User always knows which tab is the AI. | LOW | Tag terminal sessions with a `source` field ("ai" vs "manual"). Render AI tabs with Bot icon. |
+| Session persistence across project switches | Switch projects, come back, terminal is still there with scroll history intact. VS Code does this. Warp does this. Most Electron/Tauri apps don't. | HIGH | Requires keeping xterm instances alive in DOM (hidden) rather than destroying on tab switch. Or serialize scrollback buffer and restore. Hidden DOM approach is simpler but memory-heavier. |
+| Launch configurations (saved terminal presets) | Warp's killer feature: save a window/tab/pane layout and restore it. For Element, save "my dev environment" = 3 terminals (server, client, AI). | HIGH | Defer to v1.4+. Requires terminal session serialization, command replay, layout persistence. Nice differentiator but not MVP. |
 
-**Layer 1: Workflows (56 files in `workflows/`)**
-Each workflow is a complete multi-step process encoded in markdown with XML-like tags. Key patterns:
-- `<purpose>` tag — What this workflow does
-- `<process>` with numbered `<step>` elements — Sequential decision logic
-- `<required_reading>` — Files the AI must read before starting
-- `<success_criteria>` — Checkboxes defining completion
-- Conditional branching via `**If X:** do Y. **If not X:** do Z.`
+#### Background AI Execution Pipeline
 
-Example from `next.md` (the "what's next?" equivalent):
-```
-Route 1: No phases exist -> discuss
-Route 2: Phase exists but no context -> discuss
-Route 3: Phase has context but no plans -> plan
-Route 4: Phase has plans but incomplete -> execute
-Route 5: All plans have summaries -> verify and complete
-```
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Background orchestrator reads project state | AI agent that monitors `.planning/` and project DB state, determines what's actionable, and proceeds without waiting for human. This is the Devin/Cursor Background Agents pattern for project management. | HIGH | Rust-side tokio task that polls project state on interval or file-watch trigger. Needs state machine: IDLE -> ANALYZING -> EXECUTING -> WAITING_HUMAN -> COMPLETE. |
+| Risk-tiered auto-execution | Low-risk actions (run tests, check status) execute automatically. Medium-risk (code changes) pause for confirmation. High-risk (deploy, delete) require explicit approval. Mirrors the agentic AI checkpoint pattern from Smashing Magazine and Google Cloud architecture guides. | HIGH | Define risk taxonomy for actions. Low-risk = auto-proceed + notify after. Medium = notify + wait for go/no-go. High = block until explicit approval. |
+| Human-needed notifications | Desktop notifications when AI hits a blocker: needs decision, verification, or discussion. The interrupt + notify + review + resume pattern. | MEDIUM | Use `tauri-plugin-notification` for OS-native toasts. In-app notification center for history. Notification has action context: "Phase 3 complete -- verify output?" with deep-link to relevant project view. |
+| Execution progress in drawer | Real-time visibility into what the background agent is doing. Cursor shows file modifications, decisions, estimated completion. | MEDIUM | New drawer tab or overlay showing agent state, current action, recent decisions, and a timeline. Reuse existing Logs infrastructure. |
 
-**Layer 2: References (15 files in `references/`)**
-Reusable context documents loaded on-demand. Not instructions — they are knowledge:
-- `questioning.md` — How to ask good questions (loaded by discussion workflows)
-- `tdd.md` — Test-driven development patterns (loaded by executors)
-- `verification-patterns.md` — How to verify work (loaded by verifiers)
+#### Contextual UI
 
-**Layer 3: Templates (32+ files in `templates/`)**
-Structural patterns for output files. Define the shape of artifacts:
-- `context.md` — Phase context template with decisions, specifics, deferred ideas
-- `project.md` — Project definition template
-- `claude-md.md` — CLAUDE.md generation template with marker-bounded sections
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| Smart button with full state machine | Beyond just label changes: the button becomes the primary project action surface. One button, always the right next action. Like GitHub's merge button that changes between "Merge", "Squash", "Rebase" based on context. | LOW | State machine: `NO_DIRECTORY` -> "Link Directory", `NO_PLAN` -> "Plan Project", `HAS_PLAN` -> "Check Progress", `AI_RUNNING` -> "View AI" (switches to terminal), `NEEDS_ATTENTION` -> "Review" (pulsing). |
+| Notification badges on sidebar projects | Small dot/badge on project in sidebar when background AI needs attention. Pulls you to the right project without hunting. | LOW | Badge component on sidebar project item. Driven by notification state in store. |
 
-**Layer 4: Agents (18 agent definitions in `agents/`)**
-Specialized roles spawned by orchestrator workflows:
-- `gsd-executor` — Executes plan tasks
-- `gsd-planner` — Creates detailed plans
-- `gsd-verifier` — Verifies phase completion
-- `gsd-phase-researcher` — Researches technical approaches
+### Anti-Features (Commonly Requested, Often Problematic)
 
-### Key GSD Patterns to Adapt
-
-**Pattern 1: State-Driven Routing**
-GSD's `next.md` reads STATE.md and routes to the appropriate workflow. Element must replicate this in the context file itself — the AI reads the project state and follows the appropriate instruction branch.
-
-Adaptation: Embed routing logic directly in context markdown:
-```markdown
-## Your Mode
-
-**If no phases exist below:** You are in PLANNING mode. Follow the Planning Instructions.
-**If phases exist with incomplete tasks:** You are in EXECUTION mode. Follow the Execution Instructions.
-**If all tasks are complete:** Congratulate the user and ask what's next.
-```
-
-**Pattern 2: Tiered Complexity (Quick/Medium/GSD)**
-GSD has separate workflows: `quick.md` (1-3 tasks), `plan-phase.md` (medium), `new-project.md` (full). The tier decision happens in the orchestrator.
-
-Adaptation: Element detects complexity in Rust (based on project state and user choice) and generates the appropriate context file template. No tier decision in the AI — Element makes the decision and provides the right instructions.
-
-**Pattern 3: Structured Output Contracts**
-GSD uses frontmatter YAML + XML tags for structured plan files. Element already uses `plan-output.json`.
-
-Adaptation: Keep the existing JSON contract. Extend it for medium/GSD tiers:
-```json
-{
-  "tier": "medium",
-  "phases": [...],
-  "metadata": { "estimated_duration": "2 weeks" }
-}
-```
-
-**Pattern 4: Progressive Disclosure via File References**
-GSD skills use `<files_to_read>` blocks — the AI doesn't get everything upfront. It reads what it needs when it needs it.
-
-Adaptation: Context files can reference other files in the project:
-```markdown
-## Reference Materials
-- If you need project history, read `.element/history.md`
-- If you need architecture context, read `CLAUDE.md` or `AGENTS.md`
-```
-
-**Pattern 5: Gray Area Questioning**
-GSD's `questioning.md` + `discuss-phase.md` surface 2-4 decision points before planning. The AI asks domain-specific questions (not generic ones) using a heuristic:
-- Something users SEE -> layout, interactions
-- Something users CALL -> API design, errors
-- Something users RUN -> CLI flags, output format
-
-Adaptation: For the medium tier, embed the questioning framework in the context file:
-```markdown
-## Before You Plan
-
-Identify 3-5 gray areas in this project. For each, ask the user a focused question
-with concrete options (not vague categories). Consider:
-- User-facing decisions (what they'll see/interact with)
-- Technical decisions (architecture, data model, libraries)
-- Scope decisions (what's in v1 vs later)
-
-After gathering answers, generate the plan.
-```
-
-### Portability Analysis: Making Context Files Tool-Agnostic
-
-The critical challenge is that GSD relies on Claude Code-specific features:
-1. **Slash commands** (`/gsd:plan-phase`) — Not portable
-2. **Task() API** for subagent spawning — Not portable
-3. **AskUserQuestion** structured prompts — Not portable (but conversational equivalent works everywhere)
-4. **`gsd-tools.cjs`** CLI utilities — Not portable
-
-What IS portable across all AI CLI tools:
-1. **Markdown instructions** — Every tool reads markdown
-2. **File reading directives** — "Read this file before proceeding"
-3. **Conditional logic in natural language** — "If X, then do Y"
-4. **Structured output requests** — "Write JSON to this path with this schema"
-5. **File-based communication** — Write output to a known path, file watcher picks it up
-
-**Portability strategy:** Element generates markdown context files that:
-- Contain all instructions inline (no external tool dependencies)
-- Use natural language conditionals instead of code branching
-- Request structured JSON output to known file paths
-- Are self-contained — the AI needs only the context file + project files to operate
-
-### How AGENTS.md Fits
-
-AGENTS.md (Linux Foundation standard, adopted by 40,000+ projects) is emerging as the tool-agnostic alternative to CLAUDE.md. Key facts:
-- Standard markdown format, hierarchical (project root + subdirectories)
-- Supported by Codex, Amp, Jules, Cursor, Factory
-- Claude Code has an open feature request to support it natively
-- Does NOT replace tool-specific files — coexists with CLAUDE.md, .cursorrules
-
-**Recommendation:** Element should generate `.element/context.md` (its own format for seeding AI sessions) but could optionally also write an `AGENTS.md` at project root for tools that auto-discover it. This is a nice-to-have, not a priority.
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Split pane terminals | VS Code has them, power users ask for them | Massive complexity for a project management app. Element's drawer is not an IDE terminal area. Split panes need drag handles, resize logic, nested layout. ROI is low for this product. | Multiple tabs are sufficient. If user needs split panes, they have a real terminal app. |
+| Full terminal customization (fonts, colors, keybindings) | Power users want to tweak everything | Settings surface area explosion. Every option is a bug surface and support burden. | Ship one well-designed theme that matches the app. Expose font size only if needed. |
+| Autonomous AI with no human checkpoints | "Just let the AI do everything" | Trust erosion. Cursor and Devin both learned: users need visibility and control. Fully autonomous execution without checkpoints leads to wasted work and rejected outputs. | Risk-tiered execution with clear checkpoints. Start conservative (more pauses), let user increase autonomy over time. |
+| In-app code editor for AI output review | "Show me the diff inline" | Element is not an IDE. Building a diff viewer is massive scope. Users already have VS Code/Cursor open. | Deep-link to file in external editor. Show summary of changes in notification, let user review in their editor. |
+| Real-time streaming of AI terminal output to notification | "Show me what AI is typing as a notification" | Notification spam. Terminal output is noisy. Streaming raw output to notifications is hostile. | Structured status updates only: "Started phase 3", "Tests passing", "Needs review". Parse meaningful events from output, not raw text. |
+| Push notifications (mobile/remote) | "Notify me on my phone when AI is done" | Requires server infrastructure, push notification services, accounts. Violates local-first principle. | Desktop-only native notifications. If user is away from desk, the work waits. This is a personal desktop tool. |
 
 ## Feature Dependencies
 
 ```
-Configurable CLI tool -> (independent, do first)
-                                    |
-                                    v
-Planning decision tree -> Smart context adaptation -> Tier detection (Quick/Medium/GSD)
-         |                         |                           |
-         v                         v                           v
-   Quick tier <---- Context file templates ----> Medium tier questioning
-         |                         |                           |
-         v                         v                           v
-   plan-output.json --> AiPlanReview (exists) <-- Extended JSON schema
-                                    |
-                    .planning/ folder sync -> ROADMAP.md parser
-                              |                      |
-                              v                      v
-                     File watcher          Database schema extensions
-                              |
-                              v
-                    "What's next?" mode -> Progress-aware context
+[Direct project click] (independent, no deps)
+
+[Collapsible sidebar sections] (independent, no deps)
+
+[Simplified task detail] (independent, no deps)
+
+[Terminal as default tab]
+    +-- requires --> [Multi-terminal tabs]
+                        +-- requires --> [Terminal session registry]
+                                            +-- requires --> [Refactor useTerminal to session model]
+
+[Named AI session terminals]
+    +-- requires --> [Multi-terminal tabs]
+    +-- requires --> [Terminal session registry]
+
+[Smart AI button labels]
+    +-- requires --> [Project state computation]
+    +-- enhances --> [Named AI session terminals] (button label = "View AI" when session active)
+
+[Background orchestrator]
+    +-- requires --> [Multi-terminal tabs] (orchestrator launches AI in named terminal)
+    +-- requires --> [Terminal session registry] (track which sessions are orchestrator-managed)
+    +-- requires --> [Project state computation] (determine what's actionable)
+
+[Risk-tiered auto-execution]
+    +-- requires --> [Background orchestrator]
+    +-- requires --> [Notification system]
+
+[Human-needed notifications]
+    +-- requires --> [tauri-plugin-notification setup]
+    +-- requires --> [In-app notification state/store]
+    +-- enhances --> [Background orchestrator]
+    +-- enhances --> [Smart AI button] (button pulses when notification pending)
+
+[Notification badges on sidebar]
+    +-- requires --> [In-app notification state/store]
+    +-- enhances --> [Human-needed notifications]
+
+[Execution progress in drawer]
+    +-- requires --> [Background orchestrator]
+    +-- enhances --> [Multi-terminal tabs] (progress tab alongside terminal tabs)
 ```
 
-## MVP Recommendation
+### Dependency Notes
 
-Prioritize:
-1. **Configurable CLI tool** — Unblocks non-Claude users, known tech debt, trivial complexity
-2. **Smart context adaptation with tier detection** — The core UX change. "Open AI" on empty project asks tier, generates appropriate context file. Requires reworking `generate_context_file_content` in Rust.
-3. **Quick tier** — Generates a simple "help me plan these tasks" context file. AI produces `plan-output.json`. Existing AiPlanReview handles the rest.
-4. **Medium tier with questioning** — Context file includes questioning framework. AI asks questions, then produces structured plan.
-5. **"What's next?" execution mode** — Progress-aware context file that guides the AI to the next action based on project state.
+- **Multi-terminal tabs require terminal session registry:** The current `useTerminal` hook creates a single PTY tied to component lifecycle. Multi-terminal needs a session manager that owns PTY instances independently of React component mount/unmount cycles. This is the foundational refactor.
+- **Background orchestrator requires multi-terminal:** The orchestrator needs to spawn AI sessions in named terminals. Without multi-terminal, it would kill the user's active terminal (the current bug).
+- **Smart AI button enhances both terminal and orchestrator:** The button state machine bridges UI and execution -- "View AI" switches to the AI terminal tab, "Review" opens the notification that needs attention.
+- **Notifications require both native OS integration and in-app state:** `tauri-plugin-notification` handles OS toasts. In-app state (Zustand slice) tracks notification history, unread counts, and deep-link targets. Both are needed for a complete experience.
+- **Risk-tiered execution conflicts with early shipping:** It requires a risk taxonomy, action classification, and approval flow. Ship the orchestrator first with conservative defaults (always pause), add risk tiers as a follow-up.
 
-Defer:
-- **GSD tier (full research + milestones):** Requires `.planning/` folder sync to be useful. Build after sync is working.
-- **`.planning/` folder sync:** High complexity, requires markdown parser + file watcher + schema extensions. Build after tiers are working.
-- **AGENTS.md generation:** Nice-to-have, build after core context file system is solid.
+## MVP Definition
 
-## Complexity Budget
+### Launch With (v1.3)
 
-| Feature | Estimated Effort | Risk |
-|---------|-----------------|------|
-| Configurable CLI tool | 1-2 hours | None — string setting + UI |
-| Tier detection + routing | 1-2 days | Low — extends existing context generation |
-| Quick tier context file | 0.5-1 day | Low — simplest template |
-| Medium tier with questioning | 1-2 days | Medium — question quality depends on context file design |
-| "What's next?" mode | 1-2 days | Medium — routing logic must be clear enough for any AI tool |
-| .planning/ folder sync (read) | 3-5 days | High — markdown parsing, schema changes, file watcher |
-| GSD tier context file | 2-3 days | High — complex multi-step instructions in pure markdown |
+These are the minimum features to ship multi-terminal and lay execution pipeline groundwork.
+
+- [x] Direct project click navigation -- fixes the most annoying existing bug
+- [x] Collapsible sidebar sections with +/- toggle -- low effort, high polish
+- [x] Simplified task detail view -- progressive disclosure
+- [x] Link Directory on same line as AI button -- layout fix
+- [x] Smart AI button with state-aware labels -- low effort, high UX value
+- [x] Terminal as default drawer tab -- reorder + persist
+- [x] Multi-terminal tabs with session registry -- foundational for everything else
+- [x] Named AI session terminals -- AI launches create distinct tabs
+- [x] Kill/respawn per terminal tab -- basic terminal management
+- [x] Tab naming (auto from command + manual rename) -- distinguish sessions
+- [x] Basic notification system (tauri-plugin-notification + in-app store) -- needed for execution pipeline
+- [x] Background orchestrator MVP -- state reader + auto-execute low-risk + notify for human items
+
+### Add After Validation (v1.3.x)
+
+- [ ] Risk-tiered auto-execution -- once orchestrator is stable, add risk classification
+- [ ] Execution progress drawer tab -- richer visibility into agent activity
+- [ ] Notification badges on sidebar projects -- visual indicator without opening project
+- [ ] Session persistence across project switches -- keep terminals alive when switching
+
+### Future Consideration (v2+)
+
+- [ ] Launch configurations (saved terminal presets) -- Warp-style workspace templates
+- [ ] Autonomy slider (user controls how much the AI does without asking) -- trust calibration
+- [ ] Inter-agent coordination (multiple AI sessions working on different phases) -- multi-agent
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Direct project click | HIGH | LOW | P1 |
+| Collapsible sidebar sections | MEDIUM | LOW | P1 |
+| Simplified task detail | MEDIUM | MEDIUM | P1 |
+| Link Directory same line | MEDIUM | LOW | P1 |
+| Smart AI button labels | HIGH | LOW | P1 |
+| Terminal as default tab | MEDIUM | LOW | P1 |
+| Multi-terminal tabs + session registry | HIGH | HIGH | P1 |
+| Named AI session terminals | HIGH | LOW (after registry) | P1 |
+| Kill/respawn per tab | HIGH | LOW | P1 |
+| Tab naming | MEDIUM | LOW | P1 |
+| Basic notification system | HIGH | MEDIUM | P1 |
+| Background orchestrator MVP | HIGH | HIGH | P1 |
+| Risk-tiered execution | HIGH | HIGH | P2 |
+| Execution progress drawer | MEDIUM | MEDIUM | P2 |
+| Notification badges | MEDIUM | LOW | P2 |
+| Session persistence | MEDIUM | HIGH | P2 |
+| Launch configurations | LOW | HIGH | P3 |
+| Autonomy slider | LOW | MEDIUM | P3 |
+
+**Priority key:**
+- P1: Must have for v1.3 launch
+- P2: Should have, add when orchestrator is stable
+- P3: Nice to have, future milestone
+
+## Competitor Feature Analysis
+
+| Feature | VS Code | Warp | Cursor | Element Approach |
+|---------|---------|------|--------|-----------------|
+| **Multi-terminal** | Tabs + split panes + groups + editor terminals. Full terminal management system. | Tabs + panes + session restoration + launch configs + colored tabs. | Single terminal panel, background agents use cloud VMs. | Tabs only (no splits). Named sessions. AI sessions visually distinct. Simpler than VS Code/Warp but sufficient for project management context. |
+| **Terminal persistence** | Reconnects to previous PTY on reload. Restores layout across restarts. | Full session restoration including scroll history. | N/A (cloud-based). | Hidden DOM approach: keep xterm instances alive when switching tabs. Serialize on app quit for restart restoration. |
+| **Background AI** | Copilot chat + agent mode runs in terminal. Not truly background. | Oz agents (cloud-based, separate from terminal). | Background agents on cloud VMs. Up to 8 parallel. Git worktree isolation. PR-based output. | Local background orchestrator. Single agent at a time. Reads project state, executes in named terminal, notifies for human items. Simpler than Cursor but integrated into project management workflow. |
+| **AI notifications** | Inline chat responses. No OS notifications for AI. | In-terminal AI suggestions. No background notifications. | PR notifications. Email when background agent completes. | OS-native desktop notifications via tauri-plugin-notification. In-app notification center. Deep-links to project/phase that needs attention. |
+| **Contextual buttons** | Command palette adapts to context. Git button shows branch status. | Command palette + AI suggestion bar context-aware. | "Review changes" appears after agent runs. | Single smart button: label = next action. "Plan Project" -> "Check Progress" -> "View AI" -> "Review". State machine driven by project + terminal + notification state. |
+| **Human-in-the-loop** | Manual. User runs commands, reviews output. | Manual. User accepts/rejects AI suggestions. | Post-completion review. Diff viewer. Accept/reject at file and line level. | Checkpoint-based. Orchestrator pauses at defined points (phase completion, test failure, ambiguous decision). Notification with context summary + resume/cancel actions. |
+
+## Smart AI Button State Machine
+
+The contextual button is a key UX differentiator. Here is the complete state machine:
+
+| State | Condition | Label | Icon | Variant | Action |
+|-------|-----------|-------|------|---------|--------|
+| `NO_DIRECTORY` | `!directoryPath` | "Link Directory" | FolderLink | outline | Open directory picker |
+| `NO_PLAN` | `directoryPath && !hasPhases && !planningTier` | "Plan Project" | Bot | default (primary) | Open tier dialog |
+| `READY` | `directoryPath && (hasPhases \|\| planningTier)` | "Check Progress" | Bot | outline | Generate context + launch AI in named terminal |
+| `AI_RUNNING` | `activeAiTerminalSession` | "View AI" | Terminal | outline | Switch to AI terminal tab |
+| `NEEDS_ATTENTION` | `pendingNotification` | "Review" | AlertCircle | destructive, pulsing | Open notification detail / navigate to blocked phase |
+| `LAUNCHING` | `isLaunching` | "Launching..." | Loader (spinning) | outline, disabled | No action (debounce) |
+| `ALL_COMPLETE` | `allPhasesComplete` | "Project Complete" | CheckCircle | ghost | Show completion summary |
+
+Priority order (highest wins): LAUNCHING > NEEDS_ATTENTION > AI_RUNNING > NO_DIRECTORY > NO_PLAN > ALL_COMPLETE > READY
+
+## Notification Categories
+
+For the execution pipeline, notifications fall into three categories with distinct urgency:
+
+| Category | Trigger | Urgency | OS Toast | In-App Badge | Example |
+|----------|---------|---------|----------|--------------|---------|
+| **Verification** | Phase/task completed, output ready for review | Medium | Yes | Yes | "Phase 3 complete. 12 files changed. Review output?" |
+| **Decision** | AI hit a fork, needs human choice | High | Yes + sound | Yes (pulsing) | "Phase 4 has two approaches. Which do you prefer?" |
+| **Blocker** | AI cannot proceed, missing info or failed prerequisite | High | Yes + sound | Yes (red) | "Tests failing in phase 2. 3 failures. Fix needed before phase 3." |
+| **Progress** | Informational, AI started/finished a step | Low | No | No (log only) | "Started phase 3 execution" |
 
 ## Sources
 
-### Direct Analysis (HIGH confidence)
-- GSD codebase at `$HOME/.claude/get-shit-done/` — 56 workflows, 15 references, 32+ templates, 18 agents
-- Element codebase — `onboarding_commands.rs`, `onboarding.rs`, `OpenAiButton.tsx`
-- GSD skill system — `$HOME/.claude/plugins/marketplaces/claude-plugins-official/plugins/*/skills/*/SKILL.md`
+- [VS Code Terminal Advanced Docs](https://code.visualstudio.com/docs/terminal/advanced)
+- [VS Code Terminal UI and Layout (DeepWiki)](https://deepwiki.com/microsoft/vscode/6.6-terminal-ui-and-layout)
+- [VS Code Terminal Basics](https://code.visualstudio.com/docs/terminal/basics)
+- [Warp Session Management](https://docs.warp.dev/terminal/sessions)
+- [Warp All Features](https://www.warp.dev/all-features)
+- [Cursor Background Agents Guide](https://ameany.io/cursor-background-agents/)
+- [Devin vs Cursor Comparison (Builder.io)](https://www.builder.io/blog/devin-vs-cursor)
+- [Cursor Agentic Coding (TechCrunch)](https://techcrunch.com/2026/03/05/cursor-is-rolling-out-a-new-system-for-agentic-coding/)
+- [Tauri Notification Plugin](https://v2.tauri.app/plugin/notification/)
+- [Designing For Agentic AI UX Patterns (Smashing Magazine)](https://www.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/)
+- [Human-in-the-Loop for AI Agents (Permit.io)](https://www.permit.io/blog/human-in-the-loop-for-ai-agents-best-practices-frameworks-use-cases-and-demo)
+- [Button States (NN/g)](https://www.nngroup.com/articles/button-states-communicate-interaction/)
+- [Button States (UXPin)](https://www.uxpin.com/studio/blog/button-states/)
+- [Google Cloud Agentic AI Design Patterns](https://docs.google.com/architecture/choose-design-pattern-agentic-ai-system)
+- [xterm.js](https://xtermjs.org/)
+- [react-xtermjs](https://github.com/Qovery/react-xtermjs)
 
-### Industry Context (MEDIUM confidence)
-- [AGENTS.md specification](https://agents.md/) — Linux Foundation standard for tool-agnostic AI context
-- [CLAUDE.md, AGENTS.md, and Every AI Config File Explained](https://www.deployhq.com/blog/ai-coding-config-files-guide) — Comparison of context file formats
-- [The Complete Guide to AI Agent Memory Files](https://medium.com/data-science-collective/the-complete-guide-to-ai-agent-memory-files-claude-md-agents-md-and-beyond-49ea0df5c5a9) — Tiered context management patterns
-- [Codified Context: Infrastructure for AI Agents](https://arxiv.org/html/2602.20478v1) — Research on tiered knowledge architecture for AI agents
-- [Planning with Files](https://github.com/OthmanAdi/planning-with-files) — Claude Code skill for persistent markdown planning
-- [MarkdownDB](https://markdowndb.com/) — JS library for indexing markdown into SQLite (validates parse-markdown-to-DB approach)
-- [Context Management for Windsurf](https://iceberglakehouse.com/posts/2026-03-context-windsurf/) — How Windsurf manages context via Rules files and Memories
-- [2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) — Anthropic's analysis of coding agent patterns
+---
+*Feature research for: Element v1.3 Foundation & Execution*
+*Researched: 2026-03-29*
