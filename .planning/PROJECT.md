@@ -8,31 +8,17 @@ Element is a desktop workflow orchestration platform — a personal work OS that
 
 The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
 
-## Current Milestone: v1.2 Intelligent Planning
-
-**Goal:** Two-mode AI assistant — a planning mode that scales from quick todos to full GSD breakdowns, and an execution mode that answers "what's next?" based on current project state.
-
-**Target features:**
-- Planning decision tree — first-time "Open AI" detects no plan, asks complexity tier, runs appropriate flow
-- Quick tier — AI generates flat todo list from brief description (same-week work)
-- Medium tier — AI asks focused questions, generates phases + tasks (multi-week projects)
-- GSD tier — AI runs full GSD workflow with research, milestones, phases (complex long-running projects)
-- "What's next?" mode — once planned, AI seeds current progress and guides execution
-- `.planning/` folder sync — reads ROADMAP.md into database, file watcher syncs as GSD executes
-- Configurable CLI tool — Settings UI for the terminal command
-- Smart context file — adapts markdown based on project state and mode
-
 ## Current State
 
-**Shipped:** v1.1 Project Manager (2026-03-25)
-**Codebase:** ~164K LOC across 137+ files (Rust + TypeScript)
+**Shipped:** v1.2 Intelligent Planning (2026-03-28)
+**Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
 v1.0 delivered: task/project CRUD, multi-panel workspace, time-aware today view, global-hotkey quick-capture, multi-step workflows with cron scheduling, plugin system with credential vault, calendar integration (Google/Outlook OAuth), model-agnostic AI assistance, and intelligent time-block scheduling.
 
 v1.1 delivered: theme system with DnD reorder, project phases with directory linking, file explorer with live updates and gitignore filtering, embedded PTY terminal, AI plan review with inline editing, "Open AI" button that seeds full project context into terminal, and per-project workspace state restore.
 
-v1.2 progress: Phase 16 complete — AI context file now starts with an "About Element" product orientation section. The section explains what Element is, its core concepts (themes, projects, phases, tasks), and frames the AI's role. CLI tool name and planning tier are dynamically injected from settings. Prior: .planning/ folder sync (Phase 15), adaptive context builder (Phase 13), CLI settings UI (Phase 12).
+v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder with token budgets, configurable CLI tool, .planning/ folder sync with live file watcher, and AI product orientation context. Projects auto-detect GSD when directory is linked.
 
 ## Requirements
 
@@ -52,14 +38,16 @@ v1.2 progress: Phase 16 complete — AI context file now starts with an "About E
 - ✓ Task-project linking: tasks belong to projects or standalone within themes — v1.1
 - ✓ "Open AI" button: one-click context seeding into terminal with project state — v1.1
 - ✓ Per-project workspace state: center tab and drawer state restore on switch — v1.1
+- ✓ Configurable CLI tool with pre-flight validation — v1.2
+- ✓ Tiered AI planning: Quick (flat tasks), Medium (phases), GSD (full workflow) — v1.2
+- ✓ Adaptive context builder: state-aware, tier-aware, token-budgeted — v1.2
+- ✓ "What's next?" execution mode with progress and blockers — v1.2
+- ✓ .planning/ folder sync: ROADMAP.md parsing, live file watcher, auto-sync on link — v1.2
+- ✓ AI product orientation in context file — v1.2
 
 ### Active
 
-- [ ] Scalable planning decision tree (Quick/Medium/GSD tiers)
-- [ ] "What's next?" execution mode with progress-aware context
-- [ ] `.planning/` folder sync into Element database
-- [ ] Configurable CLI tool setting in Settings UI
-- ✓ Smart context file adapting to project state and mode — Phase 13
+(No active requirements — next milestone TBD)
 
 ### Future
 
@@ -122,6 +110,9 @@ v1.2 progress: Phase 16 complete — AI context file now starts with an "About E
 | Simplified workspace (not full IDE) | File tree + terminal, external editing — 90% value at 20% cost | ✓ Good — file tree + terminal delivered |
 | AI-driven project onboarding | Structured entry fields + AI questioning for project breakdown | ✓ Good — AiPlanReview with DnD |
 | Hardcoded claude CLI | Use `claude --dangerously-skip-permissions` for now, configurable later | ✓ Resolved — Phase 12 added settings UI, Phase 16 wires it into context |
+| Tiered planning over one-size-fits-all | Quick for same-week, Medium for multi-week, GSD for complex | ✓ Good — scales to project complexity |
+| One-way .planning/ sync | Disk → DB only, bidirectional deferred | ✓ Good — avoids sync conflicts |
+| Auto-detect GSD on directory link | If .planning/ROADMAP.md exists, auto-sync and set GSD tier | ✓ Good — seamless onboarding |
 
 ## Known Tech Debt
 
@@ -131,7 +122,9 @@ v1.2 progress: Phase 16 complete — AI context file now starts with an "About E
 - File > New Task menu event handler is empty (Cmd+N works)
 - 3 pre-existing TS errors in ThemeSidebar.tsx and UncategorizedSection.tsx (runtime unaffected)
 - Orphaned files: ScopeInputForm.tsx, OnboardingWaitingCard.tsx (zero importers after Phase 11)
-- ~~CLI tool hardcoded~~ — resolved: Phase 12 added settings UI, Phase 16 wires setting into AI context
+- ~~CLI tool hardcoded~~ — resolved in v1.2
+- Single terminal session kills previous on "Open AI" (backlog 999.6)
+- Terminal not scoped per-project (backlog 999.6)
 
 ## Evolution
 
@@ -151,4 +144,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 16 completion*
+*Last updated: 2026-03-28 after v1.2 milestone*

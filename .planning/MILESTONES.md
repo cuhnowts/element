@@ -1,5 +1,23 @@
 # Milestones
 
+## v1.2 Intelligent Planning (Shipped: 2026-03-29)
+
+**Phases completed:** 7 phases, 10 plans, 19 tasks
+
+**Key accomplishments:**
+
+- Migration 010 adding planning_tier and source columns, with validate_cli_tool and set_planning_tier Tauri commands
+- 4-state x 3-tier context file generator with progressive token budget rollup replacing static empty/populated templates
+- Test stubs for TierSelectionDialog, OpenAiButton tier gate, and ProjectDetail tier badge using vitest it.todo()
+- TierSelectionDialog with Quick/Medium/GSD radio options, tier gate in OpenAiButton, and tier badge in ProjectDetail header
+- batch_create_tasks command for Quick tier flat tasks, and tier/description override params on generate_context_file
+- Full frontend-backend wiring: tier dialog saves tier, generates context, launches terminal, Quick tier creates flat tasks, D-07 context regeneration
+- Regex-based ROADMAP.md parser with SHA-256 change detection, transactional full-replace DB sync, and PlanningWatcherState file watcher commands
+- Tauri API bindings, event listeners, auto-import lifecycle, GSD badges, and read-only gating for synced phases/tasks
+- Added build_skill_section function that generates a product orientation section at the top of AI context files with dynamic CLI tool name and tier display
+
+---
+
 ## v1.1 Project Manager (Shipped: 2026-03-25)
 
 **Phases completed:** 11 phases, 17 plans, 32 tasks
