@@ -39,9 +39,7 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Not used in this phase |
 | 3xl | 64px | Not used in this phase |
 
-Exceptions:
-- Sidebar project rows use 6px vertical padding (py-1.5) -- existing pattern, do not change
-- AI button + DirectoryLink row uses 12px gap (gap-3) between button and directory control per D-08
+No exceptions declared. Existing sidebar patterns outside this phase's scope are not part of this contract. AI button + DirectoryLink row gap is at executor discretion per D-08 and must use a value from the standard scale above.
 
 ---
 
@@ -84,6 +82,12 @@ Semantic colors in this phase:
 
 ---
 
+## Visual Hierarchy
+
+**Primary focal point (ProjectDetail):** The project title (Display typography, top-left of center panel) is the primary visual anchor when the view loads. The AI button row sits directly below the title as the secondary focal point, guiding the user toward the primary action.
+
+---
+
 ## Component Inventory
 
 Components modified or introduced in this phase, with their visual contract.
@@ -94,6 +98,7 @@ Components modified or introduced in this phase, with their visual contract.
 |----------|-------|
 | Click target | Entire row (left-click navigates to ProjectDetail) |
 | Chevron | Left side, 16x16, toggles expand/collapse independently via stopPropagation |
+| Chevron a11y | aria-label="Expand project tasks" (collapsed) / aria-label="Collapse project tasks" (expanded) |
 | Right-click | Opens context menu (Move to Theme, Delete) |
 | Selected state | bg-muted text class on row |
 | Font | text-xs (12px) for sidebar, text-sm (14px) for uncategorized |
@@ -104,6 +109,7 @@ Components modified or introduced in this phase, with their visual contract.
 | Property | Value |
 |----------|-------|
 | Collapse icon | ChevronRight (collapsed) / ChevronDown (expanded), 14x14 |
+| Chevron a11y | aria-label="Expand theme" (collapsed) / aria-label="Collapse theme" (expanded) |
 | Persistence | Expand/collapse state stored in useWorkspaceStore.themeCollapseState |
 | Default | Expanded (true) when no persisted state exists |
 | Font | text-xs font-semibold for theme name |
@@ -125,7 +131,7 @@ Components modified or introduced in this phase, with their visual contract.
 | Property | Value |
 |----------|-------|
 | Layout | Single flex row: AI button left, flex-1 spacer, DirectoryLink right |
-| Row gap | 12px (gap-3) |
+| Row gap | Use standard spacing scale value (8px or 16px) at executor discretion per D-08 |
 | AI button height | 36px (h-9, default Button size) |
 | DirectoryLink | Inline with path text + Link/Change button, aligned right |
 
