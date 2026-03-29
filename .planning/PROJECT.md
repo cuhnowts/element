@@ -2,11 +2,11 @@
 
 ## What This Is
 
-Element is a desktop workflow orchestration platform — a personal work OS that ingests signals (calendar, email, tasks), structures them into organized workflows, and learns user behavior over time. Built with Tauri 2.x (Rust backend) + React 19 (TypeScript frontend) + SQLite (local-first storage), it orchestrates work through external tools (Claude Code, CLIs, agents) rather than executing it directly.
+Element is a desktop project management platform with an AI-first approach — it structures work into themes, projects, phases, and tasks, then orchestrates execution through external AI tools (Claude Code, CLIs, agents). A central AI agent manages across all projects: planning at the right complexity level, auto-executing what it can, and notifying the user when human input is needed. Built with Tauri 2.x (Rust backend) + React 19 (TypeScript frontend) + SQLite (local-first storage).
 
 ## Core Value
 
-The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
+The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
 ## Current Milestone: v1.3 Foundation & Execution
 
@@ -136,8 +136,9 @@ v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder 
 - 3 pre-existing TS errors in ThemeSidebar.tsx and UncategorizedSection.tsx (runtime unaffected)
 - Orphaned files: ScopeInputForm.tsx, OnboardingWaitingCard.tsx (zero importers after Phase 11)
 - ~~CLI tool hardcoded~~ — resolved in v1.2
-- Single terminal session kills previous on "Open AI" (backlog 999.6)
-- Terminal not scoped per-project (backlog 999.6)
+- Single terminal session kills previous on "Open AI" (v1.3 Phase 19)
+- Terminal not scoped per-project (v1.3 Phase 19)
+- Central AI agent concept: persistent orchestrator that manages across all projects, feeds context to project AI sessions, auto-executes safe actions, notifies for human input (v1.3 Phase 21)
 
 ## Evolution
 
