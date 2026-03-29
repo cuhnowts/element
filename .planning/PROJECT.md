@@ -8,6 +8,16 @@ Element is a desktop workflow orchestration platform — a personal work OS that
 
 The workflow engine must reliably define, organize, schedule, and monitor workflows — everything else (Pulse, reporting, memory) builds on top of it.
 
+## Current Milestone: v1.3 Foundation & Execution
+
+**Goal:** Fix accumulated tech debt, improve UI intuitiveness, add multi-terminal sessions, and lay groundwork for an AI orchestration layer that auto-executes phases and notifies on human-needed items.
+
+**Target features:**
+- Tech debt cleanup — TS errors, orphaned files, navigation bug
+- UI polish — direct project click, collapsible sidebar, simplified task view, smart AI button labels
+- Multi-terminal sessions — per-project, named, concurrent, session tabs
+- Execution pipeline MVP — background orchestrator that reads project state, auto-executes, notifies for human input
+
 ## Current State
 
 **Shipped:** v1.2 Intelligent Planning (2026-03-28)
@@ -47,7 +57,10 @@ v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder 
 
 ### Active
 
-(No active requirements — next milestone TBD)
+- [ ] Tech debt cleanup (TS errors, orphaned files, navigation bugs)
+- [ ] UI polish (sidebar, task view, smart AI button, terminal defaults)
+- [ ] Multi-terminal sessions with per-project isolation
+- [ ] Execution pipeline MVP (background orchestrator, auto-execute, notifications)
 
 ### Future
 
@@ -144,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after v1.2 milestone*
+*Last updated: 2026-03-28 after v1.3 milestone start*
