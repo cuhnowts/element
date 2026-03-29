@@ -86,36 +86,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEBT-01 | TBD | Pending |
-| DEBT-02 | TBD | Pending |
-| DEBT-03 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| UI-07 | TBD | Pending |
-| TERM-01 | TBD | Pending |
-| TERM-02 | TBD | Pending |
-| TERM-03 | TBD | Pending |
-| TERM-04 | TBD | Pending |
-| TERM-05 | TBD | Pending |
-| AGENT-01 | TBD | Pending |
-| AGENT-02 | TBD | Pending |
-| AGENT-03 | TBD | Pending |
-| AGENT-04 | TBD | Pending |
-| AGENT-05 | TBD | Pending |
-| AGENT-06 | TBD | Pending |
-| NOTIF-01 | TBD | Pending |
-| NOTIF-02 | TBD | Pending |
-| NOTIF-03 | TBD | Pending |
+| DEBT-01 | Phase 17 | Pending |
+| DEBT-02 | Phase 17 | Pending |
+| DEBT-03 | Phase 17 | Pending |
+| UI-01 | Phase 18 | Pending |
+| UI-02 | Phase 18 | Pending |
+| UI-03 | Phase 18 | Pending |
+| UI-04 | Phase 18 | Pending |
+| UI-05 | Phase 18 | Pending |
+| UI-06 | Phase 18 | Pending |
+| UI-07 | Phase 18 | Pending |
+| TERM-01 | Phase 19 | Pending |
+| TERM-02 | Phase 19 | Pending |
+| TERM-03 | Phase 19 | Pending |
+| TERM-04 | Phase 19 | Pending |
+| TERM-05 | Phase 19 | Pending |
+| NOTIF-01 | Phase 20 | Pending |
+| NOTIF-02 | Phase 20 | Pending |
+| NOTIF-03 | Phase 20 | Pending |
+| AGENT-01 | Phase 21 | Pending |
+| AGENT-02 | Phase 21 | Pending |
+| AGENT-03 | Phase 21 | Pending |
+| AGENT-04 | Phase 21 | Pending |
+| AGENT-05 | Phase 21 | Pending |
+| AGENT-06 | Phase 21 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after initial definition*
+*Last updated: 2026-03-29 after roadmap creation*

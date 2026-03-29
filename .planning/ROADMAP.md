@@ -47,8 +47,91 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
+### v1.3 Foundation & Execution (Phases 17-21)
+
+**Milestone Goal:** Fix accumulated tech debt, improve UI intuitiveness, add multi-terminal sessions, and lay groundwork for an AI orchestration layer that auto-executes phases and notifies on human-needed items.
+
+- [ ] **Phase 17: Tech Debt Cleanup** - Fix TS errors, remove orphaned files, resolve Open AI navigation bug
+- [ ] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button
+- [ ] **Phase 19: Multi-Terminal Sessions** - Per-project terminal isolation, named sessions, tab management
+- [ ] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy
+- [ ] **Phase 21: Central AI Agent** - Background orchestrator with cross-project awareness and approve-only execution
+
+## Phase Details
+
+### Phase 17: Tech Debt Cleanup
+**Goal**: Codebase is clean and navigation is reliable before adding new state complexity
+**Depends on**: Phase 16
+**Requirements**: DEBT-01, DEBT-02, DEBT-03
+**Success Criteria** (what must be TRUE):
+  1. TypeScript compiler reports zero errors across the entire codebase
+  2. ScopeInputForm.tsx and OnboardingWaitingCard.tsx no longer exist in the source tree
+  3. Clicking "Open AI" on a project without proper state shows an error toast and keeps the user on ProjectDetail (no navigation to home)
+**Plans**: TBD
+
 Plans:
-- [ ] 16-01-PLAN.md — build_skill_section function in onboarding.rs, updated generate_context_file_content signature, CLI tool name wiring from settings
+- [ ] 17-01: TBD
+
+### Phase 18: UI Polish
+**Goal**: Users navigate projects intuitively and the AI button communicates the right action at every project state
+**Depends on**: Phase 17
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07
+**Success Criteria** (what must be TRUE):
+  1. Single-clicking a project in the sidebar opens ProjectDetail directly (no context menu required)
+  2. Sidebar theme/project sections have a chevron toggle that expands and collapses on click
+  3. Task detail view displays essential fields with less visual clutter than the current layout
+  4. The AI button label reads "Plan Project" when no plan exists, "Check Progress" when planned, and "Open AI" as fallback -- with the "Link Directory" control on the same line
+  5. Terminal tab is the first and default-selected tab in the output drawer
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 18-01: TBD
+
+### Phase 19: Multi-Terminal Sessions
+**Goal**: Users can run multiple concurrent terminal sessions per project without losing existing sessions
+**Depends on**: Phase 17
+**Requirements**: TERM-01, TERM-02, TERM-03, TERM-04, TERM-05
+**Success Criteria** (what must be TRUE):
+  1. Each project maintains its own set of terminal sessions, isolated from other projects
+  2. Terminal sessions display as named tabs (e.g., "AI Planning", "Dev Server") in the drawer
+  3. Clicking "Open AI" creates a new named terminal session without killing any existing session
+  4. Closing a terminal tab kills the PTY process cleanly (no zombie processes remain after 5 seconds)
+  5. User can switch between active terminal sessions within a project using the tab bar
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 19-01: TBD
+
+### Phase 20: Notification System
+**Goal**: The app can surface critical events to the user through both OS-native and in-app channels
+**Depends on**: Phase 17
+**Requirements**: NOTIF-01, NOTIF-02, NOTIF-03
+**Success Criteria** (what must be TRUE):
+  1. Critical events trigger OS-native desktop notifications (visible even when app is not focused)
+  2. In-app notification center shows a history of notifications with priority tiers (critical / informational / silent)
+  3. Notification system exposes an event-driven API that the central agent can invoke (not tied to individual UI actions)
+**Plans**: TBD
+**UI hint**: yes
+
+Plans:
+- [ ] 20-01: TBD
+
+### Phase 21: Central AI Agent
+**Goal**: A background AI orchestrator reads project state, auto-executes safe actions, and notifies when human input is needed
+**Depends on**: Phase 19, Phase 20
+**Requirements**: AGENT-01, AGENT-02, AGENT-03, AGENT-04, AGENT-05, AGENT-06
+**Success Criteria** (what must be TRUE):
+  1. A persistent central agent runs in its own terminal session and survives project switches
+  2. The agent can read the state of all projects (phases, tasks, progress) without manual context feeding
+  3. Clicking "Open AI" on a project causes the central agent to seed context into the project-specific AI session
+  4. The agent auto-executes phases with no human blockers in approve-only mode (user must confirm before execution proceeds)
+  5. When human input is needed (verification, decisions), a notification appears through the notification system
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: TBD
 
 ## Progress
 
@@ -71,6 +154,11 @@ Plans:
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
+| 17. Tech Debt Cleanup | v1.3 | 0/0 | Not started | - |
+| 18. UI Polish | v1.3 | 0/0 | Not started | - |
+| 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
+| 20. Notification System | v1.3 | 0/0 | Not started | - |
+| 21. Central AI Agent | v1.3 | 0/0 | Not started | - |
 
 ## Backlog
 
@@ -121,7 +209,7 @@ Plans:
 
 ### Phase 999.6: Multi-Terminal Sessions and Background Processes (BACKLOG)
 
-**Goal:** Support multiple concurrent terminal sessions per project with per-project isolation. Each session is named (e.g., "GSD Planning", "Dev Server", "Tests"). Clicking "Open AI" spawns a new named session instead of killing the existing one. Background sessions continue running when switching projects. Sessions managed with timeouts or manual cleanup to prevent resource leaks. Terminal drawer shows session tabs for switching between active sessions. Terminal CWD and session state must be scoped to the selected project — currently the terminal persists across project switches.
+**Goal:** Support multiple concurrent terminal sessions per project with per-project isolation. Each session is named (e.g., "GSD Planning", "Dev Server", "Tests"). Clicking "Open AI" spawns a new named session instead of killing the existing one. Background sessions continue running when switching projects. Sessions managed with timeouts or manual cleanup to prevent resource leaks. Terminal drawer shows session tabs for switching between active sessions. Terminal CWD and session state must be scoped to the selected project -- currently the terminal persists across project switches.
 **Requirements:** TBD
 **Plans:** 0 plans
 
