@@ -65,11 +65,14 @@ export function OpenAiButton({
       }
 
       // 6. Build full command + args
+      // Fix macOS smart-dash substitution: em-dash (—) back to double-hyphen (--)
       const fullArgs: string[] = [];
-      if (args) fullArgs.push(args.trim());
-      // Claude CLI requires "--" before positional args to separate them from flags
-      fullArgs.push("--");
-      fullArgs.push(contextPath);
+      if (args) {
+        const sanitized = args.replace(/\u2014/g, "--").replace(/\u2013/g, "-");
+        fullArgs.push(...sanitized.trim().split(/\s+/));
+      }
+      // Use @ prefix so Claude Code loads the file as context
+      fullArgs.push(`@${contextPath}`);
 
       launchTerminalCommand(command, fullArgs);
     } catch (e) {

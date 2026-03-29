@@ -1,9 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 /// Output contract from CLI tool plan generation
+/// Supports two formats:
+/// - Phases format: { "phases": [...] } (Medium/GSD tiers)
+/// - Flat format: { "tasks": [...] } (Quick tier — no phases)
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PlanOutput {
+    #[serde(default)]
     pub phases: Vec<PendingPhase>,
+    /// Flat task list for Quick tier (no phases)
+    #[serde(default)]
+    pub tasks: Vec<PendingTask>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -248,12 +255,23 @@ fn truncate_description(desc: &str) -> String {
 }
 
 fn build_skill_section(cli_tool: &str, tier: &str) -> String {
+    let (structure_desc, planning_desc) = if tier == "quick" {
+        (
+            "organizes work into themes, projects, and tasks. It keeps things simple --\njust a flat list of actionable items",
+            "Creating a simple task list (no phases, no hierarchy -- just what needs doing)",
+        )
+    } else {
+        (
+            "organizes work into themes, projects, phases, and tasks. It structures your work\ntop-down from high-level goals to actionable items",
+            "Planning work (breaking down goals into phases and tasks)",
+        )
+    };
+
     format!(
         r#"## About Element
 
 Element is a desktop workflow orchestration platform -- a personal work OS that
-organizes work into themes, projects, phases, and tasks. It structures your work
-top-down from high-level goals to actionable items, and orchestrates execution
+{structure_desc}, and orchestrates execution
 through external AI tools rather than executing directly.
 
 ### Your Role
@@ -261,15 +279,17 @@ through external AI tools rather than executing directly.
 You are working inside Element, launched via `{cli_tool}`. This project's context has been seeded below. The project uses the **{tier}** planning tier.
 
 You can help by:
-- Planning work (breaking down goals into phases and tasks)
+- {planning_desc}
 - Working on tasks (writing code, documentation, configuration)
 - Answering questions about the project's current state
 
 ---
 
 "#,
+        structure_desc = structure_desc,
         cli_tool = cli_tool,
         tier = tier_display(tier),
+        planning_desc = planning_desc,
     )
 }
 
@@ -370,8 +390,24 @@ fn build_work_section(data: &ProjectContextData, _state: &ProjectState) -> Strin
     out
 }
 
-fn output_contract_section() -> String {
-    r#"## Output Contract
+fn output_contract_section(tier: &str) -> String {
+    if tier == "quick" {
+        r#"## Output Contract
+When the user confirms the plan, write a JSON file to `.element/plan-output.json` with this exact schema:
+
+```json
+{
+  "tasks": [
+    { "title": "Task title", "description": "Optional description" }
+  ]
+}
+```
+
+IMPORTANT: Do NOT create phases. Quick tier is a flat task list only. The output file MUST be valid JSON matching this schema exactly.
+"#
+        .to_string()
+    } else {
+        r#"## Output Contract
 When the user confirms the plan, write a JSON file to `.element/plan-output.json` with this exact schema:
 
 ```json
@@ -390,7 +426,8 @@ When the user confirms the plan, write a JSON file to `.element/plan-output.json
 
 IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
 "#
-    .to_string()
+        .to_string()
+    }
 }
 
 /// Generate context file content for seeding into an AI CLI tool
@@ -417,16 +454,30 @@ pub fn generate_context_file_content(data: &ProjectContextData, tier: &str, cli_
 
     // Section 5: Output contract (Quick/Medium only, NoPlan state only per D-10/D-13)
     if tier != "full" && state == ProjectState::NoPlan {
-        out.push_str(&output_contract_section());
+        out.push_str(&output_contract_section(tier));
     }
 
     out
 }
 
 /// Parse and validate a plan output file
+/// Handles both formats:
+/// - { "phases": [...] } → used as-is
+/// - { "tasks": [...] } → wrapped into a single unnamed phase for Quick tier
 pub fn parse_plan_output_file(content: &str) -> Result<PlanOutput, String> {
-    serde_json::from_str::<PlanOutput>(content)
-        .map_err(|e| format!("Invalid plan output JSON: {}", e))
+    let mut output: PlanOutput = serde_json::from_str(content)
+        .map_err(|e| format!("Invalid plan output JSON: {}", e))?;
+
+    // Normalize flat tasks into a single unnamed phase (Quick tier format)
+    if output.phases.is_empty() && !output.tasks.is_empty() {
+        output.phases = vec![PendingPhase {
+            name: String::new(),
+            sort_order: None,
+            tasks: std::mem::take(&mut output.tasks),
+        }];
+    }
+
+    Ok(output)
 }
 
 #[cfg(test)]

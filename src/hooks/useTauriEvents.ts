@@ -61,8 +61,12 @@ export function useTauriEvents() {
           loadTasks(selectedProjectId);
         }
       }),
-      listen<string>("planning-sync-error", () => {
-        toast.warning("Could not parse .planning/ROADMAP.md \u2014 check file format");
+      listen<string>("planning-sync-error", (event) => {
+        // Only show toast if it's not a "file not found" error (watcher may fire before GSD writes the file)
+        const msg = event.payload ?? "";
+        if (!msg.includes("Failed to read") && !msg.includes("No such file")) {
+          toast.warning("Could not parse .planning/ROADMAP.md \u2014 check file format");
+        }
       }),
       listen<string>("planning-file-changed", async (event) => {
         const changedProjectId = event.payload;

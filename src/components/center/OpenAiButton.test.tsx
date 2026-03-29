@@ -124,7 +124,6 @@ describe("OpenAiButton", () => {
       expect(mockStartPlanWatcher).toHaveBeenCalledWith("/some/dir");
       expect(mockLaunchTerminalCommand).toHaveBeenCalledWith("claude", [
         "--fast",
-        "--",
         "/path/.element/context.md",
       ]);
     });

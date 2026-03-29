@@ -73,6 +73,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
   const phases = pendingPlan.phases;
   const totalTasks = phases.reduce((sum, p) => sum + p.tasks.length, 0);
   const totalPhases = phases.length;
+  const isQuickTier = phases.length === 1 && phases[0].name.trim() === "";
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -88,8 +89,6 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
   const handleConfirm = async () => {
     await api.stopPlanWatcher().catch(() => {});
 
-    // Detect Quick tier output: single phase with empty/whitespace name
-    const isQuickTier = phases.length === 1 && phases[0].name.trim() === "";
     if (isQuickTier) {
       await confirmAndSaveQuickPlan(projectId);
     } else {
@@ -122,7 +121,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
         <div>
           <h2 className="text-2xl font-semibold">Review AI Plan</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {totalPhases} phases, {totalTasks} tasks generated
+            {isQuickTier ? `${totalTasks} tasks generated` : `${totalPhases} phases, ${totalTasks} tasks generated`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -190,7 +189,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                             }}
                             className="cursor-text"
                           >
-                            {phase.name || "Untitled phase"}
+                            {phase.name || (isQuickTier ? "Quick Tasks" : "Untitled phase")}
                           </span>
                         )}
                       </AccordionTrigger>

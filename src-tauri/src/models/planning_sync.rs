@@ -8,10 +8,12 @@ use crate::db::connection::Database;
 /// A parsed phase from ROADMAP.md
 #[derive(Debug, Clone)]
 pub struct ParsedPhase {
+    pub number: String,
     pub name: String,
     pub description: String,
     pub tasks: Vec<ParsedTask>,
     pub sort_order: i32,
+    pub is_complete: bool,
 }
 
 /// A parsed task (success criterion) from ROADMAP.md
@@ -42,9 +44,26 @@ pub struct SyncResult {
 pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
     let phase_header_re = Regex::new(r"^### Phase (\d+(?:\.\d+)?): (.+)$").unwrap();
     let goal_re = Regex::new(r"^\*\*Goal\*\*\s*:\s*(.+)$").unwrap();
-    let criterion_re = Regex::new(r"^\s+\d+\.\s+\[([ xX])\]\s+(.+)$").unwrap();
-    let backlog_re = Regex::new(r"^### Phase 999").unwrap();
+    // Match both checkbox format "  1. [x] Text" and plain format "  1. Text"
+    let criterion_checkbox_re = Regex::new(r"^\s+\d+\.\s+\[([ xX])\]\s+(.+)$").unwrap();
+    let criterion_plain_re = Regex::new(r"^\s+\d+\.\s+(.+)$").unwrap();
+    let backlog_re = Regex::new(r"^## Backlog|^### Phase 999").unwrap();
+    // Progress table row: | N. Name | vX.Y | M/N | Complete | date |
+    let progress_re = Regex::new(r"^\|\s*(\d+(?:\.\d+)?)\.\s*.+?\|\s*v[\d.]+\s*\|\s*\d+/\d+\s*\|\s*(\w+)").unwrap();
 
+    // First pass: extract completion status from progress table
+    let mut completed_phases: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for line in content.lines() {
+        if let Some(caps) = progress_re.captures(line) {
+            let phase_num = caps[1].to_string();
+            let status = caps[2].to_string();
+            if status == "Complete" {
+                completed_phases.insert(phase_num);
+            }
+        }
+    }
+
+    // Second pass: extract phase details
     let mut phases = Vec::new();
     let mut current_phase: Option<ParsedPhase> = None;
     let mut in_success_criteria = false;
@@ -52,7 +71,7 @@ pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
     let mut sort_order = 0i32;
 
     for line in content.lines() {
-        // Skip everything after backlog starts (D-04)
+        // Skip everything after backlog starts
         if backlog_re.is_match(line) {
             in_backlog = true;
         }
@@ -65,11 +84,15 @@ pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
             if let Some(phase) = current_phase.take() {
                 phases.push(phase);
             }
+            let number = caps[1].to_string();
+            let is_complete = completed_phases.contains(&number);
             current_phase = Some(ParsedPhase {
-                name: caps[2].trim().to_string(),
+                name: format!("Phase {}: {}", &number, caps[2].trim()),
+                number,
                 description: String::new(),
                 tasks: Vec::new(),
                 sort_order,
+                is_complete,
             });
             sort_order += 1;
             in_success_criteria = false;
@@ -80,14 +103,19 @@ pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
         } else if line.contains("**Success Criteria**") {
             in_success_criteria = true;
         } else if in_success_criteria {
-            if let Some(caps) = criterion_re.captures(line) {
+            if let Some(caps) = criterion_checkbox_re.captures(line) {
                 let is_complete = &caps[1] == "x" || &caps[1] == "X";
                 let title = caps[2].trim().to_string();
                 if let Some(ref mut phase) = current_phase {
                     phase.tasks.push(ParsedTask { title, is_complete });
                 }
+            } else if let Some(caps) = criterion_plain_re.captures(line) {
+                let title = caps[1].trim().to_string();
+                if let Some(ref mut phase) = current_phase {
+                    // If the phase itself is complete, mark all tasks complete
+                    phase.tasks.push(ParsedTask { title, is_complete: phase.is_complete });
+                }
             } else if !line.trim().is_empty() && !line.starts_with("  ") {
-                // Non-indented non-empty line ends success criteria section
                 in_success_criteria = false;
             }
         }
@@ -233,9 +261,9 @@ mod tests {
     fn test_parse_roadmap_extracts_phase_names() {
         let result = super::parse_roadmap(sample_roadmap()).unwrap();
         assert_eq!(result.phases.len(), 3);
-        assert_eq!(result.phases[0].name, "Desktop Shell");
-        assert_eq!(result.phases[1].name, "Task Foundation");
-        assert_eq!(result.phases[2].name, "Workflows");
+        assert_eq!(result.phases[0].name, "Phase 1: Desktop Shell");
+        assert_eq!(result.phases[1].name, "Phase 2: Task Foundation");
+        assert_eq!(result.phases[2].name, "Phase 3: Workflows");
     }
 
     #[test]
@@ -295,7 +323,7 @@ mod tests {
 "#;
         let result = super::parse_roadmap(content).unwrap();
         assert_eq!(result.phases.len(), 1);
-        assert_eq!(result.phases[0].name, "Active Phase");
+        assert_eq!(result.phases[0].name, "Phase 1: Active Phase");
     }
 
     #[test]
@@ -344,12 +372,12 @@ Element is a desktop task orchestration platform.
 "#;
         let result = super::parse_roadmap(content).unwrap();
         assert_eq!(result.phases.len(), 2);
-        assert_eq!(result.phases[0].name, "CLI Settings and Schema Foundation");
+        assert_eq!(result.phases[0].name, "Phase 12: CLI Settings and Schema Foundation");
         assert_eq!(result.phases[0].tasks.len(), 3);
         assert!(result.phases[0].tasks[0].is_complete);
         assert!(result.phases[0].tasks[1].is_complete);
         assert!(!result.phases[0].tasks[2].is_complete);
-        assert_eq!(result.phases[1].name, "Adaptive Context Builder");
+        assert_eq!(result.phases[1].name, "Phase 13: Adaptive Context Builder");
         assert_eq!(result.phases[1].tasks.len(), 2);
     }
 

@@ -51,5 +51,21 @@ export const createProjectSlice: StateCreator<
     set((s) => ({
       projects: s.projects.map((p) => (p.id === projectId ? project : p)),
     }));
+
+    // Auto-sync: if .planning/ROADMAP.md exists, sync phases/tasks and set GSD tier
+    try {
+      await api.syncPlanningRoadmap(projectId, directoryPath);
+      // If sync succeeded, this is a GSD project — set tier to "full"
+      if (!project.planningTier) {
+        const updated = await api.setPlanningTier(projectId, "full");
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === projectId ? updated : p)),
+        }));
+      }
+      // Start the planning watcher for live sync
+      await api.startPlanningWatcher(projectId, directoryPath);
+    } catch {
+      // No .planning/ROADMAP.md or parse failed — not a GSD project, that's fine
+    }
   },
 });
