@@ -50,8 +50,10 @@ Exceptions: none -- Phase 17 adds no new layout or spacing. Existing spacing is 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 | 1.5 |
-| Label | 12px | 500 | 1.4 |
+| Label | 12px | 400 | 1.4 |
 | Heading | 20px | 600 | 1.2 |
+
+Two weights only: 400 (regular) for Body and Label, 600 (semibold) for Heading.
 
 Source: app.css body declaration (14px / 1.5), established codebase patterns.
 
