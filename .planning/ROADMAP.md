@@ -67,10 +67,11 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   1. TypeScript compiler reports zero errors across the entire codebase
   2. ScopeInputForm.tsx and OnboardingWaitingCard.tsx no longer exist in the source tree
   3. Clicking "Open AI" on a project without proper state shows an error toast and keeps the user on ProjectDetail (no navigation to home)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: TBD
+- [ ] 17-01-PLAN.md -- Fix TypeScript errors and remove orphaned files
+- [ ] 17-02-PLAN.md -- Diagnose and fix Open AI navigation bug
 
 ### Phase 18: UI Polish
 **Goal**: Users navigate projects intuitively and the AI button communicates the right action at every project state
@@ -154,7 +155,7 @@ Plans:
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 17. Tech Debt Cleanup | v1.3 | 0/0 | Not started | - |
+| 17. Tech Debt Cleanup | v1.3 | 0/2 | Not started | - |
 | 18. UI Polish | v1.3 | 0/0 | Not started | - |
 | 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
 | 20. Notification System | v1.3 | 0/0 | Not started | - |
