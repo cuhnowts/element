@@ -4,6 +4,7 @@ pub mod cli_commands;
 pub mod credential_commands;
 pub mod execution_commands;
 pub mod file_explorer_commands;
+pub mod notification_commands;
 pub mod onboarding_commands;
 pub mod phase_commands;
 pub mod planning_sync_commands;
