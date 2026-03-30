@@ -29,7 +29,7 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
   addEntry: (entry) =>
     set((s) => ({
       entries: [
-        { ...entry, id: crypto.randomUUID(), timestamp: Date.now() },
+        { ...entry, id: entry.id ?? crypto.randomUUID(), timestamp: Date.now() },
         ...s.entries,
       ],
     })),

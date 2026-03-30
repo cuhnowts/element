@@ -41,7 +41,7 @@ export interface AgentState {
   togglePanel: () => void;
   setActiveTab: (tab: "activity" | "terminal") => void;
   setStatus: (status: AgentStatus) => void;
-  addEntry: (entry: Omit<AgentActivityEntry, "id" | "timestamp">) => void;
+  addEntry: (entry: Omit<AgentActivityEntry, "id" | "timestamp"> & { id?: string }) => void;
   approveEntry: (entryId: string) => void;
   rejectEntry: (entryId: string) => void;
   clearEntries: () => void;
