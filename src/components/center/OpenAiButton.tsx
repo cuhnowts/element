@@ -60,8 +60,16 @@ export function OpenAiButton({
       const contextPath = await api.generateContextFile(projectId, effectiveTier);
 
       // 5. Start plan watcher only for Quick/Medium (D-09: skip GSD)
+      // Explicit try/catch prevents watcher failure from falling into the
+      // generic catch block, ensuring a descriptive toast and preventing
+      // launchTerminalCommand from executing on a broken watcher state.
       if (effectiveTier !== "full") {
-        await api.startPlanWatcher(directoryPath);
+        try {
+          await api.startPlanWatcher(directoryPath);
+        } catch {
+          toast.error("Could not start plan watcher. Please try again.");
+          return;
+        }
       }
 
       // 6. Build full command + args
