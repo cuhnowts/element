@@ -32,6 +32,8 @@ v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder 
 
 v1.3 Phase 17 complete: Zero TypeScript compiler errors, orphaned files removed, Open AI navigation bug fixed (startPlanWatcher error handling with toast).
 
+v1.3 Phase 18 complete: Sidebar left-click navigates directly, theme sections collapse with persistence, terminal is default drawer tab, AI button state machine with dynamic labels ("Plan Project"/"Check Progress"/"Open AI"), DirectoryLink on same row as AI button, task detail simplified with accordion sections.
+
 ## Requirements
 
 ### Validated
@@ -160,4 +162,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after v1.3 milestone start*
+*Last updated: 2026-03-30 after Phase 18 UI Polish completion*
