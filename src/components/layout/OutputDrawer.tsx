@@ -2,11 +2,13 @@ import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 import { LogViewer } from "@/components/output/LogViewer";
 import { ExecutionHistory } from "@/components/output/ExecutionHistory";
 import { RunHistoryList } from "@/components/output/RunHistoryList";
 import { RunHistoryDetail } from "@/components/output/RunHistoryDetail";
-import { TerminalTab } from "@/components/output/TerminalTab";
+import { TerminalPane } from "@/components/output/TerminalPane";
+import { SessionTabBar } from "@/components/output/SessionTabBar";
 import { TerminalEmptyState } from "@/components/output/TerminalEmptyState";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -19,8 +21,6 @@ export function OutputDrawer() {
 
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
-  const terminalSessionKey = useWorkspaceStore((s) => s.terminalSessionKey);
-  const terminalInitialCommand = useWorkspaceStore((s) => s.terminalInitialCommand);
 
   const selectedWorkflowId = useWorkflowStore((s) => s.selectedWorkflowId);
   const runs = useWorkflowStore((s) => s.runs);
@@ -39,6 +39,12 @@ export function OutputDrawer() {
 
   const hasWorkflow = selectedWorkflowId !== null;
 
+  const sessions = useTerminalSessionStore(
+    (s) => s.sessions[selectedProjectId ?? ""] ?? []
+  );
+  const activeSessionId = useTerminalSessionStore(
+    (s) => s.activeSessionId[selectedProjectId ?? ""] ?? null
+  );
 
   const handleLinkDirectory = async () => {
     if (!selectedProjectId) return;
@@ -61,7 +67,7 @@ export function OutputDrawer() {
         <div style={{ display: activeDrawerTab === "history" ? "block" : "none" }} className="h-full">
           <ExecutionHistory
             records={executionHistory}
-            onSelectExecution={(executionId) => {
+            onSelectExecution={(executionId: string) => {
               fetchExecutionLogs(executionId);
               setActiveDrawerTab("logs");
             }}
@@ -92,13 +98,42 @@ export function OutputDrawer() {
           ) : null}
         </div>
         <div style={{ display: activeDrawerTab === "terminal" ? "block" : "none" }} className="h-full">
-          {directoryPath ? (
-            <TerminalTab
-              key={`terminal-${selectedProjectId}-${directoryPath}-${terminalSessionKey}`}
-              cwd={directoryPath}
-              isVisible={activeDrawerTab === "terminal"}
-              initialCommand={terminalInitialCommand}
-            />
+          {directoryPath && selectedProjectId ? (
+            <div className="h-full flex flex-col">
+              <SessionTabBar
+                projectId={selectedProjectId}
+                sessions={sessions}
+                activeSessionId={activeSessionId}
+                onSwitch={(sessionId) =>
+                  useTerminalSessionStore
+                    .getState()
+                    .switchSession(selectedProjectId, sessionId)
+                }
+                onClose={(sessionId) =>
+                  useTerminalSessionStore
+                    .getState()
+                    .closeSession(selectedProjectId, sessionId)
+                }
+                onCreate={() => {
+                  const nextNum =
+                    sessions.filter((s) => s.type === "shell").length + 1;
+                  useTerminalSessionStore
+                    .getState()
+                    .createSession(
+                      selectedProjectId,
+                      `Shell ${nextNum}`,
+                      "shell"
+                    );
+                }}
+              />
+              <div className="flex-1 overflow-hidden">
+                <TerminalPane
+                  projectId={selectedProjectId}
+                  directoryPath={directoryPath}
+                  isVisible={activeDrawerTab === "terminal"}
+                />
+              </div>
+            </div>
           ) : (
             <TerminalEmptyState
               hasProject={!!selectedProjectId}
