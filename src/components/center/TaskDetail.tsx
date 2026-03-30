@@ -13,6 +13,12 @@ import { PromoteButton } from "./PromoteButton";
 import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
 import { DurationChips } from "@/components/shared/DurationChips";
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -165,16 +171,7 @@ export function TaskDetail() {
         <PromoteButton taskId={selectedTask.id} variant="button" />
       </div>
 
-      {/* Scheduling Badges - read-only display */}
-      <SchedulingBadges
-        dueDate={selectedTask.dueDate}
-        scheduledDate={selectedTask.scheduledDate}
-        scheduledTime={selectedTask.scheduledTime}
-        durationMinutes={selectedTask.durationMinutes}
-        recurrenceRule={selectedTask.recurrenceRule}
-      />
-
-      {/* Status & Priority row */}
+      {/* Status & Priority row (primary field) */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
@@ -221,82 +218,7 @@ export function TaskDetail() {
         </div>
       </div>
 
-      {/* Tags */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Tags
-        </span>
-        <div className="flex flex-wrap items-center gap-1">
-          {selectedTask.tags.map((tag) => (
-            <Badge key={tag.id} variant="secondary" className="gap-1 pr-1">
-              {tag.name}
-              <button
-                type="button"
-                onClick={() => removeTagFromTask(selectedTask.id, tag.id)}
-                className="hover:text-destructive transition-colors"
-              >
-                <X className="size-3" />
-              </button>
-            </Badge>
-          ))}
-          <Input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
-            placeholder="Add tag..."
-            className="h-6 w-24 text-xs border-none shadow-none px-1 focus-visible:ring-0 bg-transparent"
-          />
-        </div>
-      </div>
-
-      {/* Phase Assignment */}
-      {phases.length > 0 && (
-        <div>
-          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-            Phase
-          </span>
-          <Select
-            value={selectedTask.phaseId ?? "unassigned"}
-            onValueChange={(value) => {
-              const newPhaseId = value === "unassigned" ? null : value;
-              setTaskPhase(selectedTask.id, newPhaseId);
-            }}
-          >
-            <SelectTrigger className="w-48 h-8 text-sm">
-              <span className="flex flex-1 text-left truncate">
-                {selectedTask.phaseId
-                  ? phases.find((p) => p.id === selectedTask.phaseId)?.name ?? "Unknown"
-                  : "Unassigned"}
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {phases.map((phase) => (
-                <SelectItem key={phase.id} value={phase.id}>
-                  {phase.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Duration Estimate */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Duration
-        </span>
-        <DurationChips
-          value={selectedTask.durationMinutes}
-          onChange={(minutes) => {
-            if (minutes !== null) {
-              updateTask(selectedTask.id, { durationMinutes: minutes });
-            }
-          }}
-        />
-      </div>
-
-      {/* Description */}
+      {/* Description (primary field) */}
       <div>
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
           Description
@@ -309,28 +231,112 @@ export function TaskDetail() {
         />
       </div>
 
-      {/* Context */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Context
-        </span>
-        <Textarea
-          value={context}
-          onChange={(e) => handleContextChange(e.target.value)}
-          placeholder="Add context, notes, or references..."
-          className="min-h-[60px] resize-none"
-        />
-      </div>
+      {/* Secondary fields in accordion sections */}
+      <Accordion multiple className="border-t border-border">
+        <AccordionItem value="context">
+          <AccordionTrigger className="py-3 text-sm">Context</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <Textarea
+              value={context}
+              onChange={(e) => handleContextChange(e.target.value)}
+              placeholder="Add context, notes, or references..."
+              className="min-h-[60px] resize-none"
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Execution */}
-      {steps.length > 0 && (
-        <div>
-          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-            Execution
-          </span>
-          <ExecutionDiagram steps={steps} />
-        </div>
-      )}
+        <AccordionItem value="tags">
+          <AccordionTrigger className="py-3 text-sm">Tags</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4">
+            <div className="flex flex-wrap items-center gap-1">
+              {selectedTask.tags.map((tag) => (
+                <Badge key={tag.id} variant="secondary" className="gap-1 pr-1">
+                  {tag.name}
+                  <button
+                    type="button"
+                    onClick={() => removeTagFromTask(selectedTask.id, tag.id)}
+                    className="hover:text-destructive transition-colors"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              ))}
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                placeholder="Add tag..."
+                className="h-6 w-24 text-xs border-none shadow-none px-1 focus-visible:ring-0 bg-transparent"
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="scheduling">
+          <AccordionTrigger className="py-3 text-sm">Scheduling</AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4 space-y-4">
+            <SchedulingBadges
+              dueDate={selectedTask.dueDate}
+              scheduledDate={selectedTask.scheduledDate}
+              scheduledTime={selectedTask.scheduledTime}
+              durationMinutes={selectedTask.durationMinutes}
+              recurrenceRule={selectedTask.recurrenceRule}
+            />
+            <div>
+              <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
+                Duration
+              </span>
+              <DurationChips
+                value={selectedTask.durationMinutes}
+                onChange={(minutes) => {
+                  if (minutes !== null) {
+                    updateTask(selectedTask.id, { durationMinutes: minutes });
+                  }
+                }}
+              />
+            </div>
+            {phases.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
+                  Phase
+                </span>
+                <Select
+                  value={selectedTask.phaseId ?? "unassigned"}
+                  onValueChange={(value) => {
+                    const newPhaseId = value === "unassigned" ? null : value;
+                    setTaskPhase(selectedTask.id, newPhaseId);
+                  }}
+                >
+                  <SelectTrigger className="w-48 h-8 text-sm">
+                    <span className="flex flex-1 text-left truncate">
+                      {selectedTask.phaseId
+                        ? phases.find((p) => p.id === selectedTask.phaseId)?.name ?? "Unknown"
+                        : "Unassigned"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {phases.map((phase) => (
+                      <SelectItem key={phase.id} value={phase.id}>
+                        {phase.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {steps.length > 0 && (
+          <AccordionItem value="execution">
+            <AccordionTrigger className="py-3 text-sm">Execution History</AccordionTrigger>
+            <AccordionContent className="pt-2 pb-4">
+              <ExecutionDiagram steps={steps} />
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
 
       {/* Delete */}
       <div className="pt-4 border-t border-border">
