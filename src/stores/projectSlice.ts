@@ -3,6 +3,7 @@ import { api } from "../lib/tauri";
 import type { Project } from "../lib/types";
 import type { AppStore } from "./index";
 import { useWorkspaceStore } from "./useWorkspaceStore";
+import { useTerminalSessionStore } from "./useTerminalSessionStore";
 
 export interface ProjectSlice {
   projects: Project[];
@@ -35,6 +36,8 @@ export const createProjectSlice: StateCreator<
     return project;
   },
   deleteProject: async (projectId) => {
+    // Kill all terminal sessions for this project first (D-11)
+    useTerminalSessionStore.getState().removeAllForProject(projectId);
     await api.deleteProject(projectId);
     set((s) => ({
       projects: s.projects.filter((p) => p.id !== projectId),

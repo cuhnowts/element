@@ -25,9 +25,11 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
 import { SettingsPage } from "@/components/settings/SettingsPage";
+import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
 
 export function AppLayout() {
   useGlobalShortcut();
+  useTerminalCleanup();
   const settingsOpen = useStore((s) => s.settingsOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);

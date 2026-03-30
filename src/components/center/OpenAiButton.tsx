@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/tooltip";
 import { api } from "@/lib/tauri";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
+import { RefreshContextDialog } from "@/components/output/RefreshContextDialog";
 import { toast } from "sonner";
 
 export interface AiButtonState {
@@ -55,7 +57,9 @@ export function OpenAiButton({
   onTierDialogOpen,
 }: OpenAiButtonProps) {
   const [isLaunching, setIsLaunching] = useState(false);
-  const launchTerminalCommand = useWorkspaceStore((s) => s.launchTerminalCommand);
+  const [refreshDialogOpen, setRefreshDialogOpen] = useState(false);
+  const [pendingCommand, setPendingCommand] = useState<{ command: string; args: string[] } | null>(null);
+  const openTerminal = useWorkspaceStore((s) => s.openTerminal);
 
   const buttonState = getAiButtonState({
     directoryPath,
@@ -105,7 +109,7 @@ export function OpenAiButton({
       // 5. Start plan watcher only for Quick/Medium (D-09: skip GSD)
       // Explicit try/catch prevents watcher failure from falling into the
       // generic catch block, ensuring a descriptive toast and preventing
-      // launchTerminalCommand from executing on a broken watcher state.
+      // session creation from executing on a broken watcher state.
       if (effectiveTier !== "full") {
         try {
           await api.startPlanWatcher(directoryPath);
@@ -116,7 +120,7 @@ export function OpenAiButton({
       }
 
       // 6. Build full command + args
-      // Fix macOS smart-dash substitution: em-dash (—) back to double-hyphen (--)
+      // Fix macOS smart-dash substitution: em-dash (--) back to double-hyphen (--)
       const fullArgs: string[] = [];
       if (args) {
         const sanitized = args.replace(/\u2014/g, "--").replace(/\u2013/g, "-");
@@ -125,12 +129,51 @@ export function OpenAiButton({
       // Use @ prefix so Claude Code loads the file as context
       fullArgs.push(`@${contextPath}`);
 
-      launchTerminalCommand(command, fullArgs);
+      // Check for existing AI session (D-01)
+      const existingAiSession = useTerminalSessionStore.getState().findAiSession(projectId);
+      if (existingAiSession) {
+        // Store the command for after dialog resolution
+        setPendingCommand({ command, args: fullArgs });
+        setRefreshDialogOpen(true);
+        return;
+      }
+
+      // No existing AI session -- create one directly
+      const sessionName = "AI Planning";
+      useTerminalSessionStore.getState().createSession(
+        projectId, sessionName, "ai", { command, args: fullArgs }
+      );
+      openTerminal();
     } catch (e) {
       toast.error(`Failed to launch AI: ${e}`);
     } finally {
       setIsLaunching(false);
     }
+  };
+
+  const handleRefresh = () => {
+    if (!pendingCommand) return;
+    const existingAiSession = useTerminalSessionStore.getState().findAiSession(projectId);
+    if (existingAiSession) {
+      useTerminalSessionStore.getState().closeSession(projectId, existingAiSession.id);
+    }
+    const sessionName = "AI Planning";
+    useTerminalSessionStore.getState().createSession(
+      projectId, sessionName, "ai", pendingCommand
+    );
+    openTerminal();
+    setPendingCommand(null);
+    setRefreshDialogOpen(false);
+  };
+
+  const handleKeepExisting = () => {
+    const existingAiSession = useTerminalSessionStore.getState().findAiSession(projectId);
+    if (existingAiSession) {
+      useTerminalSessionStore.getState().switchSession(projectId, existingAiSession.id);
+    }
+    openTerminal();
+    setPendingCommand(null);
+    setRefreshDialogOpen(false);
   };
 
   if (buttonState.tooltip) {
@@ -162,19 +205,27 @@ export function OpenAiButton({
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleOpenAi}
-      aria-disabled={buttonState.disabled}
-      className={`gap-1.5${buttonState.disabled ? " opacity-50 cursor-not-allowed" : ""}`}
-    >
-      {buttonState.showSpinner ? (
-        <Loader2 className="size-3.5 animate-spin" />
-      ) : (
-        <Bot className="size-3.5" />
-      )}
-      {buttonState.label}
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleOpenAi}
+        aria-disabled={buttonState.disabled}
+        className={`gap-1.5${buttonState.disabled ? " opacity-50 cursor-not-allowed" : ""}`}
+      >
+        {buttonState.showSpinner ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <Bot className="size-3.5" />
+        )}
+        {buttonState.label}
+      </Button>
+      <RefreshContextDialog
+        open={refreshDialogOpen}
+        onOpenChange={setRefreshDialogOpen}
+        onRefresh={handleRefresh}
+        onKeepExisting={handleKeepExisting}
+      />
+    </>
   );
 }

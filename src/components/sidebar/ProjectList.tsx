@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/stores";
+import { SessionIndicator } from "@/components/sidebar/SessionIndicator";
 
 export function ProjectList() {
   const projects = useStore((s) => s.projects);
@@ -62,6 +63,7 @@ export function ProjectList() {
                 }
               >
                 {project.name}
+                <SessionIndicator projectId={project.id} />
                 {project.id === selectedProjectId && tasks.length > 0 && (
                   <span
                     className="ml-auto text-[11px] text-muted-foreground"
