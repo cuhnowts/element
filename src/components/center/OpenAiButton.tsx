@@ -1,9 +1,43 @@
-import { Bot } from "lucide-react";
+import { Bot, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/lib/tauri";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { toast } from "sonner";
+
+export interface AiButtonState {
+  label: "Link Directory" | "Plan Project" | "Check Progress" | "Open AI";
+  disabled: boolean;
+  tooltip: string | undefined;
+  showSpinner: boolean;
+}
+
+export function getAiButtonState(project: {
+  directoryPath: string | null;
+  planningTier: string | null;
+  hasContent: boolean;
+  isExecuting: boolean;
+}): AiButtonState {
+  if (!project.directoryPath) {
+    return { label: "Link Directory", disabled: true, tooltip: "Link a directory first", showSpinner: false };
+  }
+  if (!project.planningTier && !project.hasContent) {
+    return { label: "Plan Project", disabled: false, tooltip: undefined, showSpinner: false };
+  }
+  if (project.isExecuting) {
+    return { label: "Open AI", disabled: false, tooltip: undefined, showSpinner: true };
+  }
+  if (project.hasContent) {
+    return { label: "Check Progress", disabled: false, tooltip: undefined, showSpinner: false };
+  }
+  return { label: "Open AI", disabled: false, tooltip: undefined, showSpinner: false };
+}
 
 interface OpenAiButtonProps {
   projectId: string;
@@ -23,7 +57,16 @@ export function OpenAiButton({
   const [isLaunching, setIsLaunching] = useState(false);
   const launchTerminalCommand = useWorkspaceStore((s) => s.launchTerminalCommand);
 
+  const buttonState = getAiButtonState({
+    directoryPath,
+    planningTier,
+    hasContent,
+    isExecuting: isLaunching,
+  });
+
   const handleOpenAi = async () => {
+    if (buttonState.disabled) return;
+
     if (!directoryPath) {
       toast.error("Link a project directory first. The AI tool needs a directory to work in.");
       return;
@@ -90,16 +133,48 @@ export function OpenAiButton({
     }
   };
 
+  if (buttonState.tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenAi}
+                aria-disabled={buttonState.disabled}
+                className={`gap-1.5${buttonState.disabled ? " opacity-50 cursor-not-allowed" : ""}`}
+              />
+            }
+          >
+            {buttonState.showSpinner ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Bot className="size-3.5" />
+            )}
+            {buttonState.label}
+          </TooltipTrigger>
+          <TooltipContent>{buttonState.tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={handleOpenAi}
-      disabled={isLaunching}
-      className="gap-1.5"
+      aria-disabled={buttonState.disabled}
+      className={`gap-1.5${buttonState.disabled ? " opacity-50 cursor-not-allowed" : ""}`}
     >
-      <Bot className="size-3.5" />
-      {isLaunching ? "Launching..." : "Open AI"}
+      {buttonState.showSpinner ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : (
+        <Bot className="size-3.5" />
+      )}
+      {buttonState.label}
     </Button>
   );
 }
