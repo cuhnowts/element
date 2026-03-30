@@ -25,6 +25,13 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
       <div className="flex items-center gap-1">
         <button
           type="button"
+          onClick={() => onTabChange("terminal")}
+          className={tabClass("terminal")}
+        >
+          Terminal
+        </button>
+        <button
+          type="button"
           onClick={() => onTabChange("logs")}
           className={tabClass("logs")}
         >
@@ -36,13 +43,6 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
           className={tabClass("history")}
         >
           History
-        </button>
-        <button
-          type="button"
-          onClick={() => onTabChange("terminal")}
-          className={tabClass("terminal")}
-        >
-          Terminal
         </button>
       </div>
       <div className="flex items-center gap-2">

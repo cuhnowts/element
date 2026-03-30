@@ -73,6 +73,7 @@ export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: Them
           type="button"
           onClick={onToggle}
           className="flex-shrink-0 p-0.5"
+          aria-label={expanded ? "Collapse theme" : "Expand theme"}
         >
           {expanded ? (
             <ChevronDown className="size-4" />

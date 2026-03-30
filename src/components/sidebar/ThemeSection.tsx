@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/stores";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { ThemeHeader } from "./ThemeHeader";
 import { StandaloneTaskItem } from "./StandaloneTaskItem";
 import { MoveToThemeMenu } from "./MoveToThemeMenu";
@@ -20,7 +21,9 @@ interface ThemeSectionProps {
 }
 
 export function ThemeSection({ theme, projects, tasks, onProjectCreated }: ThemeSectionProps) {
-  const [expanded, setExpanded] = useState(true);
+  const isThemeExpanded = useWorkspaceStore((s) => s.isThemeExpanded);
+  const setThemeExpanded = useWorkspaceStore((s) => s.setThemeExpanded);
+  const expanded = isThemeExpanded(theme.id);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set()
   );
@@ -70,7 +73,7 @@ export function ThemeSection({ theme, projects, tasks, onProjectCreated }: Theme
       <ThemeHeader
         theme={theme}
         expanded={expanded}
-        onToggle={() => setExpanded(!expanded)}
+        onToggle={() => setThemeExpanded(theme.id, !expanded)}
         onCreateProject={handleCreateProject}
       />
       {expanded && (
@@ -140,6 +143,7 @@ function ProjectRow({
         type="button"
         className="flex-shrink-0 p-0.5"
         onClick={onToggle}
+        aria-label={isExpanded ? "Collapse project tasks" : "Expand project tasks"}
       >
         {isExpanded ? (
           <ChevronDown className="size-3.5" />
