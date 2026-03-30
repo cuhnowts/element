@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAgentStore } from "@/stores/useAgentStore";
+import { writeApprovalDecision } from "@/hooks/useAgentQueue";
 import { toast } from "sonner";
 import type { AgentActivityEntry } from "@/types/agent";
 
@@ -32,11 +33,19 @@ export function ApprovalRequest({ entry }: ApprovalRequestProps) {
 
   const handleApprove = () => {
     useAgentStore.getState().approveEntry(entry.id);
+    // Write decision back to queue file for MCP server to read
+    writeApprovalDecision(entry.id, "approved").catch(() => {
+      // Queue write failure is non-fatal -- store update already applied
+    });
     toast("Phase approved -- execution starting");
   };
 
   const handleReject = () => {
     useAgentStore.getState().rejectEntry(entry.id);
+    // Write decision back to queue file for MCP server to read
+    writeApprovalDecision(entry.id, "rejected").catch(() => {
+      // Queue write failure is non-fatal -- store update already applied
+    });
     toast("Phase rejected -- skipped");
   };
 

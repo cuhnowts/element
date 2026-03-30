@@ -10,6 +10,7 @@ import {
 import { api } from "@/lib/tauri";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
+import { useAgentStore } from "@/stores/useAgentStore";
 import { RefreshContextDialog } from "@/components/output/RefreshContextDialog";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ export function getAiButtonState(project: {
 
 interface OpenAiButtonProps {
   projectId: string;
+  projectName?: string;
   directoryPath: string | null;
   planningTier: string | null;
   hasContent: boolean;
@@ -51,6 +53,7 @@ interface OpenAiButtonProps {
 
 export function OpenAiButton({
   projectId,
+  projectName,
   directoryPath,
   planningTier,
   hasContent,
@@ -83,6 +86,20 @@ export function OpenAiButton({
       return;
     }
 
+    // D-12: Delegate to agent when running -- write session request to queue
+    const agentStatus = useAgentStore.getState().status;
+    if (agentStatus === "running" || agentStatus === "idle") {
+      try {
+        const { writeSessionRequest } = await import("@/hooks/useAgentQueue");
+        await writeSessionRequest(projectId, `AI: ${projectName ?? "Project"}`);
+        toast.success("Session requested -- agent is setting up context");
+      } catch (e) {
+        toast.error(`Failed to request agent session: ${e}`);
+      }
+      return;
+    }
+
+    // Fallback: if agent not running, use existing direct launch behavior
     setIsLaunching(true);
     try {
       // 1. Read CLI settings

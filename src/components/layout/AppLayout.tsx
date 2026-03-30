@@ -29,10 +29,12 @@ import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
 import { AgentPanel } from "@/components/agent/AgentPanel";
 import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
 import { useAgentStore } from "@/stores/useAgentStore";
+import { useAgentQueue } from "@/hooks/useAgentQueue";
 
 export function AppLayout() {
   useGlobalShortcut();
   useTerminalCleanup();
+  useAgentQueue();
   const settingsOpen = useStore((s) => s.settingsOpen);
   const agentPanelOpen = useAgentStore((s) => s.panelOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
