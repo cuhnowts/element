@@ -144,6 +144,37 @@ describe("OpenAiButton", () => {
     it.todo("regenerates context file after plan confirmation");
   });
 
+  // ROOT CAUSE (17-02 diagnosis): startPlanWatcher rejection falls into the
+  // generic catch block ("Failed to launch AI: ...") instead of a specific
+  // error message, and there is no explicit guard preventing launchTerminalCommand
+  // from being called if startPlanWatcher were to resolve but signal an error.
+  // The navigation-to-home bug occurs because the generic catch path does not
+  // provide actionable guidance to the user, and in edge cases (non-Error
+  // rejections) could swallow the error entirely. The fix adds an explicit
+  // try/catch around startPlanWatcher with a descriptive toast message.
+  it("does not navigate away when startPlanWatcher fails and shows descriptive error", async () => {
+    const user = userEvent.setup();
+    mockGetAppSetting.mockImplementation((key: string) =>
+      Promise.resolve(key === "cli_command" ? "claude" : null)
+    );
+    mockValidateCliTool.mockResolvedValue(true);
+    mockGenerateContextFile.mockResolvedValue("/path/.element/context.md");
+    mockStartPlanWatcher.mockRejectedValue(new Error("Watcher failed"));
+
+    render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
+
+    await user.click(screen.getByRole("button", { name: /open ai/i }));
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith(
+        "Could not start plan watcher. Please try again."
+      );
+    });
+    // The key assertion: launchTerminalCommand must NOT be called
+    // when startPlanWatcher fails
+    expect(mockLaunchTerminalCommand).not.toHaveBeenCalled();
+  });
+
   it("shows error toast on generateContextFile failure", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>
