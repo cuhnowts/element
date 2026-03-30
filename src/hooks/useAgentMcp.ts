@@ -1,0 +1,89 @@
+import { useCallback } from "react";
+import { appDataDir, resolveResource } from "@tauri-apps/api/path";
+import { invoke } from "@tauri-apps/api/core";
+
+export function useAgentMcp() {
+  const ensureDir = useCallback(async (dirPath: string) => {
+    // Use Tauri's invoke to create directory -- falls back silently if exists
+    await invoke("plugin:fs|mkdir", { path: dirPath, options: { recursive: true } }).catch(() => {
+      // Directory may already exist
+    });
+  }, []);
+
+  const writeFile = useCallback(async (filePath: string, content: string) => {
+    await invoke("plugin:fs|write_text_file", { path: filePath, contents: content });
+  }, []);
+
+  const generateMcpConfig = useCallback(
+    async (dbPath: string): Promise<string> => {
+      const dataDir = await appDataDir();
+      const agentDir = `${dataDir}/agent`;
+
+      await ensureDir(agentDir);
+
+      // Resolve the MCP server bundle path
+      const mcpServerPath = await resolveResource(
+        "mcp-server/dist/index.js"
+      );
+
+      const config = {
+        mcpServers: {
+          element: {
+            type: "stdio",
+            command: "node",
+            args: [mcpServerPath, dbPath],
+          },
+        },
+      };
+
+      const configPath = `${agentDir}/mcp-config.json`;
+      await writeFile(configPath, JSON.stringify(config, null, 2));
+      return configPath;
+    },
+    [ensureDir, writeFile]
+  );
+
+  const generateSystemPrompt = useCallback(async (): Promise<string> => {
+    const dataDir = await appDataDir();
+    const agentDir = `${dataDir}/agent`;
+
+    await ensureDir(agentDir);
+
+    const promptContent = `You are Element's central AI agent. You manage work across all projects.
+
+## Your Tools
+You have MCP tools to read project state and orchestrate work:
+- list_projects: See all projects and their current state
+- get_project_detail: Get detailed info about a specific project
+- list_phases: Get phases for a project
+- get_phase_status: Check phase completion status
+- list_tasks: Get tasks for a project/phase
+- request_approval: Ask the user to approve phase execution
+- check_approval_status: Poll for approval decision
+- report_status: Signal completion, failure, or blocked state
+- send_notification: Trigger a user notification
+- spawn_project_session: Create a named terminal for a project
+
+## Operating Mode
+You run in APPROVE-ONLY mode:
+1. Scan projects for phases ready to execute
+2. A phase is "ready" when all prior phases are complete and no human blockers exist
+3. Call request_approval before executing any phase
+4. Wait for approval via check_approval_status
+5. On approval, proceed with execution
+6. On rejection, skip and move to next candidate
+7. Report status after each action
+
+## Rules
+- NEVER execute without approval
+- ALWAYS use report_status to signal outcomes
+- If you encounter an error, report it and wait for instructions
+- Be concise in activity log messages`;
+
+    const promptPath = `${agentDir}/AGENT.md`;
+    await writeFile(promptPath, promptContent);
+    return promptPath;
+  }, [ensureDir, writeFile]);
+
+  return { generateMcpConfig, generateSystemPrompt };
+}

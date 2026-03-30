@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { invoke } from "@tauri-apps/api/core";
 
 // Hoist all mocks so they're available in vi.mock factories
 const {
@@ -10,8 +11,6 @@ const {
   mockIncrementRestart,
   mockResetRestartCount,
   mockAppDataDir,
-  mockWriteTextFile,
-  mockMkdir,
   mockResolveResource,
 } = vi.hoisted(() => ({
   mockGetAppSetting: vi.fn(),
@@ -21,8 +20,6 @@ const {
   mockIncrementRestart: vi.fn(),
   mockResetRestartCount: vi.fn(),
   mockAppDataDir: vi.fn(),
-  mockWriteTextFile: vi.fn(),
-  mockMkdir: vi.fn(),
   mockResolveResource: vi.fn(),
 }));
 
@@ -67,21 +64,15 @@ vi.mock("@tauri-apps/api/path", () => ({
   resolveResource: (...args: unknown[]) => mockResolveResource(...args),
 }));
 
-vi.mock("@tauri-apps/plugin-fs", () => ({
-  writeTextFile: (...args: unknown[]) => mockWriteTextFile(...args),
-  mkdir: (...args: unknown[]) => mockMkdir(...args),
-  BaseDirectory: { AppData: 0 },
-}));
-
 describe("useAgentLifecycle", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockRestartCount = 0;
     mockAppDataDir.mockResolvedValue("/mock/app-data");
-    mockWriteTextFile.mockResolvedValue(undefined);
-    mockMkdir.mockResolvedValue(undefined);
     mockResolveResource.mockResolvedValue("/mock/resources/mcp-server/dist/index.js");
+    // invoke is globally mocked in setup.ts, just ensure it resolves
+    vi.mocked(invoke).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -213,9 +204,8 @@ describe("useAgentMcp", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAppDataDir.mockResolvedValue("/mock/app-data");
-    mockWriteTextFile.mockResolvedValue(undefined);
-    mockMkdir.mockResolvedValue(undefined);
     mockResolveResource.mockResolvedValue("/mock/resources/mcp-server/dist/index.js");
+    vi.mocked(invoke).mockResolvedValue(undefined);
   });
 
   it("generateMcpConfig produces JSON with mcpServers.element pointing to mcp-server/dist/index.js", async () => {
@@ -228,11 +218,16 @@ describe("useAgentMcp", () => {
     });
 
     expect(configPath).toContain("mcp-config.json");
-    expect(mockWriteTextFile).toHaveBeenCalled();
+
+    // Find the invoke call that wrote the config file
+    const writeCall = vi.mocked(invoke).mock.calls.find(
+      (call) => call[0] === "plugin:fs|write_text_file"
+    );
+    expect(writeCall).toBeDefined();
 
     // Verify the written JSON content
-    const writtenContent = mockWriteTextFile.mock.calls[0][1];
-    const config = JSON.parse(writtenContent);
+    const args = writeCall![1] as { path: string; contents: string };
+    const config = JSON.parse(args.contents);
     expect(config.mcpServers).toBeDefined();
     expect(config.mcpServers.element).toBeDefined();
     expect(config.mcpServers.element.command).toBe("node");
