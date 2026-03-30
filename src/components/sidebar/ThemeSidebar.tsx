@@ -18,11 +18,12 @@ import { useStore } from "@/stores";
 import { ThemeSection } from "./ThemeSection";
 import { UncategorizedSection } from "./UncategorizedSection";
 import { CreateThemeDialog } from "./CreateThemeDialog";
-import type { Theme } from "@/lib/types";
+import type { Theme, Task } from "@/lib/types";
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 
 type DragHandleProps = {
-  attributes: Record<string, unknown>;
-  listeners: Record<string, unknown> | undefined;
+  attributes: DraggableAttributes;
+  listeners: DraggableSyntheticListeners;
 };
 
 const DragHandleContext = createContext<DragHandleProps | null>(null);

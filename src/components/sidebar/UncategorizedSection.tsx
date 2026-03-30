@@ -9,7 +9,7 @@ import {
 import { useStore } from "@/stores";
 import { StandaloneTaskItem } from "./StandaloneTaskItem";
 import { MoveToThemeMenu } from "./MoveToThemeMenu";
-import type { Project, Task } from "@/lib/types";
+import type { Project, Task, Theme } from "@/lib/types";
 
 interface UncategorizedSectionProps {
   projects: Project[];
@@ -120,7 +120,7 @@ function UncategorizedProjectRow({
   isExpanded: boolean;
   onToggle: () => void;
   onSelect: () => void;
-  themes: { id: string; name: string; color: string }[];
+  themes: Theme[];
   onMoveToTheme: (themeId: string | null) => void;
   onDelete: () => void;
 }) {
