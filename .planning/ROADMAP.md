@@ -83,11 +83,13 @@ Plans:
   3. Task detail view displays essential fields with less visual clutter than the current layout
   4. The AI button label reads "Plan Project" when no plan exists, "Check Progress" when planned, and "Open AI" as fallback -- with the "Link Directory" control on the same line
   5. Terminal tab is the first and default-selected tab in the output drawer
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 18-01: TBD
+- [ ] 18-01-PLAN.md -- Sidebar click behavior, theme collapse persistence, drawer tab reorder
+- [ ] 18-02-PLAN.md -- AI button state machine and DirectoryLink layout merge
+- [ ] 18-03-PLAN.md -- Task detail accordion simplification
 
 ### Phase 19: Multi-Terminal Sessions
 **Goal**: Users can run multiple concurrent terminal sessions per project without losing existing sessions
@@ -155,8 +157,8 @@ Plans:
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 17. Tech Debt Cleanup | v1.3 | 0/2 | Not started | - |
-| 18. UI Polish | v1.3 | 0/0 | Not started | - |
+| 17. Tech Debt Cleanup | v1.3 | 0/2 | Planned    |  |
+| 18. UI Polish | v1.3 | 0/3 | Planned | - |
 | 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
 | 20. Notification System | v1.3 | 0/0 | Not started | - |
 | 21. Central AI Agent | v1.3 | 0/0 | Not started | - |
@@ -167,7 +169,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/4 plans executed
+**Plans:** 0/2 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
