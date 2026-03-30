@@ -40,7 +40,84 @@ vi.mock("@/stores/useWorkspaceStore", () => ({
     selector({ launchTerminalCommand: mockLaunchTerminalCommand }),
 }));
 
-import { OpenAiButton } from "./OpenAiButton";
+import { OpenAiButton, getAiButtonState } from "./OpenAiButton";
+
+describe("getAiButtonState", () => {
+  it("returns 'Link Directory' disabled with tooltip when no directory linked", () => {
+    const result = getAiButtonState({
+      directoryPath: null,
+      planningTier: null,
+      hasContent: false,
+      isExecuting: false,
+    });
+    expect(result).toEqual({
+      label: "Link Directory",
+      disabled: true,
+      tooltip: "Link a directory first",
+      showSpinner: false,
+    });
+  });
+
+  it("returns 'Plan Project' when directory exists but no tier and no content", () => {
+    const result = getAiButtonState({
+      directoryPath: "/some/path",
+      planningTier: null,
+      hasContent: false,
+      isExecuting: false,
+    });
+    expect(result).toEqual({
+      label: "Plan Project",
+      disabled: false,
+      tooltip: undefined,
+      showSpinner: false,
+    });
+  });
+
+  it("returns 'Check Progress' when project has content", () => {
+    const result = getAiButtonState({
+      directoryPath: "/some/path",
+      planningTier: "quick",
+      hasContent: true,
+      isExecuting: false,
+    });
+    expect(result).toEqual({
+      label: "Check Progress",
+      disabled: false,
+      tooltip: undefined,
+      showSpinner: false,
+    });
+  });
+
+  it("returns 'Open AI' with spinner when executing", () => {
+    const result = getAiButtonState({
+      directoryPath: "/some/path",
+      planningTier: "quick",
+      hasContent: true,
+      isExecuting: true,
+    });
+    expect(result).toEqual({
+      label: "Open AI",
+      disabled: false,
+      tooltip: undefined,
+      showSpinner: true,
+    });
+  });
+
+  it("returns 'Open AI' as fallback when directory and tier exist but no content", () => {
+    const result = getAiButtonState({
+      directoryPath: "/some/path",
+      planningTier: "quick",
+      hasContent: false,
+      isExecuting: false,
+    });
+    expect(result).toEqual({
+      label: "Open AI",
+      disabled: false,
+      tooltip: undefined,
+      showSpinner: false,
+    });
+  });
+});
 
 const defaultProps = {
   projectId: "proj-1",
@@ -56,16 +133,18 @@ describe("OpenAiButton", () => {
     defaultProps.onTierDialogOpen = vi.fn();
   });
 
-  it("shows error toast when no directory linked", async () => {
+  it("shows disabled button with 'Link Directory' label when no directory linked", async () => {
     const user = userEvent.setup();
     render(<OpenAiButton {...defaultProps} directoryPath={null} />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    const button = screen.getByRole("button", { name: /link directory/i });
+    expect(button).toHaveAttribute("aria-disabled", "true");
 
-    expect(mockToast.error).toHaveBeenCalledWith(
-      expect.stringContaining("Link a project directory")
-    );
+    await user.click(button);
+
+    // Click is silently prevented via aria-disabled guard
     expect(mockGenerateContextFile).not.toHaveBeenCalled();
+    expect(mockGetAppSetting).not.toHaveBeenCalled();
   });
 
   it("shows error toast when no CLI tool configured", async () => {
@@ -74,7 +153,7 @@ describe("OpenAiButton", () => {
 
     render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    await user.click(screen.getByRole("button", { name: /check progress/i }));
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -93,7 +172,7 @@ describe("OpenAiButton", () => {
 
     render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    await user.click(screen.getByRole("button", { name: /check progress/i }));
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -116,7 +195,7 @@ describe("OpenAiButton", () => {
 
     render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    await user.click(screen.getByRole("button", { name: /check progress/i }));
 
     await waitFor(() => {
       expect(mockValidateCliTool).toHaveBeenCalledWith("claude");
@@ -163,7 +242,7 @@ describe("OpenAiButton", () => {
 
     render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    await user.click(screen.getByRole("button", { name: /check progress/i }));
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
@@ -185,7 +264,7 @@ describe("OpenAiButton", () => {
 
     render(<OpenAiButton {...defaultProps} directoryPath="/some/dir" />);
 
-    await user.click(screen.getByRole("button", { name: /open ai/i }));
+    await user.click(screen.getByRole("button", { name: /check progress/i }));
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalled();
