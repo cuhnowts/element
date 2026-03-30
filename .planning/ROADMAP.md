@@ -115,11 +115,12 @@ Plans:
   1. Critical events trigger OS-native desktop notifications (visible even when app is not focused)
   2. In-app notification center shows a history of notifications with priority tiers (critical / informational / silent)
   3. Notification system exposes an event-driven API that the central agent can invoke (not tied to individual UI actions)
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 20-01: TBD
+- [ ] 20-01-PLAN.md -- Notification backend: SQLite persistence, Rust commands, OS-native plugin, event bus API
+- [ ] 20-02-PLAN.md -- Notification frontend: Zustand slice, event hook, bell icon with popover UI, DrawerHeader integration
 
 ### Phase 21: Central AI Agent
 **Goal**: A background AI orchestrator reads project state, auto-executes safe actions, and notifies when human input is needed
@@ -160,7 +161,7 @@ Plans:
 | 17. Tech Debt Cleanup | v1.3 | 0/2 | Planned    |  |
 | 18. UI Polish | v1.3 | 0/3 | Planned | - |
 | 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
-| 20. Notification System | v1.3 | 0/0 | Not started | - |
+| 20. Notification System | v1.3 | 0/2 | Not started | - |
 | 21. Central AI Agent | v1.3 | 0/0 | Not started | - |
 
 ## Backlog
