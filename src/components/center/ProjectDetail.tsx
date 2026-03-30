@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 import { DirectoryLink } from "./DirectoryLink";
 import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
@@ -170,7 +171,7 @@ export function ProjectDetail() {
     prevStepRef.current = onboardingStep;
   }, [onboardingStep, loadProjects, loadPhases, loadTasks, selectedProjectId]);
 
-  const launchTerminalCommand = useWorkspaceStore((s) => s.launchTerminalCommand);
+  const openTerminal = useWorkspaceStore((s) => s.openTerminal);
 
   if (!project) return null;
 
@@ -214,12 +215,15 @@ export function ProjectDetail() {
         await api.startPlanWatcher(project.directoryPath);
       }
 
-      // 6. Launch terminal with context file
+      // 6. Launch terminal with context file via session store
       const fullArgs: string[] = [];
       if (args) fullArgs.push(args.trim());
       fullArgs.push("--");
       fullArgs.push(contextPath);
-      launchTerminalCommand(command, fullArgs);
+      useTerminalSessionStore.getState().createSession(
+        project.id, "AI Planning", "ai", { command, args: fullArgs }
+      );
+      openTerminal();
 
       // 7. Close dialog
       setShowTierDialog(false);
