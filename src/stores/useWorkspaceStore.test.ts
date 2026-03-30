@@ -17,7 +17,7 @@ describe("useWorkspaceStore per-project state", () => {
     expect(state).toEqual({
       centerTab: "detail",
       drawerOpen: true,
-      drawerTab: "logs",
+      drawerTab: "terminal",
     });
   });
 

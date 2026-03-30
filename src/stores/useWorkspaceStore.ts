@@ -12,7 +12,7 @@ export interface ProjectWorkspaceState {
 const DEFAULT_PROJECT_STATE: ProjectWorkspaceState = {
   centerTab: "detail",
   drawerOpen: true,
-  drawerTab: "logs",
+  drawerTab: "terminal",
 };
 
 interface WorkspaceState {
@@ -20,6 +20,11 @@ interface WorkspaceState {
   drawerOpen: boolean;
   calendarVisible: boolean;
   selectedTaskId: string | null;
+
+  // Theme collapse state (persisted)
+  themeCollapseState: Record<string, boolean>;
+  setThemeExpanded: (themeId: string, expanded: boolean) => void;
+  isThemeExpanded: (themeId: string) => boolean;
 
   // Terminal/drawer tab state
   activeDrawerTab: DrawerTab;
@@ -57,8 +62,20 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       drawerOpen: true,
       calendarVisible: true,
       selectedTaskId: null,
-      activeDrawerTab: "logs" as DrawerTab,
+      activeDrawerTab: "terminal" as DrawerTab,
       hasAutoOpenedTerminal: false,
+
+      // Theme collapse state (persisted)
+      themeCollapseState: {},
+      setThemeExpanded: (themeId: string, expanded: boolean) => {
+        set((s) => ({
+          themeCollapseState: { ...s.themeCollapseState, [themeId]: expanded },
+        }));
+      },
+      isThemeExpanded: (themeId: string): boolean => {
+        const state = get().themeCollapseState[themeId];
+        return state === undefined ? true : state;
+      },
 
       // Per-project workspace state (session-only)
       projectStates: {},
@@ -137,6 +154,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         drawerHeight: state.drawerHeight,
         drawerOpen: state.drawerOpen,
         calendarVisible: state.calendarVisible,
+        themeCollapseState: state.themeCollapseState,
         // Do NOT persist selectedTaskId -- task may not exist on next launch
         // Do NOT persist activeDrawerTab or hasAutoOpenedTerminal -- session-only state
         // Do NOT persist projectStates, terminalSessionKey, terminalInitialCommand -- session-only (D-14)
