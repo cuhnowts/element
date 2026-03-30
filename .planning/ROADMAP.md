@@ -134,10 +134,14 @@ Plans:
   3. Clicking "Open AI" on a project causes the central agent to seed context into the project-specific AI session
   4. The agent auto-executes phases with no human blockers in approve-only mode (user must confirm before execution proceeds)
   5. When human input is needed (verification, decisions), a notification appears through the notification system
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 21-01: TBD
+- [ ] 21-01-PLAN.md -- MCP server sub-project: Node.js sidecar with read tools and orchestration tools
+- [ ] 21-02-PLAN.md -- Agent types and Zustand store with activity log and approval flow
+- [ ] 21-03-PLAN.md -- Agent lifecycle hooks, UI panel components, and AppLayout integration
+- [ ] 21-04-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
+- [ ] 21-05-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
 
 ## Progress
 
@@ -164,7 +168,7 @@ Plans:
 | 18. UI Polish | v1.3 | 0/3 | Planned    |  |
 | 19. Multi-Terminal Sessions | v1.3 | 0/3 | Planned | - |
 | 20. Notification System | v1.3 | 0/2 | Not started | - |
-| 21. Central AI Agent | v1.3 | 0/0 | Not started | - |
+| 21. Central AI Agent | v1.3 | 0/5 | Planned | - |
 
 ## Backlog
 
