@@ -51,7 +51,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 **Milestone Goal:** Fix accumulated tech debt, improve UI intuitiveness, add multi-terminal sessions, and lay groundwork for an AI orchestration layer that auto-executes phases and notifies on human-needed items.
 
-- [ ] **Phase 17: Tech Debt Cleanup** - Fix TS errors, remove orphaned files, resolve Open AI navigation bug
+- [x] **Phase 17: Tech Debt Cleanup** - Fix TS errors, remove orphaned files, resolve Open AI navigation bug (completed 2026-03-30)
 - [ ] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button
 - [ ] **Phase 19: Multi-Terminal Sessions** - Per-project terminal isolation, named sessions, tab management
 - [ ] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy
@@ -158,7 +158,7 @@ Plans:
 | 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 17. Tech Debt Cleanup | v1.3 | 0/2 | Planned    |  |
+| 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
 | 18. UI Polish | v1.3 | 0/3 | Planned | - |
 | 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
 | 20. Notification System | v1.3 | 0/2 | Not started | - |
@@ -170,7 +170,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Foundation & Execution
-status: planning
-stopped_at: Phase 21 UI-SPEC approved
-last_updated: "2026-03-29T23:38:20.302Z"
-last_activity: 2026-03-29 -- Roadmap created for v1.3
+status: Ready to plan
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-03-30T01:08:27.541Z"
 progress:
   total_phases: 11
-  completed_phases: 0
-  total_plans: 1
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 2
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** The workflow engine must reliably define, organize, schedule, and monitor workflows -- everything else builds on top of it.
-**Current focus:** Phase 17 -- Tech Debt Cleanup
+**Current focus:** Phase 17 — tech-debt-cleanup
 
 ## Current Position
 
-Phase: 17 of 21 (Tech Debt Cleanup)
+Phase: 18
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-29 -- Roadmap created for v1.3
-
-Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -61,6 +55,8 @@ Recent decisions affecting current work:
 - [v1.3 roadmap]: Notifications must precede agent -- agent drives notifications
 - [v1.3 roadmap]: Agent ships in approve-only mode -- cost controls are a launch blocker
 - [v1.3 research]: xterm.js instance cap at 5 total to manage memory (~34MB per instance)
+- [Phase 17]: Use proper @dnd-kit/core type imports instead of Record approximations for type safety
+- [Phase 17]: Explicit try/catch around startPlanWatcher with early return rather than relying on outer generic catch
 
 ### Pending Todos
 
@@ -75,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T23:38:20.300Z
-Stopped at: Phase 21 UI-SPEC approved
-Resume file: .planning/phases/21-central-ai-agent/21-UI-SPEC.md
+Last session: 2026-03-30T01:05:06.531Z
+Stopped at: Completed 17-02-PLAN.md
+Resume file: None
