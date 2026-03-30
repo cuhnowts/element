@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useAgentStore } from "@/stores/useAgentStore";
 
 export function useKeyboardShortcuts() {
   const toggleCommandPalette = useStore((s) => s.toggleCommandPalette);
@@ -21,6 +22,7 @@ export function useKeyboardShortcuts() {
   const openTerminal = useWorkspaceStore((s) => s.openTerminal);
   const workspaceSelectTask = useWorkspaceStore((s) => s.selectTask);
   const workspaceSelectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
+  const toggleAgentPanel = useAgentStore((s) => s.togglePanel);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -45,6 +47,13 @@ export function useKeyboardShortcuts() {
           // Drawer is closed or on different tab -> open to terminal
           openTerminal();
         }
+        return;
+      }
+
+      // Cmd+Shift+A: toggle agent panel
+      if (meta && e.shiftKey && e.key === "A") {
+        e.preventDefault();
+        toggleAgentPanel();
         return;
       }
 
@@ -133,5 +142,6 @@ export function useKeyboardShortcuts() {
     openTerminal,
     workspaceSelectTask,
     workspaceSelectedTaskId,
+    toggleAgentPanel,
   ]);
 }
