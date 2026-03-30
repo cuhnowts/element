@@ -34,6 +34,8 @@ v1.3 Phase 17 complete: Zero TypeScript compiler errors, orphaned files removed,
 
 v1.3 Phase 18 complete: Sidebar left-click navigates directly, theme sections collapse with persistence, terminal is default drawer tab, AI button state machine with dynamic labels ("Plan Project"/"Check Progress"/"Open AI"), DirectoryLink on same row as AI button, task detail simplified with accordion sections.
 
+v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, named tabs (SessionTabBar), mount-all/show-one rendering for scroll preservation, graceful PTY cleanup (SIGTERM+3s+SIGKILL), refresh AI context dialog, sidebar session indicator, app-quit cleanup hook.
+
 ## Requirements
 
 ### Validated
@@ -162,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after Phase 18 UI Polish completion*
+*Last updated: 2026-03-30 after Phase 19 Multi-Terminal Sessions completion*
