@@ -38,11 +38,6 @@ interface WorkspaceState {
   saveCurrentProjectState: (projectId: string) => void;
   restoreProjectState: (projectId: string) => void;
 
-  // Terminal kill/respawn support (D-02)
-  terminalSessionKey: number;
-  terminalInitialCommand: { command: string; args: string[] } | null;
-  launchTerminalCommand: (command: string, args: string[]) => void;
-
   setDrawerHeight: (height: number) => void;
   toggleDrawer: () => void;
   toggleCalendar: () => void;
@@ -126,18 +121,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         });
       },
 
-      // Terminal kill/respawn (D-02)
-      terminalSessionKey: 0,
-      terminalInitialCommand: null,
-      launchTerminalCommand: (command: string, args: string[]) => {
-        set((s) => ({
-          terminalInitialCommand: { command, args },
-          terminalSessionKey: s.terminalSessionKey + 1,
-          drawerOpen: true,
-          activeDrawerTab: "terminal" as DrawerTab,
-        }));
-      },
-
       setDrawerHeight: (height) => set({ drawerHeight: height }),
       toggleDrawer: () => set((s) => ({ drawerOpen: !s.drawerOpen })),
       toggleCalendar: () => set((s) => ({ calendarVisible: !s.calendarVisible })),
@@ -157,7 +140,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         themeCollapseState: state.themeCollapseState,
         // Do NOT persist selectedTaskId -- task may not exist on next launch
         // Do NOT persist activeDrawerTab or hasAutoOpenedTerminal -- session-only state
-        // Do NOT persist projectStates, terminalSessionKey, terminalInitialCommand -- session-only (D-14)
+        // Do NOT persist projectStates -- session-only (D-14)
       }),
     }
   )

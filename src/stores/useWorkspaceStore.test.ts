@@ -5,8 +5,6 @@ describe("useWorkspaceStore per-project state", () => {
   beforeEach(() => {
     useWorkspaceStore.setState({
       projectStates: {},
-      terminalSessionKey: 0,
-      terminalInitialCommand: null,
       drawerOpen: true,
       activeDrawerTab: "logs",
     });
@@ -35,21 +33,6 @@ describe("useWorkspaceStore per-project state", () => {
     expect(useWorkspaceStore.getState().getProjectState("proj-2").centerTab).toBe("detail");
   });
 
-  it("launchTerminalCommand increments session key and stores command", () => {
-    expect(useWorkspaceStore.getState().terminalSessionKey).toBe(0);
-
-    useWorkspaceStore.getState().launchTerminalCommand("claude", ["context.md"]);
-
-    const state = useWorkspaceStore.getState();
-    expect(state.terminalSessionKey).toBe(1);
-    expect(state.terminalInitialCommand).toEqual({
-      command: "claude",
-      args: ["context.md"],
-    });
-    expect(state.drawerOpen).toBe(true);
-    expect(state.activeDrawerTab).toBe("terminal");
-  });
-
   it("projectStates is not in partialize (session-only)", () => {
     // Set some project state
     useWorkspaceStore.getState().setProjectCenterTab("proj-1", "files");
@@ -62,8 +45,6 @@ describe("useWorkspaceStore per-project state", () => {
 
     // Session-only fields must NOT appear in persisted output
     expect(persisted).not.toHaveProperty("projectStates");
-    expect(persisted).not.toHaveProperty("terminalSessionKey");
-    expect(persisted).not.toHaveProperty("terminalInitialCommand");
 
     // Persisted fields should still be present
     expect(persisted).toHaveProperty("drawerHeight");

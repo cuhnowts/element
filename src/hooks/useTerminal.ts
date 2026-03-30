@@ -10,7 +10,12 @@ export function useTerminal(
   cwd: string | null,
   isVisible: boolean,
   initialCommand?: { command: string; args: string[] } | null
-): { isReady: boolean; error: string | null } {
+): {
+  isReady: boolean;
+  error: string | null;
+  ptyRef: React.RefObject<ReturnType<typeof spawn> | null>;
+  termRef: React.RefObject<Terminal | null>;
+} {
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const ptyRef = useRef<ReturnType<typeof spawn> | null>(null);
@@ -151,5 +156,5 @@ export function useTerminal(
     }
   }, [isVisible]);
 
-  return { isReady, error };
+  return { isReady, error, ptyRef, termRef };
 }
