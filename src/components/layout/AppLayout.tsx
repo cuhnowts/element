@@ -26,11 +26,15 @@ import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
+import { AgentPanel } from "@/components/agent/AgentPanel";
+import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
+import { useAgentStore } from "@/stores/useAgentStore";
 
 export function AppLayout() {
   useGlobalShortcut();
   useTerminalCleanup();
   const settingsOpen = useStore((s) => s.settingsOpen);
+  const agentPanelOpen = useAgentStore((s) => s.panelOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
@@ -127,7 +131,8 @@ export function AppLayout() {
             <SettingsPage />
           </div>
         ) : (
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-row overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden">
             <ResizablePanelGroup direction="vertical" className="flex-1">
               <ResizablePanel
                 defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
@@ -157,6 +162,7 @@ export function AppLayout() {
                         Clear Logs
                       </Button>
                     )}
+                    <AgentToggleButton />
                   </div>
                 </div>
               </ResizableHandle>
@@ -171,6 +177,8 @@ export function AppLayout() {
                 <OutputDrawer />
               </ResizablePanel>
             </ResizablePanelGroup>
+            </div>
+            {agentPanelOpen && <AgentPanel />}
           </div>
         )}
       </div>
