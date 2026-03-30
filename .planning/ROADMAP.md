@@ -105,7 +105,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 19-01-PLAN.md -- Session store, unit tests, workspace store cleanup, useTerminal refactor
+- [x] 19-01-PLAN.md -- Session store, unit tests, workspace store cleanup, useTerminal refactor
 - [ ] 19-02-PLAN.md -- Terminal UI components: SessionTabBar, TerminalSession, TerminalPane, RefreshContextDialog, OutputDrawer refactor
 - [ ] 19-03-PLAN.md -- Integration: OpenAiButton session-aware launch, project delete cleanup, sidebar indicator, app quit hook
 
@@ -167,7 +167,7 @@ Plans:
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
 | 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
-| 19. Multi-Terminal Sessions | v1.3 | 0/3 | Planned    |  |
+| 19. Multi-Terminal Sessions | v1.3 | 1/3 | In Progress|  |
 | 20. Notification System | v1.3 | 0/2 | Planned    |  |
 | 21. Central AI Agent | v1.3 | 0/6 | Planned | - |
 
@@ -177,7 +177,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/3 plans executed
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
