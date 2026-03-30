@@ -101,11 +101,13 @@ Plans:
   3. Clicking "Open AI" creates a new named terminal session without killing any existing session
   4. Closing a terminal tab kills the PTY process cleanly (no zombie processes remain after 5 seconds)
   5. User can switch between active terminal sessions within a project using the tab bar
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 19-01: TBD
+- [ ] 19-01-PLAN.md -- Session store, unit tests, workspace store cleanup, useTerminal refactor
+- [ ] 19-02-PLAN.md -- Terminal UI components: SessionTabBar, TerminalSession, TerminalPane, RefreshContextDialog, OutputDrawer refactor
+- [ ] 19-03-PLAN.md -- Integration: OpenAiButton session-aware launch, project delete cleanup, sidebar indicator, app quit hook
 
 ### Phase 20: Notification System
 **Goal**: The app can surface critical events to the user through both OS-native and in-app channels
@@ -159,8 +161,8 @@ Plans:
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
-| 18. UI Polish | v1.3 | 0/3 | Planned | - |
-| 19. Multi-Terminal Sessions | v1.3 | 0/0 | Not started | - |
+| 18. UI Polish | v1.3 | 0/3 | Planned    |  |
+| 19. Multi-Terminal Sessions | v1.3 | 0/3 | Planned | - |
 | 20. Notification System | v1.3 | 0/2 | Not started | - |
 | 21. Central AI Agent | v1.3 | 0/0 | Not started | - |
 
@@ -170,7 +172,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/2 plans complete
+**Plans:** 0/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
