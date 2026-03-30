@@ -9,7 +9,9 @@ const {
   mockValidateCliTool,
   mockGenerateContextFile,
   mockStartPlanWatcher,
-  mockLaunchTerminalCommand,
+  mockOpenTerminal,
+  mockCreateSession,
+  mockFindAiSession,
 } = vi.hoisted(() => {
   const mockToast = Object.assign(vi.fn(), { error: vi.fn() });
   return {
@@ -18,7 +20,9 @@ const {
     mockValidateCliTool: vi.fn(),
     mockGenerateContextFile: vi.fn(),
     mockStartPlanWatcher: vi.fn(),
-    mockLaunchTerminalCommand: vi.fn(),
+    mockOpenTerminal: vi.fn(),
+    mockCreateSession: vi.fn(),
+    mockFindAiSession: vi.fn().mockReturnValue(null),
   };
 });
 
@@ -37,7 +41,24 @@ vi.mock("@/lib/tauri", () => ({
 
 vi.mock("@/stores/useWorkspaceStore", () => ({
   useWorkspaceStore: (selector: (s: Record<string, unknown>) => unknown) =>
-    selector({ launchTerminalCommand: mockLaunchTerminalCommand }),
+    selector({ openTerminal: mockOpenTerminal }),
+}));
+
+vi.mock("@/stores/useTerminalSessionStore", () => ({
+  useTerminalSessionStore: Object.assign(
+    (selector: (s: Record<string, unknown>) => unknown) =>
+      selector({ createSession: mockCreateSession, findAiSession: mockFindAiSession }),
+    {
+      getState: () => ({
+        createSession: mockCreateSession,
+        findAiSession: mockFindAiSession,
+      }),
+    }
+  ),
+}));
+
+vi.mock("@/components/output/RefreshContextDialog", () => ({
+  RefreshContextDialog: () => null,
 }));
 
 import { OpenAiButton, getAiButtonState } from "./OpenAiButton";
@@ -160,7 +181,7 @@ describe("OpenAiButton", () => {
         expect.stringContaining("No AI tool configured")
       );
     });
-    expect(mockLaunchTerminalCommand).not.toHaveBeenCalled();
+    expect(mockCreateSession).not.toHaveBeenCalled();
   });
 
   it("shows error toast when CLI tool not found on system", async () => {
@@ -201,10 +222,13 @@ describe("OpenAiButton", () => {
       expect(mockValidateCliTool).toHaveBeenCalledWith("claude");
       expect(mockGenerateContextFile).toHaveBeenCalledWith("proj-1", "quick");
       expect(mockStartPlanWatcher).toHaveBeenCalledWith("/some/dir");
-      expect(mockLaunchTerminalCommand).toHaveBeenCalledWith("claude", [
-        "--fast",
-        "@/path/.element/context.md",
-      ]);
+      expect(mockCreateSession).toHaveBeenCalledWith(
+        "proj-1", "AI Planning", "ai", {
+          command: "claude",
+          args: ["--fast", "@/path/.element/context.md"],
+        }
+      );
+      expect(mockOpenTerminal).toHaveBeenCalled();
     });
   });
 
@@ -251,7 +275,7 @@ describe("OpenAiButton", () => {
     });
     // The key assertion: launchTerminalCommand must NOT be called
     // when startPlanWatcher fails
-    expect(mockLaunchTerminalCommand).not.toHaveBeenCalled();
+    expect(mockCreateSession).not.toHaveBeenCalled();
   });
 
   it("shows error toast on generateContextFile failure", async () => {
