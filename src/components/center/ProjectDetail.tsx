@@ -388,6 +388,10 @@ export function ProjectDetail() {
             </Button>
           </>
         )}
+      </div>
+
+      {/* AI Button + Directory - Single Row (D-08) */}
+      <div className="flex items-center gap-3">
         <OpenAiButton
           projectId={project.id}
           directoryPath={project.directoryPath}
@@ -395,13 +399,7 @@ export function ProjectDetail() {
           hasContent={hasContent}
           onTierDialogOpen={handleTierDialogOpen}
         />
-      </div>
-
-      {/* Directory Section */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Directory
-        </span>
+        <div className="flex-1" />
         <DirectoryLink
           directoryPath={project.directoryPath}
           onLink={(path) => linkDirectory(project.id, path)}
