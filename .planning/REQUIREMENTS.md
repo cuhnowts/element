@@ -25,11 +25,11 @@ Requirements for v1.3 Foundation & Execution milestone. Each maps to roadmap pha
 
 ### Multi-Terminal
 
-- [ ] **TERM-01**: Each project has its own terminal session(s) isolated from other projects
-- [ ] **TERM-02**: Terminal sessions are named (e.g., "AI Planning", "Dev Server") and shown as tabs
-- [ ] **TERM-03**: Clicking "Open AI" spawns a new named session instead of killing the existing one
-- [ ] **TERM-04**: PTY processes are properly cleaned up on session close (SIGKILL fallback for zombie prevention)
-- [ ] **TERM-05**: Terminal drawer shows session tabs for switching between active sessions within a project
+- [x] **TERM-01**: Each project has its own terminal session(s) isolated from other projects
+- [x] **TERM-02**: Terminal sessions are named (e.g., "AI Planning", "Dev Server") and shown as tabs
+- [x] **TERM-03**: Clicking "Open AI" spawns a new named session instead of killing the existing one
+- [x] **TERM-04**: PTY processes are properly cleaned up on session close (SIGKILL fallback for zombie prevention)
+- [x] **TERM-05**: Terminal drawer shows session tabs for switching between active sessions within a project
 
 ### Central AI Agent
 
@@ -42,9 +42,9 @@ Requirements for v1.3 Foundation & Execution milestone. Each maps to roadmap pha
 
 ### Notifications
 
-- [ ] **NOTIF-01**: OS-native desktop notifications for critical items (via tauri-plugin-notification)
+- [x] **NOTIF-01**: OS-native desktop notifications for critical items (via tauri-plugin-notification)
 - [ ] **NOTIF-02**: In-app notification center with history and priority tiers (critical / informational / silent)
-- [ ] **NOTIF-03**: Notifications are driven by the central AI agent, not individual project actions
+- [x] **NOTIF-03**: Notifications are driven by the central AI agent, not individual project actions
 
 ## Future Requirements
 
@@ -96,14 +96,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-05 | Phase 18 | Complete |
 | UI-06 | Phase 18 | Complete |
 | UI-07 | Phase 18 | Complete |
-| TERM-01 | Phase 19 | Pending |
-| TERM-02 | Phase 19 | Pending |
-| TERM-03 | Phase 19 | Pending |
-| TERM-04 | Phase 19 | Pending |
-| TERM-05 | Phase 19 | Pending |
-| NOTIF-01 | Phase 20 | Pending |
+| TERM-01 | Phase 19 | Complete |
+| TERM-02 | Phase 19 | Complete |
+| TERM-03 | Phase 19 | Complete |
+| TERM-04 | Phase 19 | Complete |
+| TERM-05 | Phase 19 | Complete |
+| NOTIF-01 | Phase 20 | Complete |
 | NOTIF-02 | Phase 20 | Pending |
-| NOTIF-03 | Phase 20 | Pending |
+| NOTIF-03 | Phase 20 | Complete |
 | AGENT-01 | Phase 21 | Pending |
 | AGENT-02 | Phase 21 | Pending |
 | AGENT-03 | Phase 21 | Pending |
