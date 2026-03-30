@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem, SubmenuBuilder},
     tray::TrayIconBuilder,
-    Emitter, Manager,
+    Emitter, Listener, Manager,
 };
 use std::sync::{Arc, Mutex};
 use tokio_cron_scheduler::JobScheduler;
@@ -34,6 +34,7 @@ use commands::file_explorer_commands::*;
 use commands::onboarding_commands::*;
 use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
+use commands::notification_commands::*;
 
 pub fn run() {
     tauri::Builder::default()
@@ -90,6 +91,27 @@ pub fn run() {
                 match engine::scheduler::init_scheduler(app_handle).await {
                     Ok(_sched) => { /* Scheduler stored in app state by init_scheduler */ }
                     Err(e) => eprintln!("Failed to init scheduler: {}", e),
+                }
+            });
+
+            // Backend event bus listener for notification:create (Phase 21 agent integration point)
+            let notif_app = app.handle().clone();
+            let notif_db = app.state::<std::sync::Arc<std::sync::Mutex<Database>>>().inner().clone();
+            app.listen("notification:create", move |event: tauri::Event| {
+                if let Ok(input) = serde_json::from_str::<models::notification::CreateNotificationInput>(event.payload()) {
+                    let title = input.title.clone();
+                    let body = input.body.clone();
+                    let priority = input.priority.clone();
+                    if let Ok(db) = notif_db.lock() {
+                        if let Ok(notification) = db.create_notification(input) {
+                            let _ = db.prune_notifications(100);
+                            if priority == "critical" {
+                                use tauri_plugin_notification::NotificationExt;
+                                let _ = notif_app.notification().builder().title(&title).body(&body).show();
+                            }
+                            let _ = notif_app.emit("notification:created", &notification);
+                        }
+                    }
                 }
             });
 
@@ -161,6 +183,7 @@ pub fn run() {
         .plugin(tauri_plugin_oauth::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_pty::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             create_project,
             list_projects,
@@ -264,6 +287,12 @@ pub fn run() {
             sync_planning_roadmap,
             start_planning_watcher,
             stop_planning_watcher,
+            create_notification,
+            list_notifications,
+            mark_notification_read,
+            mark_all_notifications_read,
+            clear_all_notifications,
+            get_unread_count,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
