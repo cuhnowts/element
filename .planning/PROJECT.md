@@ -30,6 +30,8 @@ v1.1 delivered: theme system with DnD reorder, project phases with directory lin
 
 v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder with token budgets, configurable CLI tool, .planning/ folder sync with live file watcher, and AI product orientation context. Projects auto-detect GSD when directory is linked.
 
+v1.3 Phase 17 complete: Zero TypeScript compiler errors, orphaned files removed, Open AI navigation bug fixed (startPlanWatcher error handling with toast).
+
 ## Requirements
 
 ### Validated
@@ -57,7 +59,7 @@ v1.2 delivered: Tiered AI planning (Quick/Medium/GSD), adaptive context builder 
 
 ### Active
 
-- [ ] Tech debt cleanup (TS errors, orphaned files, navigation bugs)
+- ✓ Tech debt cleanup: zero TS errors, orphaned files removed, Open AI navigation bug fixed — v1.3 Phase 17
 - [ ] UI polish (sidebar, task view, smart AI button, terminal defaults)
 - [ ] Multi-terminal sessions with per-project isolation
 - [ ] Execution pipeline MVP (background orchestrator, auto-execute, notifications)
