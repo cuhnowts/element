@@ -52,7 +52,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **Milestone Goal:** Fix accumulated tech debt, improve UI intuitiveness, add multi-terminal sessions, and lay groundwork for an AI orchestration layer that auto-executes phases and notifies on human-needed items.
 
 - [x] **Phase 17: Tech Debt Cleanup** - Fix TS errors, remove orphaned files, resolve Open AI navigation bug (completed 2026-03-30)
-- [ ] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button
+- [x] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button (completed 2026-03-30)
 - [ ] **Phase 19: Multi-Terminal Sessions** - Per-project terminal isolation, named sessions, tab management
 - [ ] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy
 - [ ] **Phase 21: Central AI Agent** - Background orchestrator with cross-project awareness and approve-only execution
@@ -134,14 +134,15 @@ Plans:
   3. Clicking "Open AI" on a project causes the central agent to seed context into the project-specific AI session
   4. The agent auto-executes phases with no human blockers in approve-only mode (user must confirm before execution proceeds)
   5. When human input is needed (verification, decisions), a notification appears through the notification system
-**Plans**: 5 plans
+**Plans**: 6 plans
 
 Plans:
 - [ ] 21-01-PLAN.md -- MCP server sub-project: Node.js sidecar with read tools and orchestration tools
 - [ ] 21-02-PLAN.md -- Agent types and Zustand store with activity log and approval flow
-- [ ] 21-03-PLAN.md -- Agent lifecycle hooks, UI panel components, and AppLayout integration
-- [ ] 21-04-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
-- [ ] 21-05-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
+- [ ] 21-03-PLAN.md -- Agent lifecycle hooks and MCP config generation with behavioral tests
+- [ ] 21-04-PLAN.md -- Agent panel UI components and AppLayout integration
+- [ ] 21-05-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
+- [ ] 21-06-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
 
 ## Progress
 
@@ -165,10 +166,10 @@ Plans:
 | 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
 | 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
 | 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
-| 18. UI Polish | v1.3 | 0/3 | Planned    |  |
-| 19. Multi-Terminal Sessions | v1.3 | 0/3 | Planned | - |
-| 20. Notification System | v1.3 | 0/2 | Not started | - |
-| 21. Central AI Agent | v1.3 | 0/5 | Planned | - |
+| 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
+| 19. Multi-Terminal Sessions | v1.3 | 0/3 | Planned    |  |
+| 20. Notification System | v1.3 | 0/2 | Planned    |  |
+| 21. Central AI Agent | v1.3 | 0/6 | Planned | - |
 
 ## Backlog
 
