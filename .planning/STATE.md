@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Foundation & Execution
 status: Ready to plan
-stopped_at: Completed 19-03-PLAN.md
-last_updated: "2026-03-30T10:59:27.976Z"
+stopped_at: Completed 21-06-PLAN.md (Task 2 checkpoint pending)
+last_updated: "2026-03-30T11:21:31.242Z"
 progress:
   total_phases: 11
   completed_phases: 3
   total_plans: 16
-  completed_plans: 9
+  completed_plans: 14
 ---
 
 # Project State
@@ -67,6 +67,15 @@ Recent decisions affecting current work:
 - [Phase 19]: No-sessions empty state inside TerminalPane rather than extending TerminalEmptyState
 - [Phase 19]: SessionTabBar rendered inside OutputDrawer terminal section, not in AppLayout ResizableHandle
 - [Phase 19]: Placeholder RefreshContextDialog for Plan 02 dependency; app quit cleanup via store-triggered unmounts
+- [Phase 21]: Agent store uses no persist middleware -- state is ephemeral per app session
+- [Phase 21]: File-based queue in agent-queue/ directory for approval flow IPC between MCP sidecar and frontend
+- [Phase 21]: Created useAgentLifecycle stub for parallel wave 2 execution (Plan 03 provides real implementation)
+- [Phase 21]: Used base-ui tooltip render prop on AgentToggleButton to avoid nested button elements
+- [Phase 21]: Used invoke plugin:fs commands instead of @tauri-apps/plugin-fs package for MCP config file generation
+- [Phase 21]: useState for agentCommand/agentArgs instead of refs for reactive terminal consumption
+- [Phase 21]: Used invoke plugin:fs commands instead of @tauri-apps/plugin-fs package for queue watcher (matching project convention)
+- [Phase 21]: Modified addEntry to accept optional id for approval file ID mapping (avoids external ID-to-entryId map)
+- [Phase 21]: Duplicated tool definitions in test rather than importing from index.ts (top-level await prevents direct import)
 
 ### Pending Todos
 
@@ -81,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T01:29:50.445Z
-Stopped at: Completed 19-03-PLAN.md
+Last session: 2026-03-30T11:21:31.239Z
+Stopped at: Completed 21-06-PLAN.md (Task 2 checkpoint pending)
 Resume file: None

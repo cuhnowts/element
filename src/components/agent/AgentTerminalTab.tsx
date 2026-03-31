@@ -15,7 +15,7 @@ export function AgentTerminalTab() {
   }, []);
 
   const initialCommand =
-    agentCommand != null ? { command: agentCommand, args: agentArgs } : null;
+    agentCommand != null ? { command: agentCommand, args: agentArgs ?? [] } : null;
 
   const { isReady } = useTerminal(
     containerRef,

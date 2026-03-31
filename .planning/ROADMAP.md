@@ -137,11 +137,11 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 21-01-PLAN.md -- MCP server sub-project: Node.js sidecar with read tools and orchestration tools
-- [ ] 21-02-PLAN.md -- Agent types and Zustand store with activity log and approval flow
-- [ ] 21-03-PLAN.md -- Agent lifecycle hooks and MCP config generation with behavioral tests
-- [ ] 21-04-PLAN.md -- Agent panel UI components and AppLayout integration
-- [ ] 21-05-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
+- [x] 21-01-PLAN.md -- MCP server sub-project: Node.js sidecar with read tools and orchestration tools
+- [x] 21-02-PLAN.md -- Agent types and Zustand store with activity log and approval flow
+- [x] 21-03-PLAN.md -- Agent lifecycle hooks and MCP config generation with behavioral tests
+- [x] 21-04-PLAN.md -- Agent panel UI components and AppLayout integration
+- [x] 21-05-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
 - [ ] 21-06-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
 
 ## Progress
@@ -169,7 +169,7 @@ Plans:
 | 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete    | 2026-03-30 |
 | 20. Notification System | v1.3 | 0/2 | Planned    |  |
-| 21. Central AI Agent | v1.3 | 0/6 | Planned | - |
+| 21. Central AI Agent | v1.3 | 5/6 | In Progress|  |
 
 ## Backlog
 
@@ -177,7 +177,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 5/6 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

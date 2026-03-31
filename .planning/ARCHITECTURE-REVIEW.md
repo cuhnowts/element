@@ -1,3 +1,4 @@
+
 # Architecture Review: Element
 
 **Reviewed:** 2026-03-16

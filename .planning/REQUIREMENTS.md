@@ -33,12 +33,12 @@ Requirements for v1.3 Foundation & Execution milestone. Each maps to roadmap pha
 
 ### Central AI Agent
 
-- [ ] **AGENT-01**: A persistent central AI agent runs in its own terminal session, always available
-- [ ] **AGENT-02**: The central agent has cross-project awareness — can read state of all projects
-- [ ] **AGENT-03**: When user clicks "Open AI" on a project, the central agent feeds context to the project-specific AI session
-- [ ] **AGENT-04**: The agent auto-executes low-risk actions (e.g., running phases with no human blockers) with configurable risk tiers
-- [ ] **AGENT-05**: The agent notifies the user when human input is needed (verification, decisions, discussion)
-- [ ] **AGENT-06**: The agent has its own skills/tools for reading project state, managing sessions, and orchestrating work
+- [x] **AGENT-01**: A persistent central AI agent runs in its own terminal session, always available
+- [x] **AGENT-02**: The central agent has cross-project awareness — can read state of all projects
+- [x] **AGENT-03**: When user clicks "Open AI" on a project, the central agent feeds context to the project-specific AI session
+- [x] **AGENT-04**: The agent auto-executes low-risk actions (e.g., running phases with no human blockers) with configurable risk tiers
+- [x] **AGENT-05**: The agent notifies the user when human input is needed (verification, decisions, discussion)
+- [x] **AGENT-06**: The agent has its own skills/tools for reading project state, managing sessions, and orchestrating work
 
 ### Notifications
 
@@ -104,12 +104,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTIF-01 | Phase 20 | Complete |
 | NOTIF-02 | Phase 20 | Pending |
 | NOTIF-03 | Phase 20 | Complete |
-| AGENT-01 | Phase 21 | Pending |
-| AGENT-02 | Phase 21 | Pending |
-| AGENT-03 | Phase 21 | Pending |
-| AGENT-04 | Phase 21 | Pending |
-| AGENT-05 | Phase 21 | Pending |
-| AGENT-06 | Phase 21 | Pending |
+| AGENT-01 | Phase 21 | Complete |
+| AGENT-02 | Phase 21 | Complete |
+| AGENT-03 | Phase 21 | Complete |
+| AGENT-04 | Phase 21 | Complete |
+| AGENT-05 | Phase 21 | Complete |
+| AGENT-06 | Phase 21 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 24 total
