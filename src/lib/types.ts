@@ -220,3 +220,16 @@ export type SettingsTab =
   | "calendars"
   | "schedule"
   | "ai";
+
+// Notification types
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  priority: "critical" | "informational" | "silent";
+  category: string | null;
+  projectId: string | null;
+  actionUrl: string | null;
+  read: boolean;
+  createdAt: string;
+}

@@ -14,6 +14,7 @@ import type {
   Theme,
   Phase,
   FileEntry,
+  Notification,
 } from "./types";
 import type {
   AiProvider,
@@ -223,6 +224,15 @@ export const api = {
   // Planning Tier
   setPlanningTier: (projectId: string, tier: string | null) =>
     invoke<Project>("set_planning_tier", { projectId, tier }),
+
+  // Notifications
+  createNotification: (title: string, body: string, priority: string, category?: string, projectId?: string, actionUrl?: string) =>
+    invoke<Notification>("create_notification", { title, body, priority, category, projectId, actionUrl }),
+  listNotifications: () => invoke<Notification[]>("list_notifications"),
+  markNotificationRead: (notificationId: string) => invoke<void>("mark_notification_read", { notificationId }),
+  markAllNotificationsRead: () => invoke<void>("mark_all_notifications_read"),
+  clearAllNotifications: () => invoke<void>("clear_all_notifications"),
+  getUnreadCount: () => invoke<number>("get_unread_count"),
 
   // Planning Sync
   syncPlanningRoadmap: (projectId: string, directoryPath: string) =>
