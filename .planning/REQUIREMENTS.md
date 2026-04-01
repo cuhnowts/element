@@ -54,7 +54,7 @@ Requirements for v1.4 Daily Hub milestone. Each maps to roadmap phases.
 
 - [ ] **HUB-01**: User sees a 3-column hub (goals tree, AI center, calendar placeholder) as the default home screen
 - [ ] **HUB-02**: User can minimize any column to a sliver and expand it to full width, with a "+" button to restore
-- [ ] **HUB-03**: Hub replaces TodayView with explicit CenterPanel routing via activeView state
+- [x] **HUB-03**: Hub replaces TodayView with explicit CenterPanel routing via activeView state
 - [ ] **HUB-04**: Right column shows a calendar placeholder with "coming soon" state
 
 ### Goals Tree
@@ -163,7 +163,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGENT-06 | Phase 21 | Complete |
 | HUB-01 | Phase 22 | Pending |
 | HUB-02 | Phase 22 | Pending |
-| HUB-03 | Phase 22 | Pending |
+| HUB-03 | Phase 22 | Complete |
 | HUB-04 | Phase 22 | Pending |
 | GOAL-01 | Phase 22 | Pending |
 | GOAL-02 | Phase 22 | Pending |

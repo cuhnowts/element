@@ -152,7 +152,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete | 2026-03-30 |
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
-| 22. Hub Shell and Goals Tree | v1.4 | 0/3 | In progress | - |
+| 22. Hub Shell and Goals Tree | v1.4 | 0/3 | Planned    |  |
 | 23. Context Manifest and AI Briefing | v1.4 | 0/0 | Not started | - |
 | 24. Hub Chat | v1.4 | 0/0 | Not started | - |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
@@ -163,7 +163,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 6/6 plans complete
+**Plans:** 0/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
