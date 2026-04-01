@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
@@ -47,13 +46,6 @@ export function OutputDrawer() {
   );
   const activeSessionId = useTerminalSessionStore(
     (s) => s.activeSessionId[selectedProjectId ?? ""] ?? null
-  );
-
-  // All project IDs that have sessions — render hidden TerminalPanes to keep PTYs alive
-  const allSessions = useTerminalSessionStore((s) => s.sessions);
-  const allSessionProjectIds = useMemo(
-    () => Object.keys(allSessions).filter((pid) => allSessions[pid].length > 0),
-    [allSessions]
   );
 
   const handleLinkDirectory = async () => {
@@ -136,24 +128,12 @@ export function OutputDrawer() {
                     );
                 }}
               />
-              <div className="flex-1 overflow-hidden relative">
-                {allSessionProjectIds.map((pid) => {
-                  const proj = projects.find((p) => p.id === pid);
-                  if (!proj?.directoryPath) return null;
-                  return (
-                    <div
-                      key={pid}
-                      style={{ display: pid === selectedProjectId ? "block" : "none" }}
-                      className="h-full w-full absolute inset-0"
-                    >
-                      <TerminalPane
-                        projectId={pid}
-                        directoryPath={proj.directoryPath}
-                        isVisible={activeDrawerTab === "terminal" && pid === selectedProjectId}
-                      />
-                    </div>
-                  );
-                })}
+              <div className="flex-1 overflow-hidden">
+                <TerminalPane
+                  projectId={selectedProjectId}
+                  directoryPath={directoryPath}
+                  isVisible={activeDrawerTab === "terminal"}
+                />
               </div>
             </div>
           ) : (
