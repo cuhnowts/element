@@ -2,6 +2,7 @@ import type { Task } from "@/types/task";
 import { StatusDot } from "@/components/shared/StatusDot";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useStore } from "@/stores";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -25,6 +26,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
   const handleConvertToWorkflow = async () => {
     const workflow = await promoteTask(task.id);
     selectWorkflow(workflow.id);
+    useStore.getState().setActiveView('workflow');
   };
 
   return (

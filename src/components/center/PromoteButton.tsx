@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Workflow } from "@/types/workflow";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useStore } from "@/stores";
 import { Button } from "@/components/ui/button";
 import { Zap, GitBranch, Loader2 } from "lucide-react";
 
@@ -23,6 +24,7 @@ export function PromoteButton({
     try {
       const workflow = await useWorkflowStore.getState().promoteTask(taskId);
       await useWorkflowStore.getState().selectWorkflow(workflow.id);
+      useStore.getState().setActiveView('workflow');
       // Deselect task so CenterPanel shows workflow
       useWorkspaceStore.getState().selectTask(null);
       onPromoted?.(workflow);

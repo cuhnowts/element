@@ -18,6 +18,7 @@ import { useStore } from "@/stores";
 import { ThemeSection } from "./ThemeSection";
 import { UncategorizedSection } from "./UncategorizedSection";
 import { CreateThemeDialog } from "./CreateThemeDialog";
+import { HomeButton } from "./HomeButton";
 import type { Theme, Task } from "@/lib/types";
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 
@@ -129,6 +130,7 @@ export function ThemeSidebar() {
 
   return (
     <div className="flex flex-col h-full">
+      <HomeButton />
       <div className="flex items-center justify-between px-4 py-2">
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
           THEMES
