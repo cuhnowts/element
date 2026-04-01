@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("MinimizedColumn", () => {
   it.todo("renders a 40px collapsed strip with vertical label");

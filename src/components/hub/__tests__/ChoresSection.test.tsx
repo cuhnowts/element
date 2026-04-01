@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("ChoresSection", () => {
   it.todo("renders standalone tasks with checkboxes");

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("HubView", () => {
   it.todo("renders 3-column resizable layout");

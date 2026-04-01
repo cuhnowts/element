@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("CenterPanel", () => {
   it.todo("renders hub view when activeView is 'hub'");

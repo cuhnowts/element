@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("GoalsTreeNode", () => {
   it.todo("renders project name with progress dot");

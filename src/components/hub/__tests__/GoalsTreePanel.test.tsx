@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 describe("GoalsTreePanel", () => {
   it.todo("renders project list from store");
