@@ -34,8 +34,13 @@ export function TerminalSession({
     if (!pty) return;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
 
     pty.onExit(() => {
+      // Guard against StrictMode double-mount: the first PTY gets killed during
+      // cleanup, firing onExit. Skip if this effect was already cleaned up
+      // (meaning a new PTY replaced this one).
+      if (cancelled) return;
       useTerminalSessionStore.getState().markExited(projectId, sessionId);
       timer = setTimeout(() => {
         useTerminalSessionStore.getState().removeSession(projectId, sessionId);
@@ -43,6 +48,7 @@ export function TerminalSession({
     });
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [ptyRef.current, projectId, sessionId]);

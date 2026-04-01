@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     port: 1420,
     strictPort: true,
+    watch: {
+      ignored: ["**/.element/**", "**/.planning/**", "**/agent-queue/**"],
+    },
   },
   envPrefix: ["VITE_", "TAURI_"],
   resolve: {

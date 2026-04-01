@@ -2,6 +2,8 @@ import { Terminal as TerminalIcon } from "lucide-react";
 import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 import { TerminalSession } from "@/components/output/TerminalSession";
 
+const EMPTY_SESSIONS: import("@/stores/useTerminalSessionStore").TerminalSession[] = [];
+
 interface TerminalPaneProps {
   projectId: string;
   directoryPath: string;
@@ -14,7 +16,7 @@ export function TerminalPane({
   isVisible,
 }: TerminalPaneProps) {
   const sessions = useTerminalSessionStore(
-    (s) => s.sessions[projectId] ?? []
+    (s) => s.sessions[projectId] ?? EMPTY_SESSIONS
   );
   const activeId = useTerminalSessionStore(
     (s) => s.activeSessionId[projectId] ?? null

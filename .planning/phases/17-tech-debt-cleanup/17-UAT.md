@@ -3,7 +3,7 @@ status: complete
 phase: 17-tech-debt-cleanup
 source: [17-01-SUMMARY.md, 17-02-SUMMARY.md]
 started: 2026-03-30T11:20:00Z
-updated: 2026-03-31T00:10:00Z
+updated: 2026-03-31T00:30:00Z
 ---
 
 ## Current Test
@@ -22,9 +22,7 @@ result: pass
 
 ### 3. Open AI Button — Normal Flow
 expected: Clicking "Open AI" on a project with a linked directory opens the terminal and starts the AI session. User stays on the project detail page.
-result: issue
-reported: "It takes me to the home page (To-do)"
-severity: blocker
+result: pass
 
 ### 4. Open AI Button — Error Handling
 expected: If the plan watcher fails to start (e.g., no linked directory, permissions issue), a descriptive toast error appears and the user is NOT navigated away from the project page. The app remains usable.
@@ -33,18 +31,12 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
-issues: 1
+passed: 4
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- truth: "Clicking Open AI on a project with a linked directory opens the terminal and starts the AI session. User stays on the project detail page."
-  status: failed
-  reason: "User reported: It takes me to the home page (To-do)"
-  severity: blocker
-  test: 3
-  artifacts: []
-  missing: []
+[none]
