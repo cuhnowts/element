@@ -1,308 +1,290 @@
 # Pitfalls Research
 
-**Domain:** Adding multi-terminal, background AI execution, notifications, and tech debt cleanup to a Tauri 2.x desktop app
-**Researched:** 2026-03-29
-**Confidence:** HIGH (based on codebase analysis + ecosystem research)
+**Domain:** Adding AI-powered daily hub, conversational orchestrator chat, context manifest, and bot skills to an existing Tauri 2.x + React 19 desktop app
+**Researched:** 2026-03-31
+**Confidence:** HIGH (based on codebase analysis of existing MCP server, agent lifecycle, notification system, and CenterPanel routing)
 
 ## Critical Pitfalls
 
-### Pitfall 1: PTY Zombie Processes on Terminal Kill/Respawn
+### Pitfall 1: Hub Chat vs Agent Panel — Two Chat UIs Talking to the Same Orchestrator
 
 **What goes wrong:**
-The current `useTerminal.ts` spawns a PTY via `tauri-pty` and kills it on cleanup (`ptyRef.current?.kill()`). When moving to multi-terminal, the kill/respawn pattern (already used via `terminalSessionKey` increment in `useWorkspaceStore`) creates a race: if the React effect cleanup fires but the PTY process tree is not fully terminated (e.g., a running `claude` subprocess), zombie processes accumulate. On macOS this manifests as orphaned zsh/claude processes in Activity Monitor; on Windows it is worse -- Tauri issue #5611 documents that closing the window does not kill sidecar processes, and PTY daemon processes accumulate in Task Manager.
+The hub chat (new conversational UI in center column) and the existing agent panel (right sidebar with activity log + terminal) both need to communicate with the same MCP-backed orchestrator. Without clear separation, messages sent from hub chat appear in the agent activity log, agent terminal output bleeds into hub chat, or worse -- two separate CLI processes compete for the same MCP server stdio transport.
 
 **Why it happens:**
-`pty.kill()` sends SIGHUP to the PTY master, but child processes that ignore SIGHUP (common in CLI tools) survive. The current code has no process-group kill or SIGKILL fallback. With a single terminal this is manageable (one orphan per session). With N terminals, it multiplies.
+The existing agent lifecycle (`useAgentLifecycle.ts`) spawns a single CLI process with `--mcp-config` that talks to the MCP server via stdio. The hub chat needs conversational access to the same orchestrator. Developers instinctively try to reuse the same process or spawn a second one, both of which break. Stdio MCP transport is 1:1 -- you cannot multiplex two clients onto one stdio pipe.
 
 **How to avoid:**
-- Kill the entire process group, not just the PTY master. On POSIX, use `killpg(pgid, SIGTERM)` followed by a timed `SIGKILL` fallback. This requires a Rust-side command since `tauri-pty`'s JS API only exposes `kill()`.
-- Track all spawned PTY PIDs in a Rust-side registry (HashMap<SessionId, PtyHandle>). On app close (`tauri::RunEvent::ExitRequested`), iterate and force-kill all.
-- Implement a PTY health check: if a PTY's `onExit` fires but the process group is still alive after 2 seconds, escalate to SIGKILL.
-- On project switch, decide policy: keep background terminals alive (tab model) or kill them (single-session model). Do not leave them in limbo.
+Keep the existing agent panel as the orchestrator's autonomous execution surface (it watches queues, runs phases, handles approvals). Make the hub chat a separate interaction channel that sends user messages to the orchestrator via a new queue subdirectory (e.g., `agent-queue/chat/`). The orchestrator reads chat messages as a new tool input alongside approvals/notifications/status. Do NOT spawn a second CLI process. Instead, extend the file-based queue pattern already proven in `useAgentQueue.ts` to handle bidirectional chat (user writes message files, agent writes response files, UI polls for responses).
 
 **Warning signs:**
-- Activity Monitor shows growing zsh/node/claude processes after repeated "Open AI" clicks
-- Memory usage climbs without corresponding UI state
-- `ps aux | grep -c zsh` returns more processes than open terminals
+- Creating a second `useAgentLifecycle` instance for hub chat
+- Attempting to pipe user input directly to the agent terminal's PTY
+- Hub chat and agent panel showing duplicate entries
+- MCP server receiving overlapping requests from two CLI processes
 
 **Phase to address:**
-Multi-terminal sessions phase. Must be the first thing designed -- the session registry is the foundation for everything else.
+Phase 1 (Hub UI layout) must define the boundary. Phase 3 (Hub chat) must implement the queue-based chat channel.
 
 ---
 
-### Pitfall 2: Unbounded xterm.js Instance Memory Growth
+### Pitfall 2: TodayView Replacement Breaks CenterPanel Routing
 
 **What goes wrong:**
-Each xterm.js `Terminal` instance with 5000-line scrollback and WebGL renderer consumes ~34MB when the buffer is full. With 5 concurrent terminals per project and 3 projects visited in a session, that is 15 Terminal instances = ~510MB just for terminal buffers. The WebGL addon allocates GPU textures per instance. The current code creates a new Terminal on every mount (the `useEffect` in `useTerminal.ts` runs on `[containerRef, cwd, initialCommand]` changes).
+`CenterPanel.tsx` uses TodayView as the fallback when no project/task/theme/workflow is selected (lines 112-116). Replacing TodayView with a 3-column DailyHub changes the component from a simple scrollable list to a complex layout with its own sub-routing (goals tree, briefing, chat). This breaks the existing conditional rendering chain because the hub needs to be visible even when a project IS selected (it's the home screen), but CenterPanel currently prioritizes project/task selection over TodayView.
 
 **Why it happens:**
-xterm.js issue #1518 documents that `Terminal.dispose()` does not fully release DOM event listeners -- document-level listeners retain references to the Terminal object, preventing GC. The WebGL addon compounds this by retaining GPU texture references. Developers assume `dispose()` is a complete cleanup, but it is not.
+TodayView was designed as a passive fallback, not a primary destination. The hub is conceptually different -- it's a persistent home screen the user navigates TO, not what they see when nothing is selected. Developers try to just swap the component without changing the routing logic, resulting in the hub being unreachable once any sidebar item is clicked.
 
 **How to avoid:**
-- Cap maximum concurrent Terminal instances (recommend: 5 total, not per-project). Use a tab UI that shows terminal metadata but only mounts the active Terminal's DOM element.
-- For inactive terminals: keep the PTY alive (so processes continue) but dispose the xterm.js Terminal instance and store the scrollback buffer as a plain string array. Re-create the Terminal and replay the buffer when the tab becomes active.
-- Reduce scrollback from 5000 to 2000 for non-focused terminals (or 1000 for background terminals).
-- After `Terminal.dispose()`, explicitly null out all addon references and remove any document-level event listeners the WebGL addon may have attached.
-- Use the canvas renderer instead of WebGL for background terminals -- WebGL per-instance GPU cost is not justified for terminals the user is not looking at.
+Add an explicit "hub" navigation state to the workspace store (e.g., `activeView: "hub" | "project" | "task" | "theme" | "workflow"`). The sidebar gets a "Home" / "Hub" entry that sets `activeView: "hub"`. CenterPanel checks `activeView` first, before checking `selectedProjectId`. This means clicking a project switches away from hub, and clicking Home returns to it. The existing TodayView task data feeds into the hub's goals tree column rather than being thrown away.
 
 **Warning signs:**
-- Electron/Tauri process memory exceeds 1GB after extended use
-- WebGL context lost errors in console (GPU texture exhaustion)
-- UI becomes sluggish when switching between terminal tabs
+- Hub disappears when clicking any sidebar item
+- No way to return to hub after navigating to a project
+- Hub and project detail rendering simultaneously
+- TodayView tests breaking because the component was deleted rather than refactored
 
 **Phase to address:**
-Multi-terminal sessions phase. The terminal manager architecture must include instance pooling from day one.
+Phase 1 (Hub UI layout) -- this must be the very first thing solved before any hub content is built.
 
 ---
 
-### Pitfall 3: Runaway AI Background Execution Costs
+### Pitfall 3: Context Manifest Becomes a Token Bomb
 
 **What goes wrong:**
-The execution pipeline MVP will spawn background AI processes (likely Claude Code or similar) that auto-execute phases. Without cost controls, a single stuck loop -- e.g., an AI agent retrying a failing build command indefinitely -- can consume hundreds of dollars in API tokens in hours. The user is not watching because it is a background process.
+The central context manifest is supposed to give the orchestrator a compact overview of all projects. But it aggregates themes, projects, phases, tasks, progress percentages, blockers, and recent activity into one file. With 10+ projects each having 5+ phases, the manifest easily exceeds the orchestrator's effective context window, making the LLM slow, expensive, and confused. The existing `generate_context_file` command already builds per-project context with token budgets -- the manifest needs to be even more aggressive about compression.
 
 **Why it happens:**
-AI agents have no inherent concept of "this is taking too long" or "I have spent too much." The orchestrator hands off work and does not enforce budgets. Token consumption is invisible until the bill arrives. The 2026 industry consensus is that this is the #1 operational risk with agentic AI.
+Developers build the manifest bottom-up: query everything from SQLite, serialize it all. The manifest grows linearly with project count and has no natural ceiling. The existing adaptive context builder (v1.2) uses token budgets per-project, but a cross-project manifest has no such guard.
 
 **How to avoid:**
-- **Token budget per execution**: Set a max token count per phase execution (e.g., 100K input + 50K output). The Rust orchestrator must track cumulative usage and kill the process when exceeded.
-- **Wall-clock timeout**: No single AI execution should run longer than 30 minutes without human check-in. Use `tokio::time::timeout` on the process spawn.
-- **Iteration cap**: If the AI agent has attempted the same command more than 3 times with failures, abort and notify the user.
-- **Cost estimation before launch**: Show the user an estimated token cost range before starting auto-execution. Require confirmation for executions estimated above a threshold (e.g., $5).
-- **Kill switch**: A prominent "Stop All AI" button in the UI that sends SIGKILL to all AI processes. This must work even if the UI is partially frozen.
-- **Dry-run mode**: The first implementation should be "suggest and wait for approval" rather than fully autonomous execution.
+Design the manifest as a two-tier system: (1) a compact index file (~500 tokens max) listing all projects with one-line status and priority score, and (2) per-project detail files that the orchestrator can request on demand via existing `get_project_detail` and `get_phase_status` MCP tools. The manifest is the index only. Set a hard token budget (e.g., 2000 tokens for the full manifest) and truncate/summarize to fit. Use the same SHA-256 change detection pattern from ROADMAP.md sync to avoid regenerating unchanged project summaries.
 
 **Warning signs:**
-- AI process running for more than 10 minutes without producing a commit or output
-- Repeated error messages in AI output logs
-- Token counter climbing rapidly (if tracked)
+- Manifest file exceeds 5KB
+- LLM responses become slow or hallucinate project details
+- Manifest regeneration takes noticeable time (>500ms)
+- All project data duplicated between manifest and MCP tool responses
 
 **Phase to address:**
-Execution pipeline MVP phase. Cost controls are not a "nice to have" -- they are a launch blocker. Ship the dry-run/approval mode first, autonomous execution second.
+Phase 2 (Context manifest) -- must be designed with the token budget constraint from day one.
 
 ---
 
-### Pitfall 4: "Open AI" Navigation Bug Masks Deeper State Management Issue
+### Pitfall 4: Daily Briefing LLM Call Blocks App Startup
 
 **What goes wrong:**
-The known bug -- "Open AI navigates to home screen instead of showing toast" -- is intermittent and undiagnosed. Based on code analysis, the likely cause is a state race in `launchTerminalCommand()`. This function calls `set()` with `drawerOpen: true` and `activeDrawerTab: "terminal"`, but if another effect (e.g., `restoreProjectState` or a sidebar click handler) runs in the same React render cycle, the state update can be overwritten. The `terminalSessionKey` increment triggers a terminal remount, and during remount, if the project context changes (sidebar click registered first), the whole view resets to the home/today screen.
+The daily briefing calls an LLM to summarize priorities. If this runs synchronously on app open, the hub shows a blank/loading state for 5-15 seconds while waiting for the API response. Users see a broken-looking app every morning. If the LLM provider is down or rate-limited, the hub is permanently stuck.
 
 **Why it happens:**
-Zustand's `set()` is synchronous but React batches renders. Multiple `set()` calls in rapid succession during the same event loop tick get batched, and the last write wins for conflicting keys. The workspace store mixes global state (drawerOpen, activeDrawerTab) with project-scoped state (projectStates), creating implicit coupling.
+The briefing is the hero content of the hub -- developers make it the first thing that renders, which means the first thing that blocks. The existing AI layer (`aiSlice.ts`) streams responses, but streaming a briefing into a component that isn't visible yet just wastes the stream.
 
 **How to avoid:**
-- Reproduce first: Add `console.log` to `launchTerminalCommand`, `restoreProjectState`, and the sidebar click handler. Log the call stack and current state. The intermittent nature suggests a click event bubbling issue or a useEffect dependency triggering a project switch.
-- Separate terminal launch state from navigation state. The terminal command should not also control drawer visibility -- those should be two sequential operations with the navigation completing first.
-- Consider using Zustand's `subscribeWithSelector` to trace which state changes trigger re-renders during "Open AI" flow.
-- Add a behavioral test: click "Open AI" while on ProjectDetail, assert that ProjectDetail remains visible and terminal tab opens in drawer.
+Cache the last briefing in SQLite with a timestamp. On app open, immediately show the cached briefing (even if stale). Trigger a background refresh that updates the briefing when the LLM responds. Show a subtle "updating..." indicator, not a blocking spinner. If the LLM call fails, the stale briefing stays visible -- it's always better than nothing. Set a 10-second timeout on the briefing call with graceful fallback.
 
 **Warning signs:**
-- Bug frequency increases after adding multi-terminal (more state changes per terminal operation)
-- Users reporting "lost my place" after AI actions
+- Hub shows a loading spinner on every app open
+- No briefing visible when offline or LLM is unreachable
+- Briefing regenerates on every hub navigation (not just daily)
+- No cache invalidation -- briefing never updates after first generation
 
 **Phase to address:**
-Tech debt cleanup phase -- this MUST be fixed before multi-terminal work begins. Multi-terminal will add more state transitions to the same store, amplifying the race condition.
+Phase 2 (AI briefing) -- caching strategy must be part of the initial implementation, not a later optimization.
 
 ---
 
-### Pitfall 5: Tech Debt Cleanup Causes Regression Cascade
+### Pitfall 5: Bot Skills With Shell Access Create Unsandboxed Execution
 
 **What goes wrong:**
-The 3 TS errors in ThemeSidebar.tsx and UncategorizedSection.tsx have been present since Phase 6. They are "runtime unaffected" because TypeScript errors do not block Vite builds. Fixing them may require changing prop types or component interfaces, which can ripple through the sidebar component tree. Deleting orphaned files (ScopeInputForm.tsx, OnboardingWaitingCard.tsx) seems safe but may break dynamic imports, lazy routes, or barrel exports that are not caught by static analysis.
+Extending bot skills to "run commands" and "create files" means the orchestrator (an LLM) can execute arbitrary shell commands on the user's machine. The existing MCP tools are read-only database queries plus file-based queue writes -- all safe. Adding `run_command` and `create_file` tools to the MCP server crosses a critical security boundary. A hallucinating LLM could `rm -rf`, overwrite critical files, or exfiltrate data.
 
 **Why it happens:**
-TS errors that "don't affect runtime" get deprioritized, but they mask real type mismatches. The longer they persist, the more code is written assuming the broken types are correct. Deleting "orphaned" files based on import analysis misses: dynamic `import()` calls, string-based component registries, test files that import the component, and storybook stories.
+The existing approval workflow (`request_approval` / `check_approval_status`) was designed for phase execution, not individual command approval. Developers add the shell execution tool and assume the existing approve-only mode covers it. But the system prompt says "NEVER execute without approval" -- if the LLM ignores this (which LLMs do), there's no enforcement at the tool level.
 
 **How to avoid:**
-- Fix TS errors one file at a time, with a passing test suite between each fix. Do not batch all 3 into one commit.
-- Before deleting any file: `grep -r "ScopeInputForm" --include="*.ts" --include="*.tsx" --include="*.test.*"` across the entire project, including test files and config files.
-- Run the full app manually after each deletion -- dynamic imports will not be caught by `tsc`.
-- Enable `strict: true` in tsconfig as part of this phase (if not already enabled) to prevent future drift. If too many errors, enable strict checks incrementally (`strictNullChecks`, then `noImplicitAny`, etc.).
-- The navigation bug fix should happen in this phase too, since it is existing tech debt that will compound with new features.
+Implement tool-level guards in the MCP server, not prompt-level guards. Every `run_command` call must: (1) write to the approval queue and block until approved, (2) restrict commands to a configurable allowlist (e.g., `git`, `npm`, `cargo`, configured CLI tool), (3) scope file operations to project directories only (reject absolute paths outside project roots), (4) log every command execution to a persistent audit trail in SQLite. The `create_file` tool should only write within project directory trees, never to system paths.
 
 **Warning signs:**
-- "Fixed TS errors" PR that touches 15+ files
-- Sidebar rendering breaks after "cleanup" merge
-- Test suite passes but app crashes on a specific route
+- `run_command` tool executes without approval queue check
+- No path validation on `create_file` -- accepts absolute paths
+- No command allowlist -- any string passed to shell
+- Audit trail missing -- no record of what commands were run
 
 **Phase to address:**
-Tech debt cleanup phase. This must be the FIRST phase in the milestone -- cleaning up before adding new features prevents compounding.
+Phase 4 (Bot skills) -- security constraints must be designed before any execution capability is added.
 
 ---
 
-### Pitfall 6: Terminal Not Scoped Per-Project Creates Session Bleed
+### Pitfall 6: File-Based Queue Doesn't Scale for Chat Latency
 
 **What goes wrong:**
-Currently, terminal state is global in `useWorkspaceStore` -- `terminalSessionKey` and `terminalInitialCommand` are not keyed by project. When a user switches from Project A to Project B, the terminal still shows Project A's session (or kills it and starts fresh, losing context). With multi-terminal, this becomes worse: which project's terminals should be visible? If all terminals are shown globally, the user drowns in tabs. If only the current project's terminals show, switching projects feels like terminals disappear.
+The existing file-based agent queue (`agent-queue/`) polls every 2 seconds (line 306 of `useAgentQueue.ts`). This is fine for approval requests and status updates that happen every few minutes. But hub chat requires sub-second response times -- a 2-second poll interval means 1-2 seconds of dead time between user message and first response token. The chat feels laggy and unresponsive compared to any modern chat UI.
 
 **Why it happens:**
-The original terminal was a single global instance. The `launchTerminalCommand` function in the workspace store has no concept of "which project owns this terminal." The per-project workspace state (`projectStates`) stores `drawerTab` but not terminal sessions.
+The file-based queue was designed for low-frequency orchestration events, not conversational interaction. Developers extend it for chat without changing the polling interval, or they decrease the interval to 200ms which creates excessive filesystem I/O.
 
 **How to avoid:**
-- Design the terminal registry as `Map<ProjectId, TerminalSession[]>` from the start. Each project owns its terminals.
-- When switching projects: hide (not destroy) the previous project's terminals, show the new project's terminals. PTY processes continue in background.
-- Add a visual indicator showing how many terminals are running across all projects (e.g., a badge on the terminal tab).
-- Limit total terminals across all projects (recommend: 8 max) to prevent resource exhaustion.
-- The "Open AI" button should create a terminal scoped to its project, not a global terminal.
+For chat specifically, use Tauri's filesystem watcher (`notify` crate, already used for `.planning/` sync) to watch the `agent-queue/chat/` directory for new response files instead of polling. This gives near-instant notification when the agent writes a response. Keep the 2-second polling for approvals/notifications/status (they're not latency-sensitive). Alternatively, add a Tauri event bridge: the MCP server writes the file AND emits a Tauri event, the frontend listens for the event and reads the file immediately.
 
 **Warning signs:**
-- User runs "Open AI" on Project B and sees Project A's terminal output
-- `cd` to wrong directory because CWD belongs to another project's terminal
-- Confusion about which terminal belongs to which project
+- Chat responses take 2+ seconds to appear after agent writes them
+- Polling interval decreased globally (affects all queue types)
+- High CPU usage from aggressive polling
+- Chat messages arriving out of order due to filesystem timing
 
 **Phase to address:**
-Multi-terminal sessions phase. The per-project scoping must be designed before any multi-terminal UI work begins.
+Phase 3 (Hub chat) -- the delivery mechanism must be faster than 2-second polling.
 
 ---
 
-### Pitfall 7: Notification Spam from Background AI Processes
+### Pitfall 7: Goals Tree Re-implements Sidebar Data Without Shared State
 
 **What goes wrong:**
-The execution pipeline will generate many events: "Phase started," "Step completed," "Error encountered," "Human input needed," "Phase completed." If each event produces a toast notification, the user gets overwhelmed (notification fatigue). If only errors are shown, the user has no visibility into progress. If system-level notifications (macOS Notification Center) are used for everything, the user disables them entirely and misses the critical "human input needed" alert.
+The goals tree (left column of hub) shows themes > projects > phases in a hierarchical view. The sidebar already maintains this exact hierarchy in Zustand (`themeSlice`, `projectSlice`, `phaseSlice`). Developers build the goals tree with its own data fetching and state, creating two sources of truth. When a task is completed in the goals tree, the sidebar doesn't update (and vice versa).
 
 **Why it happens:**
-Developers implement notifications feature-by-feature without a holistic notification strategy. Each feature author thinks "my notification is important," resulting in death by a thousand toasts.
+The goals tree and sidebar have different visual presentations (sidebar is navigation, goals tree is progress overview), so developers assume they need different data structures. They write new `fetchGoalsTree()` queries instead of composing from existing store slices.
 
 **How to avoid:**
-- Define a notification priority taxonomy BEFORE implementing any notifications:
-  - **Critical** (system notification + persistent banner): "Human input required," "Execution failed after retries," "Cost limit reached"
-  - **Informational** (toast, auto-dismiss 5s): "Phase completed successfully," "AI started execution"
-  - **Silent** (log only, visible in history panel): "Step completed," "File written," "Command executed"
-- Implement notification coalescing: if 5 steps complete within 10 seconds, show one toast "5 steps completed" not 5 toasts.
-- Never use system notifications for success states -- only for states that require user action.
-- Add a notification center/history panel where users can review all past notifications at their own pace.
-- Respect focus state: if the user is actively viewing the project's terminal, suppress toasts for that project's events (they can already see the output).
+The goals tree must read from the same Zustand slices as the sidebar: `useStore` for themes/projects, `useStore` (PhaseSlice) for phases, `useTaskStore` for tasks. The goals tree is a read-only view that computes progress percentages from existing data. No new Tauri commands needed for data fetching. If the goals tree needs data the sidebar doesn't have (e.g., completion percentages), add it to the existing slices, not a parallel store.
 
 **Warning signs:**
-- Multiple toasts stacking and covering UI content
-- Users reporting "I stopped reading the notifications"
-- Critical notifications (human input needed) being ignored because they look like success toasts
+- New `useGoalsTreeStore` or `goalsTreeSlice` being created
+- New Tauri commands duplicating `list_themes`, `list_projects`, `list_phases`
+- Goals tree and sidebar showing different completion counts
+- Clicking a project in goals tree doesn't navigate (no integration with workspace store)
 
 **Phase to address:**
-Execution pipeline MVP phase. The notification taxonomy must be defined in the phase plan before any implementation begins.
+Phase 1 (Hub UI layout) -- goals tree component must be wired to existing stores from the start.
+
+---
+
+### Pitfall 8: Agent Panel Auto-Start Conflicts with Hub Orchestrator Needs
+
+**What goes wrong:**
+`AgentPanel.tsx` auto-starts the agent on mount (line 12: `useEffect(() => { startAgent(); }, [startAgent])`). The hub also needs the agent running to generate briefings and handle chat. If the agent panel is hidden/unmounted (user closes it), the agent stops, and hub features break. Conversely, if both the hub and agent panel try to start the agent, there are race conditions.
+
+**Why it happens:**
+The agent lifecycle is coupled to the agent panel's React component lifecycle. This was fine when the panel was the only consumer. Adding the hub as a second consumer exposes the tight coupling.
+
+**How to avoid:**
+Lift agent lifecycle out of the AgentPanel component. Make agent start/stop a top-level concern managed in `AppLayout` or a dedicated `AgentProvider`. The agent starts on app launch (not on panel mount) and runs regardless of whether the panel is visible. Both the hub and agent panel are consumers of agent state, not owners of agent lifecycle. The `useAgentLifecycle` hook should be called once at the app level, and its return values should be provided via context or store.
+
+**Warning signs:**
+- Agent stops when agent panel is closed
+- Agent restarts when toggling agent panel visibility
+- Hub chat shows "agent not running" errors when panel is hidden
+- Multiple `startAgent()` calls on app load
+
+**Phase to address:**
+Phase 1 (Hub UI layout) -- agent lifecycle must be decoupled from panel before hub features are built.
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Global terminal state instead of per-project | Simpler store, fewer state transitions | Session bleed between projects, impossible to manage multi-terminal | Never (the current state is tech debt, fix before extending) |
-| setTimeout(500ms) for PTY shell readiness | Works on fast machines | Fails on slow machines, Windows, or under load. Command may be sent before shell prompt renders | Only in prototype. Replace with shell prompt detection (watch for `$` or `%` in PTY output) |
-| Hardcoded `/bin/zsh` shell path | Works on macOS | Breaks on Windows (`cmd.exe`/`pwsh`), breaks on Linux with bash default | Never for cross-platform. Use `$SHELL` env var with fallback chain |
-| Killing terminal on "Open AI" (session key increment) | Clean slate for AI | Loses user's terminal history and running processes | Acceptable only if user explicitly chooses "new terminal" vs "reuse existing" |
-| Storing scrollback in xterm.js only | No extra code needed | Cannot persist terminal history across app restarts, cannot search across terminals | Acceptable for MVP, but design the Terminal interface to allow adding persistence later |
+| Inline LLM prompt strings for briefing | Fast to iterate | Prompts scattered across codebase, hard to tune | MVP only -- extract to prompt files before v1.5 |
+| Polling for chat responses | Simple, matches existing queue pattern | Perceptible latency, wasted CPU | Never for chat -- use fs watcher from day one |
+| Single manifest file for all projects | Simple to generate and read | Token budget exceeded at 15+ projects | Acceptable until 10 projects, then must tier |
+| Hardcoded briefing schedule (once per day) | Simple caching logic | Users want refresh after completing big tasks | Acceptable for v1.4 -- add manual refresh button |
+| Goals tree as static snapshot | Fast render, no subscriptions | Stale data after task completion | Never -- must subscribe to store changes |
+| Chat history in memory only | Simple implementation | Lost on app restart, no context for next session | MVP only -- persist to SQLite before v1.5 |
 
 ## Integration Gotchas
 
-Common mistakes when connecting components in this system.
-
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| PTY + React lifecycle | Creating PTY in useEffect without proper cleanup ordering (dispose terminal before killing PTY) | Kill PTY first (stops data flow), then dispose Terminal (cleans up DOM). Current code does it in wrong order: `pty.kill()` then `term.dispose()` -- actually correct, but add a guard to stop writing to disposed terminal |
-| Zustand persist + session state | Persisting terminal session keys or project states that reference runtime resources (PTY handles) | Use `partialize` to exclude runtime state (already done correctly in current code -- maintain this discipline) |
-| xterm.js WebGL + multiple instances | Loading WebGL addon on every terminal instance | Share a single WebGL context where possible, or use canvas renderer for background terminals. WebGL has a per-browser limit (~16 contexts) |
-| Background AI process + app close | Spawning a background process and relying on React cleanup to kill it | Register all background processes with the Rust backend. Use `tauri::RunEvent::ExitRequested` to kill them on app shutdown, not frontend cleanup |
-| Toast notifications (sonner) + async operations | Showing toast for every async result | Debounce/coalesce toasts. Use `toast.promise()` for operations with loading/success/error states |
-| File watcher + terminal CWD | File watcher triggers re-render while terminal is mid-operation | Debounce file watcher events. Do not re-render terminal-containing components on file changes |
+| Hub chat to MCP orchestrator | Piping stdin to agent terminal PTY | Use file-based queue with fs watcher for chat channel |
+| Goals tree to sidebar stores | Creating parallel data-fetching layer | Compose from existing `themeSlice`, `projectSlice`, `phaseSlice` |
+| Daily briefing to AI layer | Using `aiSlice` streaming (designed for per-project context) | New briefing-specific flow with caching and cross-project aggregation |
+| Bot skills to notification system | Bot sends notification via MCP `send_notification` but no SQLite persistence | Extend `send_notification` handler to also write to notifications table via db, not just queue file |
+| Context manifest to `.planning/` sync | Manifest watches `.planning/` files for changes | Manifest reads from SQLite (already synced by existing watcher), not from disk |
+| Hub layout to CenterPanel | Swapping TodayView component in the fallback branch | Adding explicit `activeView` state to workspace store for hub navigation |
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
-
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| One xterm.js Terminal per tab (always mounted) | Memory grows linearly with terminal count | Virtualize: only mount active terminal, serialize inactive scrollback | At 5+ terminals |
-| ResizeObserver per terminal | Multiple resize callbacks per frame during drawer resize | Use a single ResizeObserver on the container, distribute resize events to active terminal only | At 8+ terminals with frequent resize |
-| Unbounded PTY output buffering | Memory spike when AI produces large output (e.g., `cat` a large file) | xterm.js has 50MB buffer hardcap, but PTY side can buffer too. Implement flow control per xterm.js docs | When AI outputs >10MB in one command |
-| Polling for AI process status | CPU usage from setInterval checking process state | Use event-driven: PTY onData + onExit for terminal processes, Tauri events for background orchestrator status | At 3+ concurrent AI processes |
-| Storing all execution history in memory | Zustand store grows with every execution record | Page execution history from SQLite. Keep only last 10 records in memory, load more on scroll | After 50+ executions in a session |
+| Manifest regeneration on every store change | 200ms+ delay after each task toggle | Debounce manifest generation (1s), only regenerate on meaningful changes (phase completion, not task edits) | 20+ projects with frequent task updates |
+| Goals tree re-rendering entire tree on any task change | Visible jank when checking off tasks | Memoize tree nodes, use granular selectors (`useStore(s => s.projects.find(p => p.id === id))`) | 50+ tasks visible in tree |
+| Chat message polling creating new objects each cycle | React re-renders every 2s even with no new messages | Return stable references from poll (compare before updating state), use `useRef` for processed IDs (already done in queue) | Always -- even with 0 messages |
+| LLM briefing call on every hub navigation | Unnecessary API calls, increased latency and cost | Cache briefing with date-based invalidation, only regenerate once per day or on manual refresh | Immediately -- users navigate to hub frequently |
+| Agent queue file accumulation | Disk usage grows, directory listing slows | Prune processed queue files older than 24h on app startup | 1000+ files after weeks of use |
 
 ## Security Mistakes
 
-Domain-specific security issues for a desktop AI orchestration app.
-
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| AI process inherits full user shell environment | AI agent has access to all env vars including secrets, SSH keys, cloud credentials | Spawn AI processes with a sanitized environment. Whitelist only necessary env vars (PATH, HOME, SHELL) |
-| No confirmation before AI executes destructive commands | AI could `rm -rf`, `git push --force`, or deploy to production | Implement a command allowlist/blocklist in the orchestrator. Flag destructive patterns for human approval |
-| Terminal scrollback contains secrets | API keys, passwords visible in terminal history that may be persisted | Do not persist terminal scrollback to disk by default. If persisted, encrypt at rest |
-| Background execution with `--dangerously-skip-permissions` | Claude Code runs without safety guardrails | This is a known decision (see KEY DECISIONS in PROJECT.md). Document the risk clearly to users. Add a settings toggle to disable skip-permissions |
-| Cost data not shown to user | User unaware of API spend until bill arrives | Show cumulative token usage and estimated cost in the execution panel |
+| Bot `run_command` without approval enforcement at tool level | LLM executes arbitrary shell commands if it ignores system prompt | Require approval queue write + poll in MCP handler, not just prompt instruction |
+| Bot `create_file` accepting absolute paths | LLM writes to `/etc/`, `~/.ssh/`, or other sensitive locations | Validate all paths are within project `directoryPath` from database |
+| Chat messages passed directly to LLM without sanitization | Prompt injection via user input (user crafts message that overrides system prompt) | Separate user message from system context in LLM call -- user input always in `user` role, never concatenated into system prompt |
+| Context manifest containing credentials or secrets | API keys from `.env` files synced into manifest | Manifest reads from SQLite entities only, never from filesystem files directly |
+| MCP server new tools inherit `_db` read-only pattern but write tools need write access | Bot skills that modify data bypass WAL-mode read-only connection | Create a separate write-capable connection for mutation tools, keep read tools on read-only connection |
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
-
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Auto-switching to terminal tab on every AI event | Disrupts user who is reading code or editing tasks | Only auto-switch on explicit "Open AI" click. Background events go to notification center |
-| Terminal tabs with no identifying labels | "Terminal 1, Terminal 2" -- user cannot tell which is which | Label with project name + running command: "element: claude ...", "api: npm test" |
-| Notification toast covers the content user is interacting with | User must wait for toast to dismiss or manually close it | Position toasts in bottom-right (away from sidebar and center content). Never cover interactive elements |
-| "Stop AI" button that takes 10+ seconds to actually stop | User panic-clicks, spawns multiple kill signals, corrupts state | Kill signal should be immediate (SIGKILL after 2s SIGTERM). Show "Stopping..." state. Disable the button after first click |
-| No way to see what AI did while user was away | User returns to completed execution with no summary | Execution history with diff summary: "Modified 3 files, ran 12 commands, completed in 4m 23s" |
-| Modal confirmation for every AI action | Approval fatigue -- user starts clicking "Yes" without reading | Batch approvals: show a plan of N steps, approve all or edit. Not one-by-one |
+| Briefing shows loading spinner every morning | User's first impression is "broken app" | Show cached briefing immediately, update in background |
+| Hub chat has no typing indicator | User sends message, sees nothing for 3-10s, thinks it failed | Show "thinking..." immediately after send, stream response tokens as they arrive |
+| Goals tree is read-only (can't interact) | User sees tasks but must navigate to sidebar to act on them | Allow checkbox toggling directly in goals tree, propagating to existing task store |
+| No visual distinction between hub chat and agent panel | User confused about which AI they're talking to | Hub chat labeled "Ask about your day" (conversational), agent panel labeled "Orchestrator" (autonomous) |
+| Chat history lost on app restart | User loses context from yesterday's conversation | Persist chat messages to SQLite, show last N messages on hub load |
+| Briefing is stale all day | User completes 5 tasks, briefing still says "5 tasks remaining" | Add manual "Refresh briefing" button, auto-refresh after bulk task completions |
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Multi-terminal:** Works with 2 tabs -- verify with 8 concurrent terminals, switching rapidly between projects. Check memory after 30 minutes.
-- [ ] **PTY cleanup:** Terminal tab closes cleanly -- verify no orphan processes with `ps aux | grep -v grep | grep zsh | wc -l` before and after closing 5 terminals.
-- [ ] **Background execution:** AI completes a phase -- verify it stops consuming tokens after completion (check API dashboard, not just UI).
-- [ ] **Notifications:** Toast shows for errors -- verify toast does NOT show for every step completion when 10 steps finish in 5 seconds.
-- [ ] **Tech debt TS fixes:** TypeScript compiles with zero errors -- verify the APP still renders correctly on every route (TS correctness != runtime correctness).
-- [ ] **Terminal per-project scoping:** Switching projects shows correct terminals -- verify by running `pwd` in each terminal after switching back and forth 3 times.
-- [ ] **Kill switch:** "Stop AI" button works -- verify by running a long AI task and clicking stop mid-execution. Check that no orphan processes remain AND no partial file writes corrupt the project.
-- [ ] **Notification coalescing:** Single notification for batch events -- verify by triggering 10 rapid events and counting toast appearances (should be 1-2, not 10).
+- [ ] **Hub navigation:** Can return to hub from any view (project, task, theme) -- verify Home button/shortcut exists
+- [ ] **Agent lifecycle:** Agent runs when panel is closed -- verify by closing panel and checking hub chat works
+- [ ] **Chat persistence:** Chat history survives app restart -- verify by quitting and relaunching
+- [ ] **Briefing cache:** Hub loads instantly with cached briefing -- verify by disconnecting network and opening app
+- [ ] **Bot skill safety:** `run_command` requires approval even if system prompt is ignored -- verify by calling tool directly via MCP client
+- [ ] **Manifest token budget:** Manifest stays under budget with 15+ projects -- verify by creating test projects
+- [ ] **Goals tree reactivity:** Completing a task in goals tree updates sidebar and vice versa -- verify bidirectional
+- [ ] **Queue cleanup:** Old queue files are pruned -- verify after running for a week
+- [ ] **Chat latency:** Response appears within 500ms of agent writing it -- verify with timestamp comparison
+- [ ] **Notification bridge:** Bot `send_notification` creates both queue file AND SQLite notification -- verify in notification popover
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| PTY zombie processes | LOW | Add a "Kill All Terminals" command that iterates the Rust-side registry and force-kills all. Can be triggered from app menu |
-| xterm.js memory bloat | MEDIUM | Implement terminal instance pooling retroactively. Requires refactoring useTerminal hook to support detach/reattach pattern |
-| Runaway AI cost | HIGH | Cannot recover spent tokens. Add monitoring dashboard and alerts. Set up provider-side spending limits (OpenAI/Anthropic dashboards) as a safety net |
-| Navigation bug amplified | MEDIUM | Revert to single-terminal while investigating. The workspace store state can be reset by clearing localStorage (`element-workspace` key) |
-| Tech debt regression | LOW | Git revert the offending commit. This is why one-file-at-a-time cleanup matters -- easy to identify which fix broke things |
-| Notification fatigue (users disabled all notifications) | MEDIUM | Cannot un-train user behavior. Must redesign notification taxonomy and re-earn user trust. Ship with conservative defaults from the start |
+| Two chat UIs competing for agent | MEDIUM | Refactor to single agent process with queue-based chat channel, redirect hub chat away from terminal |
+| CenterPanel routing broken | LOW | Add `activeView` state to workspace store, update CenterPanel conditional chain |
+| Token-bomb manifest | LOW | Add token budget, switch to two-tier index + on-demand detail |
+| Blocking briefing call | LOW | Add SQLite cache table, load cached on mount, refresh async |
+| Unsandboxed bot commands | HIGH | Retrofit approval enforcement in MCP handler, add path validation, audit existing executions |
+| Slow chat polling | MEDIUM | Replace polling with fs watcher for chat directory, keep polling for other queues |
+| Duplicate goals tree state | MEDIUM | Delete parallel store, rewire to existing slices, fix any missing data in existing slices |
+| Agent lifecycle coupled to panel | MEDIUM | Lift `useAgentLifecycle` to AppLayout, provide via context, remove auto-start from AgentPanel |
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Navigation bug / state race | Tech debt cleanup (FIRST phase) | Behavioral test: "Open AI" keeps user on ProjectDetail view |
-| TS error regression cascade | Tech debt cleanup (FIRST phase) | Zero TS errors + full manual smoke test of sidebar |
-| Orphaned file deletion safety | Tech debt cleanup (FIRST phase) | Full-text search for file references before deletion |
-| Terminal session bleed | Multi-terminal sessions | `pwd` test after project switch shows correct CWD |
-| PTY zombie processes | Multi-terminal sessions | Process count before/after closing all terminals matches |
-| xterm.js memory growth | Multi-terminal sessions | Memory stays under 500MB after 30 min with 5 terminals |
-| Runaway AI costs | Execution pipeline MVP | Token budget enforced, wall-clock timeout kills process |
-| Notification spam | Execution pipeline MVP | Coalescing verified: 10 rapid events = 1-2 toasts |
-| AI process orphans on app close | Execution pipeline MVP | Force-quit app during AI execution, verify no orphan processes |
-| Hardcoded `/bin/zsh` | Multi-terminal sessions | Terminal launches on Linux (bash) and Windows (pwsh) |
+| Hub chat vs agent panel boundary | Phase 1 (Hub UI) + Phase 3 (Chat) | Hub chat sends messages via queue, not terminal PTY |
+| CenterPanel routing for hub | Phase 1 (Hub UI) | `activeView` state exists, Home button navigates to hub |
+| Token-bomb manifest | Phase 2 (Context manifest) | Manifest under 2000 tokens with 10 test projects |
+| Blocking briefing | Phase 2 (AI briefing) | Cached briefing renders within 100ms of hub mount |
+| Unsandboxed bot commands | Phase 4 (Bot skills) | Tool-level approval enforcement, path validation, command allowlist |
+| Slow chat polling | Phase 3 (Hub chat) | Response latency under 500ms from file write to UI update |
+| Duplicate goals tree state | Phase 1 (Hub UI) | Goals tree reads from `useStore` slices, no new fetch commands |
+| Agent lifecycle coupling | Phase 1 (Hub UI) | Agent stays running when panel is closed |
 
 ## Sources
 
-- [Tauri issue #5611: Closing window does not kill process on Windows](https://github.com/tauri-apps/tauri/issues/5611)
-- [Tauri issue #11686: Plugin-shell cannot fully terminate multi-process executables](https://github.com/tauri-apps/tauri/issues/11686)
-- [Tauri discussion #3273: Kill process on exit](https://github.com/tauri-apps/tauri/discussions/3273)
-- [xterm.js issue #1518: Memory leaks on Terminal.dispose](https://github.com/xtermjs/xterm.js/issues/1518)
-- [xterm.js issue #4175: Poor performance with wide containers](https://github.com/xtermjs/xterm.js/issues/4175)
-- [xterm.js flow control documentation](https://xtermjs.org/docs/guides/flowcontrol/)
-- [xterm.js issue #791: Buffer performance / ~34MB per full terminal](https://github.com/xtermjs/xterm.js/issues/791)
-- [Carbon Design System: Notification patterns](https://carbondesignsystem.com/patterns/notification-pattern/)
-- [NN/g: Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/)
-- [Microsoft: Toast notification UX guidance](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/toast-ux-guidance)
-- [LangChain: State of Agent Engineering (cost control patterns)](https://www.langchain.com/state-of-agent-engineering)
-- [tauri-plugin-pty GitHub (Tnze)](https://github.com/Tnze/tauri-plugin-pty)
-- Codebase analysis: `useTerminal.ts`, `useWorkspaceStore.ts`, `OpenAiButton.tsx`, `TerminalTab.tsx`
+- Codebase analysis: `src/hooks/useAgentLifecycle.ts`, `src/hooks/useAgentQueue.ts`, `src/hooks/useAgentMcp.ts`
+- Codebase analysis: `src/stores/useAgentStore.ts`, `src/stores/notificationSlice.ts`, `src/stores/index.ts`
+- Codebase analysis: `mcp-server/src/index.ts`, `mcp-server/src/tools/orchestration-tools.ts`
+- Codebase analysis: `src/components/center/TodayView.tsx`, `src/components/layout/CenterPanel.tsx`
+- Codebase analysis: `src/components/agent/AgentPanel.tsx` (auto-start on mount pattern)
+- MCP SDK stdio transport documentation: 1:1 client-server constraint
+- Tauri `notify` crate filesystem watcher: already used for `.planning/` sync
+- Memory note: `feedback_zustand_selector_stability.md` -- never return new refs from selectors (relevant to goals tree)
 
 ---
-*Pitfalls research for: Element v1.3 Foundation & Execution milestone*
-*Researched: 2026-03-29*
+*Pitfalls research for: v1.4 Daily Hub — AI-powered home screen with goals tree, briefing, chat, bot skills, and context manifest*
+*Researched: 2026-03-31*

@@ -1,195 +1,213 @@
 # Project Research Summary
 
-**Project:** Element v1.3 — Foundation & Execution
-**Domain:** Tauri 2.x desktop app — multi-terminal, background AI orchestration, contextual UI
-**Researched:** 2026-03-29
+**Project:** Element v1.4 Daily Hub
+**Domain:** AI-powered home screen with goals tree, daily briefing, conversational chat, context manifest, and bot skills — integrated into an existing Tauri 2.x + React 19 desktop app
+**Researched:** 2026-03-31
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element v1.3 is a Tauri 2.x desktop project-management app that needs to evolve from a single-terminal, manual-AI-launch tool into a multi-terminal workspace with a background AI orchestrator. The research confirms that the existing stack (Tauri 2.x, React 19, SQLite, Zustand, xterm.js, tauri-plugin-pty, tokio) requires minimal net-new dependencies: only `tauri-plugin-notification` (for OS-native alerts) and `tokio-util` (for `CancellationToken`) need to be added. All terminal, UI, and execution features can be built on what is already installed. The recommended approach is a layered build order: fix tech debt and existing state-management bugs first, add multi-terminal sessions second, wire in the notification system third, and build the background orchestrator last — because every later phase depends on the earlier ones being stable.
+Element v1.4 adds a Daily Hub that replaces TodayView as the app's default home screen. The hub is a 3-column layout: a hierarchical goals tree on the left (themes > projects > phases), an AI-generated daily briefing plus conversational chat in the center, and a calendar placeholder on the right. The existing codebase is well-positioned for this work — the AI gateway, MCP sidecar, agent queue, Zustand slice pattern, and shadcn/ui design system are all proven infrastructure. The genuine new work is a thin layer on top: 5 new npm packages (react-markdown + ecosystem), approximately 10 new React components, 3 new Rust modules, and a new standalone Zustand store. No new Rust crates and no new MCP server dependencies are required.
 
-The core architectural pattern is React-managed terminal sessions (via a Zustand `terminalSessions` store keyed by project ID) combined with a Rust-side tokio daemon that polls project state and communicates exclusively through Tauri events. The "Open AI" button becomes a state-machine-driven action surface that reflects the full project lifecycle (`NO_DIRECTORY` → `NO_PLAN` → `READY` → `AI_RUNNING` → `NEEDS_ATTENTION` → `ALL_COMPLETE`). This is the primary UX differentiator — one button that always shows the right next action.
+The recommended approach is to build in 5 sequential phases: (1) hub shell + goals tree + CenterPanel routing as a pure UI/data layer with zero AI dependency, (2) context manifest and AI briefing using the existing AI gateway with streaming and SQLite-cached results, (3) hub chat as a direct AI gateway channel (not routed through the file-based MCP queue), (4) bot skill action dispatch via LLM function-calling parsed client-side and dispatched to existing Tauri commands, and (5) MCP sidecar write tools for background agent autonomy. Each phase is independently shippable and directly depends on the previous one's infrastructure being stable.
 
-The most critical risk is the existing "Open AI" navigation bug (state race in `launchTerminalCommand` / `restoreProjectState`) which will be amplified by every multi-terminal state transition added later. This must be resolved before multi-terminal work begins. The second major risk is runaway AI execution cost: the orchestrator MVP must ship in "suggest and approve" (dry-run) mode before enabling autonomous execution. Treat cost controls as a launch blocker, not a nice-to-have.
+The three highest-risk decisions are: (a) CenterPanel routing — the hub needs an explicit `activeView` state in the workspace store rather than being a TodayView fallback, or it will disappear the moment any sidebar item is clicked; (b) hub chat must bypass the file-based agent queue (which has 2-second polling latency) and use the AI gateway directly; and (c) the context manifest must be token-budgeted from day one (target: under 2000 tokens) or LLM quality will degrade at scale. The agent lifecycle must also be lifted out of AgentPanel's component lifecycle before hub features are added, since both the hub and the panel need the agent running regardless of panel visibility.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack is validated and unchanged. Two small additions unlock all v1.3 features: `tauri-plugin-notification = "2"` in Cargo.toml (plus `@tauri-apps/plugin-notification` npm package) for OS-native toasts, and `tokio-util = "0.7"` for `CancellationToken` to cleanly shut down the orchestrator daemon. `sonner` for in-app toasts is already installed at 2.0.7. All terminal, sidebar, and UI features build on existing shadcn/ui primitives, Zustand, and the verified `tauri-pty` 0.2.1 API (`spawn`, `kill`, `resize`, `onData`, `onExit`, `write`).
+The existing stack covers approximately 90% of Daily Hub needs. The only genuine gaps are markdown rendering for LLM output and an auto-resizing textarea for chat input. All required Rust crates are already present (`serde_json`, `chrono`, `rusqlite`, `reqwest`, `tokio`). The MCP sidecar requires no new npm dependencies (`better-sqlite3`, `zod`, `@modelcontextprotocol/sdk` all present).
 
-**Core technologies:**
-- `tauri-plugin-notification 2.x`: OS-native desktop notifications — official Tauri plugin, zero friction, covers macOS/Windows/Linux
-- `tokio::sync::mpsc` + `CancellationToken`: background orchestrator lifecycle control — already available via `tokio = { features = ["full"] }`, no new async runtime needed
-- `tauri-pty 0.2.1` (existing): multi-terminal sessions — each `spawn()` call creates a fully independent PTY; no Rust-side pool needed
-- `sonner 2.0.7` (existing): in-app toasts for non-critical informational notifications
+**Core new technologies (5 npm packages only):**
+- `react-markdown@^10.1.0`: Renders LLM markdown responses — native React elements, no `dangerouslySetInnerHTML`, React 19 compatible
+- `remark-gfm@^4.0.0`: GitHub-flavored markdown (tables, task lists, strikethrough) — required for LLM output; must be v4 to match unified ecosystem v11
+- `rehype-highlight@^7.0.2`: Syntax highlighting for code blocks via highlight.js — ~30kB bundle, lighter than react-syntax-highlighter
+- `react-textarea-autosize@^8.5.7`: Auto-growing chat textarea — 2.8kB, React 19 compatible, eliminates manual height calculation
+- `highlight.js@^11.11.0`: Peer dependency of rehype-highlight — import only specific language grammars (typescript, rust, json, bash, sql) to minimize bundle
+
+**Do not add:** Vercel AI SDK (assumes HTTP/SSR, fights Tauri IPC), chatscope/chat-ui-kit (conflicting CSS, wrong interaction model for single-user LLM chat), LangChain.js (massive dep tree, server-oriented), react-virtualized for chat (premature, complicates streaming auto-scroll with dynamic heights).
 
 ### Expected Features
 
-Research confirms a clear P1/P2/P3 split. The foundational dependency is the `TerminalSession` store refactor — everything else (named AI sessions, background orchestrator, contextual button) builds on it.
+**Must have for v1.4 (P1):**
+- Hub 3-column layout replacing TodayView as default — every AI dashboard uses spatial hierarchy
+- Goals tree (left column): themes > projects > phases with progress indicators and click-to-navigate
+- Context manifest: Rust-side aggregation of all project state, generated in-memory per LLM call (never written to disk)
+- AI daily briefing (center column): cross-project priority synthesis, markdown rendered, streaming, SQLite-cached
+- Hub chat input with message history: conversational interface routed to orchestrator
+- Bot write tools at minimum: `create_task`, `update_task_status` — chat that can only answer questions is decorative
+- Quick-action suggestion chips after briefing — reduces blank-input anxiety
+- Calendar placeholder (right column) — column must exist even if content is minimal
+- Briefing refresh button — users need control after completing tasks
 
-**Must have for v1.3 (P1):**
-- Direct project-click navigation (single-click navigates, right-click = context menu) — most basic UI convention, currently violated
-- Collapsible sidebar sections with chevron toggle — standard pattern, currently non-standard slider
-- Simplified task detail view (progressive disclosure) — reduces cognitive overload
-- Smart AI button with full 7-state machine — primary UX differentiator
-- Multi-terminal tabs with per-project session registry — foundational for everything else
-- Named AI session terminals (Bot icon, distinct from manual shells) — users need to know which tab the AI is in
-- Kill/respawn per tab + tab naming — every terminal app expects this
-- Terminal as default drawer tab — it is the primary workspace tool
-- Basic notification system (OS + in-app) — required by orchestrator
-- Background orchestrator MVP in approve-only mode — core product value proposition
-
-**Should have for v1.3.x (P2):**
-- Risk-tiered auto-execution (once orchestrator is stable)
-- Execution progress drawer tab (richer agent visibility)
-- Notification badges on sidebar projects
-- Session persistence across project switches (hidden DOM approach)
+**Should have for v1.4.x (P2):**
+- Action confirmation cards inline in chat before destructive operations
+- Token-streaming polish (token-by-token rendering in chat)
+- Briefing auto-refresh on app focus
+- Chat history persistence to SQLite (in-memory only for v1.4 launch)
 
 **Defer to v2+ (P3):**
-- Launch configurations / saved terminal presets (Warp-style)
-- Autonomy slider (user calibrates AI autonomy level)
-- Inter-agent coordination (multiple parallel AI sessions)
-- Split-pane terminals, in-app code editor/diff viewer, push notifications
+- Google/Outlook calendar integration (OAuth complexity, explicitly deferred in PROJECT.md)
+- Email signal ingestion (provider integration, privacy concerns, explicitly Future in PROJECT.md)
+- AI urgency/priority scoring (subjective, creates distrust when it disagrees with user)
+- Cross-session chat memory (AGENT-10 explicitly deferred, requires memory system design)
+- Customizable hub layout with drag-and-drop (engineering cost far exceeds value for a single-user app)
 
 ### Architecture Approach
 
-The architecture is three independent layers built in strict dependency order. The terminal layer is entirely frontend-managed: a Zustand `terminalSessions: Record<ProjectId, TerminalSession[]>` store replaces the current global `terminalSessionKey`, and all sessions for the active project are mounted simultaneously with CSS `display: none` on inactive ones to preserve scrollback. The orchestrator layer is a Rust-side `tokio::spawn` daemon that reads project/phase/task state from the shared `Arc<Mutex<Database>>`, determines the next action, and communicates exclusively via `app.emit()` events — never by directly mutating frontend state. The notification layer bridges these two: Rust-side `tauri-plugin-notification` for OS alerts when the orchestrator needs human input, `sonner` toasts for foreground informational feedback, and a Zustand `notificationSlice` for persistent in-app notification history.
+The hub integrates into the existing architecture with minimal surface area modifications. The entire UI lives in a new `src/components/hub/` directory. A new standalone `useHubStore` follows the `useAgentStore` pattern — not a slice in AppStore, because hub state (briefing markdown, chat messages, streaming flags) has zero cross-dependencies with other slices. Three new Rust modules (`hub_commands.rs`, `manifest.rs`, `hub_prompts.rs`) are registered via 5 one-line additions to existing mod files. The context manifest is generated in-memory and passed directly to the AI gateway — no staleness, no file watchers, no disk I/O. Hub chat uses the AI gateway directly with Tauri event streaming, bypassing the file-based agent queue entirely.
 
 **Major components:**
-1. `TerminalSessionStore` (Zustand slice) — `Map<ProjectId, TerminalSession[]>`, active session per project, replaces `terminalSessionKey`
-2. `TerminalTabBar` + `TerminalPane` (React) — tab management UI; N panes mounted simultaneously, only active one visible
-3. `orchestrator/` (Rust module) — daemon loop, action determination, CLI tool execution via `tokio::process::Command`
-4. `OrchestratorCommands` (Tauri commands) — `start`, `stop`, `pause`, `approve` — frontend-to-orchestrator control
-5. `NotificationBridge` (Rust + React) — routes orchestrator events to OS notifications and Zustand notification slice
-6. `NotificationTray` (React) — bell icon with badge count, dropdown history, action buttons
-
-**New DB tables:** `orchestrator_runs` (execution history) and `orchestrator_config` (per-project orchestrator settings including `enabled`, `auto_execute`, `poll_interval_secs`).
+1. `HubView` — 3-column layout container; replaces TodayView in CenterPanel routing; requires explicit `activeView` state in workspace store
+2. `GoalsTreePanel` / `GoalsTreeNode` — reads from existing `themeSlice`/`projectSlice`/`phaseSlice`; computes progress client-side; one new bulk query (`list_project_progress`) to avoid N+1
+3. `BriefingCard` — streaming markdown display; SQLite cache for instant load, background refresh on mount
+4. `HubChat` / `HubChatMessage` / `HubChatInput` — conversational interface; streams via `hub-chat-stream` Tauri events; parses action JSON from LLM responses for client-side dispatch to existing `api.*` functions
+5. `hub_commands.rs` — thin Tauri command orchestrator: generates manifest in-memory, builds prompt, streams via existing AI gateway
+6. `manifest.rs` — pure data aggregation: queries all projects/phases/tasks, formats as token-budgeted markdown (hard cap: 2000 tokens)
+7. MCP sidecar write tools (Phase 5) — separate from hub chat skills; these are for background autonomous execution, not interactive conversation
 
 ### Critical Pitfalls
 
-1. **"Open AI" navigation state race** — `launchTerminalCommand` and `restoreProjectState` fight over the same Zustand keys; multi-terminal adds more transitions and amplifies the bug. Fix: separate terminal-launch state from navigation state; add a behavioral test asserting ProjectDetail stays visible after "Open AI" click. Must be resolved BEFORE multi-terminal work.
+1. **Hub chat competing with agent panel for the orchestrator** — Do not route hub chat through the file-based agent queue (2s polling latency) or spawn a second CLI process (MCP stdio is 1:1 — cannot multiplex). Use the AI gateway directly from `hub_commands.rs` with Tauri event streaming. The agent panel remains the autonomous orchestration surface; hub chat is an interactive AI gateway conversation.
 
-2. **PTY zombie processes on close** — `pty.kill()` sends SIGHUP but child processes (e.g., Claude Code) that ignore it survive. With N terminals this multiplies. Fix: track all PTY PIDs in a Rust-side registry; on `tauri::RunEvent::ExitRequested` force-kill all with SIGKILL fallback after 2s SIGTERM.
+2. **CenterPanel routing: hub unreachable after sidebar navigation** — TodayView was a passive fallback. The hub is a primary destination. Add `activeView: "hub" | "project" | "task" | "theme" | "workflow"` to workspace store. CenterPanel checks `activeView` first. Sidebar needs a "Home" entry. Without this change, the hub disappears the moment any sidebar item is clicked.
 
-3. **xterm.js instance memory growth** — each Terminal with WebGL renderer and 5000-line scrollback consumes ~34MB. Five terminals per project × 3 projects = ~510MB minimum. `Terminal.dispose()` does not fully GC due to document-level listener leaks (xterm.js issue #1518). Fix: cap at 5 total instances; use canvas renderer for background terminals; serialize inactive scrollback to a string array and re-create on tab focus.
+3. **Context manifest as a token bomb** — Aggregating all entities without a budget breaks LLM quality at 10+ projects. Hard cap: 2000 tokens. Use compact one-line-per-project format in the manifest index; MCP tools handle on-demand detail. Generate in-memory, never write to disk.
 
-4. **Runaway AI execution costs** — background AI with no budget controls can consume hundreds of dollars before the user notices. Fix: ship orchestrator MVP in approve-only mode; add per-execution token budget, 30-minute wall-clock timeout, and 3-attempt retry cap before escalating to human. Cost controls are a launch blocker.
+4. **Daily briefing blocking app startup** — LLM calls take 5-15 seconds. Cache the last briefing in SQLite with a timestamp. On hub mount, show cached immediately and refresh in background. A stale briefing is always better than a loading spinner as the user's first impression every morning.
 
-5. **Notification spam / fatigue** — without a taxonomy defined upfront, every feature author adds notifications and users disable them entirely, missing critical "human input needed" alerts. Fix: define Critical / Informational / Silent taxonomy before implementation; coalesce batched events; never use OS notifications for success states.
+5. **Agent lifecycle coupled to AgentPanel component** — `AgentPanel.tsx` currently auto-starts the agent on mount (line 12). Hub features also need the agent running. Lift `useAgentLifecycle` to AppLayout (called once at app level). Both hub and agent panel become consumers of agent state, not owners of agent lifecycle.
+
+6. **Bot skills without tool-level security** — `run_command` must enforce approval at the MCP handler level, not just via system prompt instructions (LLMs can and do ignore prompts). Require approval queue write + poll in every execution tool handler. Scope all file operations to project `directoryPath` from database — reject absolute paths outside project roots. Implement a shell command allowlist (`git`, `npm`, `cargo`, configured CLI tool).
+
+7. **Goals tree duplicating sidebar data** — The tree must read from the same Zustand slices as the sidebar (`themeSlice`, `projectSlice`, `phaseSlice`). No new `useGoalsTreeStore`. No duplicate `list_themes` or `list_projects` commands. The only new backend query needed is `list_project_progress` returning aggregate task counts per project in one SQL query.
 
 ## Implications for Roadmap
 
-Based on the dependency graph in FEATURES.md and the pitfall-to-phase mapping in PITFALLS.md, the research strongly supports a four-phase build order.
+Based on the dependency graph in FEATURES.md and the pitfall-to-phase mapping in PITFALLS.md, the research supports a 5-phase build order.
 
-### Phase 1: Tech Debt & Navigation Fixes
+### Phase 1: Hub Shell, Goals Tree, and CenterPanel Routing
 
-**Rationale:** The "Open AI" navigation bug and existing TypeScript errors will compound with every new feature added. Research explicitly identifies this as a must-fix-first. The bug is a state-management race; adding multi-terminal state transitions before fixing it guarantees regression amplification.
+**Rationale:** Zero AI dependencies. Pure UI and data queries. All critical architectural decisions — activeView routing, agent lifecycle decoupling, goals tree wired to existing stores, 3-column layout — must be locked here before any AI features are built on top. Getting CenterPanel routing wrong is a high-recovery-cost mistake that will affect every subsequent phase.
 
-**Delivers:** Stable foundation — zero TS errors, reliable project navigation, "Open AI" keeps user on ProjectDetail view, confirmed no orphaned file imports.
+**Delivers:** Working 3-column hub as default home screen with placeholder panels. Goals tree with progress indicators, click-to-navigate, and visual status encoding. CenterPanel routing with explicit `activeView` state and Home button in sidebar. Agent lifecycle lifted to AppLayout. Calendar placeholder. `list_project_progress` bulk query to avoid N+1.
 
-**Addresses:** Direct project-click navigation, Link Directory on same line as AI button (low-effort layout fixes bundled here), sidebar collapsible with chevron toggle.
+**Features addressed:** Hub 3-column layout, goals tree hierarchy, progress indicators, click-to-navigate, visual status encoding, hub as default home view, greeting with time-of-day awareness, calendar placeholder.
 
-**Avoids:** Tech debt regression cascade (Pitfall 5), navigation bug amplification (Pitfall 4).
+**Pitfalls avoided:** CenterPanel routing (activeView state established first), duplicate goals tree state (wired to existing slices from the start), agent lifecycle coupling (lifted before hub features depend on it).
 
-**Research flag:** Skip research-phase. Patterns are well-documented; this is codebase-specific debugging and cleanup.
+### Phase 2: Context Manifest and AI Daily Briefing
 
-### Phase 2: Multi-Terminal Sessions
+**Rationale:** The manifest is the data foundation for both briefing and chat. Building it here — with token budget constraints baked in from day one — validates the full AI gateway streaming pipeline before chat adds conversation history complexity. Briefing is the simpler AI integration (no user input, no history management, no action parsing) and is the hub's headline feature.
 
-**Rationale:** Everything downstream (named AI sessions, the orchestrator, the contextual button's "View AI" state) depends on the session registry existing. This is the foundational refactor that enables the rest of v1.3.
+**Delivers:** In-memory context manifest generation in Rust (all projects/phases/tasks, under 2000 tokens hard cap). `generate_briefing` Tauri command with streaming. `useHubStore` (briefing state, streaming listener). `BriefingCard` with markdown rendering. SQLite briefing cache (instant load, background refresh). Refresh button. Loading skeleton.
 
-**Delivers:** `TerminalSessionStore`, `TerminalTabBar`, `TerminalPane`, per-project PTY isolation, kill/respawn per tab, tab naming, terminal as default drawer tab, named AI session terminals, updated `launchTerminalCommand` that creates new sessions instead of killing existing ones.
+**Features addressed:** AI daily briefing, cross-project priority synthesis, briefing markdown rendering, briefing loading skeleton, briefing refresh, context manifest auto-generation, token-budget-aware manifest format, briefing prompt design.
 
-**Uses:** `tauri-pty 0.2.1` verified spawn/kill API, Zustand, existing xterm.js, Radix Collapsible for sidebar.
+**Stack used:** All 5 new npm packages go here (`react-markdown`, `remark-gfm`, `rehype-highlight`, `rehype-highlight`, `highlight.js`). Existing AI gateway + Tauri event streaming.
 
-**Avoids:** Terminal session bleed between projects (Pitfall 6), PTY zombie processes (Pitfall 1), xterm.js memory growth (Pitfall 2) — instance pooling must be designed in, not added later.
+**Pitfalls avoided:** Token-bomb manifest (budget enforced at design time), blocking briefing on startup (SQLite cache), manifest written to disk (generated in-memory).
 
-**Research flag:** Skip research-phase. Architecture is well-specified; the hidden-mount pattern and session data model are fully designed in ARCHITECTURE.md.
+### Phase 3: Hub Chat
 
-### Phase 3: Notification System
+**Rationale:** Depends on Phase 2 because it extends the same store, prompt infrastructure, and streaming pipeline. Chat adds multi-turn `CompletionRequest` extension (backward compatible via `Option<Vec<ChatMessage>>`), conversation history management, and a dedicated `hub-chat-stream` event channel distinct from existing `ai-stream-*` events.
 
-**Rationale:** The orchestrator (Phase 4) needs notifications to communicate human-needed events. Building notifications separately ensures they are stable and properly taxonomized before the orchestrator generates high-volume events. Standalone value: existing workflow events (workflow-run-completed, workflow-step-failed) can be wired through the new system immediately.
+**Delivers:** `hub_chat` Tauri command (manifest + history + streaming). `ChatMessage` type added to `CompletionRequest` as an optional field (zero changes to existing `ai_assist_task`). `HubChat`, `HubChatMessage`, `HubChatInput` components. `useHubStore` extended with chat state. Quick-action suggestion chips. Typing indicator.
 
-**Delivers:** `tauri-plugin-notification` integration, `notificationSlice` in Zustand, `NotificationTray` (bell + badge + dropdown), `ToastProvider` listening to Tauri events, notification taxonomy (Critical / Informational / Silent), coalescing logic, existing workflow event wiring.
+**Features addressed:** Hub chat input with message history, streaming AI responses, markdown rendering in chat messages, quick-action suggestion chips, context-aware suggestions, message type system (user, assistant, loading, error).
 
-**Uses:** `tauri-plugin-notification 2.x` (new dependency), `sonner 2.0.7` (existing), Tauri event system.
+**Pitfalls avoided:** Hub chat vs agent panel conflict (uses AI gateway directly, not file-based queue), slow chat polling (Tauri event streaming gives sub-second delivery, not 2s polling).
 
-**Avoids:** Notification spam / fatigue (Pitfall 7) — taxonomy must be locked before any events are wired.
+### Phase 4: Bot Skills — Action Dispatch from Chat
 
-**Research flag:** Skip research-phase. Dual-channel pattern is well-documented; taxonomy is fully specified in FEATURES.md notification categories table.
+**Rationale:** Depends on Phase 3 because action dispatch requires a working chat to generate and parse actions from. This phase is what distinguishes Element's hub from a generic AI dashboard — chat that can act, not just answer.
 
-### Phase 4: Background Orchestrator MVP
+**Delivers:** Action schema definition in `hub_prompts.rs`. Frontend action parser (extracts JSON code blocks from AI response text). Dispatcher maps action types to existing `api.*` Tauri calls. Confirmation UX before destructive operations (reuses `useAgentStore` approval pattern). Inline action result messages in chat. Bot write tools in MCP server: `create_task`, `update_task_status`, `create_phase`.
 
-**Rationale:** Depends on Phases 2 (session registry — orchestrator needs to launch AI in named terminals) and 3 (notification system — orchestrator communicates via human-needed events). Most complex piece; benefits from all prior phases being stable. Ship in approve-only mode first.
+**Features addressed:** Chat commands trigger orchestrator actions, action confirmations in chat, expanded MCP tool set, write tools for entity CRUD, skill discovery via "What can you do?" help command.
 
-**Delivers:** Rust `orchestrator/` module (daemon, actions, executor), `orchestrator_runs` and `orchestrator_config` DB tables, `OrchestratorCommands` Tauri commands, approve-only execution mode with notification-based approval flow, smart AI button full state machine (`NO_DIRECTORY` → `ALL_COMPLETE`), minimal orchestrator UI (enable/disable toggle, status indicator), token budget enforcement and wall-clock timeout.
+**Pitfalls avoided:** Unsandboxed bot commands (tool-level approval enforcement, path validation, allowlist designed here before Phase 5 adds shell execution), prompt injection (user input always in `user` role, never concatenated into system prompt).
 
-**Uses:** `tokio-util` CancellationToken (new dependency), `tokio::process::Command`, `Arc<Mutex<Database>>` (same pattern as existing scheduler), Tauri event system.
+### Phase 5: MCP Sidecar Write Tools (Background Agent Skills)
 
-**Avoids:** Runaway AI costs (Pitfall 3) — approve-only mode ships first; autonomous execution is a v1.3.x follow-up.
+**Rationale:** Semi-independent of Phases 3-4 (MCP sidecar is a separate process from the hub UI). Can be parallelized with Phases 3-4 if bandwidth allows. Addresses background autonomous agent capabilities — distinct from hub chat's interactive dispatch which is user-present. These tools run when the user is away.
 
-**Research flag:** Needs research-phase during planning. The orchestrator `determine_next_action` logic (reading `.planning/` structure, classifying what is actionable vs. human-needed) requires deeper specification based on the actual project/phase/task schema. The integration between CLI tool output parsing and task status updates also needs definition.
+**Delivers:** `run_shell_command` tool (project-scoped CWD, allowlisted commands, approval-gated at handler level). `write_file` tool (project-directory-scoped only, rejects absolute paths outside project roots). Extended `create_task`/`update_task_status` for autonomous use. Full approval enforcement at MCP handler level (not just system prompt). Audit trail written to SQLite on every execution. Notification bridge extended to persist to SQLite (not just queue file).
+
+**Features addressed:** Bot skills extension (run_command, write_file, entity CRUD for background agent), bot skill discovery, background agent autonomy improvements.
+
+**Pitfalls avoided:** Unsandboxed shell execution (enforcement at handler level, not prompt level), absolute path traversal, missing audit trail, notification without SQLite persistence.
 
 ### Phase Ordering Rationale
 
-- **Phases must be sequential:** Multi-terminal (Phase 2) requires the navigation bug to be fixed (Phase 1) or risk regression amplification. The orchestrator (Phase 4) requires both the session registry (Phase 2) and notifications (Phase 3). There is no safe reordering.
-- **Notification system as a bridge (Phase 3):** Building it standalone rather than inside the orchestrator phase keeps Phase 4 scope manageable and allows existing workflow events to benefit immediately.
-- **Approve-only mode for orchestrator MVP:** Research (FEATURES.md, PITFALLS.md) converges on shipping conservative defaults. Risk-tiered auto-execution is a v1.3.x iteration after the orchestrator is proven stable.
-- **UI polish is distributed:** Low-effort P1 UI fixes (collapsible sidebar, task detail simplification) are bundled into Phase 1 tech debt cleanup to deliver visible value immediately without requiring the session registry to be done first.
+- **Phase 1 has zero AI dependencies.** All routing, layout, and store architecture decisions are locked before AI features are built on top. This is non-negotiable — CenterPanel routing and agent lifecycle are foundational to every subsequent phase.
+- **Manifest before briefing, briefing before chat.** Each phase extends the previous one's infrastructure. Building chat before briefing means constructing two streaming pipelines simultaneously with no proven foundation.
+- **Action dispatch (Phase 4) after chat (Phase 3).** You cannot build an action parser before you have a working chat generating text from.
+- **MCP sidecar tools (Phase 5) are architecturally separate.** They extend a separate Node.js process, not the hub UI. They can be built in parallel with Phases 3-4 if desired. Placing them last ensures security constraints from Phase 4 are already designed before shell execution capability is added.
+- **This ordering matches the architecture's confirmed dependency graph** — see ARCHITECTURE.md "Suggested Build Order" section for the codebase-derived rationale.
 
 ### Research Flags
 
 Phases likely needing `/gsd:research-phase` during planning:
-- **Phase 4 (Orchestrator MVP):** The `determine_next_action` logic must be specified against the actual DB schema (project/phase/task state fields, status enums). CLI tool output parsing to detect completion vs. failure vs. human-needed states is domain-specific and sparsely documented. Token budget tracking mechanism needs definition.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Tech Debt):** Codebase-specific debugging; no external research needed.
-- **Phase 2 (Multi-Terminal):** Architecture is fully specified; `tauri-pty` API is verified against type definitions in `node_modules`.
-- **Phase 3 (Notifications):** Both notification channels have official documentation; taxonomy and coalescing patterns are well-established.
+- **Phase 4 (Bot Skills — Action Dispatch):** Prompt engineering for reliable function-calling / action JSON extraction is non-trivial. LLM must produce structured JSON blocks alongside conversational prose. Provider-specific behavior varies — Anthropic supports native tool use, Ollama may not. Research the exact schema format and parsing approach (JSON.parse with error recovery vs regex extraction vs structured output mode) before implementation.
+- **Phase 5 (MCP Write Tools):** `better-sqlite3` write connection patterns need validation when a WAL-mode read-only connection from the main app process is already open. Need to confirm whether a second write-capable connection is safe or if writes must go through the Tauri command layer.
+
+Phases with standard patterns (skip research):
+
+- **Phase 1 (Hub Shell):** Pure React layout + Zustand store wiring. All patterns are established across 13+ existing slices and CenterPanel routing. No research needed.
+- **Phase 2 (Briefing):** Streaming from AI gateway is proven in `ai_assist_task`. react-markdown integration is well-documented. SQLite caching follows existing patterns. No research needed.
+- **Phase 3 (Chat):** Extends Phase 2's infrastructure. Multi-turn `CompletionRequest` extension is a minimal backward-compatible Rust change. Tauri event streaming is proven. No research needed.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All existing dependencies verified against installed versions; new dependencies (`tauri-plugin-notification`, `tokio-util`) verified against official Tauri 2.x docs and compatibility matrix |
-| Features | MEDIUM-HIGH | Table-stakes and differentiator features well-grounded in competitor analysis (VS Code, Warp, Cursor, Devin); background orchestrator patterns are emerging territory (2026 agentic AI) |
-| Architecture | HIGH | Hidden-mount terminal pattern, event-driven orchestrator, and dual-channel notifications are all verified against existing codebase patterns (`scheduler.rs`, `useTerminal.ts`) and official Tauri docs |
-| Pitfalls | HIGH | PTY and xterm.js pitfalls sourced from open GitHub issues with specific issue numbers; cost-control patterns sourced from LangChain State of Agent Engineering 2026; navigation bug based on codebase analysis |
+| Stack | HIGH | All recommendations verified against actual `package.json` and `Cargo.toml`. Only 5 new packages, all with confirmed React 19 and unified v11 compatibility. Explicit version pinning rationale documented. |
+| Features | MEDIUM-HIGH | Hub UI and briefing patterns are well-established (shadcn AI, prompt-kit, Vercel AI SDK cookbook). Chat-to-orchestrator routing and action dispatch are emerging patterns but have clear precedents. Feature list grounded in competitor analysis (Notion AI, Linear, Todoist AI, Motion). |
+| Architecture | HIGH | Based on direct codebase analysis of all affected files. Data flows are concrete and specific (e.g., 2s polling interval cited at line 306 of `useAgentQueue.ts`, TodayView fallback at line 112 of `CenterPanel.tsx`). Anti-patterns identified from actual code paths, not generic advice. |
+| Pitfalls | HIGH | All 8 pitfalls derived from codebase analysis, not generic web patterns. Each maps to a specific file and line. Recovery costs are realistic. Phase-to-pitfall mapping is explicit. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Orchestrator action classification logic:** Research describes the `determine_next_action` interface but not its implementation. Specifically: what project/phase/task state fields determine "actionable," "human-needed," or "nothing to do"? This needs to be resolved during Phase 4 planning by reviewing the actual DB schema and current `phases`/`tasks` status enum values.
-- **CLI tool output parsing strategy:** The orchestrator must determine from AI CLI output whether a phase is complete, failed, or needs human input. The parsing approach (structured output, exit codes, log pattern matching) is not specified. Needs definition in Phase 4 planning.
-- **Windows cross-platform compatibility:** Research notes that `pty.kill()` on Windows has documented issues (Tauri issue #5611), and hardcoded `/bin/zsh` breaks on Windows. The fix (`$SHELL` env var with fallback chain, process-group kill) is specified, but Windows-specific testing is needed during Phase 2 to confirm behavior. This is flagged as a known risk, not a blocker.
-- **Token budget tracking mechanism:** The orchestrator must track per-execution token consumption to enforce budgets. The AI CLI tools (Claude Code) may or may not expose token counts via stdout. The exact tracking approach depends on which CLI tools are supported and needs to be validated during Phase 4 planning.
+- **Action JSON parsing robustness (Phase 4):** The exact schema and parsing strategy for extracting LLM action blocks needs validation against actual provider behavior before implementation. Anthropic supports native tool use via structured output; Ollama may return freeform JSON. The parsing approach (regex vs `JSON.parse` with error recovery vs native tool-use API) should be decided during Phase 4 planning.
+- **Bulk phase progress query (Phase 1):** `list_project_progress` returning aggregate task counts per project in one SQL query is described architecturally but not yet designed at the SQL level. Validate that the existing SQLite schema (tasks table `updated_at`, phases table foreign keys) supports efficient `GROUP BY` before Phase 1 implementation begins.
+- **Briefing cache invalidation threshold (Phase 2):** Research recommends once-per-day with manual refresh. The exact staleness threshold (1 hour? 24 hours? triggered by `updated_at` change detection?) should be decided during Phase 2 planning. Too aggressive = unnecessary LLM API costs; too conservative = stale briefings frustrate users after completing significant work.
+- **Chat message persistence schema (Phase 3):** Research recommends in-memory for v1.4 with SQLite persistence as a v1.4.x follow-up. The schema for persistent chat messages should be designed in Phase 3 even if not implemented, to avoid a migration later when cross-session memory is added.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Tauri Notification Plugin docs](https://v2.tauri.app/plugin/notification/) — installation, API, permissions
-- [tauri-plugin-pty GitHub](https://github.com/Tnze/tauri-plugin-pty) — spawn API, direct JS binding model
-- `tauri-pty 0.2.1` TypeScript definitions (`node_modules/tauri-pty/dist/types/index.d.ts`) — verified IPty API surface
-- [Tauri async_runtime docs](https://docs.rs/tauri/latest/tauri/async_runtime/index.html) — tokio daemon patterns
-- [Tauri Event System](https://v2.tauri.app/develop/calling-rust/#event-system) — backend-to-frontend communication
-- Existing codebase: `src/hooks/useTerminal.ts`, `src-tauri/src/lib.rs`, `engine/scheduler.rs`, `engine/executor.rs`, `Cargo.toml`, `package.json`
-- [Tauri issue #5611](https://github.com/tauri-apps/tauri/issues/5611) — PTY process kill on Windows
-- [xterm.js issue #1518](https://github.com/xtermjs/xterm.js/issues/1518) — Terminal.dispose memory leak
+
+- Codebase: `src-tauri/src/ai/` — `provider.rs` trait with `complete_stream`, `gateway.rs` with provider routing, `types.rs` `CompletionRequest` struct (direct analysis)
+- Codebase: `src/stores/` — 13-slice AppStore composition, standalone stores (`useAgentStore`, `useTerminalSessionStore`)
+- Codebase: `src/hooks/useAgentQueue.ts` — 2s polling at line 306, queue directory structure
+- Codebase: `src/components/layout/CenterPanel.tsx` — TodayView fallback routing at line 112
+- Codebase: `src/components/agent/AgentPanel.tsx` — auto-start on mount at line 12
+- Codebase: `mcp-server/src/tools/` — established tool handler pattern with `better-sqlite3`
+- Codebase: `src-tauri/src/models/onboarding.rs` — token-budgeted context generation precedent (`SOFT_TOKEN_BUDGET`, `classify_phase`, `format_phase_rollup`)
+- [react-markdown npm](https://www.npmjs.com/package/react-markdown) — v10.1.0, React 19 compat confirmed
+- [react-markdown GitHub](https://github.com/remarkjs/react-markdown) — plugin ecosystem, unified v11 requirement
+- [rehype-highlight GitHub](https://github.com/rehypejs/rehype-highlight) — highlight.js integration
+- [Tauri v2 Calling Rust](https://v2.tauri.app/develop/calling-rust/) — event streaming pattern
 
 ### Secondary (MEDIUM confidence)
-- [VS Code Terminal docs](https://code.visualstudio.com/docs/terminal/advanced) — competitor multi-terminal patterns
-- [Warp Session Management](https://docs.warp.dev/terminal/sessions) — competitor session persistence patterns
-- [Cursor Background Agents](https://ameany.io/cursor-background-agents/) — agentic execution model comparison
-- [Designing for Agentic AI (Smashing Magazine)](https://www.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/) — human-in-the-loop UX patterns
-- [LangChain State of Agent Engineering](https://www.langchain.com/state-of-agent-engineering) — cost control patterns
-- [Long-running async tasks in Tauri v2](https://sneakycrow.dev/blog/2024-05-12-running-async-tasks-in-tauri-v2) — tokio spawn + event pattern
+
+- [shadcn/ui AI Components](https://www.shadcn.io/ai) — chat bubble and markdown rendering patterns
+- [Vercel AI SDK Markdown Chatbot Cookbook](https://ai-sdk.dev/cookbook/next/markdown-chatbot-with-memoization) — memoization for streaming markdown (pattern applicable even without the SDK)
+- [AI Agent Orchestration Patterns (Azure)](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) — orchestrator/worker separation rationale
+- [Deep Dive into Context Engineering for Agents](https://galileo.ai/blog/context-engineering-for-agents) — context manifest token budget best practices
+- [Shadcn Tree View](https://www.shadcn.io/template/mrlightful-shadcn-tree-view) — tree component pattern with Tailwind
+- [Microsoft Bot Framework Skills](https://microsoft.github.io/botframework-solutions/overview/skills/) — skill abstraction and discovery pattern
 
 ### Tertiary (LOW confidence)
-- [Google Cloud Agentic AI Design Patterns](https://docs.google.com/architecture/choose-design-pattern-agentic-ai-system) — risk-tiered execution model (validates direction; not specific to Tauri)
-- [NN/g Button States](https://www.nngroup.com/articles/button-states-communicate-interaction/) — smart button UX rationale
+
+- [Context Management for Agentic AI](https://medium.com/@hungry.soul/context-management-a-practical-guide-for-agentic-ai-74562a33b2a5) — context aggregation strategies (blog post, validate during implementation)
+- [Claude Workflow Patterns](https://claude.com/blog/common-workflow-patterns-for-ai-agents-and-when-to-use-them) — agent workflow patterns (high-level, not Tauri-specific)
 
 ---
-*Research completed: 2026-03-29*
+*Research completed: 2026-03-31*
 *Ready for roadmap: yes*
