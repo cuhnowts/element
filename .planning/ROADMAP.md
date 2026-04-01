@@ -128,7 +128,12 @@ Plans:
   2. MCP sidecar exposes write tools (create_task, update_task_status, create_file) for background agent use
   3. User can ask the bot to run a shell command, with an allowlist enforced at the handler level
   4. Destructive actions (delete, overwrite, risky commands) require explicit user confirmation before execution
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 25-01-PLAN.md -- Shared action registry and shell allowlist validation
+- [ ] 25-02-PLAN.md -- MCP sidecar write tools and read-write database
+- [ ] 25-03-PLAN.md -- AI gateway tool_use support, action dispatch, and confirmation UI
+- [ ] 25-04-PLAN.md -- Shell execution command, output block, allowlist settings, agent prompt
 
 ## Progress
 
@@ -162,7 +167,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 22. Hub Shell and Goals Tree | v1.4 | 0/3 | Planned    |  |
 | 23. Context Manifest and AI Briefing | v1.4 | 0/2 | Planned | - |
 | 24. Hub Chat | v1.4 | 0/3 | Planned | - |
-| 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
+| 25. Bot Skills and MCP Write Tools | v1.4 | 0/4 | Planned | - |
 
 ## Backlog
 
