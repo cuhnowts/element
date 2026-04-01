@@ -109,7 +109,11 @@ Plans:
   2. User can have a multi-turn conversation within the session (context carries forward)
   3. Hub chat operates independently from the agent panel -- opening hub chat does not trigger the agent sidebar
   4. Chat responses are context-aware (informed by the project manifest, not generic)
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 24-01-PLAN.md -- Multi-turn chat_stream backend (Rust types, trait, 4 providers, Tauri commands)
+- [ ] 24-02-PLAN.md -- Frontend chat plumbing (types, Zustand store, streaming hook, npm deps)
+- [ ] 24-03-PLAN.md -- Chat UI components (markdown renderer, bubbles, input, chips, container)
 **UI hint**: yes
 
 ### Phase 25: Bot Skills and MCP Write Tools
@@ -154,7 +158,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
 | 22. Hub Shell and Goals Tree | v1.4 | 0/3 | Planned    |  |
 | 23. Context Manifest and AI Briefing | v1.4 | 0/0 | Not started | - |
-| 24. Hub Chat | v1.4 | 0/0 | Not started | - |
+| 24. Hub Chat | v1.4 | 0/3 | Planned | - |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
 
 ## Backlog
