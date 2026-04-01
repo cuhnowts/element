@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
 import { useTaskStore } from "@/stores/useTaskStore";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { useNotificationEvents } from "@/hooks/useNotificationEvents";
 
 interface DrawerHeaderProps {
   activeTab: DrawerTab;
@@ -12,6 +14,8 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
   const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
   const clearLogs = useTaskStore((s) => s.clearLogs);
   const executionLogs = useTaskStore((s) => s.executionLogs);
+
+  useNotificationEvents();
 
   const tabClass = (tab: DrawerTab) =>
     `text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
@@ -51,6 +55,7 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
             Clear Logs
           </Button>
         )}
+        <NotificationBell />
         <Button variant="ghost" size="sm" className="text-xs" onClick={toggleDrawer}>
           {drawerOpen ? "Hide Output" : "Show Output"}
         </Button>
