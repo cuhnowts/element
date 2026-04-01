@@ -55,7 +55,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button (completed 2026-03-30)
 - [x] **Phase 19: Multi-Terminal Sessions** - Per-project terminal isolation, named sessions, tab management (completed 2026-03-30)
 - [ ] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy
-- [ ] **Phase 21: Central AI Agent** - Background orchestrator with cross-project awareness and approve-only execution
+- [x] **Phase 21: Central AI Agent** - Background orchestrator with cross-project awareness and approve-only execution (completed 2026-04-01)
 
 ## Phase Details
 
@@ -142,7 +142,7 @@ Plans:
 - [x] 21-03-PLAN.md -- Agent lifecycle hooks and MCP config generation with behavioral tests
 - [x] 21-04-PLAN.md -- Agent panel UI components and AppLayout integration
 - [x] 21-05-PLAN.md -- Bidirectional queue watcher, OpenAiButton delegation, approval write-back
-- [ ] 21-06-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
+- [x] 21-06-PLAN.md -- MCP server and agent panel tests, end-to-end verification checkpoint
 
 ## Progress
 
@@ -169,7 +169,7 @@ Plans:
 | 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete    | 2026-03-30 |
 | 20. Notification System | v1.3 | 0/2 | Planned    |  |
-| 21. Central AI Agent | v1.3 | 5/6 | In Progress|  |
+| 21. Central AI Agent | v1.3 | 6/6 | Complete   | 2026-04-01 |
 
 ## Backlog
 
@@ -177,7 +177,7 @@ Plans:
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
