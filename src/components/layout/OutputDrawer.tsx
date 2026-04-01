@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
@@ -49,8 +50,10 @@ export function OutputDrawer() {
   );
 
   // All project IDs that have sessions — render hidden TerminalPanes to keep PTYs alive
-  const allSessionProjectIds = useTerminalSessionStore(
-    (s) => Object.keys(s.sessions).filter((pid) => s.sessions[pid].length > 0)
+  const allSessions = useTerminalSessionStore((s) => s.sessions);
+  const allSessionProjectIds = useMemo(
+    () => Object.keys(allSessions).filter((pid) => allSessions[pid].length > 0),
+    [allSessions]
   );
 
   const handleLinkDirectory = async () => {
