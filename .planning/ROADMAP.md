@@ -97,7 +97,10 @@ Plans:
   2. Briefing content reflects actual project state -- phases in progress, overdue tasks, upcoming deadlines
   3. Briefing streams in with visible loading state and can be manually refreshed
   4. Context manifest stays under 2000 tokens regardless of project count (no LLM quality degradation at scale)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 23-01-PLAN.md -- Rust manifest builder, briefing streamer, and debounced cache
+- [ ] 23-02-PLAN.md -- Frontend briefing UI with streaming markdown and hub integration
 **UI hint**: yes
 
 ### Phase 24: Hub Chat
@@ -157,7 +160,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
 | 22. Hub Shell and Goals Tree | v1.4 | 0/3 | Planned    |  |
-| 23. Context Manifest and AI Briefing | v1.4 | 0/0 | Not started | - |
+| 23. Context Manifest and AI Briefing | v1.4 | 0/2 | Planned | - |
 | 24. Hub Chat | v1.4 | 0/3 | Planned | - |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
 
