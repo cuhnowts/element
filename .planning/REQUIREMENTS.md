@@ -46,6 +46,49 @@ Requirements for v1.3 Foundation & Execution milestone. Each maps to roadmap pha
 - [ ] **NOTIF-02**: In-app notification center with history and priority tiers (critical / informational / silent)
 - [x] **NOTIF-03**: Notifications are driven by the central AI agent, not individual project actions
 
+## v1.4 Requirements
+
+Requirements for v1.4 Daily Hub milestone. Each maps to roadmap phases.
+
+### Hub Layout
+
+- [ ] **HUB-01**: User sees a 3-column hub (goals tree, AI center, calendar placeholder) as the default home screen
+- [ ] **HUB-02**: User can minimize any column to a sliver and expand it to full width, with a "+" button to restore
+- [ ] **HUB-03**: Hub replaces TodayView with explicit CenterPanel routing via activeView state
+- [ ] **HUB-04**: Right column shows a calendar placeholder with "coming soon" state
+
+### Goals Tree
+
+- [ ] **GOAL-01**: User sees a collapsible tree of themes → projects → phases with progress indicators
+- [ ] **GOAL-02**: User can click a project/phase in the tree to navigate to its detail view
+- [ ] **GOAL-03**: User sees standalone tasks grouped under a "Chores" section with to-do items
+
+### AI Briefing
+
+- [ ] **BRIEF-01**: User sees a personalized greeting and AI-generated daily summary on hub load
+- [ ] **BRIEF-02**: Briefing aggregates priorities across all projects (phases due, tasks overdue, upcoming)
+- [ ] **BRIEF-03**: Briefing streams in via the existing AI gateway with loading state
+
+### Hub Chat
+
+- [ ] **CHAT-01**: User can type messages to the central orchestrator via a chat input on the hub
+- [ ] **CHAT-02**: Chat displays streaming LLM responses with markdown rendering
+- [ ] **CHAT-03**: Chat supports multi-turn conversation within the session
+- [ ] **CHAT-04**: Hub chat is independent from the agent panel (agent panel does not open on hub)
+
+### Context Manifest
+
+- [ ] **CTX-01**: System generates an in-memory context manifest aggregating all project/phase/task status
+- [ ] **CTX-02**: Manifest stays within a 2000-token budget for efficient LLM consumption
+- [ ] **CTX-03**: Manifest refreshes on relevant DB mutations (task/phase status changes)
+
+### Bot Skills
+
+- [ ] **SKILL-01**: Bot can dispatch app actions from chat (create task, update status, navigate) via Tauri commands
+- [ ] **SKILL-02**: MCP sidecar gains write tools (create_task, update_task_status, create_file) for background agent
+- [ ] **SKILL-03**: Bot can execute shell commands with tool-level allowlist enforcement and user approval
+- [ ] **SKILL-04**: Destructive actions require explicit confirmation in the chat UI before execution
+
 ## Future Requirements
 
 Deferred to future releases. Tracked but not in current roadmap.
@@ -61,6 +104,14 @@ Deferred to future releases. Tracked but not in current roadmap.
 - **TERM-10**: Split pane terminals within a project
 - **TERM-11**: Terminal session persistence across app restart
 - **TERM-12**: Terminal session sharing between projects
+
+### Hub Enhancements
+
+- **HUB-10**: Calendar view in right column (gantt or outlook-style day view with bot-created blocks)
+- **HUB-11**: Google/Outlook calendar integration into hub calendar view
+- **HUB-12**: Email signal ingestion into daily briefing
+- **HUB-13**: AI urgency scoring for tasks and projects
+- **HUB-14**: Chat history persistence across app restart (SQLite)
 
 ### Bidirectional Sync
 
@@ -118,4 +169,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-03-29 after roadmap creation*
+*Last updated: 2026-04-01 after v1.4 requirements definition*
