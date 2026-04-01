@@ -81,7 +81,11 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   3. User can browse a collapsible tree of themes, projects, phases, and standalone tasks with progress indicators
   4. User can click any project or phase in the goals tree to navigate to its detail view
   5. User can return to the hub from any view via a Home button in the sidebar
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 22-01-PLAN.md -- activeView routing and Home button
+- [ ] 22-02-PLAN.md -- Hub 3-column layout with minimize/expand and persistence
+- [ ] 22-03-PLAN.md -- Goals tree with progress indicators and Chores section
 **UI hint**: yes
 
 ### Phase 23: Context Manifest and AI Briefing
@@ -148,7 +152,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete | 2026-03-30 |
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
-| 22. Hub Shell and Goals Tree | v1.4 | 0/0 | Not started | - |
+| 22. Hub Shell and Goals Tree | v1.4 | 0/3 | In progress | - |
 | 23. Context Manifest and AI Briefing | v1.4 | 0/0 | Not started | - |
 | 24. Hub Chat | v1.4 | 0/0 | Not started | - |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
