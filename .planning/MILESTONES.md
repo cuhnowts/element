@@ -1,5 +1,29 @@
 # Milestones
 
+## v1.3 Foundation & Execution (Shipped: 2026-04-01)
+
+**Phases completed:** 7 phases, 16 plans, 26 tasks
+
+**Key accomplishments:**
+
+- Fixed 3 TypeScript errors with proper @dnd-kit/core type imports and deleted orphaned PlanWithAiButton.tsx
+- Explicit startPlanWatcher error handling prevents navigation-to-home bug and adds descriptive toast on watcher failure
+- 1. [Rule 1 - Bug] Updated test expectations for terminal default
+- 1. [Rule 1 - Bug] Nested button elements with TooltipTrigger
+- Task detail reorganized with primary fields (title, status, priority, description) always visible and secondary fields (context, tags, scheduling, execution history) collapsed into multi-select accordion sections
+- Zustand session store with project-isolated CRUD, graceful PTY kill, and refactored useTerminal hook exposing PTY/Terminal refs
+- Session tab bar with horizontal scroll, mount-all/show-one terminal pane, per-session xterm.js wrapper with PTY lifecycle, and refresh context dialog
+- Session-aware OpenAiButton with refresh dialog, project delete cleanup, sidebar session indicator, and app quit teardown
+- SQLite notification persistence with 6 Tauri commands, OS-native desktop notifications for critical tier, and backend event bus listener for agent integration
+- Notification UI: Zustand slice, bell icon with badge, popover with priority badges, Sonner toast integration, and deep-link navigation
+- MCP server sidecar with 10 tools (5 read, 5 orchestration) over stdio transport, reading element.db read-only with WAL mode and file-based agent-queue for approval/notification flow
+- Agent lifecycle hooks with auto-start, 2s/4s/8s exponential backoff restart, and MCP config file generation for CLI tool integration
+- 7 React components for agent right sidebar panel with activity log, approval workflow, terminal tab, and AppLayout integration
+- Bidirectional file-based queue watcher polling approvals/notifications/status/sessions with OpenAiButton agent delegation (D-12)
+- Integration tests for MCP server and agent panel, plus user-verified end-to-end experience
+
+---
+
 ## v1.2 Intelligent Planning (Shipped: 2026-03-29)
 
 **Phases completed:** 7 phases, 10 plans, 19 tasks
