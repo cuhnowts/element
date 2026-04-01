@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: base-nova
 created: 2026-04-01
+revised: 2026-04-01
 ---
 
 # Phase 24 — UI Design Contract
@@ -32,14 +33,14 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps, inline padding within message bubbles |
-| sm | 8px | Gap between avatar and bubble, chip padding |
-| md | 16px | Message vertical spacing, input padding |
+| sm | 8px | Gap between avatar and bubble, chip vertical padding |
+| md | 16px | Message vertical spacing, input padding, suggestion chip horizontal padding |
 | lg | 24px | Section padding between briefing and chat area |
 | xl | 32px | Chat container horizontal padding |
 | 2xl | 48px | Not used this phase |
 | 3xl | 64px | Not used this phase |
 
-Exceptions: Suggestion chips use 12px horizontal padding (sm + xs) for a compact pill feel.
+No exceptions declared.
 
 ---
 
@@ -48,15 +49,17 @@ Exceptions: Suggestion chips use 12px horizontal padding (sm + xs) for a compact
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 16px | 600 (semibold) | 1.3 |
-| Code (inline) | 13px | 400 (regular) | 1.5 |
+| Code (inline) | 12px | 400 (regular) | 1.5 |
+
+Weights used: 2 (400 regular, 600 semibold).
 
 Notes:
 - Body (14px/400) is the project-wide default from `app.css`. All chat message text uses this.
-- Label (12px/500) for timestamps, "Stop generating" button text, and suggestion chip labels.
+- Label (12px/400) for timestamps, "Stop generating" button text, suggestion chip labels, and code block language labels. Visual distinction from Body comes from size difference (12px vs 14px), not weight.
 - Heading (16px/600) for rendered markdown H1-H3 inside bot responses (H1=16px, H2=15px, H3=14px semibold -- kept compact to avoid overwhelming the chat scroll).
-- Code uses the terminal monospace stack: `'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace` at 13px per existing terminal convention.
+- Code uses the terminal monospace stack: `'SF Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace` at 12px, matching Label size for consistency. The monospace font itself provides sufficient visual distinction from Body text.
 
 ---
 
@@ -80,6 +83,12 @@ Additional semantic colors:
 - Bot bubble text: `var(--color-card-foreground)` oklch(0.985 0 0) -- light text on dark card bubble
 - Muted text: `var(--color-muted-foreground)` oklch(0.708 0 0) -- timestamps, placeholder text
 - Border: `var(--color-border)` oklch(0.269 0 0) -- input field border, divider between briefing and chat
+
+---
+
+## Visual Hierarchy
+
+Primary focal point: chat input area (pinned bottom), which anchors the user's attention as the action entry point.
 
 ---
 
@@ -119,13 +128,13 @@ Components needed for this phase, mapped to source:
 - Bot messages: left-aligned, card background (`var(--color-card)`), light text, max-width 85% of container, border-radius 12px (top-left, top-right, bottom-right) with 4px bottom-left for the "tail" corner.
 - Messages appear in chronological order, newest at bottom.
 - Container auto-scrolls to bottom on new message. If user has scrolled up, a "scroll to bottom" pill appears.
-- 16px vertical gap between consecutive messages.
-- 8px vertical gap between consecutive messages from the same sender.
+- 16px (md) vertical gap between consecutive messages.
+- 8px (sm) vertical gap between consecutive messages from the same sender.
 
 ### Suggestion Chips (D-04)
 
 - 3-4 horizontally-wrapped pill buttons below the briefing, above the chat input.
-- Card background with border, 12px horizontal padding, 6px vertical padding, border-radius 9999px (full pill).
+- Card background with border, md (16px) horizontal padding, sm (8px) vertical padding, border-radius 9999px (full pill).
 - On hover: slightly lighter background (accent-foreground at 10% opacity overlay).
 - On click: chip text populates the input and auto-sends.
 - Chips are context-aware (generated from manifest, not hardcoded).
@@ -142,18 +151,18 @@ Components needed for this phase, mapped to source:
 ### Markdown Rendering (D-06)
 
 - Full GFM support: headings, bold, italic, strikethrough, bullet/numbered lists, blockquotes, tables, links, images.
-- Code blocks: dark background (`oklch(0.12 0 0)`), 1px border, 8px padding, border-radius 6px. Syntax highlighting via rehype-highlight. Language label in top-right corner (12px, muted foreground).
+- Code blocks: dark background (`oklch(0.12 0 0)`), 1px border, sm (8px) padding, border-radius 6px. Syntax highlighting via rehype-highlight. Language label in top-right corner (12px, muted foreground).
 - Inline code: slightly darker background than bubble, 2px horizontal padding, border-radius 3px.
 - Links: accent-colored, underline on hover. Open in external browser via Tauri shell.open.
 - Tables: full-width within bubble, border-collapse, alternating row backgrounds.
-- Paragraphs within bot messages: 8px bottom margin between paragraphs.
+- Paragraphs within bot messages: sm (8px) bottom margin between paragraphs.
 
 ### Scroll Behavior
 
 - Chat area fills available vertical space between briefing/separator and input.
 - ScrollArea component with vertical scrollbar (auto-hide).
 - On new message or streaming update: auto-scroll to bottom UNLESS user has scrolled up more than 100px from bottom.
-- "Scroll to bottom" floating pill: appears when user is scrolled up, positioned 8px above the input area, centered horizontally. Card background, "ChevronDown" Lucide icon, border-radius 9999px. Disappears on click or when user scrolls to bottom naturally.
+- "Scroll to bottom" floating pill: appears when user is scrolled up, positioned sm (8px) above the input area, centered horizontally. Card background, "ChevronDown" Lucide icon, border-radius 9999px. Disappears on click or when user scrolls to bottom naturally.
 
 ### Empty State (before first message, after briefing)
 
