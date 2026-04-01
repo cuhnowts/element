@@ -7,6 +7,7 @@ import { ThemeDetail } from "@/components/center/ThemeDetail";
 import { WorkflowDetail } from "@/components/center/WorkflowDetail";
 import { ProjectTabBar } from "@/components/center/ProjectTabBar";
 import { FileExplorer } from "@/components/center/FileExplorer";
+import { HubView } from "@/components/center/HubView";
 
 export function CenterPanel() {
   const activeView = useStore((s) => s.activeView);
@@ -50,11 +51,7 @@ export function CenterPanel() {
 
   switch (activeView) {
     case 'hub':
-      return (
-        <div className="h-full flex items-center justify-center text-muted-foreground">
-          <p className="text-lg">Hub view loading...</p>
-        </div>
-      );
+      return <HubView />;
     case 'workflow':
       return (
         <div className="h-full overflow-auto p-6">
