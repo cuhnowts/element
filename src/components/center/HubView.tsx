@@ -8,6 +8,7 @@ import {
 import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
 import { CalendarPlaceholder } from "@/components/hub/CalendarPlaceholder";
 import { MinimizedColumn } from "@/components/hub/MinimizedColumn";
+import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 const GOALS_PANEL_ID = "hub-goals";
@@ -71,11 +72,7 @@ export function HubView() {
             collapsedSize={0}
             onResize={handleGoalsResize}
           >
-            {/* GoalsTreePanel slot -- Plan 03 will replace this placeholder */}
-            <div className="h-full p-4">
-              <h2 className="text-base font-semibold leading-tight">Goals</h2>
-              <p className="text-sm text-muted-foreground mt-2">Loading goals tree...</p>
-            </div>
+            <GoalsTreePanel />
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel
