@@ -48,13 +48,13 @@ Exceptions: Minimized column strip width is 40px (D-04). Tree indentation per le
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 16px | 600 (semibold) | 1.3 |
 | Display | 20px | 600 (semibold) | 1.2 |
 
 Usage mapping:
 - **Body (14px/400):** Tree node labels (project names, phase names), standalone task text, center column placeholder body text
-- **Label (12px/500):** Section headers ("Chores", "To-Do's"), minimized column icon labels, progress counts (e.g., "3/5 phases"), column header subtitles
+- **Label (12px/400):** Section headers ("Chores", "To-Do's"), minimized column icon labels, progress counts (e.g., "3/5 phases"), column header subtitles
 - **Heading (16px/600):** Column headers ("Goals", "Calendar"), project names in goals tree when acting as group headers
 - **Display (20px/600):** Center column welcome heading ("Welcome back" placeholder for Phase 23)
 
@@ -184,7 +184,7 @@ Goals (column header, Heading 16px/600)
 [>] Project Beta                     o
                                          
 --- Chores ----------------------------- 
-To-Do's (Label 12px/500)
+To-Do's (Label 12px/400)
 [x] Task A                              
 [ ] Task B                              
 [ ] Task C                              
