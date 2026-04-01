@@ -3,6 +3,22 @@ import { persist } from "zustand/middleware";
 
 export type DrawerTab = "logs" | "history" | "runs" | "terminal";
 
+export interface HubLayout {
+  goalsPanelSize: number;
+  centerPanelSize: number;
+  calendarPanelSize: number;
+  goalsCollapsed: boolean;
+  calendarCollapsed: boolean;
+}
+
+const DEFAULT_HUB_LAYOUT: HubLayout = {
+  goalsPanelSize: 25,
+  centerPanelSize: 50,
+  calendarPanelSize: 25,
+  goalsCollapsed: false,
+  calendarCollapsed: false,
+};
+
 export interface ProjectWorkspaceState {
   centerTab: "detail" | "files";
   drawerOpen: boolean;
@@ -25,6 +41,10 @@ interface WorkspaceState {
   themeCollapseState: Record<string, boolean>;
   setThemeExpanded: (themeId: string, expanded: boolean) => void;
   isThemeExpanded: (themeId: string) => boolean;
+
+  // Hub layout state (persisted)
+  hubLayout: HubLayout;
+  setHubLayout: (partial: Partial<HubLayout>) => void;
 
   // Terminal/drawer tab state
   activeDrawerTab: DrawerTab;
@@ -59,6 +79,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       selectedTaskId: null,
       activeDrawerTab: "terminal" as DrawerTab,
       hasAutoOpenedTerminal: false,
+
+      // Hub layout state (persisted)
+      hubLayout: { ...DEFAULT_HUB_LAYOUT },
+      setHubLayout: (partial) => {
+        set((s) => ({
+          hubLayout: { ...s.hubLayout, ...partial },
+        }));
+      },
 
       // Theme collapse state (persisted)
       themeCollapseState: {},
@@ -138,6 +166,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         drawerOpen: state.drawerOpen,
         calendarVisible: state.calendarVisible,
         themeCollapseState: state.themeCollapseState,
+        hubLayout: state.hubLayout,
         // Do NOT persist selectedTaskId -- task may not exist on next launch
         // Do NOT persist activeDrawerTab or hasAutoOpenedTerminal -- session-only state
         // Do NOT persist projectStates -- session-only (D-14)
