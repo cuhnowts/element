@@ -48,15 +48,16 @@ Exceptions: none
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Greeting | 24px | 600 (semibold) | 1.2 |
 
 Notes:
 - Greeting text ("Good morning, Jake.") uses the Greeting role at 24px/600.
 - Briefing markdown body uses Body role at 14px/400.
-- "Last refreshed" timestamp and metadata labels use Label role at 12px/500.
+- "Last refreshed" timestamp and metadata labels use Label role at 12px/400. Label is differentiated from Body by smaller size (12px vs 14px) and muted foreground color (`--color-muted-foreground`), not by weight.
 - Section headings within the briefing markdown (h2/h3) use Heading role at 20px/600.
+- Weight palette is exactly two values: 400 (regular) for Body and Label, 600 (semibold) for Heading and Greeting.
 
 ---
 
@@ -67,10 +68,20 @@ Notes:
 | Dominant (60%) | `--color-background` oklch(0.145 0 0) | Center column background |
 | Secondary (30%) | `--color-card` oklch(0.205 0 0) | Briefing card surface |
 | Accent (10%) | `--color-primary` oklch(0.985 0 0) | Refresh button icon, greeting text |
-| Muted text | `--color-muted-foreground` oklch(0.708 0 0) | "Last refreshed" timestamp, subtitle text |
+| Muted text | `--color-muted-foreground` oklch(0.708 0 0) | "Last refreshed" timestamp, subtitle text, Label role text |
 | Destructive | `--color-destructive-foreground` oklch(0.637 0.237 25.331) | Overdue task/phase indicators in briefing content |
 
 Accent reserved for: refresh button icon, greeting text emphasis, progress-positive indicators in briefing content. Never for body text, card borders, or background fills.
+
+Accent unifies warmth and interactivity to reinforce the hub's active character -- the greeting emphasis (decorative warmth) and refresh button icon (interactive affordance) both signal that the hub is alive and responsive. Both uses are intentional.
+
+---
+
+## Visual Focal Point
+
+The Greeting is the primary visual focal point -- the first element the eye lands on, anchoring the panel. It sits at the top of the content area at 24px/600 semibold, with 48px of breathing room above it, making it the largest and heaviest text element on the page.
+
+The refresh button is an icon-only ghost button (`RefreshCw`, 16px) with no visible label. Discovery relies on the `aria-label` and a tooltip ("Refresh briefing") shown on hover. This is intentional -- the button is a secondary action and must not compete with the greeting focal point or the briefing content.
 
 ---
 
