@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Daily Hub
-status: Defining requirements
-stopped_at: null
+status: Ready to plan
+stopped_at: Roadmap created with 4 phases (22-25)
 last_updated: "2026-03-31T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,20 +19,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Not started (defining requirements)
+**Current focus:** Phase 22 -- Hub Shell and Goals Tree
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-31 — Milestone v1.4 started
+Phase: 22 of 25 (Hub Shell and Goals Tree)
+Plan: 0 of 0 in current phase (not yet planned)
+Status: Ready to plan
+Last activity: 2026-03-31 -- Roadmap created for v1.4 Daily Hub
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 44 (v1.0: 29, v1.1: 17, v1.2: 10)
+- Total plans completed: 60 (v1.0: 29, v1.1: 17, v1.2: 10, v1.3: 16)
 - Average duration: carried from previous milestones
 - Total execution time: carried from previous milestones
 
@@ -41,6 +43,7 @@ Last activity: 2026-03-31 — Milestone v1.4 started
 - v1.0: 6 phases in 7 days
 - v1.1: 6 phases in 3 days
 - v1.2: 5 phases in 1 day
+- v1.3: 5 phases in 2 days
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -52,32 +55,13 @@ Last activity: 2026-03-31 — Milestone v1.4 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.3 roadmap]: Tech debt must come first -- navigation bug amplified by new state transitions
-- [v1.3 roadmap]: Multi-terminal must precede agent -- agent needs to spawn sessions
-- [v1.3 roadmap]: Notifications must precede agent -- agent drives notifications
-- [v1.3 roadmap]: Agent ships in approve-only mode -- cost controls are a launch blocker
-- [v1.3 research]: xterm.js instance cap at 5 total to manage memory (~34MB per instance)
-- [Phase 17]: Use proper @dnd-kit/core type imports instead of Record approximations for type safety
-- [Phase 17]: Explicit try/catch around startPlanWatcher with early return rather than relying on outer generic catch
-- [Phase 18]: Used base-ui multiple prop instead of radix-style type=multiple for accordion
-- [Phase 18-ui-polish]: Theme collapse state stored as Record<string,boolean> in Zustand persist, defaults expanded for unknown themes
-- [Phase 18]: Used base-ui render prop on TooltipTrigger to avoid nested button elements
-- [Phase 18]: Used aria-disabled with visual classes instead of native disabled for tooltip accessibility
-- [Phase 20]: Used tauri::Listener trait import for app.listen() event bus support
-- [Phase 19]: PTY refs managed in React components not Zustand store; gracefulKillPty as standalone export
-- [Phase 19]: base-ui tooltip render prop used on TooltipTrigger to avoid nested button DOM elements
-- [Phase 19]: No-sessions empty state inside TerminalPane rather than extending TerminalEmptyState
-- [Phase 19]: SessionTabBar rendered inside OutputDrawer terminal section, not in AppLayout ResizableHandle
-- [Phase 19]: Placeholder RefreshContextDialog for Plan 02 dependency; app quit cleanup via store-triggered unmounts
-- [Phase 21]: Agent store uses no persist middleware -- state is ephemeral per app session
-- [Phase 21]: File-based queue in agent-queue/ directory for approval flow IPC between MCP sidecar and frontend
-- [Phase 21]: Created useAgentLifecycle stub for parallel wave 2 execution (Plan 03 provides real implementation)
-- [Phase 21]: Used base-ui tooltip render prop on AgentToggleButton to avoid nested button elements
-- [Phase 21]: Used invoke plugin:fs commands instead of @tauri-apps/plugin-fs package for MCP config file generation
-- [Phase 21]: useState for agentCommand/agentArgs instead of refs for reactive terminal consumption
-- [Phase 21]: Used invoke plugin:fs commands instead of @tauri-apps/plugin-fs package for queue watcher (matching project convention)
-- [Phase 21]: Modified addEntry to accept optional id for approval file ID mapping (avoids external ID-to-entryId map)
-- [Phase 21]: Duplicated tool definitions in test rather than importing from index.ts (top-level await prevents direct import)
+- [v1.4 roadmap]: Hub shell + goals tree first (zero AI deps) before briefing/chat
+- [v1.4 roadmap]: Hub chat uses AI gateway directly, not MCP sidecar file-based queue
+- [v1.4 roadmap]: Context manifest is in-memory only, never written to disk
+- [v1.4 roadmap]: Columns are minimizable/expandable with restore buttons
+- [v1.4 roadmap]: Bot skills and MCP write tools combined into single phase (interactive + background)
+- [v1.4 research]: Agent lifecycle must be lifted from AgentPanel to AppLayout before hub features
+- [v1.4 research]: CenterPanel needs explicit activeView state, not TodayView fallback
 
 ### Pending Todos
 
@@ -85,13 +69,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- "Open AI" navigation state race must be fixed in Phase 17 before multi-terminal work
+- CenterPanel routing change is high-recovery-cost if done wrong (research flagged)
+- Action JSON parsing robustness varies by AI provider (research flagged for Phase 25)
 - xterm.js memory growth with multiple terminals (~34MB per instance, dispose() leaks)
-- Orchestrator action classification logic needs definition during Phase 21 planning
-- CLI tool output parsing strategy (completion vs failure vs human-needed) needs specification
 
 ## Session Continuity
 
-Last session: 2026-03-30T11:21:31.239Z
-Stopped at: Completed 21-06-PLAN.md (Task 2 checkpoint pending)
+Last session: 2026-03-31
+Stopped at: Roadmap created for v1.4 Daily Hub (4 phases, 21 requirements mapped)
 Resume file: None

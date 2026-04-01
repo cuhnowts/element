@@ -10,6 +10,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.1 Project Manager** -- Phases 6-11 (shipped 2026-03-25) -- [archive](milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Intelligent Planning** -- Phases 12-16 (shipped 2026-03-28) -- [archive](milestones/v1.2-ROADMAP.md)
 - ✅ **v1.3 Foundation & Execution** -- Phases 17-21 (shipped 2026-04-01) -- [archive](milestones/v1.3-ROADMAP.md)
+- 🚧 **v1.4 Daily Hub** -- Phases 22-25 (in progress)
 
 ## Phases
 
@@ -59,7 +60,69 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
+### 🚧 v1.4 Daily Hub (In Progress)
+
+**Milestone Goal:** Replace TodayView with an AI-powered daily hub that greets the user, summarizes priorities across all projects, and provides a conversational interface to the central orchestrator.
+
+- [ ] **Phase 22: Hub Shell and Goals Tree** - 3-column layout with goals hierarchy, CenterPanel routing, and column minimize/expand
+- [ ] **Phase 23: Context Manifest and AI Briefing** - In-memory project status aggregation and LLM-generated daily summary
+- [ ] **Phase 24: Hub Chat** - Conversational interface to the orchestrator with streaming markdown responses
+- [ ] **Phase 25: Bot Skills and MCP Write Tools** - Chat action dispatch, shell execution, and entity CRUD for both interactive and background agent
+
+## Phase Details
+
+### Phase 22: Hub Shell and Goals Tree
+**Goal**: Users see a structured daily hub as their home screen with a navigable goals hierarchy across all projects
+**Depends on**: Phase 21 (agent lifecycle must be liftable to AppLayout)
+**Requirements**: HUB-01, HUB-02, HUB-03, HUB-04, GOAL-01, GOAL-02, GOAL-03
+**Success Criteria** (what must be TRUE):
+  1. User sees a 3-column hub layout as the default screen on app launch (not TodayView)
+  2. User can minimize any column to a sliver and restore it with a "+" button
+  3. User can browse a collapsible tree of themes, projects, phases, and standalone tasks with progress indicators
+  4. User can click any project or phase in the goals tree to navigate to its detail view
+  5. User can return to the hub from any view via a Home button in the sidebar
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 23: Context Manifest and AI Briefing
+**Goal**: Users receive an AI-generated daily summary of priorities across all projects, powered by an efficient context manifest
+**Depends on**: Phase 22
+**Requirements**: CTX-01, CTX-02, CTX-03, BRIEF-01, BRIEF-02, BRIEF-03
+**Success Criteria** (what must be TRUE):
+  1. User sees a personalized greeting and AI-generated briefing in the hub center column on load
+  2. Briefing content reflects actual project state -- phases in progress, overdue tasks, upcoming deadlines
+  3. Briefing streams in with visible loading state and can be manually refreshed
+  4. Context manifest stays under 2000 tokens regardless of project count (no LLM quality degradation at scale)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 24: Hub Chat
+**Goal**: Users can converse with the orchestrator directly from the hub to ask questions and get guidance
+**Depends on**: Phase 23 (extends hub store, prompt infrastructure, streaming pipeline)
+**Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04
+**Success Criteria** (what must be TRUE):
+  1. User can type a message in the hub and receive a streaming AI response with markdown rendering
+  2. User can have a multi-turn conversation within the session (context carries forward)
+  3. Hub chat operates independently from the agent panel -- opening hub chat does not trigger the agent sidebar
+  4. Chat responses are context-aware (informed by the project manifest, not generic)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 25: Bot Skills and MCP Write Tools
+**Goal**: The orchestrator can take action on the user's behalf -- creating tasks, updating statuses, running commands -- from both interactive chat and background agent
+**Depends on**: Phase 24 (action dispatch requires working chat), Phase 21 (MCP sidecar extension)
+**Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04
+**Success Criteria** (what must be TRUE):
+  1. User can ask the bot to create a task or update a status via chat and see it take effect in the app
+  2. MCP sidecar exposes write tools (create_task, update_task_status, create_file) for background agent use
+  3. User can ask the bot to run a shell command, with an allowlist enforced at the handler level
+  4. Destructive actions (delete, overwrite, risky commands) require explicit user confirmation before execution
+**Plans**: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 22 → 23 → 24 → 25
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -75,16 +138,20 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 | 9. Embedded Terminal | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
-| 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete    | 2026-03-28 |
-| 13. Adaptive Context Builder | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete    | 2026-03-28 |
-| 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete    | 2026-03-28 |
-| 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete    | 2026-03-28 |
-| 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
-| 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
-| 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete    | 2026-03-30 |
-| 20. Notification System | v1.3 | 2/2 | Complete    | 2026-04-01 |
-| 21. Central AI Agent | v1.3 | 6/6 | Complete    | 2026-04-01 |
+| 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete | 2026-03-28 |
+| 13. Adaptive Context Builder | v1.2 | 0/1 | Complete | 2026-03-28 |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete | 2026-03-28 |
+| 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete | 2026-03-28 |
+| 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete | 2026-03-28 |
+| 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete | 2026-03-30 |
+| 18. UI Polish | v1.3 | 0/3 | Complete | 2026-03-30 |
+| 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete | 2026-03-30 |
+| 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
+| 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
+| 22. Hub Shell and Goals Tree | v1.4 | 0/0 | Not started | - |
+| 23. Context Manifest and AI Briefing | v1.4 | 0/0 | Not started | - |
+| 24. Hub Chat | v1.4 | 0/0 | Not started | - |
+| 25. Bot Skills and MCP Write Tools | v1.4 | 0/0 | Not started | - |
 
 ## Backlog
 

@@ -161,12 +161,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGENT-04 | Phase 21 | Complete |
 | AGENT-05 | Phase 21 | Complete |
 | AGENT-06 | Phase 21 | Complete |
+| HUB-01 | Phase 22 | Pending |
+| HUB-02 | Phase 22 | Pending |
+| HUB-03 | Phase 22 | Pending |
+| HUB-04 | Phase 22 | Pending |
+| GOAL-01 | Phase 22 | Pending |
+| GOAL-02 | Phase 22 | Pending |
+| GOAL-03 | Phase 22 | Pending |
+| CTX-01 | Phase 23 | Pending |
+| CTX-02 | Phase 23 | Pending |
+| CTX-03 | Phase 23 | Pending |
+| BRIEF-01 | Phase 23 | Pending |
+| BRIEF-02 | Phase 23 | Pending |
+| BRIEF-03 | Phase 23 | Pending |
+| CHAT-01 | Phase 24 | Pending |
+| CHAT-02 | Phase 24 | Pending |
+| CHAT-03 | Phase 24 | Pending |
+| CHAT-04 | Phase 24 | Pending |
+| SKILL-01 | Phase 25 | Pending |
+| SKILL-02 | Phase 25 | Pending |
+| SKILL-03 | Phase 25 | Pending |
+| SKILL-04 | Phase 25 | Pending |
 
 **Coverage:**
-- v1.3 requirements: 24 total
-- Mapped to phases: 24
+- v1.3 requirements: 24 total (24 complete)
+- v1.4 requirements: 21 total
+- Mapped to phases: 21
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-29*
-*Last updated: 2026-04-01 after v1.4 requirements definition*
+*Last updated: 2026-03-31 after v1.4 roadmap creation*
