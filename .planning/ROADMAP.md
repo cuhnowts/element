@@ -54,7 +54,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 17: Tech Debt Cleanup** - Fix TS errors, remove orphaned files, resolve Open AI navigation bug (completed 2026-03-30)
 - [x] **Phase 18: UI Polish** - Direct project click, collapsible sidebar, simplified task view, smart AI button (completed 2026-03-30)
 - [x] **Phase 19: Multi-Terminal Sessions** - Per-project terminal isolation, named sessions, tab management (completed 2026-03-30)
-- [ ] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy
+- [x] **Phase 20: Notification System** - OS-native and in-app notifications with priority taxonomy (completed 2026-04-01)
 - [x] **Phase 21: Central AI Agent** - Background orchestrator with cross-project awareness and approve-only execution (completed 2026-04-01)
 
 ## Phase Details
@@ -121,8 +121,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 20-01-PLAN.md -- Notification backend: SQLite persistence, Rust commands, OS-native plugin, event bus API
-- [ ] 20-02-PLAN.md -- Notification frontend: Zustand slice, event hook, bell icon with popover UI, DrawerHeader integration
+- [x] 20-01-PLAN.md -- Notification backend: SQLite persistence, Rust commands, OS-native plugin, event bus API
+- [x] 20-02-PLAN.md -- Notification frontend: Zustand slice, event hook, bell icon with popover UI, DrawerHeader integration
 
 ### Phase 21: Central AI Agent
 **Goal**: A background AI orchestrator reads project state, auto-executes safe actions, and notifies when human input is needed
@@ -168,8 +168,8 @@ Plans:
 | 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete    | 2026-03-30 |
 | 18. UI Polish | v1.3 | 0/3 | Complete    | 2026-03-30 |
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete    | 2026-03-30 |
-| 20. Notification System | v1.3 | 0/2 | Planned    |  |
-| 21. Central AI Agent | v1.3 | 6/6 | Complete   | 2026-04-01 |
+| 20. Notification System | v1.3 | 2/2 | Complete    | 2026-04-01 |
+| 21. Central AI Agent | v1.3 | 6/6 | Complete    | 2026-04-01 |
 
 ## Backlog
 
