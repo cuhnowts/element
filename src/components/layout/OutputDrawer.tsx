@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 
+const EMPTY_SESSIONS: import("@/stores/useTerminalSessionStore").TerminalSession[] = [];
+
 export function OutputDrawer() {
   const executionLogs = useTaskStore((s) => s.executionLogs);
   const executionHistory = useTaskStore((s) => s.executionHistory);
@@ -40,10 +42,15 @@ export function OutputDrawer() {
   const hasWorkflow = selectedWorkflowId !== null;
 
   const sessions = useTerminalSessionStore(
-    (s) => s.sessions[selectedProjectId ?? ""] ?? []
+    (s) => s.sessions[selectedProjectId ?? ""] ?? EMPTY_SESSIONS
   );
   const activeSessionId = useTerminalSessionStore(
     (s) => s.activeSessionId[selectedProjectId ?? ""] ?? null
+  );
+
+  // All project IDs that have sessions — render hidden TerminalPanes to keep PTYs alive
+  const allSessionProjectIds = useTerminalSessionStore(
+    (s) => Object.keys(s.sessions).filter((pid) => s.sessions[pid].length > 0)
   );
 
   const handleLinkDirectory = async () => {
@@ -126,12 +133,24 @@ export function OutputDrawer() {
                     );
                 }}
               />
-              <div className="flex-1 overflow-hidden">
-                <TerminalPane
-                  projectId={selectedProjectId}
-                  directoryPath={directoryPath}
-                  isVisible={activeDrawerTab === "terminal"}
-                />
+              <div className="flex-1 overflow-hidden relative">
+                {allSessionProjectIds.map((pid) => {
+                  const proj = projects.find((p) => p.id === pid);
+                  if (!proj?.directoryPath) return null;
+                  return (
+                    <div
+                      key={pid}
+                      style={{ display: pid === selectedProjectId ? "block" : "none" }}
+                      className="h-full w-full absolute inset-0"
+                    >
+                      <TerminalPane
+                        projectId={pid}
+                        directoryPath={proj.directoryPath}
+                        isVisible={activeDrawerTab === "terminal" && pid === selectedProjectId}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (

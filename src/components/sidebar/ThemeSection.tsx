@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus } from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -11,6 +10,7 @@ import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { ThemeHeader } from "./ThemeHeader";
 import { StandaloneTaskItem } from "./StandaloneTaskItem";
 import { MoveToThemeMenu } from "./MoveToThemeMenu";
+import { SessionIndicator } from "./SessionIndicator";
 import type { Theme, Project, Task } from "@/lib/types";
 
 interface ThemeSectionProps {
@@ -21,9 +21,11 @@ interface ThemeSectionProps {
 }
 
 export function ThemeSection({ theme, projects, tasks, onProjectCreated }: ThemeSectionProps) {
-  const isThemeExpanded = useWorkspaceStore((s) => s.isThemeExpanded);
   const setThemeExpanded = useWorkspaceStore((s) => s.setThemeExpanded);
-  const expanded = isThemeExpanded(theme.id);
+  const expanded = useWorkspaceStore((s) => {
+    const state = s.themeCollapseState[theme.id];
+    return state === undefined ? true : state;
+  });
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
     new Set()
   );
@@ -151,28 +153,21 @@ function ProjectRow({
           <ChevronRight className="size-3.5" />
         )}
       </button>
+      <button
+        type="button"
+        className={`flex-1 min-w-0 px-1 py-0.5 text-xs rounded-md transition-colors hover:bg-muted text-left truncate flex items-center gap-1 ${
+          isSelected ? "text-primary font-medium" : ""
+        }`}
+        onClick={onSelect}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenuOpen(true);
+        }}
+      >
+        <span className="truncate">{project.name}</span>
+        <SessionIndicator projectId={project.id} />
+      </button>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className={`flex-1 min-w-0 px-1 py-0.5 text-xs rounded-md transition-colors hover:bg-muted text-left truncate ${
-                isSelected ? "text-primary font-medium" : ""
-              }`}
-              onClick={(e) => {
-                // Left click selects, right click opens menu
-                e.preventDefault();
-                onSelect();
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setMenuOpen(true);
-              }}
-            />
-          }
-        >
-          {project.name}
-        </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
           <MoveToThemeMenu
             themes={themes}
