@@ -28,13 +28,16 @@ import { SettingsPage } from "@/components/settings/SettingsPage";
 import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
 import { AgentPanel } from "@/components/agent/AgentPanel";
 import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAgentStore } from "@/stores/useAgentStore";
 import { useAgentQueue } from "@/hooks/useAgentQueue";
+import { useNotificationEvents } from "@/hooks/useNotificationEvents";
 
 export function AppLayout() {
   useGlobalShortcut();
   useTerminalCleanup();
   useAgentQueue();
+  useNotificationEvents();
   const settingsOpen = useStore((s) => s.settingsOpen);
   const agentPanelOpen = useAgentStore((s) => s.panelOpen);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
@@ -164,6 +167,7 @@ export function AppLayout() {
                         Clear Logs
                       </Button>
                     )}
+                    <NotificationBell />
                     <AgentToggleButton />
                   </div>
                 </div>
