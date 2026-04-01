@@ -27,7 +27,12 @@ export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set
   themesLoading: false,
 
   selectTheme: (themeId) => {
-    set({ selectedThemeId: themeId, selectedProjectId: null, selectedTaskId: null });
+    set({
+      selectedThemeId: themeId,
+      selectedProjectId: null,
+      selectedTaskId: null,
+      activeView: themeId ? 'theme' as const : 'hub' as const,
+    });
     useWorkspaceStore.getState().selectTask(null);
   },
 

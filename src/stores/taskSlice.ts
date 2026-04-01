@@ -72,11 +72,11 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
   },
   selectTask: async (taskId) => {
     if (!taskId) {
-      set({ selectedTaskId: null, selectedTask: null });
+      set({ selectedTaskId: null, selectedTask: null, activeView: 'hub' as const });
       useWorkspaceStore.getState().selectTask(null);
       return;
     }
-    set({ selectedTaskId: taskId, selectedProjectId: null, selectedThemeId: null });
+    set({ selectedTaskId: taskId, selectedProjectId: null, selectedThemeId: null, activeView: 'task' as const });
     useWorkspaceStore.getState().selectTask(taskId);
     const task = await api.getTask(taskId);
     set({ selectedTask: task });

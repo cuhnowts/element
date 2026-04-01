@@ -1,8 +1,14 @@
 import type { StateCreator } from "zustand";
 import type { AppStore } from "./index";
 import type { SettingsTab } from "../lib/types";
+import { useWorkspaceStore } from "./useWorkspaceStore";
+
+export type ActiveView = 'hub' | 'project' | 'task' | 'theme' | 'workflow';
 
 export interface UiSlice {
+  activeView: ActiveView;
+  setActiveView: (view: ActiveView) => void;
+  navigateToHub: () => void;
   commandPaletteOpen: boolean;
   createProjectDialogOpen: boolean;
   deleteConfirmOpen: boolean;
@@ -29,6 +35,17 @@ export interface UiSlice {
 export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (
   set,
 ) => ({
+  activeView: 'hub' as ActiveView,
+  setActiveView: (view) => set({ activeView: view }),
+  navigateToHub: () => {
+    set({
+      activeView: 'hub' as ActiveView,
+      selectedProjectId: null,
+      selectedTaskId: null,
+      selectedThemeId: null,
+    });
+    useWorkspaceStore.getState().selectTask(null);
+  },
   commandPaletteOpen: false,
   createProjectDialogOpen: false,
   deleteConfirmOpen: false,

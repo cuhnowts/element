@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useStore } from "@/stores";
 import { WorkflowBuilder } from "./WorkflowBuilder";
 import { ExecutionDiagram } from "./ExecutionDiagram";
 import { CronScheduler } from "./CronScheduler";
@@ -51,11 +52,13 @@ export function WorkflowDetail() {
     if (workflow) {
       await deleteWorkflow(workflow.id);
       setShowDeleteDialog(false);
+      useStore.getState().navigateToHub();
     }
   }, [workflow, deleteWorkflow]);
 
   const handleBack = useCallback(() => {
     selectWorkflow(null);
+    useStore.getState().navigateToHub();
   }, [selectWorkflow]);
 
   // Cmd+Enter to run

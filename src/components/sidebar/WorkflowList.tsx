@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useStore } from "@/stores";
 import { Plus } from "lucide-react";
 
 export function WorkflowList() {
@@ -20,6 +21,7 @@ export function WorkflowList() {
   const handleCreate = async () => {
     const workflow = await createWorkflow("New Workflow", "", []);
     selectWorkflow(workflow.id);
+    useStore.getState().setActiveView('workflow');
   };
 
   return (
@@ -48,7 +50,10 @@ export function WorkflowList() {
             <button
               key={wf.id}
               type="button"
-              onClick={() => selectWorkflow(wf.id)}
+              onClick={() => {
+                selectWorkflow(wf.id);
+                useStore.getState().setActiveView('workflow');
+              }}
               className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
                 selectedWorkflowId === wf.id ? "bg-accent/10" : ""
               }`}

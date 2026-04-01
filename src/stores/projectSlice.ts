@@ -46,7 +46,12 @@ export const createProjectSlice: StateCreator<
     }));
   },
   selectProject: (projectId) => {
-    set({ selectedProjectId: projectId, selectedTaskId: null, selectedThemeId: null });
+    set({
+      selectedProjectId: projectId,
+      selectedTaskId: null,
+      selectedThemeId: null,
+      activeView: projectId ? 'project' as const : 'hub' as const,
+    });
     useWorkspaceStore.getState().selectTask(null);
   },
   linkDirectory: async (projectId, directoryPath) => {
