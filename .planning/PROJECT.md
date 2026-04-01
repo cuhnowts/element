@@ -8,15 +8,16 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## Current Milestone: v1.3 Foundation & Execution
+## Current Milestone: v1.4 Daily Hub
 
-**Goal:** Fix accumulated tech debt, improve UI intuitiveness, add multi-terminal sessions, and lay groundwork for an AI orchestration layer that auto-executes phases and notifies on human-needed items.
+**Goal:** Replace the existing TodayView with an AI-powered daily hub that greets the user, summarizes priorities across all projects, and provides a conversational interface to the central orchestrator.
 
 **Target features:**
-- Tech debt cleanup — TS errors, orphaned files, navigation bug
-- UI polish — direct project click, collapsible sidebar, simplified task view, smart AI button labels
-- Multi-terminal sessions — per-project, named, concurrent, session tabs
-- Execution pipeline MVP — background orchestrator that reads project state, auto-executes, notifies for human input
+- Hub UI — 3-column layout (goals tree, AI briefing + chat, calendar placeholder)
+- AI daily briefing — LLM-generated summary of today's focus across all projects
+- Hub chat — conversational input to the orchestrator (separate from agent panel)
+- Bot skills — extend orchestrator tools to run commands, create files, and access all app entities
+- Central context manifest — auto-generated high-level project status file that feeds the orchestrator efficiently
 
 ## Current State
 
@@ -60,16 +61,27 @@ v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, name
 - ✓ "What's next?" execution mode with progress and blockers — v1.2
 - ✓ .planning/ folder sync: ROADMAP.md parsing, live file watcher, auto-sync on link — v1.2
 - ✓ AI product orientation in context file — v1.2
+- ✓ Tech debt cleanup: zero TS errors, orphaned files removed, Open AI navigation bug fixed — v1.3
+- ✓ UI polish: sidebar direct nav, collapsible themes, smart AI button, task accordion — v1.3
+- ✓ Multi-terminal sessions with per-project isolation — v1.3
+- ✓ Notification system: SQLite persistence, OS-native, Sonner toasts — v1.3
+- ✓ MCP server sidecar with 10 tools and file-based agent queue — v1.3
+- ✓ Agent lifecycle, panel UI, and bidirectional queue watcher — v1.3
 
 ### Active
 
-- ✓ Tech debt cleanup: zero TS errors, orphaned files removed, Open AI navigation bug fixed — v1.3 Phase 17
-- [ ] UI polish (sidebar, task view, smart AI button, terminal defaults)
-- [ ] Multi-terminal sessions with per-project isolation
-- [ ] Execution pipeline MVP (background orchestrator, auto-execute, notifications)
+- [ ] Hub UI — 3-column layout replacing TodayView (goals tree, AI briefing + chat, calendar placeholder)
+- [ ] AI daily briefing — LLM-generated summary aggregating all project priorities
+- [ ] Hub chat — conversational interface to the central orchestrator
+- [ ] Bot skills — orchestrator tools for commands, file creation, and full app entity access
+- [ ] Central context manifest — auto-generated project status file for orchestrator consumption
 
 ### Future
 
+- [ ] Hub calendar view — gantt or outlook-style day view with bot-created blocks
+- [ ] Hub calendar integration — Google/Outlook calendar data in hub view
+- [ ] Hub email signal ingestion — email context fed into daily briefing
+- [ ] Hub urgency scoring — AI-driven priority scoring for tasks and projects
 - [ ] Pulse system: ingest calendar/email signals into structured daily work
 - [ ] Reporting pipelines on cron schedules (news, spending, analytics)
 - [ ] Ad-hoc workflow creation with pattern detection for automation suggestions
@@ -164,4 +176,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after Phase 19 Multi-Terminal Sessions completion*
+*Last updated: 2026-03-31 after milestone v1.4 Daily Hub started*
