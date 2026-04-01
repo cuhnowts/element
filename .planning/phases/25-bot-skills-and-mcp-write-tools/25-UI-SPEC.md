@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: base-nova
 created: 2026-04-01
+revised: 2026-04-01
 ---
 
 # Phase 25 — UI Design Contract
@@ -32,8 +33,8 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps, inline padding, action card icon-to-label gap |
-| sm | 8px | Compact element spacing, code block internal padding top/bottom |
-| md | 16px | Default element spacing, confirmation card padding, chat bubble margin |
+| sm | 8px | Compact element spacing, code block internal padding top/bottom, action result card vertical padding |
+| md | 16px | Default element spacing, confirmation card padding, chat bubble margin, between settings groups |
 | lg | 24px | Section padding in settings, action card vertical margin |
 | xl | 32px | Settings page section breaks |
 | 2xl | 48px | Not used this phase |
@@ -50,13 +51,13 @@ Exceptions: none
 | Body | 14px | 400 (regular) | 1.5 |
 | Label | 12px | 400 (regular) | 1.4 |
 | Heading | 16px | 600 (semibold) | 1.3 |
-| Code | 13px | 400 (regular, monospace) | 1.4 |
+| Code | 14px | 400 (regular, monospace) | 1.4 |
 
 Usage mapping:
 - **Body (14px/400):** Chat messages, action result descriptions, confirmation card body text, settings field descriptions
 - **Label (12px/400):** Action status badges, shell output header ("Shell Output"), collapsed code block summary, allowlist item labels
 - **Heading (16px/600):** Confirmation card title ("Confirm Action"), settings section headers ("Shell Allowlist")
-- **Code (13px/400 monospace):** Shell command display, shell output content, code blocks in action results. Font: `"SF Mono", "Fira Code", "Cascadia Code", monospace`
+- **Code (14px/400 monospace):** Shell command display, shell output content, code blocks in action results. Font: `"SF Mono", "Fira Code", "Cascadia Code", monospace`
 
 ---
 
@@ -90,7 +91,11 @@ Accent reserved for:
 |---------|------|
 | Approve button (non-destructive) | "Approve" |
 | Approve button (destructive) | "Yes, proceed" |
-| Reject button | "Cancel" |
+| Reject button (task create) | "Don't Create" |
+| Reject button (task delete) | "Don't Delete" |
+| Reject button (status update) | "Don't Update" |
+| Reject button (shell command) | "Don't Run" |
+| Reject button (file create) | "Don't Create" |
 | Confirmation card title (task create) | "Create Task" |
 | Confirmation card title (task delete) | "Delete Task" |
 | Confirmation card title (status update) | "Update Status" |
@@ -122,7 +127,7 @@ Accent reserved for:
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| `ActionConfirmCard` | `src/components/hub/ActionConfirmCard.tsx` | Inline confirmation UI in chat with Approve/Cancel buttons |
+| `ActionConfirmCard` | `src/components/hub/ActionConfirmCard.tsx` | Inline confirmation UI in chat with Approve/Reject buttons |
 | `ActionResultCard` | `src/components/hub/ActionResultCard.tsx` | Inline success/error feedback card in chat after action executes |
 | `ShellOutputBlock` | `src/components/hub/ShellOutputBlock.tsx` | Collapsible code block for shell command output in chat |
 | `ShellAllowlistSettings` | `src/components/settings/ShellAllowlistSettings.tsx` | Settings panel for managing shell command allowlist |
@@ -131,7 +136,7 @@ Accent reserved for:
 
 | Component | Usage |
 |-----------|-------|
-| `Button` | Approve/Cancel buttons in confirmation cards, add/remove in allowlist |
+| `Button` | Approve/Reject buttons in confirmation cards, add/remove in allowlist |
 | `Card` | Wrapper for ActionConfirmCard and ActionResultCard |
 | `Badge` | Action type labels (e.g., "destructive", "shell"), status indicators |
 | `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent` | Shell output expand/collapse |
@@ -163,7 +168,7 @@ Accent reserved for:
 | Create task "Fix login bug" in Project Alpha?       |
 |                                                     |
 | -------------------------                           |
-| [Cancel]                          [Approve]         |
+| [Don't Create]                        [Approve]     |
 +----------------------------------------------------+
 ```
 
@@ -178,7 +183,7 @@ Accent reserved for:
 - Body: Body 14px/400
 - Separator: full-width, `--color-border`, 8px vertical margin above and below
 - Button row: flex, justify-between
-- Cancel button: variant="outline", size="sm"
+- Reject button: variant="outline", size="sm" — label varies by action type (see Copywriting Contract)
 - Approve button (non-destructive): variant="default", size="sm"
 - Approve button (destructive): variant="destructive", size="sm" (uses `--color-destructive` background)
 
@@ -208,7 +213,7 @@ Accent reserved for:
 - Background: `--color-card`
 - Border: 1px `--color-border`
 - Border radius: `--radius`
-- Internal padding: 12px 16px
+- Internal padding: 8px 16px
 - Single line layout: flex, align-center, gap 8px
 - Success icon: Lucide `CheckCircle2`, 16px, `--color-primary` (accent)
 - Error icon: Lucide `XCircle`, 16px, `--color-destructive`
@@ -232,9 +237,9 @@ Accent reserved for:
 - Border: 1px `--color-border`
 - Border radius: `--radius`
 - Header row: flex, justify-between, padding 8px 16px, `--color-card` background
-  - Command text: Code 13px/400 monospace, `--color-primary` (accent)
+  - Command text: Code 14px/400 monospace, `--color-primary` (accent)
   - Expand/collapse trigger: Lucide `ChevronDown`/`ChevronUp`, 16px, `--color-muted-foreground`
-- Output area: padding 8px 16px, Code 13px/400 monospace, `--color-foreground`
+- Output area: padding 8px 16px, Code 14px/400 monospace, `--color-foreground`
 - Auto-expand: output under 20 lines shows expanded by default
 - Auto-collapse: output 20+ lines shows collapsed with summary text
 - Truncation: output over 200 lines truncated with "... {remaining} more lines" at bottom
@@ -264,7 +269,7 @@ Accent reserved for:
 - Default commands: read-only Badge list, variant="secondary", size="sm"
 - Custom commands: Badge with "x" remove button, variant="outline", size="sm"
 - Input + Add button: flex row, Input takes remaining width, Button variant="outline" size="sm"
-- Vertical spacing: 16px between description and command groups, 12px between groups
+- Vertical spacing: 16px between description and command groups, 16px between groups
 
 ---
 
@@ -276,7 +281,7 @@ Accent reserved for:
 |-------|--------|
 | Pending | Card visible, buttons enabled, pulsing left-border accent (2px `--color-primary` for non-destructive, `--color-destructive` for destructive) |
 | Approved | Card fades to 50% opacity over 300ms, buttons disabled, "Approved" label replaces buttons |
-| Rejected | Card fades to 50% opacity over 300ms, buttons disabled, "Cancelled" label replaces buttons |
+| Rejected | Card fades to 50% opacity over 300ms, buttons disabled, "Dismissed" label replaces buttons |
 | Expired (timeout) | Not applicable for interactive chat -- blocks indefinitely |
 
 ### Shell Output Block
@@ -324,7 +329,7 @@ Accent reserved for:
 | Requirement | Implementation |
 |-------------|----------------|
 | Confirmation card focus | When card appears, focus moves to Approve button (most common action) |
-| Confirmation keyboard | Enter on Approve button confirms, Escape rejects (triggers Cancel) |
+| Confirmation keyboard | Enter on Approve button confirms, Escape rejects (triggers reject action) |
 | Confirmation ARIA | `role="alertdialog"`, `aria-labelledby` pointing to title, `aria-describedby` pointing to body |
 | Shell output block | `aria-expanded` on collapse trigger, `aria-label="Shell output for {command}"` |
 | Shell output content | Code block has `role="log"`, `aria-live="polite"` while running |
