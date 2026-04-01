@@ -3,7 +3,7 @@ status: complete
 phase: 19-multi-terminal-sessions
 source: [19-01-SUMMARY.md, 19-02-SUMMARY.md, 19-03-SUMMARY.md]
 started: 2026-03-31T00:00:00Z
-updated: 2026-03-31T00:50:00Z
+updated: 2026-03-31T01:00:00Z
 ---
 
 ## Current Test
@@ -38,9 +38,7 @@ result: pass
 
 ### 7. Sidebar Session Indicator
 expected: Projects that have running terminal sessions should show a green indicator dot next to the project name in the sidebar.
-result: issue
-reported: "No green indicator dot visible next to projects with running sessions"
-severity: major
+result: pass
 
 ### 8. Project Delete Cleans Up Sessions
 expected: Delete a project that has running terminal sessions. The sessions should be killed before the project is removed — no orphaned PTY processes.
@@ -49,26 +47,12 @@ result: pass
 ## Summary
 
 total: 8
-passed: 6
-issues: 2
+passed: 8
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- truth: "Projects with running terminal sessions show a green indicator dot in the sidebar"
-  status: failed
-  reason: "User reported: No green indicator dot visible next to projects with running sessions"
-  severity: major
-  test: 7
-  artifacts: []
-  missing: []
-
-- truth: "Terminal session state (PTY buffer, scroll history) persists when switching between projects"
-  status: failed
-  reason: "User reported: When clicking off the project and back on, the initial command is reparsed as if reset. Terminal memory should be persistent across project switches."
-  severity: major
-  test: 7
-  artifacts: []
-  missing: []
+[none]

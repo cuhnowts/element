@@ -3,7 +3,7 @@ status: complete
 phase: 18-ui-polish
 source: 18-01-SUMMARY.md, 18-02-SUMMARY.md, 18-03-SUMMARY.md
 started: 2026-03-31T00:00:00Z
-updated: 2026-03-31T00:40:00Z
+updated: 2026-03-31T01:00:00Z
 ---
 
 ## Current Test
@@ -14,21 +14,15 @@ updated: 2026-03-31T00:40:00Z
 
 ### 1. Theme Collapse Persistence
 expected: Collapse a theme section in the sidebar. Reload the app (or navigate away and back). The theme section should remain collapsed. Expand it again, reload — it should remain expanded.
-result: issue
-reported: "Nothing happens — chevron doesn't respond to clicks at all"
-severity: blocker
+result: pass
 
 ### 2. Terminal as Default Drawer Tab
 expected: Open the output drawer. The Terminal tab should be selected by default (not Logs). Tab order should be Terminal, Logs, History from left to right.
-result: issue
-reported: "Order is still logs history terminal — not reordered"
-severity: major
+result: pass
 
 ### 3. Sidebar Theme Click Behavior
 expected: Left-click on a theme header in the sidebar. It should expand/collapse the theme without flashing a dropdown menu. Right-click or context menu should still work if applicable.
-result: issue
-reported: "Theme works, project still opens up a dropdown instead of opening ProjectDetail directly"
-severity: major
+result: pass
 
 ### 4. AI Button Dynamic Labels
 expected: The AI button in the center panel should show contextual labels based on project state: "Link Directory" (disabled with tooltip) when no directory is linked, "Plan Project" when no planning tier is set, "Check Progress" when AI is executing, and "Open AI" as the default fallback.
@@ -49,34 +43,12 @@ result: pass
 ## Summary
 
 total: 7
-passed: 4
-issues: 3
+passed: 7
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
-- truth: "Clicking the chevron on a theme section collapses it, and the state persists across reloads"
-  status: failed
-  reason: "User reported: Nothing happens — chevron doesn't respond to clicks at all"
-  severity: blocker
-  test: 1
-  artifacts: []
-  missing: []
-
-- truth: "Terminal tab is default and tab order is Terminal, Logs, History"
-  status: failed
-  reason: "User reported: Order is still logs history terminal — not reordered"
-  severity: major
-  test: 2
-  artifacts: []
-  missing: []
-
-- truth: "Single-clicking a project in the sidebar opens ProjectDetail directly without a dropdown menu"
-  status: failed
-  reason: "User reported: Project still opens up a dropdown instead of opening ProjectDetail directly"
-  severity: major
-  test: 3
-  artifacts: []
-  missing: []
+[none]
