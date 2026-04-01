@@ -147,7 +147,7 @@ export function AppLayout() {
               </ResizablePanel>
 
               <ResizableHandle className="border-t border-border bg-card cursor-row-resize">
-                <div className="flex items-center justify-between w-full px-4 py-1.5">
+                <div className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer">
                   <div className="flex items-center gap-1">
                     <GripHorizontal className="size-3 text-muted-foreground mr-1 flex-shrink-0" />
                     {(["terminal", "logs", "history"] as DrawerTab[]).map((tab) => (
