@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 /**
- * Tool registry test -- verifies all 10 MCP tools are defined with correct schemas.
+ * Tool registry test -- verifies all 18 MCP tools are defined with correct schemas.
  *
  * Note: The server uses top-level await for stdio transport, so we cannot import
  * index.ts directly. Instead, we duplicate the tool definitions here and verify
@@ -169,11 +169,116 @@ const EXPECTED_TOOLS = [
       required: ["projectId", "sessionName"],
     },
   },
+  {
+    name: "create_task",
+    description: "Create a new task",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        title: { type: "string", description: "Task title" },
+        projectId: { type: "string", description: "Optional project ID" },
+        description: { type: "string", description: "Task description" },
+        priority: { type: "string", description: 'Task priority: "low", "medium", "high", or "urgent"' },
+        phaseId: { type: "string", description: "Optional phase ID" },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "update_task",
+    description: "Update an existing task's fields",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        taskId: { type: "string", description: "Task ID to update" },
+        title: { type: "string", description: "New title" },
+        description: { type: "string", description: "New description" },
+        priority: { type: "string", description: "New priority" },
+      },
+      required: ["taskId"],
+    },
+  },
+  {
+    name: "update_task_status",
+    description: "Update a task's status",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        taskId: { type: "string", description: "Task ID to update" },
+        status: {
+          type: "string",
+          description: 'New status: "todo", "in_progress", "done", or "cancelled"',
+          enum: ["todo", "in_progress", "done", "cancelled"],
+        },
+      },
+      required: ["taskId", "status"],
+    },
+  },
+  {
+    name: "delete_task",
+    description: "Delete a task (requires approval)",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        taskId: { type: "string", description: "Task ID to delete" },
+      },
+      required: ["taskId"],
+    },
+  },
+  {
+    name: "update_phase_status",
+    description: "Report phase status",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        phaseId: { type: "string", description: "Phase ID" },
+        status: { type: "string", description: "Status to report" },
+      },
+      required: ["phaseId", "status"],
+    },
+  },
+  {
+    name: "create_project",
+    description: "Create a new project",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Project name" },
+        description: { type: "string", description: "Project description" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "create_theme",
+    description: "Create a new theme",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        name: { type: "string", description: "Theme name" },
+        color: { type: "string", description: "Theme color (hex)" },
+      },
+      required: ["name", "color"],
+    },
+  },
+  {
+    name: "create_file",
+    description: "Create a file in a project's linked directory",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        path: { type: "string", description: "Relative file path within project directory" },
+        content: { type: "string", description: "File content" },
+        projectId: { type: "string", description: "Project ID" },
+      },
+      required: ["path", "content", "projectId"],
+    },
+  },
 ];
 
 describe("MCP Tool Registry", () => {
-  it("registers exactly 10 tools", () => {
-    expect(EXPECTED_TOOLS).toHaveLength(10);
+  it("registers exactly 18 tools", () => {
+    expect(EXPECTED_TOOLS).toHaveLength(18);
   });
 
   it("every tool has name, description, and inputSchema", () => {
@@ -204,6 +309,14 @@ describe("MCP Tool Registry", () => {
     expect(names).toContain("send_notification");
     expect(names).toContain("report_status");
     expect(names).toContain("spawn_project_session");
+    expect(names).toContain("create_task");
+    expect(names).toContain("update_task");
+    expect(names).toContain("update_task_status");
+    expect(names).toContain("delete_task");
+    expect(names).toContain("update_phase_status");
+    expect(names).toContain("create_project");
+    expect(names).toContain("create_theme");
+    expect(names).toContain("create_file");
   });
 
   it("request_approval requires projectId, projectName, phaseName, reason", () => {
