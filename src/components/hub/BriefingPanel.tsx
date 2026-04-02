@@ -70,9 +70,9 @@ export function BriefingPanel() {
       style={{ padding: "48px 24px 24px" }}
     >
       <BriefingGreeting />
-      <div className="mt-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <div className="mt-8 flex-1 min-h-0 flex flex-col">
+        <Card className="flex-1 min-h-0 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 flex-shrink-0">
             <span className="text-sm font-medium">Daily Briefing</span>
             <div className="flex items-center gap-2">
               {lastRefreshedAt && (
@@ -87,12 +87,10 @@ export function BriefingPanel() {
               />
             </div>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-[calc(100vh-240px)]">
-              <div role="region" aria-label="AI daily briefing">
-                {bodyContent}
-              </div>
-            </ScrollArea>
+          <CardContent className="flex-1 min-h-0 overflow-auto">
+            <div role="region" aria-label="AI daily briefing">
+              {bodyContent}
+            </div>
           </CardContent>
         </Card>
       </div>
