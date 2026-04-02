@@ -37,6 +37,8 @@ v1.3 Phase 18 complete: Sidebar left-click navigates directly, theme sections co
 
 v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, named tabs (SessionTabBar), mount-all/show-one rendering for scroll preservation, graceful PTY cleanup (SIGTERM+3s+SIGKILL), refresh AI context dialog, sidebar session indicator, app-quit cleanup hook.
 
+v1.4 Phase 22 complete: Hub shell with 3-column resizable layout (goals tree, center, calendar), explicit activeView state machine replacing cascading if/else routing, HomeButton for hub navigation, collapsible goals tree with project/phase hierarchy and progress dots, chores section with standalone task checkboxes.
+
 ## Requirements
 
 ### Validated
@@ -176,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after milestone v1.4 Daily Hub started*
+*Last updated: 2026-04-01 after Phase 22 hub-shell-and-goals-tree complete*
