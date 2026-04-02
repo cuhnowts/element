@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getAction, isDestructive } from "@/lib/actionRegistry";
+import { useStore } from "@/stores";
 
 export interface DispatchResult {
   success: boolean;
@@ -27,6 +28,11 @@ export function useActionDispatch() {
       }
       try {
         const result = await invoke(action.tauriCommand, input);
+        // Refresh stores so UI reflects the change immediately
+        const store = useStore.getState();
+        store.loadStandaloneTasks();
+        store.loadProjects();
+        store.loadThemes();
         return { success: true, data: result };
       } catch (err) {
         return { success: false, error: String(err) };
