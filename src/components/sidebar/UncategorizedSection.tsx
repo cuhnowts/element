@@ -68,7 +68,7 @@ export function UncategorizedSection({
           <ChevronRight className="size-4 flex-shrink-0" />
         )}
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-          UNCATEGORIZED
+          CHORES
         </span>
       </button>
       {expanded && (
