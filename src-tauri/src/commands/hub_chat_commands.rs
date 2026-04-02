@@ -23,12 +23,10 @@ pub async fn hub_chat_send(
     // Reset cancel flag at start
     cancel_flag.0.store(false, Ordering::SeqCst);
 
-    let provider_config = {
+    let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        gateway.get_default_config(&db).map_err(|e| e.to_string())?
+        gateway.get_default_provider(&db).map_err(|e| e.to_string())?
     };
-
-    let provider = gateway.build_provider(&provider_config).map_err(|e| e.to_string())?;
 
     let request = ChatRequest {
         system_prompt,

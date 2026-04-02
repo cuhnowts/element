@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::ai::anthropic::AnthropicProvider;
+use crate::ai::cli::CliProvider;
 use crate::ai::credentials;
 use crate::ai::ollama::OllamaProvider;
 use crate::ai::openai::OpenAiProvider;
@@ -137,10 +138,25 @@ impl AiGateway {
         &self,
         db: &Database,
     ) -> Result<Box<dyn AiProvider>, AiError> {
-        let config = self
-            .get_default_config(db)
-            .map_err(|e| AiError::ProviderNotFound(e))?;
-        self.build_provider(&config)
+        // Try API provider first, fall back to CLI tool
+        match self.get_default_config(db) {
+            Ok(config) => self.build_provider(&config),
+            Err(_) => self.get_cli_provider(db),
+        }
+    }
+
+    /// Build a CliProvider from the `cli_command` app setting.
+    /// Falls back to "claude" if no setting is configured.
+    pub fn get_cli_provider(
+        &self,
+        db: &Database,
+    ) -> Result<Box<dyn AiProvider>, AiError> {
+        let cli_command = db
+            .get_app_setting("cli_command")
+            .map_err(|e| AiError::ProviderNotFound(e.to_string()))?
+            .unwrap_or_else(|| "claude".to_string());
+
+        Ok(Box::new(CliProvider::new(cli_command)))
     }
 
     pub fn get_default_config(&self, db: &Database) -> Result<AiProviderConfig, String> {

@@ -60,24 +60,20 @@ pub async fn generate_briefing(
         manifest
     };
 
-    // Get provider config (lock DB, extract, drop before async)
-    let provider_config = {
+    // Get provider (API provider first, falls back to CLI tool)
+    let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        match gateway.get_default_config(&db) {
-            Ok(config) => config,
+        match gateway.get_default_provider(&db) {
+            Ok(p) => p,
             Err(_) => {
                 let _ = app.emit(
                     "briefing-error",
-                    "No AI provider configured. Add one in Settings to enable the daily briefing.",
+                    "No AI provider or CLI tool configured. Add one in Settings to enable the daily briefing.",
                 );
                 return Ok(());
             }
         }
     };
-
-    let provider = gateway
-        .build_provider(&provider_config)
-        .map_err(|e| e.to_string())?;
 
     let request = CompletionRequest {
         system_prompt: build_briefing_system_prompt(),
