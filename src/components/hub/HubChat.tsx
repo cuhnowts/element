@@ -128,6 +128,7 @@ export function HubChat() {
     useActionDispatch();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dispatchedActionsRef = useRef<Set<string>>(new Set());
 
   // Auto-scroll on new content
   useEffect(() => {
@@ -168,6 +169,11 @@ export function HubChat() {
       name: string;
       input: Record<string, unknown>;
     }) => {
+      // Dedup: prevent same action from dispatching multiple times
+      const dedupeKey = `${toolUse.name}:${JSON.stringify(toolUse.input)}`;
+      if (dispatchedActionsRef.current.has(dedupeKey)) return;
+      dispatchedActionsRef.current.add(dedupeKey);
+
       if (checkDestructive(toolUse.name)) {
         // Destructive: show confirmation card
         const pending = createPendingAction(
@@ -189,8 +195,10 @@ export function HubChat() {
         };
         setActionResults((prev) => [...prev, actionResult]);
 
-        // Send tool_result back to LLM
-        await sendToolResult(toolUse.id, result);
+        // Only send tool_result back for native API tool_use (not CLI ACTION: blocks)
+        if (!toolUse.id.startsWith("cli-")) {
+          await sendToolResult(toolUse.id, result);
+        }
       }
     },
     [checkDestructive, createPendingAction, dispatch],
@@ -266,6 +274,7 @@ export function HubChat() {
 
     setInputValue("");
     addUserMessage(text);
+    dispatchedActionsRef.current.clear();
 
     const allMessages = useHubChatStore.getState().messages;
     const chatMessages = allMessages.map((m) => ({
