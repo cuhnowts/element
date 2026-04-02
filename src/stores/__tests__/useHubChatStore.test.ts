@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-// import { useHubChatStore } from "@/stores/useHubChatStore"; // uncomment after Task 2
+import { describe, it } from "vitest";
+// import { useHubChatStore } from "@/stores/useHubChatStore"; // uncomment when filling in tests
 
 describe("useHubChatStore", () => {
   // CHAT-01: User can send messages

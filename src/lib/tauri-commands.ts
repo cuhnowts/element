@@ -113,3 +113,15 @@ export async function getNextRunTimes(
 ): Promise<string[]> {
   return invoke<string[]>("get_next_run_times", { cronExpression, count });
 }
+
+// Hub Chat
+export async function hubChatSend(
+  messages: { role: string; content: string }[],
+  systemPrompt: string,
+): Promise<void> {
+  return invoke<void>("hub_chat_send", { messages, systemPrompt });
+}
+
+export async function hubChatStop(): Promise<void> {
+  return invoke<void>("hub_chat_stop");
+}
