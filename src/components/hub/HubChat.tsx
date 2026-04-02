@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { getToolDefinitions } from "@/lib/actionRegistry";
 import {
   useActionDispatch,
@@ -15,18 +16,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Square, Bot, User } from "lucide-react";
 
-/** Parse a streaming chunk to check if it's a tool_use JSON event */
+/** Parse a streaming chunk to check if it's a tool_use JSON event or CLI ACTION: block */
 function tryParseToolUse(
   chunk: string,
 ): { type: "tool_use"; id: string; name: string; input: Record<string, unknown> } | null {
+  // Check for native API tool_use format
   try {
     const parsed = JSON.parse(chunk);
     if (parsed?.type === "tool_use" && parsed.id && parsed.name) {
       return parsed;
     }
   } catch {
-    // Not JSON -- it's a text chunk
+    // Not JSON -- check for CLI ACTION: format
   }
+
+  // Check for CLI ACTION:{...} format (may appear mid-line)
+  const actionMatch = chunk.match(/ACTION:\s*(\{.+\})/);
+  if (actionMatch) {
+    try {
+      const parsed = JSON.parse(actionMatch[1]);
+      if (parsed.name && parsed.input) {
+        return {
+          type: "tool_use",
+          id: `cli-${Date.now()}`,
+          name: parsed.name,
+          input: parsed.input,
+        };
+      }
+    } catch {
+      // Malformed JSON in ACTION block
+    }
+  }
+
   return null;
 }
 
@@ -36,9 +57,47 @@ interface ActionResult {
   message: string;
 }
 
-const SYSTEM_PROMPT = `You are Element's AI assistant. You help the user manage their projects, tasks, and work.
-You have access to tools that can create tasks, update statuses, delete items, run shell commands, and more.
-Use tools when the user asks you to take action. Be concise and helpful.`;
+function buildSystemPrompt(manifest: string): string {
+  return `You are Element — a desktop project management app's built-in orchestrator.
+You ARE the app. When the user talks to you, they are talking to Element itself.
+Never reference your own code, backend, database, or implementation. You are seamless.
+
+Your job: help the user manage their work — create tasks, update progress, organize projects,
+and answer questions about their current state. You already know everything about their projects
+because you have their current status below.
+
+## Current Project Status
+
+${manifest || "(No projects yet)"}
+
+## Taking Actions
+
+When the user asks you to DO something (create a task, update a status, delete something,
+run a command), respond with BOTH a brief confirmation message AND an action block.
+
+Output the action block on its own line in exactly this format:
+ACTION:{"name":"<tool_name>","input":{<parameters>}}
+
+Available tools:
+- create_task: Create a task. Input: {"title":"...","projectId":"...","description":"...","priority":"low|medium|high|urgent","phaseId":"..."}. Only title is required.
+- update_task: Update a task. Input: {"taskId":"...","title":"...","description":"...","priority":"..."}. taskId is required.
+- update_task_status: Change task status. Input: {"taskId":"...","status":"todo|in_progress|done|cancelled"}. Both required.
+- delete_task: Delete a task permanently. Input: {"taskId":"..."}. Required.
+- create_project: Create a project. Input: {"name":"...","description":"..."}. Name required.
+- create_theme: Create a theme. Input: {"name":"...","color":"..."}. Both required.
+- execute_shell: Run a shell command. Input: {"command":"..."}. Must be on the allowlist (git, npm, ls, etc).
+
+## Conversation Rules
+
+- You are Element. Say "I" when referring to what the app can do.
+- Never say "I can insert into the database" or "I can run sqlite3" — just do the action.
+- If the user says "create a task called X", respond like: "Done — I've created 'X'." followed by the ACTION block.
+- If you need clarification (which project? what priority?), ask naturally: "Which project should this go under?" List the projects from the status above.
+- If the user asks about their work, answer from the project status — don't guess or make things up.
+- Be concise. One sentence answers when possible. No preamble.
+- Never mention tools, JSON, action blocks, or implementation details to the user.`;
+}
+
 
 export function HubChat() {
   useHubChatStream();
@@ -49,14 +108,21 @@ export function HubChat() {
   const error = useHubChatStore((s) => s.error);
   const addUserMessage = useHubChatStore((s) => s.addUserMessage);
   const startStreaming = useHubChatStore((s) => s.startStreaming);
-  const appendChunk = useHubChatStore((s) => s.appendChunk);
 
   const [inputValue, setInputValue] = useState("");
+  const [manifest, setManifest] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [actionResults, setActionResults] = useState<ActionResult[]>([]);
   const [confirmResolved, setConfirmResolved] = useState<
     "approved" | "rejected" | null
   >(null);
+
+  // Fetch manifest on mount for system prompt context
+  useEffect(() => {
+    invoke<string>("build_context_manifest")
+      .then(setManifest)
+      .catch(() => setManifest(""));
+  }, []);
 
   const { dispatch, checkDestructive, createPendingAction } =
     useActionDispatch();
@@ -81,7 +147,11 @@ export function HubChat() {
           handleToolUse(toolUse);
           return;
         }
-        originalAppendChunk(chunk);
+        // Strip any ACTION: lines from visible output
+        const cleaned = chunk.replace(/ACTION:\s*\{.+\}\s*/g, "").trimEnd();
+        if (cleaned) {
+          originalAppendChunk(cleaned);
+        }
       },
     });
 
@@ -146,7 +216,7 @@ export function HubChat() {
 
     startStreaming();
     try {
-      await hubChatSend(chatMessages, SYSTEM_PROMPT, getToolDefinitions());
+      await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
     } catch (err) {
       useHubChatStore.getState().setError(String(err));
     }
@@ -205,7 +275,7 @@ export function HubChat() {
 
     startStreaming();
     try {
-      await hubChatSend(chatMessages, SYSTEM_PROMPT, getToolDefinitions());
+      await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
     } catch (err) {
       useHubChatStore.getState().setError(String(err));
     }
@@ -227,7 +297,7 @@ export function HubChat() {
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Bot className="mb-2 h-8 w-8" />
               <p className="text-sm">
-                Ask me to create tasks, update statuses, or run commands.
+                What would you like to work on?
               </p>
             </div>
           )}

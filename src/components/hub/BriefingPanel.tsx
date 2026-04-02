@@ -7,7 +7,6 @@ import { BriefingSkeleton } from "@/components/hub/BriefingSkeleton";
 import { BriefingContent } from "@/components/hub/BriefingContent";
 import { BriefingRefreshButton } from "@/components/hub/BriefingRefreshButton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 function formatRelativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 60000);
