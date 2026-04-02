@@ -1,4 +1,5 @@
 pub mod execution;
+pub mod manifest;
 pub mod onboarding;
 pub mod phase;
 pub mod planning_sync;
