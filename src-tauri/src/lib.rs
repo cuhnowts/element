@@ -37,6 +37,7 @@ use commands::workflow_commands::*;
 use commands::manifest_commands::*;
 use commands::notification_commands::*;
 use commands::hub_chat_commands::*;
+use commands::shell_commands::*;
 
 pub fn run() {
     tauri::Builder::default()
@@ -313,6 +314,7 @@ pub fn run() {
             hub_chat_stop,
             build_context_manifest,
             generate_briefing,
+            execute_bot_shell,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
