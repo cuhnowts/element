@@ -78,6 +78,20 @@ pub struct TokenUsage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatRequest {
+    pub system_prompt: String,
+    pub messages: Vec<ChatMessage>,
+    pub max_tokens: u32,
+    pub temperature: f32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelInfo {
     pub id: String,

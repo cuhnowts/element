@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use crate::ai::types::{CompletionRequest, CompletionResponse, AiError, ModelInfo, ProviderType};
+use crate::ai::types::{ChatRequest, CompletionRequest, CompletionResponse, AiError, ModelInfo, ProviderType};
 
 #[async_trait]
 pub trait AiProvider: Send + Sync {
@@ -9,6 +9,11 @@ pub trait AiProvider: Send + Sync {
     async fn complete_stream(
         &self,
         request: CompletionRequest,
+        event_sender: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<CompletionResponse, AiError>;
+    async fn chat_stream(
+        &self,
+        request: ChatRequest,
         event_sender: tokio::sync::mpsc::Sender<String>,
     ) -> Result<CompletionResponse, AiError>;
     async fn test_connection(&self) -> Result<bool, AiError>;

@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 use crate::ai::provider::AiProvider;
 use crate::ai::types::{
-    AiError, CompletionRequest, CompletionResponse, ModelInfo, ProviderType, TokenUsage,
+    AiError, ChatRequest, CompletionRequest, CompletionResponse, ModelInfo, ProviderType, TokenUsage,
 };
 
 pub struct OpenAiCompatProvider {
@@ -111,6 +111,70 @@ impl AiProvider for OpenAiCompatProvider {
                 {"role": "system", "content": request.system_prompt},
                 {"role": "user", "content": request.user_message}
             ]
+        });
+
+        let url = format!("{}/v1/chat/completions", self.base_url);
+        let resp = self.build_request(&url).json(&body).send().await?;
+
+        let status = resp.status();
+        if !status.is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(AiError::Api {
+                status: status.as_u16(),
+                message: text,
+            });
+        }
+
+        let mut accumulated = String::new();
+        let bytes = resp.bytes().await?;
+        let text = String::from_utf8_lossy(&bytes);
+
+        for line in text.lines() {
+            let line = line.trim();
+            if !line.starts_with("data: ") {
+                continue;
+            }
+            let data = &line[6..];
+            if data == "[DONE]" {
+                break;
+            }
+
+            if let Ok(chunk) = serde_json::from_str::<Value>(data) {
+                if let Some(content) = chunk["choices"][0]["delta"]["content"].as_str() {
+                    accumulated.push_str(content);
+                    let _ = event_sender.send(content.to_string()).await;
+                }
+            }
+        }
+
+        Ok(CompletionResponse {
+            content: accumulated,
+            model: self.model.clone(),
+            usage: TokenUsage {
+                input_tokens: 0,
+                output_tokens: 0,
+            },
+        })
+    }
+
+    async fn chat_stream(
+        &self,
+        request: ChatRequest,
+        event_sender: tokio::sync::mpsc::Sender<String>,
+    ) -> Result<CompletionResponse, AiError> {
+        let mut messages: Vec<serde_json::Value> = vec![
+            json!({"role": "system", "content": request.system_prompt})
+        ];
+        for m in &request.messages {
+            messages.push(json!({"role": &m.role, "content": &m.content}));
+        }
+
+        let body = json!({
+            "model": self.model,
+            "max_tokens": request.max_tokens,
+            "temperature": request.temperature,
+            "stream": true,
+            "messages": messages
         });
 
         let url = format!("{}/v1/chat/completions", self.base_url);
