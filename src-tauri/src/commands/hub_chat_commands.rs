@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::ai::gateway::AiGateway;
-use crate::ai::types::{ChatMessage, ChatRequest};
+use crate::ai::types::{ChatMessage, ChatRequest, ToolDefinition};
 use crate::db::connection::Database;
 
 /// Managed state for hub chat cancellation
@@ -14,6 +14,7 @@ pub struct HubChatCancelFlag(pub Arc<AtomicBool>);
 pub async fn hub_chat_send(
     messages: Vec<ChatMessage>,
     system_prompt: String,
+    tools: Option<Vec<ToolDefinition>>,
     app: AppHandle,
     db_state: State<'_, Arc<Mutex<Database>>>,
     gateway: State<'_, AiGateway>,
@@ -34,6 +35,7 @@ pub async fn hub_chat_send(
         messages,
         max_tokens: 4096,
         temperature: 0.7,
+        tools,
     };
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(32);

@@ -171,13 +171,33 @@ impl AiProvider for OpenAiCompatProvider {
             messages.push(json!({"role": &m.role, "content": &m.content}));
         }
 
-        let body = json!({
+        let mut body = json!({
             "model": self.model,
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
             "stream": true,
             "messages": messages
         });
+
+        // Include tools if provided
+        if let Some(ref tools) = request.tools {
+            if !tools.is_empty() {
+                let tools_json: Vec<serde_json::Value> = tools
+                    .iter()
+                    .map(|t| {
+                        json!({
+                            "type": "function",
+                            "function": {
+                                "name": t.name,
+                                "description": t.description,
+                                "parameters": t.input_schema,
+                            }
+                        })
+                    })
+                    .collect();
+                body["tools"] = json!(tools_json);
+            }
+        }
 
         let url = format!("{}/v1/chat/completions", self.base_url);
         let resp = self.build_request(&url).json(&body).send().await?;

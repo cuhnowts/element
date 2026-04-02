@@ -330,13 +330,30 @@ impl AiProvider for AnthropicProvider {
             .map(|m| json!({"role": &m.role, "content": &m.content}))
             .collect();
 
-        let body = json!({
+        let mut body = json!({
             "model": self.model,
             "max_tokens": request.max_tokens,
             "system": request.system_prompt,
             "stream": true,
             "messages": messages
         });
+
+        // Include tools if provided
+        if let Some(ref tools) = request.tools {
+            if !tools.is_empty() {
+                let tools_json: Vec<Value> = tools
+                    .iter()
+                    .map(|t| {
+                        json!({
+                            "name": t.name,
+                            "description": t.description,
+                            "input_schema": t.input_schema,
+                        })
+                    })
+                    .collect();
+                body["tools"] = json!(tools_json);
+            }
+        }
 
         let resp = self
             .client
@@ -361,6 +378,12 @@ impl AiProvider for AnthropicProvider {
         let mut input_tokens: u32 = 0;
         let mut output_tokens: u32 = 0;
         let mut model_name = self.model.clone();
+        let mut tool_use_blocks: Vec<ToolUseBlock> = Vec::new();
+
+        // Tool_use streaming state
+        let mut current_tool_id: Option<String> = None;
+        let mut current_tool_name: Option<String> = None;
+        let mut current_tool_input_json = String::new();
 
         let bytes = resp.bytes().await?;
         let text = String::from_utf8_lossy(&bytes);
@@ -387,10 +410,59 @@ impl AiProvider for AnthropicProvider {
                             .as_u64()
                             .unwrap_or(0) as u32;
                     }
+                    "content_block_start" => {
+                        let block_type =
+                            chunk["content_block"]["type"].as_str().unwrap_or("");
+                        if block_type == "tool_use" {
+                            current_tool_id = chunk["content_block"]["id"]
+                                .as_str()
+                                .map(|s| s.to_string());
+                            current_tool_name = chunk["content_block"]["name"]
+                                .as_str()
+                                .map(|s| s.to_string());
+                            current_tool_input_json.clear();
+                        }
+                    }
                     "content_block_delta" => {
-                        if let Some(text) = chunk["delta"]["text"].as_str() {
-                            accumulated.push_str(text);
-                            let _ = event_sender.send(text.to_string()).await;
+                        let delta_type = chunk["delta"]["type"].as_str().unwrap_or("");
+                        if delta_type == "text_delta" {
+                            if let Some(text) = chunk["delta"]["text"].as_str() {
+                                accumulated.push_str(text);
+                                let _ = event_sender.send(text.to_string()).await;
+                            }
+                        } else if delta_type == "input_json_delta" {
+                            if let Some(partial) =
+                                chunk["delta"]["partial_json"].as_str()
+                            {
+                                current_tool_input_json.push_str(partial);
+                            }
+                        }
+                    }
+                    "content_block_stop" => {
+                        if let (Some(id), Some(name)) =
+                            (current_tool_id.take(), current_tool_name.take())
+                        {
+                            let input: Value =
+                                serde_json::from_str(&current_tool_input_json)
+                                    .unwrap_or(json!({}));
+                            current_tool_input_json.clear();
+
+                            let block = ToolUseBlock {
+                                id: id.clone(),
+                                name: name.clone(),
+                                input: input.clone(),
+                            };
+                            tool_use_blocks.push(block);
+
+                            let tool_event = json!({
+                                "type": "tool_use",
+                                "id": id,
+                                "name": name,
+                                "input": input,
+                            });
+                            let _ = event_sender
+                                .send(tool_event.to_string())
+                                .await;
                         }
                     }
                     "message_delta" => {
@@ -410,7 +482,11 @@ impl AiProvider for AnthropicProvider {
                 input_tokens,
                 output_tokens,
             },
-            tool_use: None,
+            tool_use: if tool_use_blocks.is_empty() {
+                None
+            } else {
+                Some(tool_use_blocks)
+            },
         })
     }
 

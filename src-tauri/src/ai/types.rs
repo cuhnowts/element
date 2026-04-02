@@ -112,6 +112,7 @@ pub struct ChatRequest {
     pub messages: Vec<ChatMessage>,
     pub max_tokens: u32,
     pub temperature: f32,
+    pub tools: Option<Vec<ToolDefinition>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

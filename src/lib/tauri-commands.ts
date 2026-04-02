@@ -118,8 +118,9 @@ export async function getNextRunTimes(
 export async function hubChatSend(
   messages: { role: string; content: string }[],
   systemPrompt: string,
+  tools?: { name: string; description: string; input_schema: Record<string, unknown> }[],
 ): Promise<void> {
-  return invoke<void>("hub_chat_send", { messages, systemPrompt });
+  return invoke<void>("hub_chat_send", { messages, systemPrompt, tools: tools ?? null });
 }
 
 export async function hubChatStop(): Promise<void> {
