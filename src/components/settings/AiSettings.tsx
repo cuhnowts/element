@@ -8,6 +8,7 @@ import { ProviderCard } from "./ProviderCard";
 import { AddProviderDialog } from "./AddProviderDialog";
 import { api } from "@/lib/tauri";
 import { toast } from "sonner";
+import { ShellAllowlistSettings } from "./ShellAllowlistSettings";
 
 export function AiSettings() {
   const providers = useStore((s) => s.providers);
@@ -107,6 +108,13 @@ export function AiSettings() {
           </div>
           <Button onClick={handleSaveCliTool}>Save CLI Tool</Button>
         </div>
+      </div>
+
+      <Separator className="my-6" />
+
+      {/* Shell Allowlist section */}
+      <div className="mb-6">
+        <ShellAllowlistSettings />
       </div>
 
       <Separator className="my-6" />

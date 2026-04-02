@@ -16,4 +16,5 @@ pub mod schedule_commands;
 pub mod scheduling_commands;
 pub mod task_commands;
 pub mod theme_commands;
+pub mod shell_commands;
 pub mod workflow_commands;
