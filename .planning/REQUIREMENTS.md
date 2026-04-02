@@ -52,16 +52,16 @@ Requirements for v1.4 Daily Hub milestone. Each maps to roadmap phases.
 
 ### Hub Layout
 
-- [ ] **HUB-01**: User sees a 3-column hub (goals tree, AI center, calendar placeholder) as the default home screen
-- [ ] **HUB-02**: User can minimize any column to a sliver and expand it to full width, with a "+" button to restore
+- [x] **HUB-01**: User sees a 3-column hub (goals tree, AI center, calendar placeholder) as the default home screen
+- [x] **HUB-02**: User can minimize any column to a sliver and expand it to full width, with a "+" button to restore
 - [x] **HUB-03**: Hub replaces TodayView with explicit CenterPanel routing via activeView state
-- [ ] **HUB-04**: Right column shows a calendar placeholder with "coming soon" state
+- [x] **HUB-04**: Right column shows a calendar placeholder with "coming soon" state
 
 ### Goals Tree
 
-- [ ] **GOAL-01**: User sees a collapsible tree of themes → projects → phases with progress indicators
-- [ ] **GOAL-02**: User can click a project/phase in the tree to navigate to its detail view
-- [ ] **GOAL-03**: User sees standalone tasks grouped under a "Chores" section with to-do items
+- [x] **GOAL-01**: User sees a collapsible tree of themes → projects → phases with progress indicators
+- [x] **GOAL-02**: User can click a project/phase in the tree to navigate to its detail view
+- [x] **GOAL-03**: User sees standalone tasks grouped under a "Chores" section with to-do items
 
 ### AI Briefing
 
@@ -161,13 +161,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGENT-04 | Phase 21 | Complete |
 | AGENT-05 | Phase 21 | Complete |
 | AGENT-06 | Phase 21 | Complete |
-| HUB-01 | Phase 22 | Pending |
-| HUB-02 | Phase 22 | Pending |
+| HUB-01 | Phase 22 | Complete |
+| HUB-02 | Phase 22 | Complete |
 | HUB-03 | Phase 22 | Complete |
-| HUB-04 | Phase 22 | Pending |
-| GOAL-01 | Phase 22 | Pending |
-| GOAL-02 | Phase 22 | Pending |
-| GOAL-03 | Phase 22 | Pending |
+| HUB-04 | Phase 22 | Complete |
+| GOAL-01 | Phase 22 | Complete |
+| GOAL-02 | Phase 22 | Complete |
+| GOAL-03 | Phase 22 | Complete |
 | CTX-01 | Phase 23 | Pending |
 | CTX-02 | Phase 23 | Pending |
 | CTX-03 | Phase 23 | Pending |

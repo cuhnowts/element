@@ -2,14 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Daily Hub
-status: Ready to execute
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-04-01T23:46:29.045Z"
+status: executing
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-04-02T00:05:04.800Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 10
-  completed_phases: 0
-  total_plans: 3
-  completed_plans: 0
+  completed_phases: 1
+  total_plans: 12
+  completed_plans: 3
+  percent: 33
 ---
 
 # Project State
@@ -23,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-31)
 
 ## Current Position
 
-Phase: 22 of 25 (Hub Shell and Goals Tree)
-Plan: 1 of 3 complete in current phase
+Phase: 23 of 25 (context manifest and ai briefing)
+Plan: Not started
 Status: Executing
-Last activity: 2026-04-01 -- Completed 22-01-PLAN.md (activeView routing and hub foundation)
+Last activity: 2026-04-02
 
 Progress: [███░░░░░░░] 33%
 
@@ -65,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 22]: activeView defaults to hub on every launch (not persisted) -- D-07
 - [Phase 22]: CenterPanel uses switch(activeView) not cascading if/else -- TodayView removed
 - [Phase 22]: Workflow callers set activeView at call site since useWorkflowStore is separate store
+- [Phase 22]: Used panelRef prop and onResize callback (react-resizable-panels v4 API) instead of ref/onCollapse/onExpand
+- [Phase 22]: Phase/project progress derived from task statuses at render time (no stored status field on Phase)
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T23:46:35Z
-Stopped at: Completed 22-01-PLAN.md
-Resume file: .planning/phases/22-hub-shell-and-goals-tree/22-02-PLAN.md
+Last session: 2026-04-01T23:58:14.345Z
+Stopped at: Completed 22-03-PLAN.md
+Resume file: None

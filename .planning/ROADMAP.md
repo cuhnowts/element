@@ -64,7 +64,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 **Milestone Goal:** Replace TodayView with an AI-powered daily hub that greets the user, summarizes priorities across all projects, and provides a conversational interface to the central orchestrator.
 
-- [ ] **Phase 22: Hub Shell and Goals Tree** - 3-column layout with goals hierarchy, CenterPanel routing, and column minimize/expand
+- [x] **Phase 22: Hub Shell and Goals Tree** - 3-column layout with goals hierarchy, CenterPanel routing, and column minimize/expand (completed 2026-04-02)
 - [ ] **Phase 23: Context Manifest and AI Briefing** - In-memory project status aggregation and LLM-generated daily summary
 - [ ] **Phase 24: Hub Chat** - Conversational interface to the orchestrator with streaming markdown responses
 - [ ] **Phase 25: Bot Skills and MCP Write Tools** - Chat action dispatch, shell execution, and entity CRUD for both interactive and background agent
@@ -83,8 +83,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   5. User can return to the hub from any view via a Home button in the sidebar
 **Plans**: 3 plans
 Plans:
-- [ ] 22-01-PLAN.md -- activeView routing and Home button
-- [ ] 22-02-PLAN.md -- Hub 3-column layout with minimize/expand and persistence
+- [x] 22-01-PLAN.md -- activeView routing and Home button
+- [x] 22-02-PLAN.md -- Hub 3-column layout with minimize/expand and persistence
 - [ ] 22-03-PLAN.md -- Goals tree with progress indicators and Chores section
 **UI hint**: yes
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete | 2026-03-30 |
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
-| 22. Hub Shell and Goals Tree | v1.4 | 0/3 | Planned    |  |
+| 22. Hub Shell and Goals Tree | v1.4 | 2/3 | Complete    | 2026-04-02 |
 | 23. Context Manifest and AI Briefing | v1.4 | 0/2 | Planned | - |
 | 24. Hub Chat | v1.4 | 0/3 | Planned | - |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 0/4 | Planned | - |
@@ -175,7 +175,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
