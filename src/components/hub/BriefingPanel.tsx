@@ -24,18 +24,16 @@ export function BriefingPanel() {
   const lastRefreshedAt = useBriefingStore((s) => s.lastRefreshedAt);
   const requestBriefing = useBriefingStore((s) => s.requestBriefing);
 
+  // Only regenerate if stale (30+ minutes) or never generated
   useEffect(() => {
-    requestBriefing();
-    invoke("build_context_manifest").then(() => invoke("generate_briefing"));
-  }, [requestBriefing]);
+    const STALE_MS = 30 * 60 * 1000; // 30 minutes
+    const isStale = !lastRefreshedAt || Date.now() - lastRefreshedAt > STALE_MS;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+    if (isStale) {
       requestBriefing();
       invoke("build_context_manifest").then(() => invoke("generate_briefing"));
-    }, 7200000);
-    return () => clearInterval(interval);
-  }, [requestBriefing]);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefresh = async () => {
     requestBriefing();
