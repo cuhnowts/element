@@ -1,6 +1,7 @@
 use tauri::{AppHandle, Emitter, State};
 
 use crate::db::connection::Database;
+use crate::models::manifest::ManifestRebuildTrigger;
 use crate::models::phase::{CreatePhaseInput, Phase};
 use crate::models::project::Project;
 use crate::models::task::Task;
@@ -9,6 +10,7 @@ use crate::models::task::Task;
 pub async fn create_phase(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     project_id: String,
     name: String,
 ) -> Result<Phase, String> {
@@ -20,6 +22,7 @@ pub async fn create_phase(
     let phase = db.create_phase(input).map_err(|e| e.to_string())?;
     app.emit("phase-created", &phase)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(phase)
 }
 
@@ -36,6 +39,7 @@ pub async fn list_phases(
 pub async fn update_phase(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     phase_id: String,
     name: String,
 ) -> Result<Phase, String> {
@@ -45,6 +49,7 @@ pub async fn update_phase(
         .map_err(|e| e.to_string())?;
     app.emit("phase-updated", &phase)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(phase)
 }
 
@@ -52,12 +57,14 @@ pub async fn update_phase(
 pub async fn delete_phase(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     phase_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     db.delete_phase(&phase_id).map_err(|e| e.to_string())?;
     app.emit("phase-deleted", &phase_id)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(())
 }
 

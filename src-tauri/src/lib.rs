@@ -34,6 +34,7 @@ use commands::file_explorer_commands::*;
 use commands::onboarding_commands::*;
 use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
+use commands::manifest_commands::*;
 use commands::notification_commands::*;
 use commands::hub_chat_commands::*;
 
@@ -73,6 +74,15 @@ pub fn run() {
             app.manage(commands::hub_chat_commands::HubChatCancelFlag(
                 Arc::new(std::sync::atomic::AtomicBool::new(false))
             ));
+
+            // Initialize manifest state (context manifest for AI briefing)
+            app.manage(models::manifest::ManifestState {
+                cached: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+            });
+
+            // Spawn debounced manifest rebuilder and manage the trigger
+            let rebuild_tx = commands::manifest_commands::spawn_manifest_rebuilder(app.handle().clone());
+            app.manage(models::manifest::ManifestRebuildTrigger(rebuild_tx));
 
             // Initialize file watcher state
             app.manage(FileWatcherState {
@@ -301,6 +311,8 @@ pub fn run() {
             get_unread_count,
             hub_chat_send,
             hub_chat_stop,
+            build_context_manifest,
+            generate_briefing,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

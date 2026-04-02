@@ -2,6 +2,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::db::connection::Database;
+use crate::models::manifest::ManifestRebuildTrigger;
 use crate::models::tag::Tag;
 use crate::models::task::{
     CreateTaskInput, Task, TaskPriority, TaskStatus, UpdateTaskInput,
@@ -19,6 +20,7 @@ pub struct TaskWithTags {
 pub async fn create_task(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     project_id: Option<String>,
     theme_id: Option<String>,
     title: String,
@@ -54,6 +56,7 @@ pub async fn create_task(
     let task = db.create_task(input).map_err(|e| e.to_string())?;
     app.emit("task-created", &task)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(task)
 }
 
@@ -124,6 +127,7 @@ pub async fn update_task(
 pub async fn update_task_status(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     task_id: String,
     status: String,
 ) -> Result<Task, String> {
@@ -135,6 +139,7 @@ pub async fn update_task_status(
         .map_err(|e| e.to_string())?;
     app.emit("task-updated", &task)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(task)
 }
 
@@ -142,12 +147,14 @@ pub async fn update_task_status(
 pub async fn delete_task(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    rebuild_trigger: State<'_, ManifestRebuildTrigger>,
     task_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     db.delete_task(&task_id).map_err(|e| e.to_string())?;
     app.emit("task-deleted", &task_id)
         .map_err(|e| e.to_string())?;
+    let _ = rebuild_trigger.0.try_send(());
     Ok(())
 }
 
