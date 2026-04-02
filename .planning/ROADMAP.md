@@ -67,7 +67,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 22: Hub Shell and Goals Tree** - 3-column layout with goals hierarchy, CenterPanel routing, and column minimize/expand (completed 2026-04-02)
 - [ ] **Phase 23: Context Manifest and AI Briefing** - In-memory project status aggregation and LLM-generated daily summary
 - [ ] **Phase 24: Hub Chat** - Conversational interface to the orchestrator with streaming markdown responses
-- [ ] **Phase 25: Bot Skills and MCP Write Tools** - Chat action dispatch, shell execution, and entity CRUD for both interactive and background agent
+- [x] **Phase 25: Bot Skills and MCP Write Tools** - Chat action dispatch, shell execution, and entity CRUD for both interactive and background agent (completed 2026-04-02)
 
 ## Phase Details
 
@@ -99,7 +99,7 @@ Plans:
   4. Context manifest stays under 2000 tokens regardless of project count (no LLM quality degradation at scale)
 **Plans**: 2 plans
 Plans:
-- [ ] 23-01-PLAN.md -- Rust manifest builder, briefing streamer, and debounced cache
+- [x] 23-01-PLAN.md -- Rust manifest builder, briefing streamer, and debounced cache
 - [ ] 23-02-PLAN.md -- Frontend briefing UI with streaming markdown and hub integration
 **UI hint**: yes
 
@@ -114,7 +114,7 @@ Plans:
   4. Chat responses are context-aware (informed by the project manifest, not generic)
 **Plans**: 3 plans
 Plans:
-- [ ] 24-01-PLAN.md -- Multi-turn chat_stream backend (Rust types, trait, 4 providers, Tauri commands)
+- [x] 24-01-PLAN.md -- Multi-turn chat_stream backend (Rust types, trait, 4 providers, Tauri commands)
 - [ ] 24-02-PLAN.md -- Frontend chat plumbing (types, Zustand store, streaming hook, npm deps)
 - [ ] 24-03-PLAN.md -- Chat UI components (markdown renderer, bubbles, input, chips, container)
 **UI hint**: yes
@@ -130,8 +130,8 @@ Plans:
   4. Destructive actions (delete, overwrite, risky commands) require explicit user confirmation before execution
 **Plans**: 4 plans
 Plans:
-- [ ] 25-01-PLAN.md -- Shared action registry and shell allowlist validation
-- [ ] 25-02-PLAN.md -- MCP sidecar write tools and read-write database
+- [x] 25-01-PLAN.md -- Shared action registry and shell allowlist validation
+- [x] 25-02-PLAN.md -- MCP sidecar write tools and read-write database
 - [ ] 25-03-PLAN.md -- AI gateway tool_use support, action dispatch, and confirmation UI
 - [ ] 25-04-PLAN.md -- Shell execution command, output block, allowlist settings, agent prompt
 
@@ -165,9 +165,9 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
 | 22. Hub Shell and Goals Tree | v1.4 | 2/3 | Complete    | 2026-04-02 |
-| 23. Context Manifest and AI Briefing | v1.4 | 0/2 | Planned | - |
-| 24. Hub Chat | v1.4 | 0/3 | Planned | - |
-| 25. Bot Skills and MCP Write Tools | v1.4 | 0/4 | Planned | - |
+| 23. Context Manifest and AI Briefing | v1.4 | 1/2 | In Progress|  |
+| 24. Hub Chat | v1.4 | 1/3 | In Progress|  |
+| 25. Bot Skills and MCP Write Tools | v1.4 | 2/4 | Complete    | 2026-04-02 |
 
 ## Backlog
 
@@ -175,7 +175,7 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

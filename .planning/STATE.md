@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Daily Hub
-status: executing
-stopped_at: Completed 22-03-PLAN.md
-last_updated: "2026-04-02T00:05:04.800Z"
-last_activity: 2026-04-02
+status: Ready to plan
+stopped_at: Completed 25-03-PLAN.md
+last_updated: "2026-04-02T11:02:49.844Z"
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 3
-  percent: 33
+  completed_plans: 11
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-31)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 22 — hub-shell-and-goals-tree
+**Current focus:** Phase 25 — bot-skills-and-mcp-write-tools
 
 ## Current Position
 
-Phase: 23 of 25 (context manifest and ai briefing)
+Phase: 999.4
 Plan: Not started
-Status: Executing
-Last activity: 2026-04-02
-
-Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -69,6 +63,21 @@ Recent decisions affecting current work:
 - [Phase 22]: Workflow callers set activeView at call site since useWorkflowStore is separate store
 - [Phase 22]: Used panelRef prop and onResize callback (react-resizable-panels v4 API) instead of ref/onCollapse/onExpand
 - [Phase 22]: Phase/project progress derived from task statuses at render time (no stored status field on Phase)
+- [Phase 24]: Chat streaming uses hub-chat-stream-* events to avoid collision with existing ai-stream-* channel
+- [Phase 24]: AtomicBool with SeqCst for cancel flag -- simple, no mutex on hot path
+- [Phase 23]: Manifest uses project+phase level only (no individual tasks) for token efficiency
+- [Phase 23]: Briefing system prompt is time-aware (morning/afternoon/evening)
+- [Phase 23]: Debounce uses tokio mpsc channel with try_send (non-blocking) in mutation commands
+- [Phase 24]: useHubChatStore fully standalone from useAgentStore (D-12)
+- [Phase 23]: Standalone Zustand store for briefing (useBriefingStore), not AppStore slice
+- [Phase 23]: BriefingPanel wired into HubCenterPanel (not CenterPanel) since hub routes through HubView
+- [Phase 25]: Registry uses flat array with find-by-name lookup for 9 bot skill definitions
+- [Phase 25]: Shell metacharacter regex rejects all injection vectors before allowlist matching
+- [Phase 25]: MCP write handlers emit data-changed notifications via agent queue for UI refresh
+- [Phase 25]: Phase status is informational only (derived from task completion, no DB column)
+- [Phase 25]: Extended MULTI_WORD_PREFIXES to include cargo/docker/kubectl for correct custom allowlist matching
+- [Phase 25]: Extended ChatRequest with tools field to enable tool_use in hub chat path (chat_stream)
+- [Phase 25]: Tool_use events sent through same event_sender channel, frontend parses JSON vs text
 
 ### Pending Todos
 
@@ -82,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T23:58:14.345Z
-Stopped at: Completed 22-03-PLAN.md
+Last session: 2026-04-02T10:56:30.732Z
+Stopped at: Completed 25-03-PLAN.md
 Resume file: None
