@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MinimizedColumnProps {
@@ -29,6 +29,29 @@ export function MinimizedColumn({ label, side, onExpand }: MinimizedColumnProps)
       >
         {label}
       </span>
+    </div>
+  );
+}
+
+interface ColumnRibbonProps {
+  label: string;
+  onMinimize: () => void;
+}
+
+export function ColumnRibbon({ label, onMinimize }: ColumnRibbonProps) {
+  return (
+    <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/50 shrink-0">
+      <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+        {label}
+      </span>
+      <button
+        type="button"
+        onClick={onMinimize}
+        aria-label={`Minimize ${label}`}
+        className="p-0.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
+      >
+        <Minus className="size-3.5" />
+      </button>
     </div>
   );
 }

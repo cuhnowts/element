@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/resizable";
 import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
 import { CalendarPlaceholder } from "@/components/hub/CalendarPlaceholder";
-import { MinimizedColumn } from "@/components/hub/MinimizedColumn";
+import { MinimizedColumn, ColumnRibbon } from "@/components/hub/MinimizedColumn";
 import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
@@ -20,9 +20,11 @@ export function HubView() {
   const setHubLayout = useWorkspaceStore((s) => s.setHubLayout);
 
   const goalsPanelRef = usePanelRef();
+  const centerPanelRef = usePanelRef();
   const calendarPanelRef = usePanelRef();
 
   const [goalsCollapsed, setGoalsCollapsed] = useState(hubLayout.goalsCollapsed);
+  const [centerCollapsed, setCenterCollapsed] = useState(false);
   const [calendarCollapsed, setCalendarCollapsed] = useState(hubLayout.calendarCollapsed);
 
   const handleGoalsResize = useCallback(
@@ -30,6 +32,15 @@ export function HubView() {
       const collapsed = panelSize.asPercentage === 0;
       setGoalsCollapsed(collapsed);
       setHubLayout({ goalsCollapsed: collapsed, goalsPanelSize: panelSize.asPercentage });
+    },
+    [setHubLayout]
+  );
+
+  const handleCenterResize = useCallback(
+    (panelSize: PanelSize) => {
+      const collapsed = panelSize.asPercentage === 0;
+      setCenterCollapsed(collapsed);
+      setHubLayout({ centerPanelSize: panelSize.asPercentage });
     },
     [setHubLayout]
   );
@@ -43,22 +54,20 @@ export function HubView() {
     [setHubLayout]
   );
 
-  const handleCenterResize = useCallback(
-    (panelSize: PanelSize) => {
-      setHubLayout({ centerPanelSize: panelSize.asPercentage });
-    },
-    [setHubLayout]
-  );
-
   return (
     <div className="h-full flex">
       {goalsCollapsed && (
         <MinimizedColumn
           label="Goals"
           side="left"
-          onExpand={() => {
-            goalsPanelRef.current?.expand();
-          }}
+          onExpand={() => goalsPanelRef.current?.expand()}
+        />
+      )}
+      {centerCollapsed && (
+        <MinimizedColumn
+          label="Briefing"
+          side="left"
+          onExpand={() => centerPanelRef.current?.expand()}
         />
       )}
       <div className="flex-1 h-full">
@@ -72,16 +81,29 @@ export function HubView() {
             collapsedSize={0}
             onResize={handleGoalsResize}
           >
-            <GoalsTreePanel />
+            <div className="h-full flex flex-col">
+              <ColumnRibbon label="Goals" onMinimize={() => goalsPanelRef.current?.collapse()} />
+              <div className="flex-1 min-h-0 overflow-auto">
+                <GoalsTreePanel />
+              </div>
+            </div>
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel
             id={CENTER_PANEL_ID}
+            panelRef={centerPanelRef}
             defaultSize={hubLayout.centerPanelSize}
-            minSize={30}
+            minSize={20}
+            collapsible
+            collapsedSize={0}
             onResize={handleCenterResize}
           >
-            <HubCenterPanel />
+            <div className="h-full flex flex-col">
+              <ColumnRibbon label="Briefing" onMinimize={() => centerPanelRef.current?.collapse()} />
+              <div className="flex-1 min-h-0">
+                <HubCenterPanel />
+              </div>
+            </div>
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel
@@ -93,7 +115,12 @@ export function HubView() {
             collapsedSize={0}
             onResize={handleCalendarResize}
           >
-            <CalendarPlaceholder />
+            <div className="h-full flex flex-col">
+              <ColumnRibbon label="Calendar" onMinimize={() => calendarPanelRef.current?.collapse()} />
+              <div className="flex-1 min-h-0">
+                <CalendarPlaceholder />
+              </div>
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
@@ -101,9 +128,7 @@ export function HubView() {
         <MinimizedColumn
           label="Calendar"
           side="right"
-          onExpand={() => {
-            calendarPanelRef.current?.expand();
-          }}
+          onExpand={() => calendarPanelRef.current?.expand()}
         />
       )}
     </div>
