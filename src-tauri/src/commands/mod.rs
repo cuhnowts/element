@@ -1,6 +1,7 @@
 pub mod ai_commands;
 pub mod calendar_commands;
 pub mod cli_commands;
+pub mod manifest_commands;
 pub mod credential_commands;
 pub mod execution_commands;
 pub mod file_explorer_commands;

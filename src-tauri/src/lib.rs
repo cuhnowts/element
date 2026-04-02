@@ -34,6 +34,7 @@ use commands::file_explorer_commands::*;
 use commands::onboarding_commands::*;
 use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
+use commands::manifest_commands::*;
 use commands::notification_commands::*;
 
 pub fn run() {
@@ -67,6 +68,15 @@ pub fn run() {
 
             // Initialize AI gateway
             app.manage(ai::gateway::AiGateway::new());
+
+            // Initialize manifest state (context manifest for AI briefing)
+            app.manage(models::manifest::ManifestState {
+                cached: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+            });
+
+            // Spawn debounced manifest rebuilder and manage the trigger
+            let rebuild_tx = commands::manifest_commands::spawn_manifest_rebuilder(app.handle().clone());
+            app.manage(models::manifest::ManifestRebuildTrigger(rebuild_tx));
 
             // Initialize file watcher state
             app.manage(FileWatcherState {
@@ -293,6 +303,8 @@ pub fn run() {
             mark_all_notifications_read,
             clear_all_notifications,
             get_unread_count,
+            build_context_manifest,
+            generate_briefing,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
