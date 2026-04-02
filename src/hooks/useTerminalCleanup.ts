@@ -14,22 +14,25 @@ export function useTerminalCleanup() {
     const unlistenPromise = appWindow.onCloseRequested(async (event) => {
       event.preventDefault();
 
-      // Get all sessions across all projects
-      const allSessions = useTerminalSessionStore.getState().getAllSessions();
+      try {
+        // Get all sessions across all projects
+        const allSessions = useTerminalSessionStore.getState().getAllSessions();
 
-      // PTY refs are held by React components, not the store.
-      // The store's removeAllForProject will trigger component unmounts,
-      // which run gracefulKillPty in their cleanup effects (TerminalSession.tsx).
-      // We clear the store state here to trigger those unmounts.
-      const projectIds = [...new Set(allSessions.map((s) => s.projectId))];
-      for (const pid of projectIds) {
-        useTerminalSessionStore.getState().removeAllForProject(pid);
+        // PTY refs are held by React components, not the store.
+        // The store's removeAllForProject will trigger component unmounts,
+        // which run gracefulKillPty in their cleanup effects (TerminalSession.tsx).
+        const projectIds = [...new Set(allSessions.map((s) => s.projectId))];
+        for (const pid of projectIds) {
+          useTerminalSessionStore.getState().removeAllForProject(pid);
+        }
+
+        // Brief delay to allow React cleanup effects to run
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch {
+        // Cleanup errors should not prevent closing
       }
 
-      // Brief delay to allow React cleanup effects to run
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Now close the window
+      // Always close the window
       await appWindow.destroy();
     });
 
