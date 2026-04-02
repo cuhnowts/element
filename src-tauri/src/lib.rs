@@ -35,6 +35,7 @@ use commands::onboarding_commands::*;
 use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
 use commands::notification_commands::*;
+use commands::hub_chat_commands::*;
 
 pub fn run() {
     tauri::Builder::default()
@@ -67,6 +68,11 @@ pub fn run() {
 
             // Initialize AI gateway
             app.manage(ai::gateway::AiGateway::new());
+
+            // Initialize hub chat cancellation flag
+            app.manage(commands::hub_chat_commands::HubChatCancelFlag(
+                Arc::new(std::sync::atomic::AtomicBool::new(false))
+            ));
 
             // Initialize file watcher state
             app.manage(FileWatcherState {
@@ -293,6 +299,8 @@ pub fn run() {
             mark_all_notifications_read,
             clear_all_notifications,
             get_unread_count,
+            hub_chat_send,
+            hub_chat_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

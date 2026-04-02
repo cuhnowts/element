@@ -1,4 +1,5 @@
 pub mod ai_commands;
+pub mod hub_chat_commands;
 pub mod calendar_commands;
 pub mod cli_commands;
 pub mod credential_commands;
