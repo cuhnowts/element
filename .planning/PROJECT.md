@@ -39,6 +39,8 @@ v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, name
 
 v1.4 Phase 22 complete: Hub shell with 3-column resizable layout (goals tree, center, calendar), explicit activeView state machine replacing cascading if/else routing, HomeButton for hub navigation, collapsible goals tree with project/phase hierarchy and progress dots, chores section with standalone task checkboxes.
 
+v1.4 Phase 25 complete: Bot skills — action registry (9 skills), shell allowlist with injection prevention, MCP write tools (8 handlers for tasks/projects/themes/files), AI gateway tool_use support (Anthropic + OpenAI), hub chat action dispatch with confirmation UI, Tauri shell execution with allowlist enforcement, shell output block, and allowlist settings.
+
 ## Requirements
 
 ### Validated
@@ -75,7 +77,7 @@ v1.4 Phase 22 complete: Hub shell with 3-column resizable layout (goals tree, ce
 - [ ] Hub UI — 3-column layout replacing TodayView (goals tree, AI briefing + chat, calendar placeholder)
 - [ ] AI daily briefing — LLM-generated summary aggregating all project priorities
 - [ ] Hub chat — conversational interface to the central orchestrator
-- [ ] Bot skills — orchestrator tools for commands, file creation, and full app entity access
+- ✓ Bot skills — orchestrator tools for commands, file creation, and full app entity access — v1.4
 - [ ] Central context manifest — auto-generated project status file for orchestrator consumption
 
 ### Future
