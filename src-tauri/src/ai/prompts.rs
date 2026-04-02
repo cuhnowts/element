@@ -44,6 +44,8 @@ Related tasks are suggestions for tasks that would naturally precede, follow, or
         user_message: user,
         max_tokens: 1024,
         temperature: 0.3,
+        tools: None,
+        tool_results: None,
     }
 }
 

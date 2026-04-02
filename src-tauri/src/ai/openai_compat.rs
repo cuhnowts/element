@@ -94,6 +94,7 @@ impl AiProvider for OpenAiCompatProvider {
                 input_tokens,
                 output_tokens,
             },
+            tool_use: None,
         })
     }
 
@@ -154,6 +155,7 @@ impl AiProvider for OpenAiCompatProvider {
                 input_tokens: 0,
                 output_tokens: 0,
             },
+            tool_use: None,
         })
     }
 
@@ -218,6 +220,7 @@ impl AiProvider for OpenAiCompatProvider {
                 input_tokens: 0,
                 output_tokens: 0,
             },
+            tool_use: None,
         })
     }
 
@@ -227,6 +230,8 @@ impl AiProvider for OpenAiCompatProvider {
             user_message: "hi".to_string(),
             max_tokens: 1,
             temperature: 0.0,
+            tools: None,
+            tool_results: None,
         };
         self.complete(request).await?;
         Ok(true)

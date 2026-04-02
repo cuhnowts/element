@@ -57,11 +57,33 @@ pub struct CreateProviderInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ToolDefinition {
+    pub name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ToolUseBlock {
+    pub id: String,
+    pub name: String,
+    pub input: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ToolResultBlock {
+    pub tool_use_id: String,
+    pub content: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CompletionRequest {
     pub system_prompt: String,
     pub user_message: String,
     pub max_tokens: u32,
     pub temperature: f32,
+    pub tools: Option<Vec<ToolDefinition>>,
+    pub tool_results: Option<Vec<ToolResultBlock>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -69,6 +91,7 @@ pub struct CompletionResponse {
     pub content: String,
     pub model: String,
     pub usage: TokenUsage,
+    pub tool_use: Option<Vec<ToolUseBlock>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

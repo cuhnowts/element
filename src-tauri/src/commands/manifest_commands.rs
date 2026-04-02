@@ -84,6 +84,8 @@ pub async fn generate_briefing(
         user_message: manifest,
         max_tokens: 1024,
         temperature: 0.7,
+        tools: None,
+        tool_results: None,
     };
 
     // Create channel for streaming

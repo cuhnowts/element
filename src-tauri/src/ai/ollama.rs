@@ -81,6 +81,7 @@ impl AiProvider for OllamaProvider {
                 input_tokens,
                 output_tokens,
             },
+            tool_use: None,
         })
     }
 
@@ -151,6 +152,7 @@ impl AiProvider for OllamaProvider {
                 input_tokens,
                 output_tokens,
             },
+            tool_use: None,
         })
     }
 
@@ -223,6 +225,7 @@ impl AiProvider for OllamaProvider {
                 input_tokens,
                 output_tokens,
             },
+            tool_use: None,
         })
     }
 
