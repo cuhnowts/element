@@ -153,7 +153,7 @@ fn build_briefing_system_prompt() -> String {
 pub fn spawn_manifest_rebuilder(app_handle: AppHandle) -> tokio::sync::mpsc::Sender<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(16);
 
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         while rx.recv().await.is_some() {
             // Debounce: wait 5 seconds
             tokio::time::sleep(Duration::from_secs(5)).await;
