@@ -16,6 +16,16 @@ import {
   handleReportStatus,
   handleSpawnProjectSession,
 } from "./tools/orchestration-tools.js";
+import {
+  handleCreateTask,
+  handleUpdateTask,
+  handleUpdateTaskStatus,
+  handleDeleteTask,
+  handleUpdatePhaseStatus,
+  handleCreateProject,
+  handleCreateTheme,
+  handleCreateFile,
+} from "./tools/write-tools.js";
 
 const server = new Server(
   { name: "element-mcp", version: "1.0.0" },
@@ -194,6 +204,114 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["projectId", "sessionName"],
       },
     },
+    {
+      name: "create_task",
+      description: "Create a new task",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          title: { type: "string", description: "Task title" },
+          projectId: { type: "string", description: "Optional project ID" },
+          description: { type: "string", description: "Task description" },
+          priority: {
+            type: "string",
+            description: 'Task priority: "low", "medium", "high", or "urgent"',
+          },
+          phaseId: { type: "string", description: "Optional phase ID" },
+        },
+        required: ["title"],
+      },
+    },
+    {
+      name: "update_task",
+      description: "Update an existing task's fields",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          taskId: { type: "string", description: "Task ID to update" },
+          title: { type: "string", description: "New title" },
+          description: { type: "string", description: "New description" },
+          priority: { type: "string", description: "New priority" },
+        },
+        required: ["taskId"],
+      },
+    },
+    {
+      name: "update_task_status",
+      description: "Update a task's status",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          taskId: { type: "string", description: "Task ID to update" },
+          status: {
+            type: "string",
+            description: 'New status: "todo", "in_progress", "done", or "cancelled"',
+            enum: ["todo", "in_progress", "done", "cancelled"],
+          },
+        },
+        required: ["taskId", "status"],
+      },
+    },
+    {
+      name: "delete_task",
+      description: "Delete a task (requires approval)",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          taskId: { type: "string", description: "Task ID to delete" },
+        },
+        required: ["taskId"],
+      },
+    },
+    {
+      name: "update_phase_status",
+      description: "Report phase status",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          phaseId: { type: "string", description: "Phase ID" },
+          status: { type: "string", description: "Status to report" },
+        },
+        required: ["phaseId", "status"],
+      },
+    },
+    {
+      name: "create_project",
+      description: "Create a new project",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          name: { type: "string", description: "Project name" },
+          description: { type: "string", description: "Project description" },
+        },
+        required: ["name"],
+      },
+    },
+    {
+      name: "create_theme",
+      description: "Create a new theme",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          name: { type: "string", description: "Theme name" },
+          color: { type: "string", description: "Theme color (hex)" },
+        },
+        required: ["name", "color"],
+      },
+    },
+    {
+      name: "create_file",
+      description: "Create a file in a project's linked directory",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          path: { type: "string", description: "Relative file path within project directory" },
+          content: { type: "string", description: "File content" },
+          projectId: { type: "string", description: "Project ID" },
+        },
+        required: ["path", "content", "projectId"],
+      },
+    },
   ],
 }));
 
@@ -270,6 +388,73 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         db,
         dbPath,
         args as { projectId: string; sessionName: string }
+      );
+
+    case "create_task":
+      return handleCreateTask(
+        db,
+        dbPath,
+        args as {
+          title: string;
+          projectId?: string;
+          description?: string;
+          priority?: string;
+          phaseId?: string;
+        }
+      );
+
+    case "update_task":
+      return handleUpdateTask(
+        db,
+        dbPath,
+        args as {
+          taskId: string;
+          title?: string;
+          description?: string;
+          priority?: string;
+        }
+      );
+
+    case "update_task_status":
+      return handleUpdateTaskStatus(
+        db,
+        dbPath,
+        args as { taskId: string; status: string }
+      );
+
+    case "delete_task":
+      return handleDeleteTask(
+        db,
+        dbPath,
+        args as { taskId: string }
+      );
+
+    case "update_phase_status":
+      return handleUpdatePhaseStatus(
+        db,
+        dbPath,
+        args as { phaseId: string; status: string }
+      );
+
+    case "create_project":
+      return handleCreateProject(
+        db,
+        dbPath,
+        args as { name: string; description?: string }
+      );
+
+    case "create_theme":
+      return handleCreateTheme(
+        db,
+        dbPath,
+        args as { name: string; color: string }
+      );
+
+    case "create_file":
+      return handleCreateFile(
+        db,
+        dbPath,
+        args as { path: string; content: string; projectId: string }
       );
 
     default:
