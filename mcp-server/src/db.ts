@@ -11,7 +11,7 @@ if (!dbPath) {
   process.exit(1);
 }
 
-const db: DatabaseType = new Database(dbPath, { readonly: true });
+const db: DatabaseType = new Database(dbPath);
 
 db.pragma("journal_mode=WAL");
 db.pragma("busy_timeout=5000");
