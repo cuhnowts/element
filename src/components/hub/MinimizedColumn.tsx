@@ -11,7 +11,7 @@ export function MinimizedColumn({ label, side, onExpand }: MinimizedColumnProps)
   return (
     <div
       className={cn(
-        "flex flex-col items-center py-3 gap-2 w-10 h-full bg-card shrink-0",
+        "flex flex-col items-center py-2 gap-1.5 w-8 h-full bg-card shrink-0",
         side === "left" ? "border-r border-border" : "border-l border-border"
       )}
     >
@@ -40,8 +40,8 @@ interface ColumnRibbonProps {
 
 export function ColumnRibbon({ label, onMinimize }: ColumnRibbonProps) {
   return (
-    <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/50 shrink-0">
-      <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+    <div className="flex items-center justify-between px-2 py-1 border-b border-border bg-card/50 shrink-0">
+      <span className="text-[10px] font-semibold tracking-wide uppercase text-muted-foreground">
         {label}
       </span>
       <button
@@ -50,7 +50,7 @@ export function ColumnRibbon({ label, onMinimize }: ColumnRibbonProps) {
         aria-label={`Minimize ${label}`}
         className="p-0.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
       >
-        <Minus className="size-3.5" />
+        <Minus className="size-3" />
       </button>
     </div>
   );

@@ -76,7 +76,7 @@ export function HubView() {
             id={GOALS_PANEL_ID}
             panelRef={goalsPanelRef}
             defaultSize={hubLayout.goalsPanelSize}
-            minSize={15}
+            minSize={10}
             collapsible
             collapsedSize={0}
             onResize={handleGoalsResize}
@@ -93,7 +93,7 @@ export function HubView() {
             id={CENTER_PANEL_ID}
             panelRef={centerPanelRef}
             defaultSize={hubLayout.centerPanelSize}
-            minSize={20}
+            minSize={15}
             collapsible
             collapsedSize={0}
             onResize={handleCenterResize}
@@ -110,7 +110,7 @@ export function HubView() {
             id={CALENDAR_PANEL_ID}
             panelRef={calendarPanelRef}
             defaultSize={hubLayout.calendarPanelSize}
-            minSize={15}
+            minSize={10}
             collapsible
             collapsedSize={0}
             onResize={handleCalendarResize}
