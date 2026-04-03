@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
 import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 
 /**
@@ -9,11 +8,18 @@ import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
  * before the app exits. Clearing the store triggers React component unmounts,
  * which run gracefulKillPty in their cleanup effects (TerminalSession.tsx).
  */
+let cleanupDone = false;
+
 export function useTerminalCleanup() {
   useEffect(() => {
+    cleanupDone = false;
     const appWindow = getCurrentWindow();
     const unlistenPromise = appWindow.onCloseRequested(async (event) => {
+      // Second close attempt after cleanup — let it through
+      if (cleanupDone) return;
+
       event.preventDefault();
+      cleanupDone = true;
 
       try {
         const allSessions = useTerminalSessionStore.getState().getAllSessions();
@@ -26,12 +32,8 @@ export function useTerminalCleanup() {
         // Cleanup errors should not prevent closing
       }
 
-      try {
-        await appWindow.destroy();
-      } catch {
-        // If destroy fails, force quit via Tauri
-        try { await invoke("plugin:process|exit", { exitCode: 0 }); } catch { /* last resort */ }
-      }
+      // Re-trigger close — this time cleanupDone is true so it goes through
+      await appWindow.close();
     });
 
     return () => {
