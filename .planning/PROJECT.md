@@ -8,20 +8,9 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## Current Milestone: v1.4 Daily Hub
-
-**Goal:** Replace the existing TodayView with an AI-powered daily hub that greets the user, summarizes priorities across all projects, and provides a conversational interface to the central orchestrator.
-
-**Target features:**
-- Hub UI — 3-column layout (goals tree, AI briefing + chat, calendar placeholder)
-- AI daily briefing — LLM-generated summary of today's focus across all projects
-- Hub chat — conversational input to the orchestrator (separate from agent panel)
-- Bot skills — extend orchestrator tools to run commands, create files, and access all app entities
-- Central context manifest — auto-generated high-level project status file that feeds the orchestrator efficiently
-
 ## Current State
 
-**Shipped:** v1.2 Intelligent Planning (2026-03-28)
+**Shipped:** v1.4 Daily Hub (2026-04-03)
 **Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
@@ -37,9 +26,7 @@ v1.3 Phase 18 complete: Sidebar left-click navigates directly, theme sections co
 
 v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, named tabs (SessionTabBar), mount-all/show-one rendering for scroll preservation, graceful PTY cleanup (SIGTERM+3s+SIGKILL), refresh AI context dialog, sidebar session indicator, app-quit cleanup hook.
 
-v1.4 Phase 22 complete: Hub shell with 3-column resizable layout (goals tree, center, calendar), explicit activeView state machine replacing cascading if/else routing, HomeButton for hub navigation, collapsible goals tree with project/phase hierarchy and progress dots, chores section with standalone task checkboxes.
-
-v1.4 Phase 25 complete: Bot skills — action registry (9 skills), shell allowlist with injection prevention, MCP write tools (8 handlers for tasks/projects/themes/files), AI gateway tool_use support (Anthropic + OpenAI), hub chat action dispatch with confirmation UI, Tauri shell execution with allowlist enforcement, shell output block, and allowlist settings.
+v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/phase hierarchy, progress dots, chores checkboxes), AI daily briefing (CLI-powered, CEO-style formatting, 30-min cache), conversational hub chat with markdown rendering and multi-turn context, bot skill system (action registry, search_tasks, shell allowlist, MCP write tools), CLI AI provider fallback, and column minimize/expand ribbons.
 
 ## Requirements
 
@@ -72,13 +59,16 @@ v1.4 Phase 25 complete: Bot skills — action registry (9 skills), shell allowli
 - ✓ MCP server sidecar with 10 tools and file-based agent queue — v1.3
 - ✓ Agent lifecycle, panel UI, and bidirectional queue watcher — v1.3
 
+- ✓ Hub UI: 3-column layout replacing TodayView with goals tree, AI briefing + chat, calendar placeholder — v1.4
+- ✓ AI daily briefing: CLI-powered LLM summary aggregating all project priorities — v1.4
+- ✓ Hub chat: conversational interface to central orchestrator with markdown rendering — v1.4
+- ✓ Bot skills: orchestrator tools for commands, file creation, and full app entity access — v1.4
+- ✓ Central context manifest: auto-generated project status for orchestrator consumption — v1.4
+- ✓ CLI AI provider: fallback to configured CLI tool when no API keys available — v1.4
+
 ### Active
 
-- [ ] Hub UI — 3-column layout replacing TodayView (goals tree, AI briefing + chat, calendar placeholder)
-- [ ] AI daily briefing — LLM-generated summary aggregating all project priorities
-- [ ] Hub chat — conversational interface to the central orchestrator
-- ✓ Bot skills — orchestrator tools for commands, file creation, and full app entity access — v1.4
-- [ ] Central context manifest — auto-generated project status file for orchestrator consumption
+(None — planning next milestone)
 
 ### Future
 
@@ -180,4 +170,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-01 after Phase 22 hub-shell-and-goals-tree complete*
+*Last updated: 2026-04-03 after v1.4 Daily Hub milestone completion*

@@ -1,5 +1,24 @@
 # Milestones
 
+## v1.4 Daily Hub (Shipped: 2026-04-03)
+
+**Phases completed:** 6 phases, 12 plans, 23 tasks
+
+**Key accomplishments:**
+
+- Explicit activeView state machine replacing cascading if/else routing, with HomeButton and 37 test stubs for all phase 22 requirements
+- 3-column resizable hub layout with collapsible side columns, minimized strip overlays, and persisted layout state via Zustand
+- Expandable project/phase goals tree with progress dots and standalone task chores section with interactive checkboxes
+- Token-budgeted context manifest aggregator with streaming AI briefing via Tauri commands and debounced cache rebuild
+- Streaming AI briefing panel with time-of-day greeting, react-markdown rendering, refresh button, skeleton loading, and 2-hour auto-regeneration timer
+- Multi-turn chat streaming via ChatMessage/ChatRequest types, chat_stream on all 4 AI providers, and hub_chat_send/stop commands with AtomicBool cancellation
+- 1. [Rule 1 - Bug] Removed unused imports from test stub
+- 8 MCP write tool handlers (task CRUD, project/theme/file creation) with data-changed notifications via agent queue for UI refresh
+- AI gateway tool_use support for both providers, tested action dispatch hook, and hub chat wired end-to-end with inline confirmation for destructive actions
+- Bot shell execution with Rust-side allowlist enforcement, collapsible output renderer, settings UI for custom allowlist, and 18-tool agent system prompt
+
+---
+
 ## v1.3 Foundation & Execution (Shipped: 2026-04-01)
 
 **Phases completed:** 7 phases, 16 plans, 26 tasks
