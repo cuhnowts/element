@@ -8,6 +8,20 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
+## Current Milestone: v1.5 Time Bounded
+
+**Goal:** Turn Element into a daily scheduling assistant — it reads your calendar, knows your tasks and deadlines, and opens with "Here's what you have time for today. What should we work on?" Then helps you carve work blocks into the gaps.
+
+**Target features:**
+- Calendar sync fix — debug existing Google/Outlook OAuth, reliable background sync
+- Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks
+- Hub calendar view — real day/week view showing meetings + work blocks side by side
+- Daily planning skill — AI presents prioritized to-dos against available time, asks "what should we do today?"
+- Due date enforcement — all tasks/phases get due dates, AI suggests them conversationally
+- Heartbeat — periodic background check (local LLM preferred, CLI fallback) that flags deadline risks and suggests reshuffles
+- Schedule negotiation — conversational renegotiation when plans change
+- Backlog exemption — backlog items immune to due date enforcement
+
 ## Current State
 
 **Shipped:** v1.4 Daily Hub (2026-04-03)
@@ -68,21 +82,25 @@ v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/
 
 ### Active
 
-(None — planning next milestone)
+- [ ] Calendar sync fix — debug Google/Outlook OAuth plugin, reliable background sync
+- [ ] Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks
+- [ ] Hub calendar view — real day/week view showing meetings + work blocks
+- [ ] Daily planning skill — AI presents prioritized to-dos against available time conversationally
+- [ ] Due date enforcement — all tasks/phases get due dates, AI suggests them through conversation
+- [ ] Heartbeat — periodic background LLM check flagging deadline risks and suggesting reshuffles
+- [ ] Schedule negotiation — conversational renegotiation when plans change
+- [ ] Backlog exemption — backlog items immune to due date enforcement
 
 ### Future
 
-- [ ] Hub calendar view — gantt or outlook-style day view with bot-created blocks
-- [ ] Hub calendar integration — Google/Outlook calendar data in hub view
-- [ ] Hub email signal ingestion — email context fed into daily briefing
+- [ ] Push events to Google/Outlook (write back to external calendar)
 - [ ] Hub urgency scoring — AI-driven priority scoring for tasks and projects
+- [ ] Hub email signal ingestion — email context fed into daily briefing
 - [ ] Pulse system: ingest calendar/email signals into structured daily work
 - [ ] Reporting pipelines on cron schedules (news, spending, analytics)
 - [ ] Ad-hoc workflow creation with pattern detection for automation suggestions
 - [ ] Memory system: full context model that learns user preferences, habits, and patterns
 - [ ] Code + GUI workflow definition (developers write code, GUI for visual building)
-- [ ] Daily briefing: wake up to a structured workday ready to go
-- [ ] Calendar events wired to smart scheduler
 - [ ] Windows support
 - [ ] Plugin marketplace with paid workflow plugins
 
@@ -170,4 +188,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after v1.4 Daily Hub milestone completion*
+*Last updated: 2026-04-03 after milestone v1.5 Time Bounded started*
