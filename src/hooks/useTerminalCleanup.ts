@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
 import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 
 /**
@@ -15,25 +16,22 @@ export function useTerminalCleanup() {
       event.preventDefault();
 
       try {
-        // Get all sessions across all projects
         const allSessions = useTerminalSessionStore.getState().getAllSessions();
-
-        // PTY refs are held by React components, not the store.
-        // The store's removeAllForProject will trigger component unmounts,
-        // which run gracefulKillPty in their cleanup effects (TerminalSession.tsx).
         const projectIds = [...new Set(allSessions.map((s) => s.projectId))];
         for (const pid of projectIds) {
           useTerminalSessionStore.getState().removeAllForProject(pid);
         }
-
-        // Brief delay to allow React cleanup effects to run
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       } catch {
         // Cleanup errors should not prevent closing
       }
 
-      // Always close the window
-      await appWindow.destroy();
+      try {
+        await appWindow.destroy();
+      } catch {
+        // If destroy fails, force quit via Tauri
+        try { await invoke("plugin:process|exit", { exitCode: 0 }); } catch { /* last resort */ }
+      }
     });
 
     return () => {
