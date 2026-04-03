@@ -164,19 +164,44 @@ export function HubChat() {
 
   // Intercept streaming chunks to detect tool_use events
   const originalAppendChunk = useHubChatStore.getState().appendChunk;
+  const chunkBufferRef = useRef("");
   useEffect(() => {
     // Override appendChunk to intercept tool_use JSON events
     useHubChatStore.setState({
       appendChunk: (chunk: string) => {
+        // Check for native API tool_use
         const toolUse = tryParseToolUse(chunk);
         if (toolUse) {
+          chunkBufferRef.current = "";
           handleToolUse(toolUse);
           return;
         }
-        // Strip any ACTION: lines from visible output
+
+        // Accumulate chunks in case ACTION: spans multiple lines
+        chunkBufferRef.current += chunk;
+
+        // Check accumulated buffer for ACTION blocks
+        const bufferToolUse = tryParseToolUse(chunkBufferRef.current);
+        if (bufferToolUse) {
+          // Strip the ACTION from buffer and flush any text before it
+          const before = chunkBufferRef.current.replace(/ACTION:\s*\{.+\}/s, "").trim();
+          if (before) {
+            originalAppendChunk(before);
+          }
+          chunkBufferRef.current = "";
+          handleToolUse(bufferToolUse);
+          return;
+        }
+
+        // If no ACTION detected, pass through (strip any partial ACTION: hints)
         const cleaned = chunk.replace(/ACTION:\s*\{.+\}\s*/g, "").trimEnd();
         if (cleaned) {
           originalAppendChunk(cleaned);
+        }
+
+        // Keep buffer from growing indefinitely — trim if over 2000 chars with no ACTION
+        if (chunkBufferRef.current.length > 2000 && !chunkBufferRef.current.includes("ACTION:")) {
+          chunkBufferRef.current = "";
         }
       },
     });
@@ -231,7 +256,7 @@ export function HubChat() {
   );
 
   const sendToolResult = async (
-    toolUseId: string,
+    _toolUseId: string,
     result: DispatchResult,
   ) => {
     const allMessages = useHubChatStore.getState().messages;
@@ -240,12 +265,23 @@ export function HubChat() {
       content: m.content,
     }));
 
-    // Add tool result as an assistant/user exchange
+    // Format result clearly so the LLM can extract IDs and act
+    let resultContent: string;
+    if (result.success && Array.isArray(result.data)) {
+      // Search results — format as readable list with IDs
+      const items = (result.data as Record<string, unknown>[]).map(
+        (item) => `- id: ${item.id}, title: "${item.title}", status: ${item.status}`
+      ).join("\n");
+      resultContent = `Search results:\n${items || "(no matches)"}.\n\nNow take the next action using the IDs above. Output an ACTION block.`;
+    } else if (result.success) {
+      resultContent = `Done: ${JSON.stringify(result.data)}`;
+    } else {
+      resultContent = `Error: ${result.error}`;
+    }
+
     chatMessages.push({
       role: "user",
-      content: result.success
-        ? `Tool result for ${toolUseId}: ${JSON.stringify(result.data)}`
-        : `Tool error for ${toolUseId}: ${result.error}`,
+      content: resultContent,
     });
 
     startStreaming();
@@ -301,6 +337,7 @@ export function HubChat() {
     setInputValue("");
     addUserMessage(text);
     dispatchedActionsRef.current.clear();
+    chunkBufferRef.current = "";
 
     const allMessages = useHubChatStore.getState().messages;
     const chatMessages = allMessages.map((m) => ({
