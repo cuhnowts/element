@@ -1,213 +1,168 @@
 # Project Research Summary
 
-**Project:** Element v1.4 Daily Hub
-**Domain:** AI-powered home screen with goals tree, daily briefing, conversational chat, context manifest, and bot skills — integrated into an existing Tauri 2.x + React 19 desktop app
-**Researched:** 2026-03-31
+**Project:** Element v1.5 — Time Bounded
+**Domain:** AI scheduling assistant with calendar-aware task management and proactive deadline monitoring
+**Researched:** 2026-04-02
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element v1.4 adds a Daily Hub that replaces TodayView as the app's default home screen. The hub is a 3-column layout: a hierarchical goals tree on the left (themes > projects > phases), an AI-generated daily briefing plus conversational chat in the center, and a calendar placeholder on the right. The existing codebase is well-positioned for this work — the AI gateway, MCP sidecar, agent queue, Zustand slice pattern, and shadcn/ui design system are all proven infrastructure. The genuine new work is a thin layer on top: 5 new npm packages (react-markdown + ecosystem), approximately 10 new React components, 3 new Rust modules, and a new standalone Zustand store. No new Rust crates and no new MCP server dependencies are required.
+Element v1.5 extends an existing, well-structured Tauri 2.x/React 19 desktop app with scheduling features that most competitors handle poorly. The research is unusually favorable: the scheduling engine already exists and works correctly, the calendar sync infrastructure already exists, and the AI chat system already handles bot skills via action registry — the primary work is wiring these together and building the UI layer on top. The single most consequential line of code is `scheduling_commands.rs:97`, which passes an empty vec for calendar events, preventing the scheduler from knowing about meetings. Fixing that ~15-line gap unlocks the entire feature set.
 
-The recommended approach is to build in 5 sequential phases: (1) hub shell + goals tree + CenterPanel routing as a pure UI/data layer with zero AI dependency, (2) context manifest and AI briefing using the existing AI gateway with streaming and SQLite-cached results, (3) hub chat as a direct AI gateway channel (not routed through the file-based MCP queue), (4) bot skill action dispatch via LLM function-calling parsed client-side and dispatched to existing Tauri commands, and (5) MCP sidecar write tools for background agent autonomy. Each phase is independently shippable and directly depends on the previous one's infrastructure being stable.
+The recommended architecture is opinionated: LLMs handle conversational presentation and rescheduling negotiation only; deterministic algorithms handle actual schedule generation. This is not a tradeoff — using an LLM for constraint-based scheduling is a known failure mode backed by published research. The existing greedy scheduler (`assign_tasks_to_blocks`) is already deadline-aware and priority-scored. The bot's job is to present its output conversationally and let users adjust, not to generate schedules from scratch.
 
-The three highest-risk decisions are: (a) CenterPanel routing — the hub needs an explicit `activeView` state in the workspace store rather than being a TodayView fallback, or it will disappear the moment any sidebar item is clicked; (b) hub chat must bypass the file-based agent queue (which has 2-second polling latency) and use the AI gateway directly; and (c) the context manifest must be token-budgeted from day one (target: under 2000 tokens) or LLM quality will degrade at scale. The agent lifecycle must also be lifted out of AgentPanel's component lifecycle before hub features are added, since both the hub and the panel need the agent running regardless of panel visibility.
+The dominant risk is calendar sync reliability before anything else ships. Three pre-existing bugs must be fixed in the first phase: the Outlook timezone parsing bug that makes events appear hours off for non-EST users, the missing 410 Gone handler that permanently breaks incremental sync when Google invalidates a sync token, and the OAuth testing-mode 7-day token expiry. None of these require new libraries — they are code corrections in existing files. The second risk is user trust: auto-rescheduling without confirmation is a verified trust destroyer (documented from Motion user research). Every schedule change must be presented as a suggestion the user explicitly accepts.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack covers approximately 90% of Daily Hub needs. The only genuine gaps are markdown rendering for LLM output and an auto-resizing textarea for chat input. All required Rust crates are already present (`serde_json`, `chrono`, `rusqlite`, `reqwest`, `tokio`). The MCP sidecar requires no new npm dependencies (`better-sqlite3`, `zod`, `@modelcontextprotocol/sdk` all present).
+The existing stack requires only one new frontend dependency (`date-fns@^4.1.0` for calendar grid date math) and one minor version bump (`@modelcontextprotocol/sdk` from `^1.28.0` to `^1.29.0`). All other features — Ollama heartbeat calls, background timer, schedule block reads — use existing Rust (`reqwest`, `tokio::time::interval`, `rusqlite`) and TypeScript (`better-sqlite3`, `@modelcontextprotocol/sdk`) dependencies already in the project. The calendar view should be built as a custom Tailwind CSS time grid (~200 lines TSX), not via `react-big-calendar` or `FullCalendar`, which fight shadcn/ui theming and have stale release cadences.
 
-**Core new technologies (5 npm packages only):**
-- `react-markdown@^10.1.0`: Renders LLM markdown responses — native React elements, no `dangerouslySetInnerHTML`, React 19 compatible
-- `remark-gfm@^4.0.0`: GitHub-flavored markdown (tables, task lists, strikethrough) — required for LLM output; must be v4 to match unified ecosystem v11
-- `rehype-highlight@^7.0.2`: Syntax highlighting for code blocks via highlight.js — ~30kB bundle, lighter than react-syntax-highlighter
-- `react-textarea-autosize@^8.5.7`: Auto-growing chat textarea — 2.8kB, React 19 compatible, eliminates manual height calculation
-- `highlight.js@^11.11.0`: Peer dependency of rehype-highlight — import only specific language grammars (typescript, rust, json, bash, sql) to minimize bundle
-
-**Do not add:** Vercel AI SDK (assumes HTTP/SSR, fights Tauri IPC), chatscope/chat-ui-kit (conflicting CSS, wrong interaction model for single-user LLM chat), LangChain.js (massive dep tree, server-oriented), react-virtualized for chat (premature, complicates streaming auto-scroll with dynamic heights).
+**Core technologies:**
+- `tokio::time::interval` (existing): Background heartbeat timer — simpler and more precise than cron for fixed-interval work
+- `reqwest` (existing): Ollama local LLM HTTP calls — the Ollama API is two endpoints; no `ollama-rs` crate needed
+- `date-fns@^4.1.0` (new, only addition): Calendar grid date math — tree-shakeable, immutable, shares version with `react-day-picker` already installed
+- `better-sqlite3` (existing, MCP sidecar): Calendar MCP tools — SQL queries against `calendar_events` + `scheduled_blocks` tables
 
 ### Expected Features
 
-**Must have for v1.4 (P1):**
-- Hub 3-column layout replacing TodayView as default — every AI dashboard uses spatial hierarchy
-- Goals tree (left column): themes > projects > phases with progress indicators and click-to-navigate
-- Context manifest: Rust-side aggregation of all project state, generated in-memory per LLM call (never written to disk)
-- AI daily briefing (center column): cross-project priority synthesis, markdown rendered, streaming, SQLite-cached
-- Hub chat input with message history: conversational interface routed to orchestrator
-- Bot write tools at minimum: `create_task`, `update_task_status` — chat that can only answer questions is decorative
-- Quick-action suggestion chips after briefing — reduces blank-input anxiety
-- Calendar placeholder (right column) — column must exist even if content is minimal
-- Briefing refresh button — users need control after completing tasks
+**Must have (table stakes, v1.5 core):**
+- Calendar day view with time-grid showing meetings + work blocks side-by-side — the hub right column is currently a placeholder
+- Calendar sync reliability fix — events must flow before any downstream feature works
+- Daily planning bot skill — "here's what fits today" presented conversationally with user confirmation
+- Due date prominence in task UI + bot skill to set them conversationally
+- Backlog exemption flag — must ship alongside due date enforcement, not after
 
-**Should have for v1.4.x (P2):**
-- Action confirmation cards inline in chat before destructive operations
-- Token-streaming polish (token-by-token rendering in chat)
-- Briefing auto-refresh on app focus
-- Chat history persistence to SQLite (in-memory only for v1.4 launch)
+**Should have (differentiators, v1.5 extended):**
+- Conversational schedule negotiation — "move the report to tomorrow" via hub chat, building on daily planning skill
+- Heartbeat deadline monitoring — periodic background check with deterministic risk math, LLM summary optional
+- AI-suggested due dates — bot proposes dates based on project scope and capacity during planning conversations
+- Week calendar view — extends day view once daily planning habit is established
+- Phase-level due dates — new column enabling heartbeat risk calculations at phase granularity
 
-**Defer to v2+ (P3):**
-- Google/Outlook calendar integration (OAuth complexity, explicitly deferred in PROJECT.md)
-- Email signal ingestion (provider integration, privacy concerns, explicitly Future in PROJECT.md)
-- AI urgency/priority scoring (subjective, creates distrust when it disagrees with user)
-- Cross-session chat memory (AGENT-10 explicitly deferred, requires memory system design)
-- Customizable hub layout with drag-and-drop (engineering cost far exceeds value for a single-user app)
+**Defer (v2+):**
+- Calendar write-back to Google/Outlook — two-way sync complexity; read-only is the right v1.5 constraint
+- Energy-level optimization — requires weeks of behavioral data; Morgen/Reclaim users find the learning period frustrating
+- Drag-to-reschedule on calendar — nice-to-have but not essential for the chat-first UX
 
 ### Architecture Approach
 
-The hub integrates into the existing architecture with minimal surface area modifications. The entire UI lives in a new `src/components/hub/` directory. A new standalone `useHubStore` follows the `useAgentStore` pattern — not a slice in AppStore, because hub state (briefing markdown, chat messages, streaming flags) has zero cross-dependencies with other slices. Three new Rust modules (`hub_commands.rs`, `manifest.rs`, `hub_prompts.rs`) are registered via 5 one-line additions to existing mod files. The context manifest is generated in-memory and passed directly to the AI gateway — no staleness, no file watchers, no disk I/O. Hub chat uses the AI gateway directly with Tauri event streaming, bypassing the file-based agent queue entirely.
+The app follows a clean 3-layer pattern: React frontend communicating via Tauri IPC/events to a Rust backend, with a separate MCP sidecar process sharing the same SQLite DB via WAL mode. All new features extend this pattern — new bot skills register in `actionRegistry.ts` and dispatch to new Tauri commands; the heartbeat is a `tokio::spawn` background task following the existing `init_scheduler()` pattern; the calendar view replaces `CalendarPlaceholder.tsx` pulling from existing Zustand slices; and calendar MCP tools are new handlers in `mcp-server/src/index.ts` reading existing tables. SQLite is the single source of truth; Zustand stores are caches invalidated by Tauri events, never used as data carriers for mutations.
 
 **Major components:**
-1. `HubView` — 3-column layout container; replaces TodayView in CenterPanel routing; requires explicit `activeView` state in workspace store
-2. `GoalsTreePanel` / `GoalsTreeNode` — reads from existing `themeSlice`/`projectSlice`/`phaseSlice`; computes progress client-side; one new bulk query (`list_project_progress`) to avoid N+1
-3. `BriefingCard` — streaming markdown display; SQLite cache for instant load, background refresh on mount
-4. `HubChat` / `HubChatMessage` / `HubChatInput` — conversational interface; streams via `hub-chat-stream` Tauri events; parses action JSON from LLM responses for client-side dispatch to existing `api.*` functions
-5. `hub_commands.rs` — thin Tauri command orchestrator: generates manifest in-memory, builds prompt, streams via existing AI gateway
-6. `manifest.rs` — pure data aggregation: queries all projects/phases/tasks, formats as token-budgeted markdown (hard cap: 2000 tokens)
-7. MCP sidecar write tools (Phase 5) — separate from hub chat skills; these are for background autonomous execution, not interactive conversation
+1. `CalendarView.tsx` (new) — day/week time-grid pulling from `calendarSlice` (meetings) + `schedulingSlice` (work blocks), replaces `CalendarPlaceholder.tsx`
+2. `heartbeat.rs` (new) — `tokio::spawn` interval task for deadline risk detection, Ollama LLM summary, Tauri event emission
+3. `mcp-server/src/tools/calendar-tools.ts` (new) — `list_calendar_events`, `get_available_slots`, `create_work_block`, `move_work_block` via `better-sqlite3`
+4. `scheduling_commands.rs::generate_schedule` (modify) — wire real `calendar_events` DB query replacing empty vec at line 97
+5. `actionRegistry.ts` (modify) — add `get_todays_plan`, `set_due_date`, `block_time` skills for hub chat dispatch
 
 ### Critical Pitfalls
 
-1. **Hub chat competing with agent panel for the orchestrator** — Do not route hub chat through the file-based agent queue (2s polling latency) or spawn a second CLI process (MCP stdio is 1:1 — cannot multiplex). Use the AI gateway directly from `hub_commands.rs` with Tauri event streaming. The agent panel remains the autonomous orchestration surface; hub chat is an interactive AI gateway conversation.
-
-2. **CenterPanel routing: hub unreachable after sidebar navigation** — TodayView was a passive fallback. The hub is a primary destination. Add `activeView: "hub" | "project" | "task" | "theme" | "workflow"` to workspace store. CenterPanel checks `activeView` first. Sidebar needs a "Home" entry. Without this change, the hub disappears the moment any sidebar item is clicked.
-
-3. **Context manifest as a token bomb** — Aggregating all entities without a budget breaks LLM quality at 10+ projects. Hard cap: 2000 tokens. Use compact one-line-per-project format in the manifest index; MCP tools handle on-demand detail. Generate in-memory, never write to disk.
-
-4. **Daily briefing blocking app startup** — LLM calls take 5-15 seconds. Cache the last briefing in SQLite with a timestamp. On hub mount, show cached immediately and refresh in background. A stale briefing is always better than a loading spinner as the user's first impression every morning.
-
-5. **Agent lifecycle coupled to AgentPanel component** — `AgentPanel.tsx` currently auto-starts the agent on mount (line 12). Hub features also need the agent running. Lift `useAgentLifecycle` to AppLayout (called once at app level). Both hub and agent panel become consumers of agent state, not owners of agent lifecycle.
-
-6. **Bot skills without tool-level security** — `run_command` must enforce approval at the MCP handler level, not just via system prompt instructions (LLMs can and do ignore prompts). Require approval queue write + poll in every execution tool handler. Scope all file operations to project `directoryPath` from database — reject absolute paths outside project roots. Implement a shell command allowlist (`git`, `npm`, `cargo`, configured CLI tool).
-
-7. **Goals tree duplicating sidebar data** — The tree must read from the same Zustand slices as the sidebar (`themeSlice`, `projectSlice`, `phaseSlice`). No new `useGoalsTreeStore`. No duplicate `list_themes` or `list_projects` commands. The only new backend query needed is `list_project_progress` returning aggregate task counts per project in one SQL query.
+1. **Google OAuth 7-day token expiry in testing mode** — publish OAuth consent screen to Production status; implement `invalid_grant` detection with user-facing "reconnect" prompt; never silently lose calendar access
+2. **Outlook timezone bug already in production code** — add `Prefer: outlook.timezone="UTC"` header to all Microsoft Graph requests; remove the hardcoded `-05:` check in `calendar.rs:282-307` before calendar data is consumed by the scheduler
+3. **410 Gone sync token invalidation not handled** — on 410 response, clear stored sync token and automatically retry as full sync; this must be transparent to users
+4. **LLM cannot reliably generate schedules** — use the existing `assign_tasks_to_blocks` algorithm for scheduling; the LLM presents and narrates its output conversationally and processes user adjustment requests; never have the LLM generate a schedule from scratch
+5. **Auto-rescheduling destroys user trust** — every AI-suggested schedule change must be presented as a proposal with explicit accept/reject; never auto-apply; this pattern must be established in the daily planning skill phase before schedule negotiation is built
 
 ## Implications for Roadmap
 
-Based on the dependency graph in FEATURES.md and the pitfall-to-phase mapping in PITFALLS.md, the research supports a 5-phase build order.
+Based on research, the dependency graph is clear: calendar sync correctness is a hard prerequisite for everything; the calendar UI can be built in parallel once data flows; the daily planning skill is the headline feature that depends on both; heartbeat and schedule negotiation extend the planning loop once it works.
 
-### Phase 1: Hub Shell, Goals Tree, and CenterPanel Routing
+### Phase 1: Calendar Sync Foundation
 
-**Rationale:** Zero AI dependencies. Pure UI and data queries. All critical architectural decisions — activeView routing, agent lifecycle decoupling, goals tree wired to existing stores, 3-column layout — must be locked here before any AI features are built on top. Getting CenterPanel routing wrong is a high-recovery-cost mistake that will affect every subsequent phase.
+**Rationale:** Three pre-existing bugs prevent any calendar-aware feature from working. All downstream features depend on reliable calendar data in `calendar_events` table. The scheduling engine already supports calendar events — it just isn't connected. This phase unblocks everything.
+**Delivers:** Working Google + Outlook OAuth, events flowing into SQLite, scheduler using real meeting data, background 15-min auto-sync
+**Addresses:** Calendar sync reliability (table stakes), wired scheduler (tech debt fix)
+**Avoids:** Outlook timezone bug (Pitfall 2), Google 410 handling (Pitfall 4), OAuth 7-day expiry (Pitfall 1), empty calendar events vec (Pitfall 3)
 
-**Delivers:** Working 3-column hub as default home screen with placeholder panels. Goals tree with progress indicators, click-to-navigate, and visual status encoding. CenterPanel routing with explicit `activeView` state and Home button in sidebar. Agent lifecycle lifted to AppLayout. Calendar placeholder. `list_project_progress` bulk query to avoid N+1.
+### Phase 2: Hub Calendar View
 
-**Features addressed:** Hub 3-column layout, goals tree hierarchy, progress indicators, click-to-navigate, visual status encoding, hub as default home view, greeting with time-of-day awareness, calendar placeholder.
+**Rationale:** Users need to see their calendar before the AI can meaningfully plan against it. The right column of HubView already has a placeholder slot. This phase is high visual impact and validates that sync is working correctly by making data visible.
+**Delivers:** Day/week time-grid in hub showing meetings (external, read-only) + work blocks (internal, styled differently), date navigation
+**Uses:** `date-fns@^4.1.0` (only new dependency), existing `calendarSlice` + `schedulingSlice`
+**Implements:** `CalendarView.tsx`, `CalendarDayColumn.tsx`, `CalendarEventCard.tsx` replacing `CalendarPlaceholder.tsx`
+**Avoids:** Calendar rendering jank pitfall — virtualize events, render only visible viewport; visual distinction between meetings and work blocks
 
-**Pitfalls avoided:** CenterPanel routing (activeView state established first), duplicate goals tree state (wired to existing slices from the start), agent lifecycle coupling (lifted before hub features depend on it).
+### Phase 3: Daily Planning Skill + Due Date Curation
 
-### Phase 2: Context Manifest and AI Daily Briefing
+**Rationale:** With calendar working and visible, the AI can reason about the user's day. This is the v1.5 headline feature. Due date enforcement must ship with backlog exemption in the same phase to avoid anxiety/nag patterns documented in pitfall research.
+**Delivers:** Bot skill that presents "here's what fits today" using greedy scheduler output, conversational due date setting, backlog exemption flag
+**Uses:** Enriched context manifest (calendar events + schedule blocks + available time), new `actionRegistry.ts` skills (`get_todays_plan`, `set_due_date`, `block_time`)
+**Implements:** Daily planning bot skill, `backlog_exempt` column on tasks, due date type distinction (hard vs. target)
+**Avoids:** LLM schedule generation failure (Pitfall 5) — algorithm generates, LLM presents; due date anxiety (Pitfall 8) — backlog exemption ships in same phase
 
-**Rationale:** The manifest is the data foundation for both briefing and chat. Building it here — with token budget constraints baked in from day one — validates the full AI gateway streaming pipeline before chat adds conversation history complexity. Briefing is the simpler AI integration (no user input, no history management, no action parsing) and is the hub's headline feature.
+### Phase 4: Calendar MCP Tools
 
-**Delivers:** In-memory context manifest generation in Rust (all projects/phases/tasks, under 2000 tokens hard cap). `generate_briefing` Tauri command with streaming. `useHubStore` (briefing state, streaming listener). `BriefingCard` with markdown rendering. SQLite briefing cache (instant load, background refresh). Refresh button. Loading skeleton.
+**Rationale:** External agents (Claude Code via MCP) need calendar awareness. Building after core daily planning works ensures the data model is stable. MCP tools are read-heavy with a few controlled write operations.
+**Delivers:** `list_calendar_events`, `get_available_slots`, `create_work_block`, `move_work_block` tools registered in MCP sidecar
+**Implements:** `mcp-server/src/tools/calendar-tools.ts`, registration in `mcp-server/src/index.ts`
+**Avoids:** MCP write safety pitfall — all write operations require approval flow; only Element-managed events are modifiable, never real user meetings
 
-**Features addressed:** AI daily briefing, cross-project priority synthesis, briefing markdown rendering, briefing loading skeleton, briefing refresh, context manifest auto-generation, token-budget-aware manifest format, briefing prompt design.
+### Phase 5: Heartbeat + Schedule Negotiation
 
-**Stack used:** All 5 new npm packages go here (`react-markdown`, `remark-gfm`, `rehype-highlight`, `rehype-highlight`, `highlight.js`). Existing AI gateway + Tauri event streaming.
-
-**Pitfalls avoided:** Token-bomb manifest (budget enforced at design time), blocking briefing on startup (SQLite cache), manifest written to disk (generated in-memory).
-
-### Phase 3: Hub Chat
-
-**Rationale:** Depends on Phase 2 because it extends the same store, prompt infrastructure, and streaming pipeline. Chat adds multi-turn `CompletionRequest` extension (backward compatible via `Option<Vec<ChatMessage>>`), conversation history management, and a dedicated `hub-chat-stream` event channel distinct from existing `ai-stream-*` events.
-
-**Delivers:** `hub_chat` Tauri command (manifest + history + streaming). `ChatMessage` type added to `CompletionRequest` as an optional field (zero changes to existing `ai_assist_task`). `HubChat`, `HubChatMessage`, `HubChatInput` components. `useHubStore` extended with chat state. Quick-action suggestion chips. Typing indicator.
-
-**Features addressed:** Hub chat input with message history, streaming AI responses, markdown rendering in chat messages, quick-action suggestion chips, context-aware suggestions, message type system (user, assistant, loading, error).
-
-**Pitfalls avoided:** Hub chat vs agent panel conflict (uses AI gateway directly, not file-based queue), slow chat polling (Tauri event streaming gives sub-second delivery, not 2s polling).
-
-### Phase 4: Bot Skills — Action Dispatch from Chat
-
-**Rationale:** Depends on Phase 3 because action dispatch requires a working chat to generate and parse actions from. This phase is what distinguishes Element's hub from a generic AI dashboard — chat that can act, not just answer.
-
-**Delivers:** Action schema definition in `hub_prompts.rs`. Frontend action parser (extracts JSON code blocks from AI response text). Dispatcher maps action types to existing `api.*` Tauri calls. Confirmation UX before destructive operations (reuses `useAgentStore` approval pattern). Inline action result messages in chat. Bot write tools in MCP server: `create_task`, `update_task_status`, `create_phase`.
-
-**Features addressed:** Chat commands trigger orchestrator actions, action confirmations in chat, expanded MCP tool set, write tools for entity CRUD, skill discovery via "What can you do?" help command.
-
-**Pitfalls avoided:** Unsandboxed bot commands (tool-level approval enforcement, path validation, allowlist designed here before Phase 5 adds shell execution), prompt injection (user input always in `user` role, never concatenated into system prompt).
-
-### Phase 5: MCP Sidecar Write Tools (Background Agent Skills)
-
-**Rationale:** Semi-independent of Phases 3-4 (MCP sidecar is a separate process from the hub UI). Can be parallelized with Phases 3-4 if bandwidth allows. Addresses background autonomous agent capabilities — distinct from hub chat's interactive dispatch which is user-present. These tools run when the user is away.
-
-**Delivers:** `run_shell_command` tool (project-scoped CWD, allowlisted commands, approval-gated at handler level). `write_file` tool (project-directory-scoped only, rejects absolute paths outside project roots). Extended `create_task`/`update_task_status` for autonomous use. Full approval enforcement at MCP handler level (not just system prompt). Audit trail written to SQLite on every execution. Notification bridge extended to persist to SQLite (not just queue file).
-
-**Features addressed:** Bot skills extension (run_command, write_file, entity CRUD for background agent), bot skill discovery, background agent autonomy improvements.
-
-**Pitfalls avoided:** Unsandboxed shell execution (enforcement at handler level, not prompt level), absolute path traversal, missing audit trail, notification without SQLite persistence.
+**Rationale:** Background monitoring is a differentiator but meaningless without due dates populated and calendar events flowing. This phase adds proactive deadline risk detection and closes the conversational loop by letting users negotiate schedule changes. The suggest-never-auto-apply pattern must be locked from day 1.
+**Delivers:** Periodic background deadline risk detection, Ollama LLM summarization with CLI fallback, heartbeat alerts via Tauri events, conversational schedule negotiation ("move X to tomorrow"), undo support for accepted AI suggestions
+**Implements:** `heartbeat.rs`, `heartbeat_commands.rs`, `useHeartbeat.ts`, `012_heartbeat.sql` migration, schedule negotiation skills in action registry
+**Avoids:** Heartbeat resource drain (Pitfall 6) — system load gating, 30-min default interval, 1-3B model size cap, graceful Ollama degradation; auto-rescheduling trust loss (Pitfall 7) — suggest-only UI pattern
 
 ### Phase Ordering Rationale
 
-- **Phase 1 has zero AI dependencies.** All routing, layout, and store architecture decisions are locked before AI features are built on top. This is non-negotiable — CenterPanel routing and agent lifecycle are foundational to every subsequent phase.
-- **Manifest before briefing, briefing before chat.** Each phase extends the previous one's infrastructure. Building chat before briefing means constructing two streaming pipelines simultaneously with no proven foundation.
-- **Action dispatch (Phase 4) after chat (Phase 3).** You cannot build an action parser before you have a working chat generating text from.
-- **MCP sidecar tools (Phase 5) are architecturally separate.** They extend a separate Node.js process, not the hub UI. They can be built in parallel with Phases 3-4 if desired. Placing them last ensures security constraints from Phase 4 are already designed before shell execution capability is added.
-- **This ordering matches the architecture's confirmed dependency graph** — see ARCHITECTURE.md "Suggested Build Order" section for the codebase-derived rationale.
+- Phase 1 before all others: three pre-existing bugs block every downstream feature; no calendar feature can be tested without them fixed
+- Phase 2 before Phase 3: users need to see their calendar to validate daily planning output; also provides immediate visual feedback that Phase 1 work is correct
+- Phase 3 before Phase 5: heartbeat is meaningless without due dates populated and daily planning established as a habit loop
+- Phase 4 after Phase 3: MCP tool data model should be stable before exposing to external agents; calendar schema won't change after Phase 3
+- Phase 5 last: heartbeat and negotiation are enhancements to a working core, not prerequisites
 
 ### Research Flags
 
-Phases likely needing `/gsd:research-phase` during planning:
+Phases likely needing deeper research during planning:
+- **Phase 1:** Google OAuth production verification flow, Microsoft Graph delta link expiration handling, pagination for `nextPageToken` — these are API-specific edge cases with limited documentation
+- **Phase 5:** Ollama model selection and system load gating APIs on macOS — Tauri system metrics access is not well-documented
 
-- **Phase 4 (Bot Skills — Action Dispatch):** Prompt engineering for reliable function-calling / action JSON extraction is non-trivial. LLM must produce structured JSON blocks alongside conversational prose. Provider-specific behavior varies — Anthropic supports native tool use, Ollama may not. Research the exact schema format and parsing approach (JSON.parse with error recovery vs regex extraction vs structured output mode) before implementation.
-- **Phase 5 (MCP Write Tools):** `better-sqlite3` write connection patterns need validation when a WAL-mode read-only connection from the main app process is already open. Need to confirm whether a second write-capable connection is safe or if writes must go through the Tauri command layer.
-
-Phases with standard patterns (skip research):
-
-- **Phase 1 (Hub Shell):** Pure React layout + Zustand store wiring. All patterns are established across 13+ existing slices and CenterPanel routing. No research needed.
-- **Phase 2 (Briefing):** Streaming from AI gateway is proven in `ai_assist_task`. react-markdown integration is well-documented. SQLite caching follows existing patterns. No research needed.
-- **Phase 3 (Chat):** Extends Phase 2's infrastructure. Multi-turn `CompletionRequest` extension is a minimal backward-compatible Rust change. Tauri event streaming is proven. No research needed.
+Phases with standard patterns (skip research-phase):
+- **Phase 2:** Custom Tailwind time-grid is a well-documented pattern; absolute positioning by time offset is straightforward
+- **Phase 3:** Action registry pattern is established and well-tested in the codebase; no new integration patterns needed
+- **Phase 4:** MCP tool registration follows existing `write-tools.ts` pattern exactly
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All recommendations verified against actual `package.json` and `Cargo.toml`. Only 5 new packages, all with confirmed React 19 and unified v11 compatibility. Explicit version pinning rationale documented. |
-| Features | MEDIUM-HIGH | Hub UI and briefing patterns are well-established (shadcn AI, prompt-kit, Vercel AI SDK cookbook). Chat-to-orchestrator routing and action dispatch are emerging patterns but have clear precedents. Feature list grounded in competitor analysis (Notion AI, Linear, Todoist AI, Motion). |
-| Architecture | HIGH | Based on direct codebase analysis of all affected files. Data flows are concrete and specific (e.g., 2s polling interval cited at line 306 of `useAgentQueue.ts`, TodayView fallback at line 112 of `CenterPanel.tsx`). Anti-patterns identified from actual code paths, not generic advice. |
-| Pitfalls | HIGH | All 8 pitfalls derived from codebase analysis, not generic web patterns. Each maps to a specific file and line. Recovery costs are realistic. Phase-to-pitfall mapping is explicit. |
+| Stack | HIGH | Based on direct codebase inspection + official docs; only one new npm dependency |
+| Features | HIGH | Competitor analysis + codebase confirmation that data models already support features |
+| Architecture | HIGH | Based on direct codebase analysis; integration patterns verified against existing code |
+| Pitfalls | HIGH | Pre-existing bugs confirmed in specific file:line references; API behavior verified against official docs |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Action JSON parsing robustness (Phase 4):** The exact schema and parsing strategy for extracting LLM action blocks needs validation against actual provider behavior before implementation. Anthropic supports native tool use via structured output; Ollama may return freeform JSON. The parsing approach (regex vs `JSON.parse` with error recovery vs native tool-use API) should be decided during Phase 4 planning.
-- **Bulk phase progress query (Phase 1):** `list_project_progress` returning aggregate task counts per project in one SQL query is described architecturally but not yet designed at the SQL level. Validate that the existing SQLite schema (tasks table `updated_at`, phases table foreign keys) supports efficient `GROUP BY` before Phase 1 implementation begins.
-- **Briefing cache invalidation threshold (Phase 2):** Research recommends once-per-day with manual refresh. The exact staleness threshold (1 hour? 24 hours? triggered by `updated_at` change detection?) should be decided during Phase 2 planning. Too aggressive = unnecessary LLM API costs; too conservative = stale briefings frustrate users after completing significant work.
-- **Chat message persistence schema (Phase 3):** Research recommends in-memory for v1.4 with SQLite persistence as a v1.4.x follow-up. The schema for persistent chat messages should be designed in Phase 3 even if not implemented, to avoid a migration later when cross-session memory is added.
+- **Google OAuth production mode verification:** Research confirms the 7-day testing-mode expiry, but the exact Google verification process for `calendar.readonly` scope (sensitive scope review timeline) is unclear. May affect Phase 1 timeline if Google's review takes weeks. Mitigation: implement `invalid_grant` recovery regardless, so testing-mode builds recover gracefully while awaiting production approval.
+- **Ollama system availability detection on macOS:** Research recommends checking CPU load before heartbeat LLM calls, but the Tauri API for system metrics (`sysinfo` crate availability, Process priority APIs) was not fully verified. Phase 5 planning should confirm the right Rust approach before implementation.
+- **`@modelcontextprotocol/sdk` v2 timeline:** Research notes v2 was anticipated Q1 2026 but v1.x is still current as of April 2026. If v2 ships during development, MCP sidecar may need updates. Low risk since v1.x will receive security fixes for 6+ months post-v2.
+- **Calendar event pagination:** The research flags that current `sync_google_calendar` does not paginate (`nextPageToken`). This only affects users with 300+ events in a 30-day window and is not a Phase 1 blocker, but should be addressed before shipping to general users.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-- Codebase: `src-tauri/src/ai/` — `provider.rs` trait with `complete_stream`, `gateway.rs` with provider routing, `types.rs` `CompletionRequest` struct (direct analysis)
-- Codebase: `src/stores/` — 13-slice AppStore composition, standalone stores (`useAgentStore`, `useTerminalSessionStore`)
-- Codebase: `src/hooks/useAgentQueue.ts` — 2s polling at line 306, queue directory structure
-- Codebase: `src/components/layout/CenterPanel.tsx` — TodayView fallback routing at line 112
-- Codebase: `src/components/agent/AgentPanel.tsx` — auto-start on mount at line 12
-- Codebase: `mcp-server/src/tools/` — established tool handler pattern with `better-sqlite3`
-- Codebase: `src-tauri/src/models/onboarding.rs` — token-budgeted context generation precedent (`SOFT_TOKEN_BUDGET`, `classify_phase`, `format_phase_rollup`)
-- [react-markdown npm](https://www.npmjs.com/package/react-markdown) — v10.1.0, React 19 compat confirmed
-- [react-markdown GitHub](https://github.com/remarkjs/react-markdown) — plugin ecosystem, unified v11 requirement
-- [rehype-highlight GitHub](https://github.com/rehypejs/rehype-highlight) — highlight.js integration
-- [Tauri v2 Calling Rust](https://v2.tauri.app/develop/calling-rust/) — event streaming pattern
+- Element codebase direct analysis — `scheduling_commands.rs`, `calendar.rs`, `time_blocks.rs`, `assignment.rs`, `actionRegistry.ts`, `mcp-server/src/index.ts`
+- [Google Calendar API Sync Guide](https://developers.google.com/workspace/calendar/api/guides/sync) — incremental sync and 410 handling
+- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2) — token lifecycle
+- [Microsoft Graph Throttling Limits](https://learn.microsoft.com/en-us/graph/throttling-limits) — rate limits
+- [Ollama API docs](https://github.com/ollama/ollama/blob/main/docs/api.md) — endpoint format
+- [tokio::time::interval docs](https://docs.rs/tokio/latest/tokio/time/fn.interval.html) — periodic timer pattern
+- [@modelcontextprotocol/sdk npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) — v1.29.0 current
 
 ### Secondary (MEDIUM confidence)
-
-- [shadcn/ui AI Components](https://www.shadcn.io/ai) — chat bubble and markdown rendering patterns
-- [Vercel AI SDK Markdown Chatbot Cookbook](https://ai-sdk.dev/cookbook/next/markdown-chatbot-with-memoization) — memoization for streaming markdown (pattern applicable even without the SDK)
-- [AI Agent Orchestration Patterns (Azure)](https://learn.microsoft.com/en-us/azure/architecture/ai-ml/guide/ai-agent-design-patterns) — orchestrator/worker separation rationale
-- [Deep Dive into Context Engineering for Agents](https://galileo.ai/blog/context-engineering-for-agents) — context manifest token budget best practices
-- [Shadcn Tree View](https://www.shadcn.io/template/mrlightful-shadcn-tree-view) — tree component pattern with Tailwind
-- [Microsoft Bot Framework Skills](https://microsoft.github.io/botframework-solutions/overview/skills/) — skill abstraction and discovery pattern
+- [LLMs Can't Optimize Schedules (Timefold)](https://timefold.ai/blog/llms-cant-optimize-schedules-but-ai-can) — architectural decision to use deterministic scheduler
+- [Morgen AI Planning Assistants Review](https://www.morgen.so/blog-posts/best-ai-planning-assistants) — competitor feature analysis
+- [Motion](https://www.usemotion.com/), [Reclaim.ai](https://reclaim.ai/), [Trevor AI](https://www.trevorai.com/) — competitor UX patterns
+- [Google OAuth Testing Mode Token Expiry](https://nango.dev/blog/google-oauth-invalid-grant-token-has-been-expired-or-revoked) — 7-day expiry confirmation
 
 ### Tertiary (LOW confidence)
-
-- [Context Management for Agentic AI](https://medium.com/@hungry.soul/context-management-a-practical-guide-for-agentic-ai-74562a33b2a5) — context aggregation strategies (blog post, validate during implementation)
-- [Claude Workflow Patterns](https://claude.com/blog/common-workflow-patterns-for-ai-agents-and-when-to-use-them) — agent workflow patterns (high-level, not Tauri-specific)
+- [Microsoft Graph All-Day Events Timezone Issue](https://learn.microsoft.com/en-us/answers/questions/5760696/microsoft-graph-all-day-events-return-incorrect-ut) — organizer timezone gap, needs validation during Phase 1
 
 ---
-*Research completed: 2026-03-31*
+*Research completed: 2026-04-02*
 *Ready for roadmap: yes*

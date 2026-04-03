@@ -1,559 +1,479 @@
 # Architecture Research
 
-**Domain:** Daily Hub integration into existing Tauri 2.x + React 19 desktop app
-**Researched:** 2026-03-31
-**Confidence:** HIGH
+**Domain:** Time-bounded scheduling features for existing Tauri 2.x desktop app
+**Researched:** 2026-04-02
+**Confidence:** HIGH (based on direct codebase analysis of existing architecture)
 
 ## System Overview
 
-### Current Architecture (post-v1.3)
-
 ```
-+------------------------------------------------------------------+
-|                        React 19 Frontend                          |
-+------------------------------------------------------------------+
-|  Sidebar        CenterPanel            OutputDrawer   AgentPanel  |
-|  (themes,       (TodayView |           (terminal      (activity,  |
-|   projects,      ProjectDetail |        sessions,      approvals, |
-|   tasks)         TaskDetail |           logs,           terminal)  |
-|                  FileExplorer |         workflows)                 |
-|                  ThemeDetail)                                      |
-+------------------------------------------------------------------+
-|  Zustand Stores (AppStore + standalone stores)                    |
-|  - useStore (13 slices)    - useAgentStore                        |
-|  - useWorkspaceStore       - useTerminalSessionStore              |
-|  - useWorkflowStore        - useTaskStore                         |
-+------------------------------------------------------------------+
-|                    Tauri IPC Layer (~50+ commands)                 |
-+------------------------------------------------------------------+
-|                        Rust Backend                               |
-|  commands/  models/  ai/  engine/  scheduling/  plugins/  db/     |
-|  (CRUD,     (SQLite  (gateway,    (workflow    (scheduler) (plugin |
-|   context,   models)  providers,   executor)               host)  |
-|   planning)           prompts)                                    |
-+------------------------------------------------------------------+
-|  SQLite (WAL)    OS Keychain    File Watchers    Cron Scheduler   |
-+------------------------------------------------------------------+
-
-         +-- File-based Queue (agent-queue/) --+
-         |  approvals/ notifications/ status/   |
-         +--------------------------------------+
-                        |
-         +-- MCP Server Sidecar (separate binary) --+
-         |  stdio transport, reads element.db (RO)   |
-         |  10 tools: 5 read + 5 orchestration       |
-         +-------------------------------------------+
-```
-
-### Target Architecture (with Daily Hub)
-
-```
-+------------------------------------------------------------------+
-|                        React 19 Frontend                          |
-+------------------------------------------------------------------+
-|  Sidebar        CenterPanel            OutputDrawer   AgentPanel  |
-|  (themes,       (HubView |             (terminal      (activity,  |
-|   projects,      ProjectDetail |        sessions,      approvals, |
-|   tasks)         TaskDetail | ...)      logs)          terminal)  |
-+------------------------------------------------------------------+
-|  HubView (NEW - replaces TodayView as default home screen)       |
-|  +-------------------+---------------------------+----------+     |
-|  | GoalsTreePanel    | HubMainPanel              | Calendar |     |
-|  | (themes/projects  | +-- BriefingCard ------+  | (place-  |     |
-|  |  as tree with     | | AI-generated summary |  |  holder) |     |
-|  |  progress bars)   | +----------------------+  |          |     |
-|  |                   | +-- HubChat -----------+  |          |     |
-|  |                   | | Conversational input  |  |          |     |
-|  |                   | | to orchestrator       |  |          |     |
-|  |                   | +----------------------+  |          |     |
-|  +-------------------+---------------------------+----------+     |
-+------------------------------------------------------------------+
-|  Zustand Stores                                                   |
-|  + useHubStore (NEW)  - briefing, chat messages, loading states   |
-+------------------------------------------------------------------+
-|  Tauri IPC Layer (+ new hub commands)                             |
-|  + generate_briefing, hub_chat, generate_manifest                 |
-+------------------------------------------------------------------+
-|  Rust Backend                                                     |
-|  + commands/hub_commands.rs (NEW)                                 |
-|  + models/manifest.rs (NEW - central context manifest)            |
-|  + ai/hub_prompts.rs (NEW - briefing + chat system prompts)      |
-+------------------------------------------------------------------+
-|  MCP Sidecar (MODIFIED - add write tools for bot skills)          |
-|  + create_task, update_status, run_command, write_file tools      |
-+------------------------------------------------------------------+
++-----------------------------------------------------------------------+
+|                          React 19 Frontend                             |
+|  +-------------+  +-----------------+  +----------------------------+  |
+|  | GoalsTree   |  | HubCenterPanel  |  | CalendarView (NEW)         |  |
+|  | Panel       |  | Briefing + Chat |  | replaces CalendarPlaceholder|  |
+|  +------+------+  +--------+--------+  +-------------+--------------+  |
+|         |                  |                          |                 |
+|  +------+------------------+-------+------------------+--------------+ |
+|  |  Zustand Store (calendarSlice, schedulingSlice, briefingStore)    | |
+|  +------+------------------+-------+------------------+--------------+ |
+|         |                  |                          |                 |
++---------+------------------+------ -------------------+-----------------+
+          |                  |                          |
+          | Tauri IPC        | Tauri Events             | Tauri IPC
+          |                  |                          |
++---------+------------------+-------------- -----------+-----------------+
+|                         Rust Backend (Tauri 2.x)                        |
+|  +------------------+  +------------------+  +----------------------+   |
+|  | calendar_commands|  | scheduling_cmds  |  | manifest_commands    |   |
+|  | (OAuth, sync)    |  | (generate, apply)|  | (briefing, context)  |   |
+|  +--------+---------+  +--------+---------+  +-----------+----------+   |
+|           |                     |                        |              |
+|  +--------+---------+  +-------+--------+  +-------------+----------+  |
+|  | plugins/calendar |  | scheduling/    |  | ai/gateway             |  |
+|  | (Google/Outlook   |  | time_blocks   |  | (provider dispatch)    |  |
+|  |  API calls)       |  | assignment    |  +------------------------+  |
+|  +--------+---------+  | types         |                               |
+|           |            +-------+--------+                               |
+|           |                    |                                        |
+|  +--------+--------------------+--------------------------------------+ |
+|  |                    SQLite (rusqlite)                                | |
+|  |  calendar_accounts | calendar_events | scheduled_blocks            | |
+|  |  work_hours        | tasks (due_date, estimated_minutes)           | |
+|  +--------------------------------------------------------------------+ |
++-------------------------------------------------------------------------+
+          |
+          | stdio (separate process)
+          |
++---------+----------------------------+
+|        MCP Server Sidecar            |
+|  better-sqlite3 reads element.db     |
+|  project-tools | task-tools          |
+|  phase-tools   | write-tools         |
+|  orchestration-tools                 |
+|  + calendar-tools (NEW)              |
++--------------------------------------+
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | New vs Modified |
-|-----------|----------------|-----------------|
-| HubView | 3-column layout container, replaces TodayView as default | NEW |
-| GoalsTreePanel | Renders themes/projects/tasks as collapsible tree with progress | NEW |
-| GoalsTreeNode | Recursive tree node with progress bar and status icon | NEW |
-| HubMainPanel | Contains BriefingCard and HubChat vertically stacked | NEW |
-| BriefingCard | Displays AI-generated daily summary with refresh button | NEW |
-| HubChat | Message list + input bar, sends to orchestrator via AI gateway | NEW |
-| HubChatMessage | Individual message bubble (user/assistant) with markdown | NEW |
-| HubChatInput | Text input with send button and loading indicator | NEW |
-| CalendarPlaceholder | Static placeholder for future calendar integration | NEW |
-| useHubStore | Briefing content, chat history, streaming state, loading/error | NEW |
-| hub_commands.rs | Tauri commands: generate_briefing, hub_chat, generate_manifest | NEW |
-| manifest.rs | Cross-project context manifest generation from SQLite | NEW |
-| hub_prompts.rs | System prompts for briefing generation and chat conversation | NEW |
-| CenterPanel.tsx | Route to HubView instead of TodayView when nothing selected | MODIFIED (1 line) |
-| lib.rs | Register 3 new hub commands in invoke_handler | MODIFIED (3 lines) |
-| commands/mod.rs | Add `pub mod hub_commands;` | MODIFIED (1 line) |
-| models/mod.rs | Add `pub mod manifest;` | MODIFIED (1 line) |
-| ai/mod.rs | Add `pub mod hub_prompts;` | MODIFIED (1 line) |
-| MCP sidecar | Add write/command/file tools for bot skills | MODIFIED (separate phase) |
+| Component | Responsibility | Current State |
+|-----------|----------------|---------------|
+| `calendar_commands.rs` | OAuth flows, sync orchestration, event queries | Exists, full OAuth + sync implemented |
+| `plugins/core/calendar.rs` | Google/Outlook API calls, token refresh, event parsing | Exists, ~600 lines, provider-specific logic |
+| `scheduling/time_blocks.rs` | Gap-finding: work hours - occupied = open blocks | Exists, well-tested, accepts `CalendarEvent[]` |
+| `scheduling/assignment.rs` | Greedy task-to-block allocation by score | Exists, well-tested, score = priority + due_date urgency |
+| `scheduling_commands.rs` | IPC: `generate_schedule`, `apply_schedule`, `get_work_hours` | Exists, **but line 97 passes empty `calendar_events` vec** |
+| `manifest_commands.rs` | Context manifest + AI briefing via streaming events | Exists, used by daily briefing |
+| `calendarSlice.ts` | Frontend calendar state (accounts, events, sync) | Exists, full CRUD |
+| `schedulingSlice.ts` | Frontend schedule state (generate, apply, work hours) | Exists |
+| `actionRegistry.ts` | Bot skill definitions for hub chat tool_use | Exists, 10 skills registered |
+| `CalendarPlaceholder.tsx` | Empty "Coming Soon" placeholder in hub right column | Exists, needs replacement |
+| `MCP server` | External tool access to element.db for AI agents | Exists, 17 tools, no calendar tools yet |
+| **Heartbeat (NEW)** | Periodic background deadline check | Does not exist |
+| **Daily planning skill (NEW)** | AI-driven "what should we work on?" conversation | Does not exist |
+| **Calendar MCP tools (NEW)** | Bot reads/writes meetings and work blocks via MCP | Does not exist |
+| **CalendarView (NEW)** | Real day/week view replacing placeholder | Does not exist |
 
-## Recommended Project Structure
+## New Components vs Modified Components
 
-### New Files
+### New Components to Build
 
-```
-src/
-  components/
-    hub/                        # NEW directory
-      HubView.tsx               # 3-column layout container
-      GoalsTreePanel.tsx        # Left column: theme/project tree
-      GoalsTreeNode.tsx         # Recursive tree node component
-      HubMainPanel.tsx          # Center column: briefing + chat
-      BriefingCard.tsx          # AI briefing display with streaming
-      HubChat.tsx               # Chat interface container
-      HubChatMessage.tsx        # Individual message bubble
-      HubChatInput.tsx          # Input bar with send button
-      CalendarPlaceholder.tsx   # Right column placeholder
-  stores/
-    useHubStore.ts              # NEW standalone Zustand store
-  types/
-    hub.ts                      # NEW type definitions
+| Component | Layer | Purpose | Depends On |
+|-----------|-------|---------|------------|
+| `CalendarView.tsx` | Frontend | Day/week calendar showing meetings + work blocks | calendarSlice, schedulingSlice, working calendar sync |
+| `CalendarDayColumn.tsx` | Frontend | Single-day time column with event/block rendering | CalendarView |
+| `CalendarEventCard.tsx` | Frontend | Individual event/block visual representation | CalendarDayColumn |
+| `heartbeat.rs` | Rust backend | Periodic tokio timer that checks deadlines, calls LLM | ai/gateway, scheduling, manifest |
+| `heartbeat_commands.rs` | Rust backend | IPC to start/stop/configure heartbeat | heartbeat.rs |
+| `useHeartbeat.ts` | Frontend hook | Listen for heartbeat Tauri events, surface alerts | Tauri event listener |
+| `mcp-server/src/tools/calendar-tools.ts` | MCP sidecar | `list_calendar_events`, `create_work_block`, `move_work_block`, `get_available_slots` | element.db calendar_events + scheduled_blocks tables |
+| Daily planning skill entries | actionRegistry.ts | `get_todays_plan`, `suggest_schedule`, `set_due_date` | scheduling_commands, calendar data |
 
-src-tauri/
-  src/
-    commands/
-      hub_commands.rs           # NEW command module
-    models/
-      manifest.rs               # NEW manifest generation model
-    ai/
-      hub_prompts.rs            # NEW prompt templates
-```
+### Existing Components to Modify
 
-### Modified Files
-
-```
-src/
-  components/
-    layout/
-      CenterPanel.tsx           # MODIFY: import HubView, replace TodayView in default case
-
-src-tauri/
-  src/
-    lib.rs                      # MODIFY: register hub commands
-    commands/
-      mod.rs                    # MODIFY: pub mod hub_commands;
-    models/
-      mod.rs                    # MODIFY: pub mod manifest;
-    ai/
-      mod.rs                    # MODIFY: pub mod hub_prompts;
-```
-
-### Structure Rationale
-
-- **`src/components/hub/`:** Isolated from `center/` because the Hub is a distinct feature with its own 3-column layout paradigm. Existing center components (ProjectDetail, TaskDetail, FileExplorer) remain untouched. The Hub only appears when no entity is selected.
-- **`useHubStore` as standalone:** Follows the established pattern of `useAgentStore` and `useTerminalSessionStore` -- feature-specific stores that have no cross-slice dependencies with the main AppStore. Hub state (briefing markdown, chat messages, streaming flags) is self-contained.
-- **`hub_commands.rs` as single module:** All hub Tauri commands in one file. Commands are thin orchestrators: they gather data from `models/manifest.rs`, build prompts via `ai/hub_prompts.rs`, call the AI gateway, and stream results via Tauri events.
+| Component | Change | Why |
+|-----------|--------|-----|
+| `scheduling_commands.rs::generate_schedule` | Wire real `calendar_events` from DB instead of empty vec (line 94-97) | **Critical**: scheduling engine already supports calendar events but was never connected |
+| `manifest_commands.rs::generate_briefing` | Include today's calendar events + schedule blocks in context manifest | Daily planning needs the AI to see the user's day |
+| `models/manifest.rs::build_manifest_string` | Add calendar events section and scheduled blocks to manifest output | Feed calendar awareness into briefing |
+| `actionRegistry.ts` | Add scheduling/calendar skills: `get_todays_plan`, `suggest_schedule`, `set_due_date`, `block_time` | Bot needs to manipulate schedule via chat |
+| `HubChat.tsx` | No structural change needed -- ACTION dispatch already handles arbitrary skills | Just register new skills in action registry |
+| `CalendarPlaceholder.tsx` | Replace entirely with `CalendarView` | Placeholder was always temporary |
+| `HubView.tsx` | Swap `CalendarPlaceholder` import to `CalendarView` | One-line change |
+| `calendarSlice.ts` | Add `selectedDate`, `viewMode` (day/week), auto-refresh on sync events | Calendar view needs date navigation state |
+| `schedulingSlice.ts` | Expose `getScheduledBlocksForDate` query, listen for schedule-applied events | Calendar view needs to show work blocks alongside meetings |
+| `mcp-server/src/index.ts` | Register new calendar tools in ListTools + CallTool dispatch | MCP agents need calendar access |
+| `tasks` table | Ensure `due_date` column is used consistently (exists since migration 003) | Due date enforcement requires populated due_dates |
+| `lib.rs` | Register heartbeat commands, start heartbeat on app launch | Heartbeat lifecycle management |
 
 ## Architectural Patterns
 
-### Pattern 1: Direct AI Gateway for Hub Chat (not MCP sidecar)
+### Pattern 1: Tauri Event-Driven Streaming (Existing)
 
-**What:** Hub chat sends messages through the existing Rust AI gateway (`ai/gateway.rs` + AiProvider trait with `complete_stream`), not through the MCP sidecar's file-based queue.
+**What:** Backend emits named events (`briefing-chunk`, `calendar-synced`, `schedule-applied`), frontend subscribes via `listen()`.
+**When to use:** For all heartbeat notifications, schedule updates, sync progress -- any async backend-to-frontend communication.
+**Trade-offs:** Simple and decoupled, but no built-in back-pressure or error retry.
 
-**When to use:** For the Hub briefing and chat -- any interactive, user-initiated AI conversation.
-
-**Why not MCP sidecar:** The MCP sidecar communicates via file-based queue with 2-second polling intervals (`useAgentQueue.ts` line 307: `setInterval(pollQueue, 2000)`). Chat needs sub-second responsiveness. The sidecar is designed for autonomous background operations (auto-execute phases, approval workflows), not interactive conversation.
-
-Using the AI gateway means:
-- Streaming tokens via Tauri events (same pattern as `ai_assist_task` in `ai_commands.rs`)
-- User's configured default provider is used directly
-- No approval flow needed -- the user is already present and driving the conversation
-- No file I/O overhead from the queue system
-
-**Trade-offs:** Bot skills that modify app state (create tasks, update phases) execute via existing Tauri commands dispatched from the frontend, not via MCP tool calls. This is simpler and reuses tested code paths, but means skill dispatch logic lives in the frontend action parser rather than in the sidecar.
-
-**Example:**
+**Example (heartbeat will follow this pattern):**
 ```rust
-// hub_commands.rs
-#[tauri::command]
-pub async fn hub_chat(
-    message: String,
-    history: Vec<ChatMessage>,
-    db_state: State<'_, Arc<Mutex<Database>>>,
-    gateway: State<'_, AiGateway>,
-    app: AppHandle,
-) -> Result<String, String> {
-    // 1. Build context manifest from all projects
-    let manifest = {
-        let db = db_state.lock().map_err(|e| e.to_string())?;
-        manifest::generate_manifest(&db)?
-    };
-
-    // 2. Build prompt with manifest + conversation history
-    let request = hub_prompts::build_chat_request(&manifest, &message, &history);
-
-    // 3. Get default provider, stream response
-    let config = {
-        let db = db_state.lock().map_err(|e| e.to_string())?;
-        gateway.get_default_config(&db)?
-    };
-    let provider = gateway.build_provider(&config)?;
-
-    let (tx, mut rx) = tokio::sync::mpsc::channel(32);
-    tokio::spawn(async move {
-        let _ = provider.complete_stream(request, tx).await;
-    });
-
-    let mut full_response = String::new();
-    while let Some(chunk) = rx.recv().await {
-        full_response.push_str(&chunk);
-        let _ = app.emit("hub-chat-stream", &chunk);
-    }
-
-    Ok(full_response)
-}
+// Rust: emit heartbeat alert
+app.emit("heartbeat-alert", HeartbeatAlert {
+    alert_type: "deadline_risk",
+    message: "Task X is due tomorrow with 4h estimated, only 2h available",
+    affected_task_ids: vec!["task-123"],
+    suggested_action: "Reschedule or reduce scope",
+}).ok();
+```
+```typescript
+// Frontend: listen for heartbeat alerts
+listen<HeartbeatAlert>("heartbeat-alert", (e) => {
+  addNotification(e.payload);
+});
 ```
 
-### Pattern 2: Central Context Manifest (in-memory, not file-based)
+### Pattern 2: Bot Skill via Action Registry (Existing)
 
-**What:** A function that queries all projects, phases, and tasks from SQLite and produces a markdown string summarizing workspace state. Generated on-demand for each AI call, not written to disk.
+**What:** New bot capabilities are added by registering an `ActionDefinition` in `actionRegistry.ts` with a `tauriCommand` mapping. The hub chat LLM sees the tool definition and emits `ACTION:{"name":"...", "input":{...}}` blocks that get dispatched to Tauri IPC.
+**When to use:** For all new scheduling/calendar skills the bot needs.
+**Trade-offs:** Zero changes to HubChat.tsx for new skills. LLM quality depends on good tool descriptions.
 
-**When to use:** For briefing generation and hub chat where the AI needs cross-project awareness.
-
-**Why in-memory, not a file:** The existing per-project context (`generate_context_file` in `onboarding_commands.rs`) writes `.element/context.md` to disk because external CLI tools (claude) read it. The hub manifest is consumed entirely within the Rust process by the AI gateway -- no external reader needs it. Benefits:
-- No staleness (generated fresh each call)
-- No file watchers needed
-- No disk I/O
-- Token budget applied dynamically based on project count
-
-**Reuses existing patterns:** The manifest builder follows the same token-budgeted rollup approach from `onboarding.rs` (`SOFT_TOKEN_BUDGET`, `classify_phase`, `format_phase_rollup`), but operates across all projects instead of one.
-
-**Example manifest output:**
-```markdown
-# Workspace Status
-Generated: 2026-03-31T08:00:00Z
-
-## Active Projects (3)
-
-### Element (In Progress, 87%)
-- Phase 22: Hub UI [0/3] <-- CURRENT
-- Phase 23: AI Briefing [0/2]
-- 14 phases complete, 2 remaining
-
-### Side Hustle (Planned, 0%)
-- Phase 1: Research [0/5] <-- CURRENT
-
-### Home Reno (Blocked)
-- Phase 3: Electrical [1/4, 1 BLOCKED]
-- Blocker: "Waiting for permit approval"
-
-## Today's Tasks (5)
-- [~] Fix hub layout -- Element
-- [ ] Research vendors -- Side Hustle
-- [ ] Call electrician -- Home Reno
-- [ ] Review PR -- Element
-- [ ] Update budget -- Home Reno
-
-## Attention Items
-- Home Reno: 1 blocked task requiring human action
-- Side Hustle: 0% progress, created 3 days ago
+**New skills to register:**
+```typescript
+{
+  name: "get_todays_plan",
+  description: "Get the user's schedule for today including meetings and work blocks",
+  tauriCommand: "get_todays_plan",
+  destructive: false,
+},
+{
+  name: "set_due_date",
+  description: "Set or update the due date for a task",
+  tauriCommand: "set_task_due_date",
+  destructive: false,
+},
+{
+  name: "block_time",
+  description: "Create a work block for a task at a specific time slot",
+  tauriCommand: "create_work_block",
+  destructive: false,
+},
 ```
 
-### Pattern 3: Bot Skills via LLM Function Calling + Frontend Dispatch
+### Pattern 3: MCP Tool Registration (Existing)
 
-**What:** The hub chat system prompt defines available actions as a structured schema. When the LLM determines the user wants to take an action, it returns JSON action blocks alongside conversational text. The frontend parses these and dispatches them to existing Tauri commands.
-
-**When to use:** For hub chat actions that modify app state (create task, update status, mark complete).
-
-**Why this approach:**
-1. All entity CRUD already exists as ~50+ Tauri commands
-2. The AI gateway can request structured output (JSON blocks in response)
-3. No new backend execution layer needed
-4. Frontend already has `api.*` wrappers in `src/lib/tauri.ts` for every command
-5. Zustand stores handle optimistic updates on the existing action calls
-
-**Trade-offs:** Requires careful prompt engineering for reliable action JSON. The LLM must output both conversational text and structured actions. This is a well-understood pattern (function calling / tool use) supported by all major providers.
-
-**Example flow:**
-```
-User: "Create a task to review the API docs in Element"
-    |
-    v
-hub_chat system prompt includes:
-  "Available actions: create_task({ title, projectId?, description? }), ..."
-    |
-    v
-LLM Response:
-  "I'll create that task for you.\n\n```json\n{\"action\": \"create_task\", ...}\n```"
-    |
-    v
-Frontend parses response, extracts action JSON
-    |
-    v
-api.createTask({ title: "Review API docs", projectId: "element-id" })
-    |
-    v
-Zustand store refreshes, HubChat shows confirmation
-```
+**What:** The MCP sidecar exposes tools via `ListToolsRequestSchema` + `CallToolRequestSchema` handlers. It reads/writes element.db directly via better-sqlite3 (separate process from Tauri). Changes trigger file-based events that the Tauri watcher picks up.
+**When to use:** For calendar MCP tools that external AI agents (Claude Code, etc.) need.
+**Important:** MCP server has its own DB connection -- it writes directly to SQLite. The Tauri backend picks up changes via its file watcher polling. Calendar tools follow the same pattern as existing write-tools.
 
 ## Data Flow
 
-### Briefing Generation Flow
+### Calendar Sync Flow (Existing, needs fixing)
 
 ```
-App Launch / User clicks "Refresh Briefing"
+User triggers "sync" (or background timer)
     |
     v
-useHubStore.generateBriefing()
-    |-- Set briefingLoading = true
-    |-- Clear previous briefing content
+sync_calendar() / sync_all_calendars()  [calendar_commands.rs]
     |
     v
-Tauri invoke("generate_briefing")
+refresh_{google|outlook}_token()  [plugins/core/calendar.rs]
     |
     v
-Rust hub_commands::generate_briefing
-    |-- db.lock() -> query all projects, phases, tasks
-    |-- manifest::generate_manifest(&db) -> markdown string
-    |-- hub_prompts::build_briefing_request(&manifest) -> CompletionRequest
-    |-- gateway.get_default_config(&db) -> provider config
-    |-- provider.complete_stream(request, tx) -> spawn streaming task
-    |-- while rx.recv(): app.emit("hub-briefing-stream", chunk)
+sync_{google|outlook}_calendar()  [plugins/core/calendar.rs]
     |
     v
-Frontend: listen("hub-briefing-stream")
-    |-- Append chunk to useHubStore.briefingContent
-    |-- BriefingCard re-renders with accumulated markdown
+save_events() -> INSERT INTO calendar_events  [SQLite]
     |
     v
-On stream complete: set briefingLoading = false
+app.emit("calendar-synced")  [Tauri event]
+    |
+    v
+Frontend calendarSlice re-fetches events
 ```
 
-### Hub Chat Flow
+### Schedule Generation Flow (Existing, broken connection at step 3)
 
 ```
-User types message in HubChatInput, presses Enter
-    |
-    v
-useHubStore.sendMessage(text)
-    |-- Push { role: "user", content: text } to messages array
-    |-- Set chatLoading = true
-    |
-    v
-Tauri invoke("hub_chat", { message: text, history: messages })
-    |
-    v
-Rust hub_commands::hub_chat
-    |-- Generate fresh manifest (same as briefing)
-    |-- Build chat prompt: system(manifest + skills schema) + history + user message
-    |-- Stream via AI gateway
-    |-- app.emit("hub-chat-stream", chunk) for each token
-    |-- Return full response text on completion
-    |
-    v
-Frontend: listen("hub-chat-stream")
-    |-- Accumulate into current assistant message in useHubStore
-    |
-    v
-On invoke resolution:
-    |-- Parse response for action JSON blocks
-    |-- If actions found: dispatch to Tauri commands (api.createTask, etc.)
-    |-- Push final { role: "assistant", content } to messages array
-    |-- Set chatLoading = false
+1. User/bot requests schedule for date
+       |
+       v
+2. generate_schedule(date)  [scheduling_commands.rs]
+       |
+       v
+3. *** calendar_events = empty vec ***  <-- FIX: query calendar_events table
+       |
+       v
+4. find_open_blocks(work_hours, calendar_events)  [time_blocks.rs]
+       |
+       v
+5. assign_tasks_to_blocks(open_blocks, tasks)  [assignment.rs]
+       |
+       v
+6. Return Vec<ScheduleBlock> to frontend
 ```
 
-### Goals Tree Data Flow
+### Daily Planning Flow (NEW)
 
 ```
-HubView mounts
+User opens Hub (or bot initiates)
     |
     v
-GoalsTreePanel reads from existing Zustand stores:
-    |-- useStore: themes (already loaded on app init)
-    |-- useStore: projects (already loaded on app init)
-    |-- useStore: phases (loaded per-project, may need bulk fetch)
+AI briefing runs with enriched manifest (calendar + schedule context)
     |
     v
-Compute progress client-side:
-    |-- Per project: completedTasks / totalTasks
-    |-- Per theme: aggregate across projects
+Bot presents: "You have 3 meetings today (2h). 5h available. Here are your priorities..."
     |
     v
-Render as collapsible tree:
-    Theme > Project > Phase (with progress bars)
+User converses: "Let's work on X first, push Y to tomorrow"
     |
     v
-Click on node -> navigation:
-    |-- Project click: setSelectedProjectId -> CenterPanel shows ProjectDetail
-    |-- Theme click: setSelectedThemeId -> CenterPanel shows ThemeDetail
+Bot dispatches ACTION:{"name":"block_time","input":{...}}
+    |
+    v
+schedule updated -> emit "schedule-applied" -> CalendarView refreshes
 ```
 
-**Note on phases data:** The current `phaseSlice` loads phases per-project on demand (`loadPhases(projectId)`). For the goals tree to show progress across all projects, a new bulk endpoint may be needed: `list_all_phases_with_counts` that returns `{ projectId, phaseCount, completedCount }` per project in one query. This avoids N+1 queries when rendering the tree.
+### Heartbeat Flow (NEW)
 
-### Key Data Flows Summary
+```
+App startup
+    |
+    v
+init_heartbeat() spawns tokio::interval task (configurable: 15-60 min)
+    |
+    v
+Every tick:
+  1. Query tasks with due_dates in next 48h
+  2. Query today's scheduled_blocks vs estimated_minutes
+  3. Detect: overdue, at-risk (not enough time), unscheduled urgent
+  4. If alerts found:
+     a. Build short prompt with alerts
+     b. Call LLM (prefer Ollama local, fallback CLI) for natural-language summary
+     c. app.emit("heartbeat-alert", alert_payload)
+     d. Create notification in notifications table
+  5. If no alerts: silent (no event emitted)
+```
 
-1. **Manifest generation:** Server-side in Rust. Queries SQLite for all projects/phases/tasks. Formats as markdown with token budget. Passed in-memory to LLM prompt builder. Never persisted to disk.
+### Calendar MCP Tools Flow (NEW)
 
-2. **Chat history:** Stored in `useHubStore.messages` as `{ role, content, timestamp }[]`. Sent to Rust on each `hub_chat` call for conversation continuity. Not persisted to SQLite (ephemeral per session). Future enhancement: persist for cross-session memory.
+```
+External AI agent (Claude Code via MCP)
+    |
+    v
+MCP tool call: list_calendar_events({date: "2026-04-02"})
+    |
+    v
+mcp-server reads calendar_events + scheduled_blocks from element.db
+    |
+    v
+Returns merged view: meetings (external) + work blocks (internal)
+    |
+    v
+Agent can then: create_work_block / move_work_block / get_available_slots
+    |
+    v
+Writes to scheduled_blocks table
+    |
+    v
+Tauri file watcher detects DB change -> re-emits schedule events
+```
 
-3. **Streaming:** Both briefing and chat use Tauri `app.emit()` for token streaming. Frontend listens with `listen()` from `@tauri-apps/api/event`. Matches the existing pattern used by `cli-output` in `cli_commands.rs`.
+## Key Integration Points
 
-4. **Bot skill dispatch:** Actions extracted from AI response text (JSON code blocks) are dispatched client-side using existing `api.*` functions. No new backend execution paths needed.
+### 1. The Critical Fix: Wire Calendar Events to Scheduler
 
-## Integration Points
+**File:** `scheduling_commands.rs`, lines 94-97
+**Current:** `let calendar_events: Vec<CalendarEvent> = vec![];`
+**Fix:** Query `calendar_events` table for the given date, map to `scheduling::types::CalendarEvent`
 
-### Existing Components Modified
+This is the single most important integration. The scheduling engine (`time_blocks.rs`, `assignment.rs`) already fully supports calendar events with buffer handling, merging, and gap detection. It was designed for this but never connected. The fix is approximately 15 lines of SQL query + mapping.
 
-| Component | Change | Scope |
-|-----------|--------|-------|
-| `CenterPanel.tsx` | Default view: `HubView` instead of `TodayView` | 1 import change + 1 JSX swap |
-| `lib.rs` invoke_handler | Register `generate_briefing`, `hub_chat`, `generate_manifest` | 3 lines added |
-| `commands/mod.rs` | `pub mod hub_commands;` | 1 line |
-| `models/mod.rs` | `pub mod manifest;` | 1 line |
-| `ai/mod.rs` | `pub mod hub_prompts;` | 1 line |
+### 2. Manifest Enrichment for Daily Planning
 
-### New Backend Queries
+The context manifest (`build_manifest_string`) currently aggregates project/task state. For daily planning, it needs to also include:
+- Today's calendar events (from `calendar_events` table)
+- Today's scheduled blocks (from `scheduled_blocks` table)  
+- Available time remaining
+- Tasks approaching due dates
 
-| Query | Purpose | Notes |
-|-------|---------|-------|
-| All projects with task counts | Manifest: project-level progress | One query with GROUP BY |
-| All phases with task counts | Manifest: phase-level progress | One query with GROUP BY |
-| Today's tasks across projects | Manifest: today section | Reuse `get_todays_tasks` query |
-| Blocked tasks across projects | Manifest: attention items | New WHERE clause on status |
-| Default AI provider config | Hub chat/briefing provider | Reuse `list_ai_providers` with default filter |
+This enriched manifest feeds both the daily briefing and the hub chat system prompt.
+
+### 3. CalendarView Replacing Placeholder
+
+`HubView.tsx` already has a 3-column layout with the right column designated for calendar. The `CalendarPlaceholder` component is a simple swap target. The new `CalendarView` needs:
+- Day view (default) showing 24h timeline with events + work blocks
+- Week view toggle
+- Date navigation (prev/next day/week)
+- Pull data from both `calendarSlice` (meetings) and `schedulingSlice` (work blocks)
+- Visual distinction: meetings (external, read-only) vs work blocks (internal, draggable)
+
+### 4. Heartbeat as Background tokio Task
+
+Follow the same pattern as `init_scheduler()` in `engine/scheduler.rs`:
+- Spawn on app startup in `lib.rs`
+- Store handle in app state for lifecycle management
+- Use `tokio::time::interval` (not cron -- heartbeat is fixed-interval)
+- Configurable interval via settings (default: 30 min)
+- LLM call is optional/best-effort (degrade gracefully if no provider)
+
+### 5. Due Date Enforcement via Conversation
+
+Rather than forcing due dates through UI forms, the bot suggests them conversationally:
+- During daily planning: "This task has no due date. When do you need it done?"
+- During heartbeat alerts: "Task X has no due date but seems urgent based on priority"
+- New action: `set_due_date` in action registry -> `update_task` with `due_date` field
+
+This requires adding `due_date` to the `update_task` Tauri command's accepted parameters (currently supports title, description, priority but not due_date).
+
+## Suggested Build Order
+
+Build order is driven by dependency chains:
+
+### Phase 1: Calendar Sync Fix + Wire to Scheduler
+**Rationale:** Everything downstream depends on calendar data flowing. The OAuth infrastructure exists. The scheduling engine exists. The gap is literally one empty vec on line 97.
+
+1. Debug/fix Google OAuth token refresh (reported as "broken")
+2. Debug/fix Outlook OAuth token refresh  
+3. Wire `calendar_events` query into `generate_schedule`
+4. Add background auto-sync timer (tokio interval, every 15 min)
+5. Test: calendar events now appear in generated schedule
+
+### Phase 2: Calendar View UI
+**Rationale:** Users need to see their calendar before the AI can meaningfully plan against it.
+
+1. Build `CalendarView` component with day timeline
+2. Overlay meetings (from calendarSlice) + work blocks (from schedulingSlice)
+3. Date navigation + week view toggle
+4. Replace `CalendarPlaceholder` in HubView
+5. Wire drag-to-reschedule for work blocks (optional, nice-to-have)
+
+### Phase 3: Daily Planning Skill + Due Date Curation
+**Rationale:** With calendar working, the AI can now reason about the user's day.
+
+1. Enrich context manifest with calendar + schedule data
+2. Register new bot skills: `get_todays_plan`, `set_due_date`, `block_time`
+3. Add corresponding Tauri commands
+4. Update briefing prompt to present day-plan format
+5. Implement conversational due date suggestion logic
+
+### Phase 4: Calendar MCP Tools
+**Rationale:** External agents need calendar access. Building after the core works.
+
+1. Add `list_calendar_events` MCP tool
+2. Add `get_available_slots` MCP tool
+3. Add `create_work_block` / `move_work_block` MCP tools
+4. Test with Claude Code via MCP
+
+### Phase 5: Heartbeat + Schedule Negotiation
+**Rationale:** Heartbeat is a background enhancement. Needs working calendar + scheduling to be meaningful.
+
+1. Implement `heartbeat.rs` with tokio interval
+2. Deadline risk detection queries
+3. LLM summarization (Ollama preferred, CLI fallback)
+4. Heartbeat alert events + notification persistence
+5. Schedule negotiation: conversational rescheduling when conflicts detected
+6. Backlog exemption flag on tasks/phases
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Polling SQLite from MCP on Every Change
+
+**What people do:** Have the MCP server poll the DB to detect changes for real-time updates.
+**Why it's wrong:** SQLite has no built-in change notification across processes. Polling wastes CPU and adds latency.
+**Do this instead:** Use the existing file-based event queue pattern. When Tauri writes schedule changes, it also writes to the agent queue file. MCP tools are request-response (not streaming), so they just read current state on each call.
+
+### Anti-Pattern 2: Building a Custom Calendar Rendering Engine
+
+**What people do:** Build pixel-precise calendar time grids from scratch.
+**Why it's wrong:** Calendar time layout is surprisingly complex (overlapping events, all-day events, timezone handling, DST).
+**Do this instead:** Keep it simple -- vertical time slots at 30-min intervals. Events are absolutely positioned by `top` (start time) and `height` (duration). No need for a library. The data model already stores HH:mm strings which map directly to pixel offsets.
+
+### Anti-Pattern 3: Running Heartbeat LLM Calls on Main Thread
+
+**What people do:** Block the scheduler or main async runtime with LLM API calls.
+**Why it's wrong:** LLM calls can take 5-30 seconds. Blocking the main tokio runtime degrades the entire app.
+**Do this instead:** Spawn heartbeat LLM calls in a dedicated `tokio::spawn` with timeout. If the call fails or times out, log and skip -- heartbeat is best-effort.
+
+### Anti-Pattern 4: Dual-Writing Schedule State
+
+**What people do:** Keep schedule state in both frontend Zustand and backend SQLite, trying to sync them.
+**Why it's wrong:** Leads to stale state, race conditions, and UI showing data that doesn't match the DB.
+**Do this instead:** SQLite is the source of truth. Frontend always fetches after mutations. Use Tauri events (`schedule-applied`, `calendar-synced`) as invalidation signals to re-fetch, never as data carriers for state updates.
+
+## Integration Boundaries
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| HubView <-> GoalsTreePanel | Props from Zustand stores | Read-only, no new backend calls |
-| HubChat <-> hub_commands | Tauri invoke + event stream | Same invoke/listen pattern as AI assist |
-| BriefingCard <-> hub_commands | Tauri invoke + event stream | One-shot generation with streaming |
-| Hub skill dispatch <-> existing CRUD | Tauri invoke via api.* | Reuses 100% of existing commands |
-| manifest.rs <-> SQLite | `db.conn()` queries | Same Arc<Mutex<Database>> pattern |
-| hub_prompts <-> AI gateway | CompletionRequest struct | Same struct used by existing prompts.rs |
+| Frontend <-> Rust backend | Tauri IPC (invoke) + Tauri events (emit/listen) | ~60+ existing commands, add ~5-8 new ones |
+| Rust backend <-> SQLite | rusqlite direct queries via `Arc<Mutex<Database>>` | Existing pattern, no changes needed |
+| MCP server <-> SQLite | better-sqlite3 separate connection | Read-write, same DB file, WAL mode handles concurrent access |
+| MCP server <-> Tauri | File-based event queue (agent_queue in DB) | MCP writes queue entries, Tauri polls and processes |
+| Heartbeat <-> AI gateway | `AiGateway::stream_completion` or CLI fallback | Same pattern as daily briefing |
 
-### MCP Sidecar Bot Skills (Separate Phase)
+### External Services
 
-The MCP sidecar currently has 10 tools (5 read, 5 orchestration). For the background agent to gain write capabilities:
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Google Calendar API | OAuth 2.0 + REST via reqwest | Exists, reported broken -- likely token refresh issue |
+| Microsoft Graph API | OAuth 2.0 + REST via reqwest | Exists, same suspected issue |
+| LLM providers | API calls via ai/gateway or CLI subprocess | Exists, model-agnostic |
+| Ollama (local) | HTTP to localhost:11434 | Preferred for heartbeat (no API key needed, fast, private) |
 
-| New Tool | Purpose | Implementation |
-|----------|---------|----------------|
-| `create_task` | Agent creates tasks autonomously | Write to tasks table + emit notification |
-| `update_task_status` | Agent marks tasks complete | Update status + emit event |
-| `create_phase` | Agent creates project phases | Write to phases table |
-| `run_shell_command` | Agent runs commands in project dirs | tokio::process::Command, project-scoped CWD |
-| `write_file` | Agent creates/updates files | fs::write, project directory scoped |
+## Database Schema Impact
 
-These are separate from hub chat skills. Hub chat dispatches actions through the frontend (user is present). MCP sidecar skills are for autonomous background execution (user may not be present, approval-gated).
+### Existing Tables Used (No Schema Changes)
 
-## Anti-Patterns
+- `calendar_accounts` -- OAuth accounts, sync tokens
+- `calendar_events` -- Cached external events
+- `scheduled_blocks` -- Work blocks, meeting blocks, buffer blocks
+- `work_hours` -- Work day configuration
+- `tasks` -- Already has `due_date`, `estimated_minutes`, `scheduled_date` columns
 
-### Anti-Pattern 1: Routing Hub Chat Through MCP Sidecar
+### New Migration Needed (012_heartbeat.sql)
 
-**What people do:** Send hub chat messages through the file-based agent queue to the MCP sidecar, then poll for a response file.
-**Why it's wrong:** The file-based queue has 2-second polling intervals. Chat needs sub-second streaming. The MCP sidecar is for autonomous background operations, not interactive conversation. Mixing these concerns creates latency and architectural confusion.
-**Do this instead:** Use the AI gateway directly from Rust (`hub_commands.rs`). Stream tokens via Tauri events. Reserve the MCP sidecar for background agent orchestration only.
+```sql
+-- Heartbeat configuration (singleton)
+CREATE TABLE IF NOT EXISTS heartbeat_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    interval_minutes INTEGER NOT NULL DEFAULT 30,
+    lookahead_hours INTEGER NOT NULL DEFAULT 48,
+    prefer_local_llm INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
+);
 
-### Anti-Pattern 2: Writing Manifest to Disk
-
-**What people do:** Generate `context-manifest.md` as a file on disk and read it back for each AI call.
-**Why it's wrong:** The manifest is stale the moment any project/task changes. File I/O adds unnecessary latency. File watchers would add complexity. The manifest has no external consumer -- only the Rust AI gateway needs it.
-**Do this instead:** Generate manifest in-memory as a String when needed. Pass directly to the prompt builder function. No persistence, no staleness, no watchers.
-
-### Anti-Pattern 3: Putting Hub State in the Main AppStore
-
-**What people do:** Add `hubSlice` to the combined `useStore` alongside the existing 13 slices.
-**Why it's wrong:** Hub state (chat messages, briefing content, streaming flags) has zero cross-dependencies with other slices. Adding it to AppStore increases store complexity and risks re-renders in unrelated components when chat messages update.
-**Do this instead:** Create `useHubStore` as a standalone Zustand `create()` store, following the pattern of `useAgentStore` (standalone, `create()`, no slice composition).
-
-### Anti-Pattern 4: Building Hub Chat as a Second Agent
-
-**What people do:** Create a separate agent process/lifecycle for the hub, duplicating the agent queue, polling, and MCP patterns from Phase 21.
-**Why it's wrong:** The hub chat is user-driven conversation, not autonomous orchestration. Two agents creates confusion about ownership of actions and context. The existing agent (MCP sidecar) is the single autonomous orchestrator.
-**Do this instead:** Hub chat is a direct AI gateway call. The existing background agent remains the only autonomous orchestrator. They share the same manifest/context but serve fundamentally different interaction modes (interactive vs. autonomous).
-
-### Anti-Pattern 5: N+1 Queries in Goals Tree
-
-**What people do:** Call `loadPhases(projectId)` for each project when rendering the goals tree, causing N API calls for N projects.
-**Why it's wrong:** Visible latency when the tree loads. Each call acquires the database mutex independently.
-**Do this instead:** Add a single `list_project_progress` Tauri command that returns `{ projectId, totalTasks, completedTasks, blockedTasks }[]` for all projects in one query. The goals tree consumes this aggregate data without per-project phase loading.
-
-## Suggested Build Order
-
-Dependencies flow left to right. Each phase is independently shippable and testable.
-
-```
-Phase 1: Context Manifest + Hub UI Shell
-    |-- models/manifest.rs (pure data, no AI dependency)
-    |-- HubView 3-column layout with placeholder panels
-    |-- GoalsTreePanel (reads existing stores + new progress query)
-    |-- GoalsTreeNode recursive component
-    |-- CalendarPlaceholder
-    |-- CenterPanel routing: HubView replaces TodayView
-    |-- list_project_progress command for tree data
-    |
-    v
-Phase 2: AI Briefing
-    |-- ai/hub_prompts.rs (briefing system prompt)
-    |-- hub_commands::generate_briefing (manifest + AI gateway streaming)
-    |-- useHubStore (briefing state + streaming listener)
-    |-- BriefingCard component with markdown rendering
-    |-- HubMainPanel layout (briefing fills center column)
-    |
-    v
-Phase 3: Hub Chat
-    |-- hub_prompts.rs extended with chat system prompt + action schema
-    |-- hub_commands::hub_chat (manifest + history + AI gateway streaming)
-    |-- useHubStore extended with chat state
-    |-- HubChat, HubChatMessage, HubChatInput components
-    |-- HubMainPanel updated: briefing top, chat bottom
-    |
-    v
-Phase 4: Bot Skills (Action Dispatch from Chat)
-    |-- Action schema definition in hub_prompts.rs
-    |-- Frontend action parser (extract JSON from AI response)
-    |-- Dispatcher maps action types to existing api.* calls
-    |-- Confirmation UX before executing destructive actions
-    |-- Chat shows action results inline
-    |
-    v
-Phase 5: MCP Sidecar Write Tools (Background Agent Skills)
-    |-- Add write tools to MCP server: create_task, update_status
-    |-- Add run_command tool (project-scoped)
-    |-- Add write_file tool (project-directory-scoped)
-    |-- Approval flow for write operations (reuse existing queue)
+-- Heartbeat log (audit trail)
+CREATE TABLE IF NOT EXISTS heartbeat_log (
+    id TEXT PRIMARY KEY,
+    checked_at TEXT NOT NULL,
+    alerts_count INTEGER NOT NULL DEFAULT 0,
+    summary TEXT,
+    created_at TEXT NOT NULL
+);
 ```
 
-**Phase ordering rationale:**
-- **Phase 1 first** because it has zero AI dependencies. Pure UI + data queries. Gets the Hub visible and navigable immediately. The goals tree provides standalone value even without AI features.
-- **Phase 2 before Phase 3** because briefing is a simpler AI integration (no conversation history, no streaming user input, no action parsing). It validates the manifest + AI gateway + streaming pipeline.
-- **Phase 3 depends on Phase 2** because it extends the same store, prompt infrastructure, and streaming pattern. Chat adds conversation history management on top.
-- **Phase 4 depends on Phase 3** because action dispatch requires a working chat to generate actions from. The action parser operates on chat responses.
-- **Phase 5 is semi-independent** -- it extends the MCP sidecar (not the hub UI). Could be built in parallel with Phases 3-4 if desired. It addresses background agent capabilities, not interactive chat.
+### Possible Addition to tasks Table
+
+Consider adding a `backlog_exempt` boolean column to mark tasks/phases that should be immune to due date enforcement. Alternatively, use a convention: tasks with `priority = 'low'` and `due_date IS NULL` under a phase named "Backlog" are exempt. Convention is simpler; column is more explicit. **Recommend:** Column, as conventions break.
+
+```sql
+ALTER TABLE tasks ADD COLUMN backlog_exempt INTEGER NOT NULL DEFAULT 0;
+```
 
 ## Sources
 
-- Codebase: `src-tauri/src/ai/provider.rs` -- AiProvider trait with `complete_stream` (streaming support confirmed)
-- Codebase: `src-tauri/src/ai/gateway.rs` -- AiGateway with provider routing and `build_provider`
-- Codebase: `src/hooks/useAgentQueue.ts` -- file-based queue with 2-second polling (lines 296-327)
-- Codebase: `src/stores/useAgentStore.ts` -- standalone Zustand store pattern (not a slice)
-- Codebase: `src-tauri/src/models/onboarding.rs` -- context generation with token budgets, phase classification
-- Codebase: `src/components/layout/CenterPanel.tsx` -- routing logic, TodayView as default (line 112)
-- Codebase: `src-tauri/src/lib.rs` -- command registration pattern, 50+ handlers (lines 187-296)
-- Codebase: `src/stores/index.ts` -- 13-slice AppStore composition pattern
+- Direct codebase analysis of `/Users/cuhnowts/projects/element/`
+- `scheduling_commands.rs` lines 94-97 confirming empty calendar_events vec
+- `time_blocks.rs` confirming CalendarEvent support in gap-finding algorithm
+- `assignment.rs` confirming score_task uses due_date urgency
+- `actionRegistry.ts` confirming bot skill registration pattern
+- `mcp-server/src/index.ts` confirming MCP tool registration pattern
+- `CalendarPlaceholder.tsx` confirming placeholder status
+- `engine/scheduler.rs` confirming tokio background task pattern
 
 ---
-*Architecture research for: Daily Hub integration into Element v1.4*
-*Researched: 2026-03-31*
+*Architecture research for: Element v1.5 Time Bounded*
+*Researched: 2026-04-02*
