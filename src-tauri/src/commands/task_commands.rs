@@ -217,6 +217,24 @@ pub async fn list_standalone_tasks(
 }
 
 #[tauri::command]
+pub async fn search_tasks(
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    query: String,
+) -> Result<Vec<Task>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let pattern = format!("%{}%", query);
+    let sql = format!(
+        "SELECT {} FROM tasks WHERE title LIKE ?1 ORDER BY created_at DESC LIMIT 20",
+        crate::models::task::TASK_COLUMNS
+    );
+    let mut stmt = db.conn().prepare(&sql).map_err(|e| e.to_string())?;
+    let tasks = stmt
+        .query_map(rusqlite::params![pattern], |row| crate::models::task::row_to_task(row))
+        .map_err(|e| e.to_string())?;
+    tasks.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn list_tasks_by_theme(
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     theme_id: String,

@@ -315,6 +315,7 @@ pub fn run() {
             build_context_manifest,
             generate_briefing,
             execute_bot_shell,
+            search_tasks,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

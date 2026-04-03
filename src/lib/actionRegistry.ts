@@ -20,6 +20,23 @@ export interface ActionDefinition {
 
 export const ACTION_REGISTRY: ActionDefinition[] = [
   {
+    name: "search_tasks",
+    description:
+      "Search for tasks by title. Returns matching tasks with their IDs. Use this before updating or deleting tasks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Search term to match against task titles",
+        },
+      },
+      required: ["query"],
+    },
+    destructive: false,
+    tauriCommand: "search_tasks",
+  },
+  {
     name: "create_task",
     description: "Create a new task with a title and optional details.",
     inputSchema: {
