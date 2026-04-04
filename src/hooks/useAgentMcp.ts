@@ -71,6 +71,11 @@ You have MCP tools to read project state and orchestrate work:
 - create_project: Create a new project
 - create_theme: Create a new theme
 - create_file: Create a file in a project's linked directory
+- list_calendar_events: List calendar events for a date range (returns titles, times, locations)
+- get_available_slots: Get available time slots for a given day (returns gaps between meetings and work blocks)
+- create_work_block: Schedule a work block for a task on the calendar (requires approval)
+- move_work_block: Move an existing work block to a new time slot (requires approval)
+- delete_work_block: Remove a work block from the calendar (requires approval)
 
 ## Operating Mode
 You run in APPROVE-ONLY mode:
