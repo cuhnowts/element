@@ -3,11 +3,17 @@ import { api } from "../lib/tauri";
 import type { CalendarAccount, CalendarEvent } from "../lib/types";
 import type { AppStore } from "./index";
 
+function todayISO(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export interface CalendarSlice {
   calendarAccounts: CalendarAccount[];
   calendarEvents: CalendarEvent[];
   calendarSyncing: boolean;
   calendarError: string | null;
+  hubSelectedDate: string;
+  hubViewMode: "day" | "week";
   fetchCalendarAccounts: () => Promise<void>;
   connectGoogleCalendar: () => Promise<void>;
   connectOutlookCalendar: () => Promise<void>;
@@ -15,6 +21,8 @@ export interface CalendarSlice {
   syncAllCalendars: () => Promise<void>;
   disconnectCalendar: (accountId: string) => Promise<void>;
   fetchCalendarEvents: (start: string, end: string) => Promise<void>;
+  setHubSelectedDate: (date: string) => void;
+  setHubViewMode: (mode: "day" | "week") => void;
 }
 
 export const createCalendarSlice: StateCreator<
@@ -27,6 +35,10 @@ export const createCalendarSlice: StateCreator<
   calendarEvents: [],
   calendarSyncing: false,
   calendarError: null,
+  hubSelectedDate: todayISO(),
+  hubViewMode: "day" as const,
+  setHubSelectedDate: (date) => set({ hubSelectedDate: date }),
+  setHubViewMode: (mode) => set({ hubViewMode: mode }),
   fetchCalendarAccounts: async () => {
     try {
       const calendarAccounts = await api.listCalendarAccounts();
