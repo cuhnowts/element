@@ -115,7 +115,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 27-01-PLAN.md -- Types, layout math (TDD), Zustand state, and data hooks
+- [x] 27-01-PLAN.md -- Types, layout math (TDD), Zustand state, and data hooks
 - [ ] 27-02-PLAN.md -- Day view UI components and HubView wiring
 - [ ] 27-03-PLAN.md -- Week view, meeting popover, MiniCalendar coordination, and integration tests
 
@@ -145,7 +145,11 @@ Plans:
   1. An MCP client can list calendar events for any date range and receive structured event data
   2. An MCP client can create and move work blocks, which then appear in the hub calendar view
   3. An MCP client can query available time slots for a given day and receive gap data
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 29-01-PLAN.md -- MCP server calendar tool handlers, gap detection algorithm, and unit tests
+- [ ] 29-02-PLAN.md -- Tauri commands, action registry entries, and system prompt update for hub chat integration
 
 ### Phase 30: Heartbeat & Schedule Negotiation
 **Goal**: The app proactively warns about deadline risks and lets users conversationally renegotiate their schedule
@@ -191,10 +195,10 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 23. Context Manifest and AI Briefing | v1.4 | 2/2 | Complete | 2026-04-03 |
 | 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
-| 26. Calendar Sync Foundation | v1.5 | 0/2 | Not started | - |
-| 27. Hub Calendar View | v1.5 | 0/3 | Not started | - |
-| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Not started | - |
-| 29. Calendar MCP Tools | v1.5 | 0/? | Not started | - |
+| 26. Calendar Sync Foundation | v1.5 | 0/2 | Planned    |  |
+| 27. Hub Calendar View | v1.5 | 1/3 | In Progress|  |
+| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Planned    |  |
+| 29. Calendar MCP Tools | v1.5 | 0/2 | Planned    |  |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 0/? | Not started | - |
 
 ## Backlog
@@ -203,7 +207,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 4/4 plans complete
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
