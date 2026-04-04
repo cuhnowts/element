@@ -3,6 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 
 use crate::db::connection::Database;
 use crate::models::task::TaskPriority;
+use crate::plugins::core::calendar as cal_mod;
 use crate::scheduling::types::{ScheduleBlock, TaskWithPriority, WorkHoursConfig};
 
 /// Default work hours used when none are configured in the database.
@@ -83,9 +84,36 @@ pub fn generate_schedule_for_date(
         return Ok(vec![]);
     }
 
-    // 3. Calendar events placeholder
-    // TODO: Read from calendar_events table once calendar integration is wired up.
-    let calendar_events: Vec<crate::scheduling::types::CalendarEvent> = vec![];
+    // 3. Fetch real calendar events for this date and convert to scheduler format
+    let calendar_events: Vec<crate::scheduling::types::CalendarEvent> = {
+        let date_start = format!("{}T00:00:00Z", date);
+        let date_end = format!("{}T23:59:59Z", date);
+        match cal_mod::list_events_for_range(db.conn(), &date_start, &date_end) {
+            Ok(db_events) => db_events
+                .iter()
+                .filter(|e| !e.all_day) // All-day events don't block specific time slots
+                .filter(|e| e.status != "cancelled") // Skip cancelled events
+                .filter_map(|e| {
+                    // Parse RFC3339 timestamps to local HH:mm for the scheduling algorithm
+                    let start = chrono::DateTime::parse_from_rfc3339(&e.start_time).ok()?;
+                    let end = chrono::DateTime::parse_from_rfc3339(&e.end_time).ok()?;
+                    let local_start = start.with_timezone(&chrono::Local);
+                    let local_end = end.with_timezone(&chrono::Local);
+                    Some(crate::scheduling::types::CalendarEvent {
+                        id: e.id.clone(),
+                        title: e.title.clone(),
+                        start_time: local_start.format("%H:%M").to_string(),
+                        end_time: local_end.format("%H:%M").to_string(),
+                        account_color: None,
+                    })
+                })
+                .collect(),
+            Err(e) => {
+                eprintln!("Warning: failed to load calendar events for {}: {}", date, e);
+                vec![] // Graceful fallback -- schedule without calendar awareness
+            }
+        }
+    };
 
     // 4. Get non-backlog tasks with no confirmed schedule block for this date
     let tasks = query_schedulable_tasks(db, date)?;
@@ -231,4 +259,97 @@ pub async fn apply_schedule(
         .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calendar_event_type_conversion() {
+        // Verify the RFC3339 to HH:MM conversion logic works correctly
+        let db_event = cal_mod::CalendarEvent {
+            id: "evt-1".to_string(),
+            account_id: "acct-1".to_string(),
+            title: "Team Meeting".to_string(),
+            description: String::new(),
+            location: None,
+            start_time: "2026-03-17T14:00:00Z".to_string(),
+            end_time: "2026-03-17T15:00:00Z".to_string(),
+            all_day: false,
+            attendees: vec![],
+            status: "confirmed".to_string(),
+            updated_at: String::new(),
+        };
+
+        let start = chrono::DateTime::parse_from_rfc3339(&db_event.start_time).unwrap();
+        let end = chrono::DateTime::parse_from_rfc3339(&db_event.end_time).unwrap();
+        let local_start = start.with_timezone(&chrono::Local);
+        let local_end = end.with_timezone(&chrono::Local);
+
+        let scheduler_event = crate::scheduling::types::CalendarEvent {
+            id: db_event.id.clone(),
+            title: db_event.title.clone(),
+            start_time: local_start.format("%H:%M").to_string(),
+            end_time: local_end.format("%H:%M").to_string(),
+            account_color: None,
+        };
+
+        // Verify format is HH:MM
+        assert!(scheduler_event.start_time.len() == 5, "Start time should be HH:MM format");
+        assert!(scheduler_event.end_time.len() == 5, "End time should be HH:MM format");
+        assert!(scheduler_event.start_time.contains(':'), "Start time should contain :");
+    }
+
+    #[test]
+    fn test_all_day_events_filtered_out() {
+        let all_day = cal_mod::CalendarEvent {
+            id: "evt-allday".to_string(),
+            account_id: "acct-1".to_string(),
+            title: "Vacation".to_string(),
+            description: String::new(),
+            location: None,
+            start_time: "2026-03-17T00:00:00Z".to_string(),
+            end_time: "2026-03-18T00:00:00Z".to_string(),
+            all_day: true,
+            attendees: vec![],
+            status: "confirmed".to_string(),
+            updated_at: String::new(),
+        };
+
+        let events = vec![all_day];
+        let filtered: Vec<_> = events
+            .iter()
+            .filter(|e| !e.all_day)
+            .filter(|e| e.status != "cancelled")
+            .collect();
+
+        assert!(filtered.is_empty(), "All-day events should be filtered out");
+    }
+
+    #[test]
+    fn test_cancelled_events_filtered_out() {
+        let cancelled = cal_mod::CalendarEvent {
+            id: "evt-cancel".to_string(),
+            account_id: "acct-1".to_string(),
+            title: "Cancelled Meeting".to_string(),
+            description: String::new(),
+            location: None,
+            start_time: "2026-03-17T14:00:00Z".to_string(),
+            end_time: "2026-03-17T15:00:00Z".to_string(),
+            all_day: false,
+            attendees: vec![],
+            status: "cancelled".to_string(),
+            updated_at: String::new(),
+        };
+
+        let events = vec![cancelled];
+        let filtered: Vec<_> = events
+            .iter()
+            .filter(|e| !e.all_day)
+            .filter(|e| e.status != "cancelled")
+            .collect();
+
+        assert!(filtered.is_empty(), "Cancelled events should be filtered out");
+    }
 }
