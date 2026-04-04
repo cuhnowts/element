@@ -818,6 +818,27 @@ impl CalendarPlugin {
     }
 }
 
+// ─── Sync debounce ───────────────────────────────────────────────────────────
+
+/// Minimum seconds between syncs for the same account (debounce threshold).
+const SYNC_DEBOUNCE_SECS: i64 = 120; // 2 minutes
+
+/// Check if enough time has passed since last sync to allow a new one.
+pub fn should_sync(last_synced_at: Option<&str>) -> bool {
+    match last_synced_at {
+        None => true, // Never synced -- always sync
+        Some(ts) => {
+            match chrono::DateTime::parse_from_rfc3339(ts) {
+                Ok(last) => {
+                    let elapsed = chrono::Utc::now().signed_duration_since(last);
+                    elapsed.num_seconds() >= SYNC_DEBOUNCE_SECS
+                }
+                Err(_) => true, // Unparseable timestamp -- sync anyway
+            }
+        }
+    }
+}
+
 // ─── Background sync ──────────────────────────────────────────────────────────
 
 /// Start background sync that polls all enabled accounts every 15 minutes (D-04).
@@ -1677,5 +1698,24 @@ mod tests {
         let remaining = list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, "del-evt-2");
+    }
+
+    // ─── Sync debounce tests ─────────────────────────────────────────────
+
+    #[test]
+    fn test_should_sync_debounce() {
+        // Never synced -- should sync
+        assert!(should_sync(None));
+
+        // Synced 1 minute ago -- should NOT sync (within 2-min debounce)
+        let one_min_ago = (chrono::Utc::now() - chrono::Duration::seconds(60)).to_rfc3339();
+        assert!(!should_sync(Some(&one_min_ago)));
+
+        // Synced 3 minutes ago -- should sync (past 2-min debounce)
+        let three_min_ago = (chrono::Utc::now() - chrono::Duration::seconds(180)).to_rfc3339();
+        assert!(should_sync(Some(&three_min_ago)));
+
+        // Invalid timestamp -- should sync (fallback)
+        assert!(should_sync(Some("not-a-timestamp")));
     }
 }
