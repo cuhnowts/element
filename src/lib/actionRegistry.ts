@@ -187,6 +187,23 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
     tauriCommand: "create_file",
   },
   {
+    name: "reschedule_day",
+    description:
+      "Regenerate today's schedule after the user reports lost time or changed priorities. Returns an updated task list for the day.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        reason: {
+          type: "string",
+          description: "Brief description of why the schedule needs updating",
+        },
+      },
+      required: ["reason"],
+    },
+    destructive: false,
+    tauriCommand: "generate_schedule",
+  },
+  {
     name: "execute_shell",
     description:
       "Execute a shell command from the allowlist (git, npm, ls, etc.).",

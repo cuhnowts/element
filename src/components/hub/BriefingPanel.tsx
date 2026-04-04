@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useBriefingStore } from "@/stores/useBriefingStore";
 import { useBriefingStream } from "@/hooks/useBriefingStream";
@@ -7,6 +7,7 @@ import { BriefingSkeleton } from "@/components/hub/BriefingSkeleton";
 import { BriefingContent } from "@/components/hub/BriefingContent";
 import { BriefingRefreshButton } from "@/components/hub/BriefingRefreshButton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import type { ScheduleBlock } from "@/components/hub/DailyPlanSection";
 
 function formatRelativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 60000);
@@ -24,6 +25,20 @@ export function BriefingPanel() {
   const lastRefreshedAt = useBriefingStore((s) => s.lastRefreshedAt);
   const requestBriefing = useBriefingStore((s) => s.requestBriefing);
 
+  const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  const fetchSchedule = () => {
+    setScheduleLoading(true);
+    const todayStr = new Date().toISOString().split("T")[0];
+    invoke<ScheduleBlock[]>("generate_schedule", { date: todayStr })
+      .then((blocks) => {
+        setScheduleBlocks(blocks);
+        setScheduleLoading(false);
+      })
+      .catch(() => setScheduleLoading(false));
+  };
+
   // Only regenerate if stale (30+ minutes) or never generated
   useEffect(() => {
     const STALE_MS = 30 * 60 * 1000; // 30 minutes
@@ -32,6 +47,7 @@ export function BriefingPanel() {
     if (isStale) {
       requestBriefing();
       invoke("build_context_manifest").then(() => invoke("generate_briefing"));
+      fetchSchedule();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -39,6 +55,7 @@ export function BriefingPanel() {
     requestBriefing();
     await invoke("build_context_manifest");
     await invoke("generate_briefing");
+    fetchSchedule();
   };
 
   const isActive =
@@ -51,7 +68,7 @@ export function BriefingPanel() {
     briefingStatus === "streaming" ||
     briefingStatus === "complete"
   ) {
-    bodyContent = <BriefingContent />;
+    bodyContent = <BriefingContent scheduleBlocks={scheduleBlocks} scheduleLoading={scheduleLoading} />;
   } else {
     bodyContent = (
       <p className="text-sm text-muted-foreground">

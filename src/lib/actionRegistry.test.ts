@@ -40,7 +40,8 @@ describe("actionRegistry", () => {
       expect(names).toContain("create_theme");
       expect(names).toContain("create_file");
       expect(names).toContain("execute_shell");
-      expect(names).toHaveLength(9);
+      expect(names).toContain("reschedule_day");
+      expect(names).toHaveLength(11);
     });
 
     it("all delete_* actions have destructive: true (per D-12)", () => {
