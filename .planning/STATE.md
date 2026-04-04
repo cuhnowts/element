@@ -2,14 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Time Bounded
-status: Defining requirements
-stopped_at: null
-last_updated: "2026-04-03T00:00:00.000Z"
+status: planning
+stopped_at: Phase 26 context gathered
+last_updated: "2026-04-04T01:33:16.693Z"
+last_activity: 2026-04-02 -- Roadmap created for v1.5 Time Bounded
 progress:
-  total_phases: 0
+  total_phases: 11
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -19,20 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Not started (defining requirements)
+**Current focus:** Phase 26 - Calendar Sync Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-03 — Milestone v1.5 started
+Phase: 26 of 30 (Calendar Sync Foundation)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-04-02 -- Roadmap created for v1.5 Time Bounded
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 60 (v1.0: 29, v1.1: 17, v1.2: 10, v1.3: 16)
+- Total plans completed: 60 (v1.0: 29, v1.1: 17, v1.2: 10, v1.3: 16) + v1.4
 - Average duration: carried from previous milestones
 - Total execution time: carried from previous milestones
 
@@ -42,6 +46,7 @@ Last activity: 2026-04-03 — Milestone v1.5 started
 - v1.1: 6 phases in 3 days
 - v1.2: 5 phases in 1 day
 - v1.3: 5 phases in 2 days
+- v1.4: 4 phases in 2 days
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -53,33 +58,12 @@ Last activity: 2026-04-03 — Milestone v1.5 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.4 roadmap]: Hub shell + goals tree first (zero AI deps) before briefing/chat
-- [v1.4 roadmap]: Hub chat uses AI gateway directly, not MCP sidecar file-based queue
-- [v1.4 roadmap]: Context manifest is in-memory only, never written to disk
-- [v1.4 roadmap]: Columns are minimizable/expandable with restore buttons
-- [v1.4 roadmap]: Bot skills and MCP write tools combined into single phase (interactive + background)
-- [v1.4 research]: Agent lifecycle must be lifted from AgentPanel to AppLayout before hub features
-- [v1.4 research]: CenterPanel needs explicit activeView state, not TodayView fallback
-- [Phase 22]: activeView defaults to hub on every launch (not persisted) -- D-07
-- [Phase 22]: CenterPanel uses switch(activeView) not cascading if/else -- TodayView removed
-- [Phase 22]: Workflow callers set activeView at call site since useWorkflowStore is separate store
-- [Phase 22]: Used panelRef prop and onResize callback (react-resizable-panels v4 API) instead of ref/onCollapse/onExpand
-- [Phase 22]: Phase/project progress derived from task statuses at render time (no stored status field on Phase)
-- [Phase 24]: Chat streaming uses hub-chat-stream-* events to avoid collision with existing ai-stream-* channel
-- [Phase 24]: AtomicBool with SeqCst for cancel flag -- simple, no mutex on hot path
-- [Phase 23]: Manifest uses project+phase level only (no individual tasks) for token efficiency
-- [Phase 23]: Briefing system prompt is time-aware (morning/afternoon/evening)
-- [Phase 23]: Debounce uses tokio mpsc channel with try_send (non-blocking) in mutation commands
-- [Phase 24]: useHubChatStore fully standalone from useAgentStore (D-12)
-- [Phase 23]: Standalone Zustand store for briefing (useBriefingStore), not AppStore slice
-- [Phase 23]: BriefingPanel wired into HubCenterPanel (not CenterPanel) since hub routes through HubView
-- [Phase 25]: Registry uses flat array with find-by-name lookup for 9 bot skill definitions
-- [Phase 25]: Shell metacharacter regex rejects all injection vectors before allowlist matching
-- [Phase 25]: MCP write handlers emit data-changed notifications via agent queue for UI refresh
-- [Phase 25]: Phase status is informational only (derived from task completion, no DB column)
-- [Phase 25]: Extended MULTI_WORD_PREFIXES to include cargo/docker/kubectl for correct custom allowlist matching
-- [Phase 25]: Extended ChatRequest with tools field to enable tool_use in hub chat path (chat_stream)
-- [Phase 25]: Tool_use events sent through same event_sender channel, frontend parses JSON vs text
+- [v1.5 research]: LLM narrates algorithm output, does not generate schedules -- deterministic scheduler only
+- [v1.5 research]: Custom Tailwind time-grid for calendar view, not react-big-calendar or FullCalendar
+- [v1.5 research]: Only 1 new npm dep (date-fns), zero new Rust crates
+- [v1.5 research]: Suggest-never-auto-apply pattern for all schedule changes
+- [v1.5 research]: scheduling_commands.rs:97 empty vec is the critical 15-line fix unlocking everything
+- [v1.5 research]: Ollama HTTP API (2 endpoints) via existing reqwest, no ollama-rs crate
 
 ### Pending Todos
 
@@ -87,12 +71,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- CenterPanel routing change is high-recovery-cost if done wrong (research flagged)
-- Action JSON parsing robustness varies by AI provider (research flagged for Phase 25)
-- xterm.js memory growth with multiple terminals (~34MB per instance, dispose() leaks)
+- Calendar sync has 3 pre-existing bugs (Google 410 handling, Outlook timezone, OAuth 7-day expiry)
+- Backlog 999.2 overlaps with Phase 26 scope -- Phase 26 subsumes it
+- Google OAuth production verification may take weeks (implement invalid_grant recovery regardless)
 
 ## Session Continuity
 
-Last session: 2026-04-02T10:56:30.732Z
-Stopped at: Completed 25-03-PLAN.md
-Resume file: None
+Last session: 2026-04-04T01:33:16.690Z
+Stopped at: Phase 26 context gathered
+Resume file: .planning/phases/26-calendar-sync-foundation/26-CONTEXT.md
