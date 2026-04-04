@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: base-nova
 created: 2026-04-03
+revised: 2026-04-03
 ---
 
 # Phase 26 -- UI Design Contract
@@ -84,7 +85,7 @@ This phase modifies 2 existing components and adds 0 new component files. All ch
 | Element | Specification |
 |---------|---------------|
 | Badge shape | 8px diameter circle, `bg-chart-4` (amber), positioned absolute top-right of the Calendar icon |
-| Badge offset | `top: -2px`, `right: -4px` relative to the icon container |
+| Badge offset | `top: -4px`, `right: -4px` relative to the icon container |
 | Badge visibility | Visible only when `calendarAccounts.some(a => a.needsReconnect)` is true |
 | Accessibility | `aria-label` on the Calendars tab button must include "needs attention" when badge is visible |
 
@@ -99,9 +100,11 @@ When an account enters `needs_reconnect` state (invalid_grant / revoked access):
 | Account row border | Change from `border-border` to `border-chart-4/50` (amber, 50% opacity) |
 | Account row background | `bg-chart-4/5` (amber, 5% opacity) |
 | Status text | Replace "Last synced {time}" with "Connection expired" in `text-chart-4` |
-| Reconnect button | `<Button variant="outline" size="sm">` with label "Reconnect" placed inline where sync/disconnect buttons are. Uses default outline variant, not destructive. |
+| Reconnect button | `<Button variant="outline" size="sm">` with label "Reconnect Account" placed inline where sync/disconnect buttons are. Uses default outline variant, not destructive. |
 | Sync button | Hidden when `needs_reconnect` is true (reconnect replaces it) |
-| Disconnect button | Remains visible alongside Reconnect |
+| Disconnect button | Remains visible alongside Reconnect Account |
+
+**Focal point -- error recovery flow:** When an account row enters the `needs_reconnect` state, the amber border + amber background + "Connection expired" status text + inline "Reconnect Account" button form the primary visual anchor for the error recovery flow. The amber highlight draws the eye to the affected row; the button provides the single corrective action.
 
 **Change 2: Placeholder OAuth client ID error**
 
@@ -119,7 +122,7 @@ When user clicks Connect Google/Outlook and the backend detects placeholder clie
 
 | Element | Copy |
 |---------|------|
-| Primary CTA | "Reconnect" (on accounts with expired OAuth tokens) |
+| Primary CTA | "Reconnect Account" (on accounts with expired OAuth tokens) |
 | Empty state heading | "No calendars connected" (existing, unchanged) |
 | Empty state body | "Connect a Google or Outlook calendar to see your events in Element." (existing, unchanged) |
 | Error: placeholder OAuth (Google) | "Google Calendar is not configured. Set the GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables with credentials from the Google Cloud Console, then restart Element." |
@@ -140,7 +143,7 @@ When user clicks Connect Google/Outlook and the backend detects placeholder clie
 |-------|--------|----------|
 | Connected + synced | Default border, "Last synced {relative time}" | Hover shows sync/disconnect buttons |
 | Connected + syncing | Default border, "Syncing..." with spin icon | Sync button disabled with spinner |
-| Needs reconnect | Amber border, "Connection expired", Reconnect button visible | Clicking Reconnect initiates same OAuth flow as initial connect |
+| Needs reconnect | Amber border, "Connection expired", Reconnect Account button visible | Clicking Reconnect Account initiates same OAuth flow as initial connect |
 | Disconnecting | Confirmation dialog overlay | Cancel or confirm |
 
 ### Badge Lifecycle
@@ -148,7 +151,7 @@ When user clicks Connect Google/Outlook and the backend detects placeholder clie
 | Trigger | Badge State |
 |---------|-------------|
 | Token refresh returns invalid_grant | Badge appears on Calendars nav tab |
-| User clicks Reconnect and completes OAuth | Badge disappears once no accounts need reconnect |
+| User clicks Reconnect Account and completes OAuth | Badge disappears once no accounts need reconnect |
 | User disconnects the failing account | Badge disappears if no other accounts need reconnect |
 
 ### Background Sync (invisible)
