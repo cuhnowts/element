@@ -256,6 +256,7 @@ pub fn run() {
             sync_all_calendars,
             disconnect_calendar,
             list_calendar_events,
+            sync_all_if_stale,
             list_ai_providers,
             add_ai_provider,
             remove_ai_provider,
