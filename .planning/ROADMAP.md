@@ -129,8 +129,13 @@ Plans:
   3. Tasks in backlog phases (999.x) do not show due date warnings or nag the user
   4. On hub load, the bot presents a prioritized daily plan showing tasks ranked against available calendar time
   5. User can tell the bot about lost time or changed priorities and get an updated plan suggestion (not auto-applied)
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 28-01-PLAN.md -- Date utilities, badge warning variant, DatePickerPopover, SchedulingBadges three-tier, GoalsTreeNode overdue badges
+- [ ] 28-02-PLAN.md -- Rust manifest extension with today's schedule data and briefing prompt update
+- [ ] 28-03-PLAN.md -- DailyPlanSection, DueDateSuggestion, BriefingPanel wiring, HubChat rescheduling
 
 ### Phase 29: Calendar MCP Tools
 **Goal**: External AI agents can read the user's calendar and manage work blocks through the MCP server
@@ -188,7 +193,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
 | 26. Calendar Sync Foundation | v1.5 | 0/2 | Not started | - |
 | 27. Hub Calendar View | v1.5 | 0/3 | Not started | - |
-| 28. Due Dates & Daily Planning | v1.5 | 0/? | Not started | - |
+| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Not started | - |
 | 29. Calendar MCP Tools | v1.5 | 0/? | Not started | - |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 0/? | Not started | - |
 
