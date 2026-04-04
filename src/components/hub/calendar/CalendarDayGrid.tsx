@@ -35,6 +35,13 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   const calendarError = useStore((s) => s.calendarError);
   const calendarAccounts = useStore((s) => s.calendarAccounts);
 
+  // Default work hours if none configured
+  const effectiveWorkHours = workHours ?? {
+    startTime: "09:00",
+    endTime: "17:00",
+    workDays: [1, 2, 3, 4, 5],
+  };
+
   const { events, allDayEvents, isLoading } = useCalendarEvents(dateStr);
 
   const [expandedRange, setExpandedRange] = useState<{
@@ -75,15 +82,13 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   // Compute grid range
   const gridStartMinutes = useMemo(() => {
     if (expandedRange) return expandedRange.start;
-    if (!workHours) return 9 * 60; // default 9 AM
-    return normalizeToMinutes(workHours.startTime);
-  }, [workHours, expandedRange]);
+    return normalizeToMinutes(effectiveWorkHours.startTime);
+  }, [effectiveWorkHours, expandedRange]);
 
   const gridEndMinutes = useMemo(() => {
     if (expandedRange) return expandedRange.end;
-    if (!workHours) return 17 * 60; // default 5 PM
-    return normalizeToMinutes(workHours.endTime);
-  }, [workHours, expandedRange]);
+    return normalizeToMinutes(effectiveWorkHours.endTime);
+  }, [effectiveWorkHours, expandedRange]);
 
   const { nowPixelOffset, isVisible: nowIsVisible } =
     useNowLine(gridStartMinutes);
@@ -169,17 +174,6 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
       }
     }
   }, [isToday, nowIsVisible, nowPixelOffset]);
-
-  // Loading state
-  if (!workHours) {
-    return (
-      <div className="flex-1 p-4 space-y-3">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-16 w-3/4" />
-        <Skeleton className="h-12 w-1/2" />
-      </div>
-    );
-  }
 
   // Error state
   if (calendarError) {
