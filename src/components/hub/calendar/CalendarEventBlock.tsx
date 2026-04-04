@@ -137,6 +137,7 @@ export function CalendarEventBlock({
     return (
       <Popover>
         <PopoverTrigger
+          nativeButton={false}
           render={
             <div
               role="button"
