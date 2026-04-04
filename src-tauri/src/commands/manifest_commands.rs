@@ -41,6 +41,7 @@ pub async fn generate_briefing(
     db_state: State<'_, Arc<Mutex<Database>>>,
     manifest_state: State<'_, ManifestState>,
     gateway: State<'_, AiGateway>,
+    heartbeat_state: State<'_, crate::heartbeat::HeartbeatState>,
 ) -> Result<(), String> {
     // Read cached manifest (or build if empty)
     let manifest = {
@@ -60,6 +61,25 @@ pub async fn generate_briefing(
         manifest
     };
 
+    // Prepend heartbeat risk summary if available (D-06: risks surface in daily briefing)
+    let manifest_with_risks = {
+        let assessment = heartbeat_state.latest_assessment.lock().map_err(|e| e.to_string())?;
+        if let Some(ref assessment) = *assessment {
+            if !assessment.risks.is_empty() {
+                format!(
+                    "## Deadline Risk Alert\n\n{}\n\nAssessed at: {}\n\n---\n\n{}",
+                    assessment.summary,
+                    assessment.assessed_at,
+                    manifest
+                )
+            } else {
+                manifest
+            }
+        } else {
+            manifest
+        }
+    };
+
     // Get provider (API provider first, falls back to CLI tool)
     let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
@@ -77,7 +97,7 @@ pub async fn generate_briefing(
 
     let request = CompletionRequest {
         system_prompt: build_briefing_system_prompt(),
-        user_message: manifest,
+        user_message: manifest_with_risks,
         max_tokens: 1024,
         temperature: 0.7,
         tools: None,
@@ -174,7 +194,10 @@ fn build_briefing_system_prompt() -> String {
         - If tasks have no due date, suggest 1-2 that would benefit from a deadline. \
         Format each suggestion on its own line as: SUGGEST_DUE_DATE:{{\"taskId\":\"<id>\",\"date\":\"<YYYY-MM-DD>\",\"taskTitle\":\"<title>\"}}\n\
         - Never auto-apply changes. Only suggest.\n\
-        - If no schedule data is present, say the day is open and suggest reviewing undated tasks",
+        - If no schedule data is present, say the day is open and suggest reviewing undated tasks\n\
+        \n\
+        If the input begins with a \"## Deadline Risk Alert\" section, lead your briefing with a concise \
+        risk summary. Highlight the most urgent risks first, then transition to the standard briefing format.",
         time_context
     )
 }

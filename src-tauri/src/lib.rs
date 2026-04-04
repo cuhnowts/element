@@ -38,6 +38,7 @@ use commands::workflow_commands::*;
 use commands::manifest_commands::*;
 use commands::notification_commands::*;
 use commands::hub_chat_commands::*;
+use commands::heartbeat_commands::*;
 use commands::shell_commands::*;
 
 pub fn run() {
@@ -80,6 +81,12 @@ pub fn run() {
             // Initialize manifest state (context manifest for AI briefing)
             app.manage(models::manifest::ManifestState {
                 cached: std::sync::Arc::new(std::sync::Mutex::new(String::new())),
+            });
+
+            // Initialize heartbeat state
+            app.manage(heartbeat::HeartbeatState {
+                latest_assessment: std::sync::Arc::new(std::sync::Mutex::new(None)),
+                running: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
             });
 
             // Spawn debounced manifest rebuilder and manage the trigger
@@ -195,6 +202,10 @@ pub fn run() {
             // Start background calendar sync (every 5 minutes)
             let sync_handle = app.handle().clone();
             plugins::core::calendar::start_background_sync(sync_handle);
+
+            // Start background heartbeat (deadline risk monitoring)
+            let heartbeat_handle = app.handle().clone();
+            heartbeat::spawn_heartbeat(heartbeat_handle);
 
             Ok(())
         })
@@ -323,6 +334,10 @@ pub fn run() {
             create_work_block,
             move_work_block,
             delete_work_block,
+            get_heartbeat_config,
+            set_heartbeat_config,
+            trigger_heartbeat,
+            get_heartbeat_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
