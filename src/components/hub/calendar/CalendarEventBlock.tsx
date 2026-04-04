@@ -93,30 +93,23 @@ export function CalendarEventBlock({
     ...(isMeeting
       ? {
           borderLeft: `3px solid ${accountColor}`,
-          backgroundColor: `color-mix(in oklch, ${accountColor} 40%, transparent)`,
+          backgroundColor: "hsl(var(--muted))",
+          border: "1px solid hsl(var(--border))",
+          borderLeftWidth: "3px",
+          borderLeftColor: accountColor,
         }
       : {
           border: `1px solid ${WORK_BLOCK_COLOR}`,
-          backgroundColor: `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`,
+          backgroundColor: "hsl(var(--accent))",
         }),
   };
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    if (isMeeting) {
-      el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 55%, transparent)`;
-    } else {
-      el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 25%, transparent)`;
-    }
+    e.currentTarget.style.opacity = "0.8";
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    if (isMeeting) {
-      el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 40%, transparent)`;
-    } else {
-      el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`;
-    }
+    e.currentTarget.style.opacity = "1";
   };
 
   const blockContent = (

@@ -21,7 +21,7 @@ export type PositionedEvent = {
 };
 
 // Grid dimensions (from UI-SPEC)
-export const SLOT_HEIGHT = 24; // px per 30-min slot
+export const SLOT_HEIGHT = 48; // px per 30-min slot
 export const MINUTES_PER_SLOT = 30;
 export const HOUR_HEIGHT = SLOT_HEIGHT * 2; // 48px per hour
 
