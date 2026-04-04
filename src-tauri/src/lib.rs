@@ -14,6 +14,7 @@ mod engine;
 mod models;
 mod plugins;
 mod scheduling;
+mod heartbeat;
 #[cfg(test)]
 mod test_fixtures;
 
