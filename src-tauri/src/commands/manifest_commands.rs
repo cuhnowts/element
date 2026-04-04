@@ -158,7 +158,23 @@ fn build_briefing_system_prompt() -> String {
         - Be direct — no filler, no cheerleading, no \"let's\" or \"we should\"\n\
         - Do NOT include a greeting — the app adds one separately\n\
         - Do NOT echo raw data — synthesize and prioritize\n\
-        - Keep total response under 300 words",
+        - Keep total response under 500 words\n\
+        \n\
+        ---\n\
+        \n\
+        #### Today's Plan\n\
+        \n\
+        After the project summaries, add a \"Today's Plan\" section.\n\
+        Use the \"Today's Schedule\" data from the project status to narrate what the user should work on.\n\
+        \n\
+        **Rules for Today's Plan:**\n\
+        - List the scheduled tasks in time order with their time slots\n\
+        - If the schedule shows OVERFLOW, explicitly state which tasks won't fit and ask: \
+        \"What should we work on today?\"\n\
+        - If tasks have no due date, suggest 1-2 that would benefit from a deadline. \
+        Format each suggestion on its own line as: SUGGEST_DUE_DATE:{{\"taskId\":\"<id>\",\"date\":\"<YYYY-MM-DD>\",\"taskTitle\":\"<title>\"}}\n\
+        - Never auto-apply changes. Only suggest.\n\
+        - If no schedule data is present, say the day is open and suggest reviewing undated tasks",
         time_context
     )
 }
