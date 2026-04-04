@@ -227,16 +227,16 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
     inputSchema: {
       type: "object",
       properties: {
-        startDate: {
+        start: {
           type: "string",
           description: "Start date (YYYY-MM-DD)",
         },
-        endDate: { type: "string", description: "End date (YYYY-MM-DD)" },
+        end: { type: "string", description: "End date (YYYY-MM-DD)" },
       },
-      required: ["startDate", "endDate"],
+      required: ["start", "end"],
     },
     destructive: false,
-    tauriCommand: "list_calendar_events_for_range",
+    tauriCommand: "list_calendar_events",
   },
   {
     name: "get_available_slots",

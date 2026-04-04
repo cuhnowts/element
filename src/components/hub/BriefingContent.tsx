@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { invoke } from "@tauri-apps/api/core";
@@ -6,6 +6,21 @@ import { useBriefingStore } from "@/stores/useBriefingStore";
 import { useStore } from "@/stores";
 import { DailyPlanSection, type ScheduleBlock } from "./DailyPlanSection";
 import { DueDateSuggestion } from "./DueDateSuggestion";
+
+const DISMISSED_KEY = "element-dismissed-due-date-suggestions";
+
+function loadDismissed(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissed(set: Set<string>) {
+  localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
+}
 
 interface BriefingContentProps {
   scheduleBlocks: ScheduleBlock[];
@@ -19,14 +34,22 @@ export function BriefingContent({
   const content = useBriefingStore((s) => s.briefingContent);
   const status = useBriefingStore((s) => s.briefingStatus);
   const updateTask = useStore((s) => s.updateTask);
-  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(
-    new Set(),
-  );
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(loadDismissed);
 
-  const { cleanContent, suggestions } = useMemo(() => {
+  // Persist dismissed set whenever it changes
+  useEffect(() => {
+    saveDismissed(dismissedSuggestions);
+  }, [dismissedSuggestions]);
+
+  const cleanContent = useMemo(() => {
+    return content.replace(/SUGGEST_DUE_DATE:\s*\{[^}]+\}/g, "").trim();
+  }, [content]);
+
+  // Parse and validate suggestions — verify task IDs exist
+  const [suggestions, setSuggestions] = useState<Array<{ taskId: string; date: string; taskTitle: string }>>([]);
+  useEffect(() => {
     const regex = /SUGGEST_DUE_DATE:\s*(\{[^}]+\})/g;
-    const found: Array<{ taskId: string; date: string; taskTitle: string }> =
-      [];
+    const found: Array<{ taskId: string; date: string; taskTitle: string }> = [];
     let match;
     while ((match = regex.exec(content)) !== null) {
       try {
@@ -34,14 +57,21 @@ export function BriefingContent({
         if (parsed.taskId && parsed.date && parsed.taskTitle) {
           found.push(parsed);
         }
-      } catch {
-        /* skip malformed */
-      }
+      } catch { /* skip */ }
     }
-    const clean = content
-      .replace(/SUGGEST_DUE_DATE:\s*\{[^}]+\}/g, "")
-      .trim();
-    return { cleanContent: clean, suggestions: found };
+    // Validate each task ID exists
+    Promise.all(
+      found.map(async (s) => {
+        try {
+          await invoke("get_task", { id: s.taskId });
+          return s;
+        } catch {
+          return null; // hallucinated ID
+        }
+      })
+    ).then((results) => {
+      setSuggestions(results.filter((r): r is NonNullable<typeof r> => r !== null));
+    });
   }, [content]);
 
   const overflowIndex = useMemo(() => {

@@ -135,9 +135,9 @@ You may output multiple ACTION blocks if needed (e.g., search then act on result
 - create_theme: Create a theme category. Input: {"name":"...","color":"..."}. Both required.
 
 **Calendar & Scheduling:**
-- list_calendar_events: List meetings for a date range. Input: {"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}. Returns event titles, times, locations.
+- list_calendar_events: List meetings for a date range. Input: {"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}. Returns event titles, times, locations. Use this to check what meetings exist before scheduling work.
 - get_available_slots: Find open time slots for a day. Input: {"date":"YYYY-MM-DD"}. Returns gaps between meetings.
-- create_work_block: Block time on the calendar for a task. Input: {"date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM","title":"...","taskId":"..."}. taskId optional.
+- create_work_block: Block time on the calendar. Input: {"date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM","title":"..."}. taskId optional. Use 24-hour time format.
 - move_work_block: Move an existing work block. Input: {"blockId":"...","newDate":"YYYY-MM-DD","newStartTime":"HH:MM","newEndTime":"HH:MM"}.
 - delete_work_block: Remove a work block. Input: {"blockId":"..."}.
 - reschedule_day: Regenerate today's schedule after changes. Input: {"reason":"brief description"}.
