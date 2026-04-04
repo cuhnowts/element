@@ -24,6 +24,10 @@ import {
   createNotificationSlice,
   type NotificationSlice,
 } from "./notificationSlice";
+import {
+  createHeartbeatSlice,
+  type HeartbeatSlice,
+} from "./heartbeatSlice";
 
 export type AppStore = ProjectSlice &
   TaskSlice &
@@ -37,7 +41,8 @@ export type AppStore = ProjectSlice &
   PhaseSlice &
   FileExplorerSlice &
   OnboardingSlice &
-  NotificationSlice;
+  NotificationSlice &
+  HeartbeatSlice;
 
 export const useStore = create<AppStore>()((...a) => ({
   ...createProjectSlice(...a),
@@ -53,4 +58,5 @@ export const useStore = create<AppStore>()((...a) => ({
   ...createFileExplorerSlice(...a),
   ...createOnboardingSlice(...a),
   ...createNotificationSlice(...a),
+  ...createHeartbeatSlice(...a),
 }));

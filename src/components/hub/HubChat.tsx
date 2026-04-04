@@ -8,6 +8,7 @@ import {
 } from "@/hooks/useActionDispatch";
 import { ActionConfirmCard } from "./ActionConfirmCard";
 import { ActionResultCard } from "./ActionResultCard";
+import { ScheduleChangeCard } from "./ScheduleChangeCard";
 import { useHubChatStore } from "@/stores/useHubChatStore";
 import { useHubChatStream } from "@/hooks/useHubChatStream";
 import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
@@ -17,6 +18,41 @@ import { Input } from "@/components/ui/input";
 import { Send, Square, Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
+/** Parse a SCHEDULE_CHANGE JSON block from bot response */
+interface ScheduleChangeProposal {
+  id: string;
+  taskTitle: string;
+  beforeDay: string;
+  beforeTime: string;
+  afterDay: string;
+  afterTime: string;
+  sideEffect?: string;
+  resolved?: "confirmed" | "dismissed" | null;
+}
+
+function tryParseScheduleChange(text: string): ScheduleChangeProposal | null {
+  const match = text.match(/\[SCHEDULE_CHANGE\]\s*(\{[\s\S]*?\})/);
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (parsed.taskTitle && parsed.beforeDay && parsed.afterDay) {
+      return {
+        id: `sc-${Date.now()}`,
+        taskTitle: parsed.taskTitle,
+        beforeDay: parsed.beforeDay,
+        beforeTime: parsed.beforeTime ?? "",
+        afterDay: parsed.afterDay,
+        afterTime: parsed.afterTime ?? "",
+        sideEffect: parsed.sideEffect,
+        resolved: null,
+      };
+    }
+  } catch {
+    // Malformed schedule change JSON
+  }
+  return null;
+}
 
 /** Parse a streaming chunk to check if it's a tool_use JSON event or CLI ACTION: block */
 function tryParseToolUse(
@@ -155,6 +191,7 @@ export function HubChat() {
   const [confirmResolved, setConfirmResolved] = useState<
     "approved" | "rejected" | null
   >(null);
+  const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeProposal[]>([]);
 
   // Fetch manifest on mount for system prompt context
   useEffect(() => {
@@ -174,7 +211,24 @@ export function HubChat() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, streamingContent, actionResults, pendingAction]);
+  }, [messages, streamingContent, actionResults, pendingAction, scheduleChanges]);
+
+  // Detect SCHEDULE_CHANGE blocks in finalized assistant messages
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "assistant") {
+      const proposal = tryParseScheduleChange(lastMsg.content);
+      if (proposal) {
+        setScheduleChanges((prev) => {
+          // Avoid duplicates by checking if we already have one for this task
+          if (prev.some((sc) => sc.taskTitle === proposal.taskTitle && !sc.resolved)) {
+            return prev;
+          }
+          return [...prev, proposal];
+        });
+      }
+    }
+  }, [messages]);
 
   // Intercept streaming chunks to detect tool_use events
   const originalAppendChunk = useHubChatStore.getState().appendChunk;
@@ -372,6 +426,20 @@ export function HubChat() {
     useHubChatStore.getState().stopGenerating();
   };
 
+  const handleScheduleConfirm = useCallback((id: string) => {
+    setScheduleChanges((prev) =>
+      prev.map((sc) => (sc.id === id ? { ...sc, resolved: "confirmed" } : sc)),
+    );
+    // D-14: schedule changes require explicit confirmation
+    // The actual reschedule is handled by the bot tool call flow
+  }, []);
+
+  const handleScheduleDismiss = useCallback((id: string) => {
+    setScheduleChanges((prev) =>
+      prev.map((sc) => (sc.id === id ? { ...sc, resolved: "dismissed" } : sc)),
+    );
+  }, []);
+
   const isInputDisabled = isStreaming || pendingAction !== null;
 
   return (
@@ -432,6 +500,22 @@ export function HubChat() {
               key={ar.id}
               success={ar.success}
               message={ar.message}
+            />
+          ))}
+
+          {/* Schedule change proposals */}
+          {scheduleChanges.map((sc) => (
+            <ScheduleChangeCard
+              key={sc.id}
+              taskTitle={sc.taskTitle}
+              beforeDay={sc.beforeDay}
+              beforeTime={sc.beforeTime}
+              afterDay={sc.afterDay}
+              afterTime={sc.afterTime}
+              sideEffect={sc.sideEffect}
+              onConfirm={() => handleScheduleConfirm(sc.id)}
+              onDismiss={() => handleScheduleDismiss(sc.id)}
+              resolved={sc.resolved}
             />
           ))}
 

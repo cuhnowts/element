@@ -8,6 +8,7 @@ import { CredentialVault } from "./CredentialVault";
 import { CalendarAccounts } from "./CalendarAccounts";
 import { ScheduleSettings } from "./ScheduleSettings";
 import { AiSettings } from "./AiSettings";
+import { HeartbeatSettings } from "./HeartbeatSettings";
 
 const tabHeadings: Record<string, string> = {
   plugins: "Plugins",
@@ -15,6 +16,7 @@ const tabHeadings: Record<string, string> = {
   calendars: "Calendars",
   schedule: "Schedule",
   ai: "AI",
+  heartbeat: "Heartbeat",
 };
 
 export function SettingsPage() {
@@ -61,6 +63,8 @@ export function SettingsPage() {
         return <ScheduleSettings />;
       case "ai":
         return <AiSettings />;
+      case "heartbeat":
+        return <HeartbeatSettings />;
       default:
         return null;
     }
