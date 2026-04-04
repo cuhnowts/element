@@ -25,6 +25,7 @@ The AI agent must reliably orchestrate project work — planning, executing, and
 ## Current State
 
 **Shipped:** v1.4 Daily Hub (2026-04-03)
+**Phase 28 complete (2026-04-04):** Due dates & daily planning — date picker, three-tier urgency visuals, manifest schedule data, daily plan UI with suggestions and rescheduling
 **Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
@@ -85,11 +86,11 @@ v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/
 - [ ] Calendar sync fix — debug Google/Outlook OAuth plugin, reliable background sync
 - [ ] Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks
 - [ ] Hub calendar view — real day/week view showing meetings + work blocks
-- [ ] Daily planning skill — AI presents prioritized to-dos against available time conversationally
-- [ ] Due date enforcement — all tasks/phases get due dates, AI suggests them through conversation
+- ✓ Daily planning skill — AI presents prioritized to-dos against available time conversationally — v1.5 Phase 28
+- ✓ Due date enforcement — all tasks/phases get due dates, AI suggests them through conversation — v1.5 Phase 28
 - [ ] Heartbeat — periodic background LLM check flagging deadline risks and suggesting reshuffles
 - [ ] Schedule negotiation — conversational renegotiation when plans change
-- [ ] Backlog exemption — backlog items immune to due date enforcement
+- ✓ Backlog exemption — backlog items immune to due date enforcement — v1.5 Phase 28
 
 ### Future
 
