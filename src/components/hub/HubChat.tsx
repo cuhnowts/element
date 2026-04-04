@@ -341,16 +341,24 @@ export function HubChat() {
       content: m.content,
     }));
 
-    // Format result clearly so the LLM can extract IDs and act
+    // Format result clearly so the LLM can extract data and act
     let resultContent: string;
     if (result.success && Array.isArray(result.data)) {
-      // Search results — format as readable list with IDs
-      const items = (result.data as Record<string, unknown>[]).map(
-        (item) => `- id: ${item.id}, title: "${item.title}", status: ${item.status}`
-      ).join("\n");
-      resultContent = `Search results:\n${items || "(no matches)"}.\n\nNow take the next action using the IDs above. Output an ACTION block.`;
+      const items = result.data as Record<string, unknown>[];
+      if (items.length === 0) {
+        resultContent = "No results found.\n\nProceed with the next step. Output an ACTION block if needed.";
+      } else {
+        // Format each item showing all its fields
+        const formatted = items.map((item) => {
+          const parts = Object.entries(item)
+            .filter(([, v]) => v != null && v !== "")
+            .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+          return `- ${parts.join(", ")}`;
+        }).join("\n");
+        resultContent = `Results:\n${formatted}\n\nUse the data above for your next action. Output an ACTION block.`;
+      }
     } else if (result.success) {
-      resultContent = `Done: ${JSON.stringify(result.data)}`;
+      resultContent = `Done: ${JSON.stringify(result.data)}\n\nProceed with the next step if needed.`;
     } else {
       resultContent = `Error: ${result.error}`;
     }
