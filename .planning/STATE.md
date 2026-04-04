@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Time Bounded
-status: Ready to plan
-stopped_at: "Completed 27-03-PLAN.md (awaiting checkpoint:human-verify)"
-last_updated: "2026-04-04T12:50:32.502Z"
+status: Ready to execute
+stopped_at: Completed 29-01-PLAN.md
+last_updated: "2026-04-04T17:22:47.346Z"
 progress:
   total_phases: 11
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 7
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 28 — due-dates-daily-planning
+**Current focus:** Phase 30 — heartbeat-schedule-negotiation
 
 ## Current Position
 
-Phase: 29
-Plan: Not started
+Phase: 30 (heartbeat-schedule-negotiation) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 28]: Used isContinuation field on schedule blocks for overflow detection
 - [Phase 28]: Added input transform in useActionDispatch for reschedule_day to map reason to date param
 - [Phase 27]: Week grid columns driven by workHours.workDays with DAY_KEY_TO_OFFSET map, schedule blocks only in today column
+- [Phase 26]: AppHandle.state() pattern for Send-safe async helpers instead of State<> parameters
+- [Phase 26]: Post-connect sync spawned as background task to avoid non-Send State across await
+- [Phase 29]: Port Rust find_open_blocks to TypeScript using minutes-since-midnight integer arithmetic; calendar events get buffer, work blocks do not
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:47:30.455Z
-Stopped at: Completed 27-03-PLAN.md (awaiting checkpoint:human-verify)
+Last session: 2026-04-04T17:22:47.344Z
+Stopped at: Completed 29-01-PLAN.md
 Resume file: None

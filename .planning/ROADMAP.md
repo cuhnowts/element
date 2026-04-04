@@ -99,7 +99,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **Plans**: 2 plans
 
 Plans:
-- [ ] 26-01-PLAN.md -- Fix Google/Outlook sync bugs (410, timezone, invalid_grant, cancelled events, placeholder guards)
+- [x] 26-01-PLAN.md -- Fix Google/Outlook sync bugs (410, timezone, invalid_grant, cancelled events, placeholder guards)
 - [ ] 26-02-PLAN.md -- Wire scheduler to real calendar events and finalize background sync timing
 
 ### Phase 27: Hub Calendar View
@@ -148,7 +148,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 29-01-PLAN.md -- MCP server calendar tool handlers, gap detection algorithm, and unit tests
+- [x] 29-01-PLAN.md -- MCP server calendar tool handlers, gap detection algorithm, and unit tests
 - [ ] 29-02-PLAN.md -- Tauri commands, action registry entries, and system prompt update for hub chat integration
 
 ### Phase 30: Heartbeat & Schedule Negotiation
@@ -201,10 +201,10 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 23. Context Manifest and AI Briefing | v1.4 | 2/2 | Complete | 2026-04-03 |
 | 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
-| 26. Calendar Sync Foundation | v1.5 | 0/2 | Planned    |  |
+| 26. Calendar Sync Foundation | v1.5 | 1/2 | In Progress|  |
 | 27. Hub Calendar View | v1.5 | 2/3 | In Progress|  |
 | 28. Due Dates & Daily Planning | v1.5 | 0/3 | Complete    | 2026-04-04 |
-| 29. Calendar MCP Tools | v1.5 | 0/2 | Planned    |  |
+| 29. Calendar MCP Tools | v1.5 | 1/2 | In Progress|  |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 0/3 | Planned    |  |
 
 ## Backlog
@@ -213,7 +213,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

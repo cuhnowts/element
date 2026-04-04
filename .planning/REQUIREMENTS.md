@@ -11,8 +11,8 @@ Requirements for v1.5 Time Bounded milestone. Each maps to roadmap phases.
 
 - [x] **CAL-01**: Google Calendar OAuth sync works reliably with token refresh and 410 handling
 - [x] **CAL-02**: Outlook Calendar OAuth sync works with correct timezone parsing
-- [ ] **CAL-03**: Calendar events are wired to the scheduling engine for gap detection
-- [ ] **CAL-04**: Calendar sync runs on a background interval with debounced refresh
+- [x] **CAL-03**: Calendar events are wired to the scheduling engine for gap detection
+- [x] **CAL-04**: Calendar sync runs on a background interval with debounced refresh
 
 ### Calendar View
 
@@ -29,9 +29,9 @@ Requirements for v1.5 Time Bounded milestone. Each maps to roadmap phases.
 
 ### Calendar MCP Tools
 
-- [ ] **MCP-01**: MCP server exposes tools to read calendar events for a date range
-- [ ] **MCP-02**: MCP server exposes tools to create/move work blocks on the calendar
-- [ ] **MCP-03**: MCP server exposes tools to query available time slots
+- [x] **MCP-01**: MCP server exposes tools to read calendar events for a date range
+- [x] **MCP-02**: MCP server exposes tools to create/move work blocks on the calendar
+- [x] **MCP-03**: MCP server exposes tools to query available time slots
 
 ### Daily Planning
 
@@ -91,8 +91,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | CAL-01 | Phase 26 | Complete |
 | CAL-02 | Phase 26 | Complete |
-| CAL-03 | Phase 26 | Pending |
-| CAL-04 | Phase 26 | Pending |
+| CAL-03 | Phase 26 | Complete |
+| CAL-04 | Phase 26 | Complete |
 | VIEW-01 | Phase 27 | Complete |
 | VIEW-02 | Phase 27 | Complete |
 | VIEW-03 | Phase 27 | Complete |
@@ -104,9 +104,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAN-02 | Phase 28 | Complete |
 | PLAN-03 | Phase 28 | Complete |
 | PLAN-04 | Phase 28 | Complete |
-| MCP-01 | Phase 29 | Pending |
-| MCP-02 | Phase 29 | Pending |
-| MCP-03 | Phase 29 | Pending |
+| MCP-01 | Phase 29 | Complete |
+| MCP-02 | Phase 29 | Complete |
+| MCP-03 | Phase 29 | Complete |
 | BEAT-01 | Phase 30 | Pending |
 | BEAT-02 | Phase 30 | Pending |
 | BEAT-03 | Phase 30 | Pending |
