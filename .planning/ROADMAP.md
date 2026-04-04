@@ -111,8 +111,13 @@ Plans:
   2. User can toggle between day view and week view
   3. Work blocks scheduled by the AI are visually distinct from external calendar meetings
   4. Clicking a work block navigates the user to the associated task's detail view
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 27-01-PLAN.md -- Types, layout math (TDD), Zustand state, and data hooks
+- [ ] 27-02-PLAN.md -- Day view UI components and HubView wiring
+- [ ] 27-03-PLAN.md -- Week view, meeting popover, MiniCalendar coordination, and integration tests
 
 ### Phase 28: Due Dates & Daily Planning
 **Goal**: Users get a conversational daily planning experience -- the AI presents what fits today, suggests due dates, and adapts when plans change, while backlog items stay out of the way
@@ -182,7 +187,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
 | 26. Calendar Sync Foundation | v1.5 | 0/2 | Not started | - |
-| 27. Hub Calendar View | v1.5 | 0/? | Not started | - |
+| 27. Hub Calendar View | v1.5 | 0/3 | Not started | - |
 | 28. Due Dates & Daily Planning | v1.5 | 0/? | Not started | - |
 | 29. Calendar MCP Tools | v1.5 | 0/? | Not started | - |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 0/? | Not started | - |
