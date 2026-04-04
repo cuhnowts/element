@@ -219,7 +219,8 @@ export type SettingsTab =
   | "credentials"
   | "calendars"
   | "schedule"
-  | "ai";
+  | "ai"
+  | "heartbeat";
 
 // Notification types
 export interface Notification {
