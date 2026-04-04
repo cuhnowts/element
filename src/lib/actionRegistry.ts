@@ -255,21 +255,22 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   {
     name: "create_work_block",
     description:
-      "Schedule a work block for a task on the calendar. Requires user approval.",
+      "Block time on the calendar for focused work. Can optionally link to a task.",
     inputSchema: {
       type: "object",
       properties: {
         date: { type: "string", description: "Date (YYYY-MM-DD)" },
-        taskId: {
-          type: "string",
-          description: "Task ID to assign to this block",
-        },
         startTime: { type: "string", description: "Start time (HH:mm)" },
         endTime: { type: "string", description: "End time (HH:mm)" },
+        title: { type: "string", description: "Block title (e.g., 'Deep Focus')" },
+        taskId: {
+          type: "string",
+          description: "Optional task ID to link this block to",
+        },
       },
-      required: ["date", "taskId", "startTime", "endTime"],
+      required: ["date", "startTime", "endTime"],
     },
-    destructive: true,
+    destructive: false,
     tauriCommand: "create_work_block",
   },
   {

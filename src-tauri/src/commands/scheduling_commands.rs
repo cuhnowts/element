@@ -409,25 +409,29 @@ pub async fn get_available_slots(
 #[tauri::command]
 pub async fn create_work_block(
     date: String,
-    task_id: String,
     start_time: String,
     end_time: String,
+    title: Option<String>,
+    task_id: Option<String>,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
     app: AppHandle,
 ) -> Result<serde_json::Value, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-    // Verify task exists
-    let task_exists: bool = db
-        .conn()
-        .prepare("SELECT 1 FROM tasks WHERE id = ?1")
-        .map_err(|e| e.to_string())?
-        .exists(rusqlite::params![&task_id])
-        .map_err(|e| e.to_string())?;
-    if !task_exists {
-        return Err("Task not found. Search for a task first, then schedule it.".to_string());
+    // Verify task exists if provided
+    if let Some(ref tid) = task_id {
+        let task_exists: bool = db
+            .conn()
+            .prepare("SELECT 1 FROM tasks WHERE id = ?1")
+            .map_err(|e| e.to_string())?
+            .exists(rusqlite::params![tid])
+            .map_err(|e| e.to_string())?;
+        if !task_exists {
+            return Err("Task not found. Search for a task first, then schedule it.".to_string());
+        }
     }
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
+    let block_title = title.unwrap_or_else(|| "Work Block".to_string());
     db.conn()
         .execute(
             "INSERT INTO scheduled_blocks (id, schedule_date, task_id, block_type, start_time, end_time, is_confirmed, created_at)
