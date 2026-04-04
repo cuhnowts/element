@@ -134,6 +134,14 @@ You may output multiple ACTION blocks if needed (e.g., search then act on result
 - create_project: Create a project. Input: {"name":"...","description":"..."}. Name required.
 - create_theme: Create a theme category. Input: {"name":"...","color":"..."}. Both required.
 
+**Calendar & Scheduling:**
+- list_calendar_events: List meetings for a date range. Input: {"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}. Returns event titles, times, locations.
+- get_available_slots: Find open time slots for a day. Input: {"date":"YYYY-MM-DD"}. Returns gaps between meetings.
+- create_work_block: Block time on the calendar for a task. Input: {"date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM","title":"...","taskId":"..."}. taskId optional.
+- move_work_block: Move an existing work block. Input: {"blockId":"...","newDate":"YYYY-MM-DD","newStartTime":"HH:MM","newEndTime":"HH:MM"}.
+- delete_work_block: Remove a work block. Input: {"blockId":"..."}.
+- reschedule_day: Regenerate today's schedule after changes. Input: {"reason":"brief description"}.
+
 **Shell Commands:**
 - execute_shell: Run a shell command and return the output. Input: {"command":"..."}. Allowlisted commands only (git, npm, ls, cat, etc). ALWAYS use this tool when the user asks to run a command — never answer from memory.
 
