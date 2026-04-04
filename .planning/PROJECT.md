@@ -26,6 +26,7 @@ The AI agent must reliably orchestrate project work — planning, executing, and
 
 **Shipped:** v1.4 Daily Hub (2026-04-03)
 **Phase 28 complete (2026-04-04):** Due dates & daily planning — date picker, three-tier urgency visuals, manifest schedule data, daily plan UI with suggestions and rescheduling
+**Phase 29 complete (2026-04-04):** Calendar MCP tools — 5 MCP tool handlers (list events, get slots, create/move/delete work blocks), gap detection algorithm, hub chat bot dual-registration wiring
 **Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
@@ -84,7 +85,7 @@ v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/
 ### Active
 
 - [ ] Calendar sync fix — debug Google/Outlook OAuth plugin, reliable background sync
-- [ ] Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks
+- ✓ Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks — v1.5 Phase 29
 - [ ] Hub calendar view — real day/week view showing meetings + work blocks
 - ✓ Daily planning skill — AI presents prioritized to-dos against available time conversationally — v1.5 Phase 28
 - ✓ Due date enforcement — all tasks/phases get due dates, AI suggests them through conversation — v1.5 Phase 28
@@ -189,4 +190,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after milestone v1.5 Time Bounded started*
+*Last updated: 2026-04-04 after Phase 29 Calendar MCP Tools completed*
