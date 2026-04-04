@@ -10,7 +10,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.1 Project Manager** -- Phases 6-11 (shipped 2026-03-25) -- [archive](milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Intelligent Planning** -- Phases 12-16 (shipped 2026-03-28) -- [archive](milestones/v1.2-ROADMAP.md)
 - ✅ **v1.3 Foundation & Execution** -- Phases 17-21 (shipped 2026-04-01) -- [archive](milestones/v1.3-ROADMAP.md)
-- 🚧 **v1.4 Daily Hub** -- Phases 22-25 (in progress)
+- ✅ **v1.4 Daily Hub** -- Phases 22-25 (shipped 2026-04-03) -- [archive](milestones/v1.4-ROADMAP.md)
+- 🚧 **v1.5 Time Bounded** -- Phases 26-30 (in progress)
 
 ## Phases
 
@@ -60,85 +61,97 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### 🚧 v1.4 Daily Hub (In Progress)
+<details>
+<summary>v1.4 Daily Hub (Phases 22-25) -- SHIPPED 2026-04-03</summary>
 
-**Milestone Goal:** Replace TodayView with an AI-powered daily hub that greets the user, summarizes priorities across all projects, and provides a conversational interface to the central orchestrator.
+- [x] Phase 22: Hub Shell and Goals Tree (3/3 plans) -- completed 2026-04-02
+- [x] Phase 23: Context Manifest and AI Briefing (2/2 plans) -- completed 2026-04-03
+- [x] Phase 24: Hub Chat (3/3 plans) -- completed 2026-04-03
+- [x] Phase 25: Bot Skills and MCP Write Tools (4/4 plans) -- completed 2026-04-03
 
-- [x] **Phase 22: Hub Shell and Goals Tree** - 3-column layout with goals hierarchy, CenterPanel routing, and column minimize/expand (completed 2026-04-02)
-- [ ] **Phase 23: Context Manifest and AI Briefing** - In-memory project status aggregation and LLM-generated daily summary
-- [ ] **Phase 24: Hub Chat** - Conversational interface to the orchestrator with streaming markdown responses
-- [x] **Phase 25: Bot Skills and MCP Write Tools** - Chat action dispatch, shell execution, and entity CRUD for both interactive and background agent (completed 2026-04-02)
+</details>
+
+### v1.5 Time Bounded (In Progress)
+
+**Milestone Goal:** Turn Element into a daily scheduling assistant that reads your calendar, knows your tasks and deadlines, and opens with "Here's what you have time for today."
+
+**Phase Numbering:**
+- Integer phases (26, 27, 28...): Planned milestone work
+- Decimal phases (26.1, 26.2): Urgent insertions (marked with INSERTED)
+
+- [ ] **Phase 26: Calendar Sync Foundation** - Fix OAuth bugs and wire calendar events to scheduling engine
+- [ ] **Phase 27: Hub Calendar View** - Day/week time-grid showing meetings and work blocks
+- [ ] **Phase 28: Due Dates & Daily Planning** - Due date enforcement with backlog exemption and AI daily planning skill
+- [ ] **Phase 29: Calendar MCP Tools** - Bot tools for reading calendar and managing work blocks
+- [ ] **Phase 30: Heartbeat & Schedule Negotiation** - Background deadline monitoring and conversational rescheduling
 
 ## Phase Details
 
-### Phase 22: Hub Shell and Goals Tree
-**Goal**: Users see a structured daily hub as their home screen with a navigable goals hierarchy across all projects
-**Depends on**: Phase 21 (agent lifecycle must be liftable to AppLayout)
-**Requirements**: HUB-01, HUB-02, HUB-03, HUB-04, GOAL-01, GOAL-02, GOAL-03
+### Phase 26: Calendar Sync Foundation
+**Goal**: Calendar events reliably flow from Google and Outlook into the app and feed the scheduling engine
+**Depends on**: Nothing (first phase of v1.5; built on v1.4 infrastructure)
+**Requirements**: CAL-01, CAL-02, CAL-03, CAL-04
 **Success Criteria** (what must be TRUE):
-  1. User sees a 3-column hub layout as the default screen on app launch (not TodayView)
-  2. User can minimize any column to a sliver and restore it with a "+" button
-  3. User can browse a collapsible tree of themes, projects, phases, and standalone tasks with progress indicators
-  4. User can click any project or phase in the goals tree to navigate to its detail view
-  5. User can return to the hub from any view via a Home button in the sidebar
-**Plans**: 3 plans
-Plans:
-- [x] 22-01-PLAN.md -- activeView routing and Home button
-- [x] 22-02-PLAN.md -- Hub 3-column layout with minimize/expand and persistence
-- [ ] 22-03-PLAN.md -- Goals tree with progress indicators and Chores section
-**UI hint**: yes
-
-### Phase 23: Context Manifest and AI Briefing
-**Goal**: Users receive an AI-generated daily summary of priorities across all projects, powered by an efficient context manifest
-**Depends on**: Phase 22
-**Requirements**: CTX-01, CTX-02, CTX-03, BRIEF-01, BRIEF-02, BRIEF-03
-**Success Criteria** (what must be TRUE):
-  1. User sees a personalized greeting and AI-generated briefing in the hub center column on load
-  2. Briefing content reflects actual project state -- phases in progress, overdue tasks, upcoming deadlines
-  3. Briefing streams in with visible loading state and can be manually refreshed
-  4. Context manifest stays under 2000 tokens regardless of project count (no LLM quality degradation at scale)
+  1. User with a Google Calendar connected sees their events appear in the app within one sync cycle, including after token refresh and 410 sync token invalidation
+  2. User with an Outlook Calendar connected sees events with correct times regardless of their timezone
+  3. The scheduling engine detects busy time from real calendar events when generating a schedule (empty vec tech debt resolved)
+  4. Calendar sync runs automatically in the background on a timer without user intervention
 **Plans**: 2 plans
+
 Plans:
-- [x] 23-01-PLAN.md -- Rust manifest builder, briefing streamer, and debounced cache
-- [ ] 23-02-PLAN.md -- Frontend briefing UI with streaming markdown and hub integration
+- [ ] 26-01-PLAN.md -- Fix Google/Outlook sync bugs (410, timezone, invalid_grant, cancelled events, placeholder guards)
+- [ ] 26-02-PLAN.md -- Wire scheduler to real calendar events and finalize background sync timing
+
+### Phase 27: Hub Calendar View
+**Goal**: Users can see their day at a glance -- meetings from external calendars and AI-scheduled work blocks in one view
+**Depends on**: Phase 26
+**Requirements**: VIEW-01, VIEW-02, VIEW-03, VIEW-04
+**Success Criteria** (what must be TRUE):
+  1. Hub right column displays a time-grid day view with time slots showing both external meetings and internal work blocks
+  2. User can toggle between day view and week view
+  3. Work blocks scheduled by the AI are visually distinct from external calendar meetings
+  4. Clicking a work block navigates the user to the associated task's detail view
+**Plans**: TBD
 **UI hint**: yes
 
-### Phase 24: Hub Chat
-**Goal**: Users can converse with the orchestrator directly from the hub to ask questions and get guidance
-**Depends on**: Phase 23 (extends hub store, prompt infrastructure, streaming pipeline)
-**Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04
+### Phase 28: Due Dates & Daily Planning
+**Goal**: Users get a conversational daily planning experience -- the AI presents what fits today, suggests due dates, and adapts when plans change, while backlog items stay out of the way
+**Depends on**: Phase 26, Phase 27
+**Requirements**: DUE-01, DUE-02, DUE-03, PLAN-01, PLAN-02, PLAN-03, PLAN-04
 **Success Criteria** (what must be TRUE):
-  1. User can type a message in the hub and receive a streaming AI response with markdown rendering
-  2. User can have a multi-turn conversation within the session (context carries forward)
-  3. Hub chat operates independently from the agent panel -- opening hub chat does not trigger the agent sidebar
-  4. Chat responses are context-aware (informed by the project manifest, not generic)
-**Plans**: 3 plans
-Plans:
-- [x] 24-01-PLAN.md -- Multi-turn chat_stream backend (Rust types, trait, 4 providers, Tauri commands)
-- [ ] 24-02-PLAN.md -- Frontend chat plumbing (types, Zustand store, streaming hook, npm deps)
-- [ ] 24-03-PLAN.md -- Chat UI components (markdown renderer, bubbles, input, chips, container)
+  1. User can set a due date on any task or phase via a date picker in the UI
+  2. Overdue and upcoming-soon tasks are visually flagged in the goals tree and task detail views
+  3. Tasks in backlog phases (999.x) do not show due date warnings or nag the user
+  4. On hub load, the bot presents a prioritized daily plan showing tasks ranked against available calendar time
+  5. User can tell the bot about lost time or changed priorities and get an updated plan suggestion (not auto-applied)
+**Plans**: TBD
 **UI hint**: yes
 
-### Phase 25: Bot Skills and MCP Write Tools
-**Goal**: The orchestrator can take action on the user's behalf -- creating tasks, updating statuses, running commands -- from both interactive chat and background agent
-**Depends on**: Phase 24 (action dispatch requires working chat), Phase 21 (MCP sidecar extension)
-**Requirements**: SKILL-01, SKILL-02, SKILL-03, SKILL-04
+### Phase 29: Calendar MCP Tools
+**Goal**: External AI agents can read the user's calendar and manage work blocks through the MCP server
+**Depends on**: Phase 26, Phase 28
+**Requirements**: MCP-01, MCP-02, MCP-03
 **Success Criteria** (what must be TRUE):
-  1. User can ask the bot to create a task or update a status via chat and see it take effect in the app
-  2. MCP sidecar exposes write tools (create_task, update_task_status, create_file) for background agent use
-  3. User can ask the bot to run a shell command, with an allowlist enforced at the handler level
-  4. Destructive actions (delete, overwrite, risky commands) require explicit user confirmation before execution
-**Plans**: 4 plans
-Plans:
-- [x] 25-01-PLAN.md -- Shared action registry and shell allowlist validation
-- [x] 25-02-PLAN.md -- MCP sidecar write tools and read-write database
-- [ ] 25-03-PLAN.md -- AI gateway tool_use support, action dispatch, and confirmation UI
-- [ ] 25-04-PLAN.md -- Shell execution command, output block, allowlist settings, agent prompt
+  1. An MCP client can list calendar events for any date range and receive structured event data
+  2. An MCP client can create and move work blocks, which then appear in the hub calendar view
+  3. An MCP client can query available time slots for a given day and receive gap data
+**Plans**: TBD
+
+### Phase 30: Heartbeat & Schedule Negotiation
+**Goal**: The app proactively warns about deadline risks and lets users conversationally renegotiate their schedule
+**Depends on**: Phase 28
+**Requirements**: BEAT-01, BEAT-02, BEAT-03, BEAT-04
+**Success Criteria** (what must be TRUE):
+  1. A background process periodically evaluates whether remaining work can fit before deadlines, without user action
+  2. When deadline risk is detected, the user sees a notification and the daily briefing reflects the risk
+  3. Heartbeat uses a local LLM (Ollama) for risk summaries when available, falling back to the configured CLI tool
+  4. Backlog items (999.x phases) are ignored by the heartbeat -- no false alarms on intentionally unscheduled work
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 22 → 23 → 24 → 25
+Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -154,20 +167,25 @@ Phases execute in numeric order: 22 → 23 → 24 → 25
 | 9. Embedded Terminal | v1.1 | 2/2 | Complete | 2026-03-23 |
 | 10. AI Project Onboarding | v1.1 | 3/3 | Complete | 2026-03-23 |
 | 11. Workspace Integration and AI Context | v1.1 | 3/3 | Complete | 2026-03-25 |
-| 12. CLI Settings and Schema Foundation | v1.2 | 1/2 | Complete | 2026-03-28 |
-| 13. Adaptive Context Builder | v1.2 | 0/1 | Complete | 2026-03-28 |
-| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 0/4 | Complete | 2026-03-28 |
-| 15. .planning/ Folder Sync | v1.2 | 1/2 | Complete | 2026-03-28 |
-| 16. Onboarding Skill and Context Delivery | v1.2 | 0/1 | Complete | 2026-03-28 |
-| 17. Tech Debt Cleanup | v1.3 | 0/2 | Complete | 2026-03-30 |
-| 18. UI Polish | v1.3 | 0/3 | Complete | 2026-03-30 |
-| 19. Multi-Terminal Sessions | v1.3 | 1/3 | Complete | 2026-03-30 |
+| 12. CLI Settings and Schema Foundation | v1.2 | 2/2 | Complete | 2026-03-28 |
+| 13. Adaptive Context Builder | v1.2 | 1/1 | Complete | 2026-03-28 |
+| 14. Planning Tier Decision Tree and Execution Mode | v1.2 | 4/4 | Complete | 2026-03-28 |
+| 15. .planning/ Folder Sync | v1.2 | 2/2 | Complete | 2026-03-28 |
+| 16. Onboarding Skill and Context Delivery | v1.2 | 1/1 | Complete | 2026-03-28 |
+| 17. Tech Debt Cleanup | v1.3 | 2/2 | Complete | 2026-03-30 |
+| 18. UI Polish | v1.3 | 3/3 | Complete | 2026-03-30 |
+| 19. Multi-Terminal Sessions | v1.3 | 3/3 | Complete | 2026-03-30 |
 | 20. Notification System | v1.3 | 2/2 | Complete | 2026-04-01 |
 | 21. Central AI Agent | v1.3 | 6/6 | Complete | 2026-04-01 |
-| 22. Hub Shell and Goals Tree | v1.4 | 2/3 | Complete    | 2026-04-02 |
-| 23. Context Manifest and AI Briefing | v1.4 | 1/2 | In Progress|  |
-| 24. Hub Chat | v1.4 | 1/3 | In Progress|  |
-| 25. Bot Skills and MCP Write Tools | v1.4 | 2/4 | Complete    | 2026-04-02 |
+| 22. Hub Shell and Goals Tree | v1.4 | 3/3 | Complete | 2026-04-02 |
+| 23. Context Manifest and AI Briefing | v1.4 | 2/2 | Complete | 2026-04-03 |
+| 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
+| 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
+| 26. Calendar Sync Foundation | v1.5 | 0/2 | Not started | - |
+| 27. Hub Calendar View | v1.5 | 0/? | Not started | - |
+| 28. Due Dates & Daily Planning | v1.5 | 0/? | Not started | - |
+| 29. Calendar MCP Tools | v1.5 | 0/? | Not started | - |
+| 30. Heartbeat & Schedule Negotiation | v1.5 | 0/? | Not started | - |
 
 ## Backlog
 
@@ -200,7 +218,7 @@ Plans:
 
 ### Phase 999.4: GSD .planning/ Directory Sync (BACKLOG)
 
-**Goal:** When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created → mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app.
+**Goal:** When a directory is linked to a project, scan for `.planning/ROADMAP.md` and parse existing phases/tasks into the Element database. File watcher on `.planning/` syncs updates as GSD executes phases (e.g., SUMMARY.md created -> mark tasks complete). This would let users run `/gsd:new-project` in a linked directory and see the resulting phases and tasks visualized in the app.
 **Requirements:** TBD
 **Plans:** 0 plans
 
