@@ -655,6 +655,8 @@ pub fn save_events(
 }
 
 /// List events within a time range.
+/// Start/end can be plain dates (YYYY-MM-DD) or full RFC3339 timestamps.
+/// Uses date() SQLite function to handle timezone-aware comparisons.
 pub fn list_events_for_range(
     conn: &rusqlite::Connection,
     start: &str,
@@ -663,7 +665,7 @@ pub fn list_events_for_range(
     let mut stmt = conn.prepare(
         "SELECT id, account_id, title, description, location, start_time, end_time, all_day, attendees, status, updated_at
          FROM calendar_events
-         WHERE start_time >= ?1 AND end_time <= ?2
+         WHERE date(start_time) >= date(?1) AND date(start_time) <= date(?2)
          ORDER BY start_time",
     )?;
     let events = stmt
