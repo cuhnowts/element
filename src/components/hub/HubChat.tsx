@@ -321,9 +321,9 @@ export function HubChat() {
         };
         setActionResults((prev) => [...prev, actionResult]);
 
-        // Send results back for search/lookup actions so the bot can act on them
-        // Also send for native API tool_use (not CLI ACTION: blocks for mutations)
-        if (!toolUse.id.startsWith("cli-") || toolUse.name === "search_tasks") {
+        // Send results back for lookup actions so the bot can act on them
+        const lookupActions = ["search_tasks", "list_calendar_events", "get_available_slots"];
+        if (!toolUse.id.startsWith("cli-") || lookupActions.includes(toolUse.name)) {
           await sendToolResult(toolUse.id, result);
         }
       }
