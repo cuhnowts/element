@@ -63,6 +63,10 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
   const handleSelect = (date: Date | undefined) => {
     setSelectedDate(date);
     onDateSelect?.(date);
+    if (date) {
+      const setHubSelectedDate = useStore.getState().setHubSelectedDate;
+      setHubSelectedDate(date.toISOString().split("T")[0]);
+    }
   };
 
   const handleMonthChange = (month: Date) => {

@@ -1,6 +1,8 @@
+import { startOfWeek } from "date-fns";
 import { useStore } from "@/stores";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarDayGrid } from "./CalendarDayGrid";
+import { CalendarWeekGrid } from "./CalendarWeekGrid";
 import { AllDayBanner } from "./AllDayBanner";
 import { useCalendarEvents } from "./useCalendarEvents";
 
@@ -9,6 +11,12 @@ export function HubCalendar() {
   const hubViewMode = useStore((s) => s.hubViewMode);
   const { allDayEvents } = useCalendarEvents(hubSelectedDate);
 
+  const weekStartStr = startOfWeek(new Date(hubSelectedDate + "T00:00:00"), {
+    weekStartsOn: 1,
+  })
+    .toISOString()
+    .split("T")[0];
+
   return (
     <div className="flex flex-col h-full">
       <CalendarHeader />
@@ -16,9 +24,7 @@ export function HubCalendar() {
       {hubViewMode === "day" ? (
         <CalendarDayGrid dateStr={hubSelectedDate} />
       ) : (
-        <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
-          Week view coming in Plan 03
-        </div>
+        <CalendarWeekGrid weekStartDate={weekStartStr} />
       )}
     </div>
   );
