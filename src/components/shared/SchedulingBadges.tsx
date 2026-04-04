@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, Timer } from "lucide-react";
 import { RecurrenceIndicator } from "./RecurrenceIndicator";
+import { isOverdue, isDueSoon } from "@/lib/date-utils";
 
 interface SchedulingBadgesProps {
   dueDate: string | null;
@@ -8,6 +9,7 @@ interface SchedulingBadgesProps {
   scheduledTime: string | null;
   durationMinutes: number | null;
   recurrenceRule: string | null;
+  isBacklog?: boolean;
 }
 
 function formatDate(dateStr: string): string {
@@ -18,11 +20,26 @@ function formatDate(dateStr: string): string {
   }).format(date);
 }
 
-function isOverdue(dateStr: string): boolean {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dateStr + "T00:00:00");
-  return due < today;
+function getUrgencyVariant(dueDate: string, isBacklog: boolean): "destructive" | "warning" | "outline" {
+  if (isBacklog) return "outline";
+  if (isOverdue(dueDate)) return "destructive";
+  if (isDueSoon(dueDate)) return "warning";
+  return "outline";
+}
+
+function getDueDateLabel(dueDate: string, isBacklog: boolean): string {
+  if (isBacklog) return formatDate(dueDate);
+  if (isOverdue(dueDate)) return `Overdue - ${formatDate(dueDate)}`;
+  if (isDueSoon(dueDate)) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate + "T00:00:00");
+    const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000);
+    if (diffDays === 0) return "Due today";
+    if (diffDays === 1) return "Due tomorrow";
+    return `Due ${new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(due)}`;
+  }
+  return formatDate(dueDate);
 }
 
 function formatScheduled(
@@ -62,6 +79,7 @@ export function SchedulingBadges({
   scheduledTime,
   durationMinutes,
   recurrenceRule,
+  isBacklog = false,
 }: SchedulingBadgesProps) {
   if (!dueDate && !scheduledDate && !scheduledTime && !durationMinutes && !recurrenceRule) {
     return null;
@@ -70,9 +88,9 @@ export function SchedulingBadges({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {dueDate && (
-        <Badge variant={isOverdue(dueDate) ? "destructive" : "outline"}>
+        <Badge variant={getUrgencyVariant(dueDate, isBacklog)}>
           <CalendarDays className="size-4 mr-1" />
-          {isOverdue(dueDate) ? `Overdue - ${formatDate(dueDate)}` : formatDate(dueDate)}
+          {getDueDateLabel(dueDate, isBacklog)}
         </Badge>
       )}
 

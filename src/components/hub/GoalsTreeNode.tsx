@@ -9,6 +9,7 @@ import { useStore } from "@/stores";
 import { ProgressDot, type ProgressStatus } from "./ProgressDot";
 import type { Project, Phase, Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { isOverdue, isBacklogPhase } from "@/lib/date-utils";
 
 interface GoalsTreeNodeProps {
   project: Project;
@@ -19,10 +20,23 @@ interface GoalsTreeNodeProps {
 export function derivePhaseStatus(
   phaseId: string,
   tasks: Task[],
+  phaseSortOrder?: number,
 ): ProgressStatus {
   const phaseTasks = tasks.filter((t) => t.phaseId === phaseId);
   if (phaseTasks.length === 0) return "not-started";
   if (phaseTasks.every((t) => t.status === "complete")) return "complete";
+
+  // Check for overdue (skip backlog phases)
+  if (
+    phaseSortOrder !== undefined &&
+    !isBacklogPhase(phaseSortOrder) &&
+    phaseTasks.some(
+      (t) => t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate),
+    )
+  ) {
+    return "overdue";
+  }
+
   if (
     phaseTasks.some(
       (t) => t.status === "in-progress" || t.status === "blocked",
@@ -39,11 +53,19 @@ export function deriveProjectStatus(
   tasks: Task[],
 ): ProgressStatus {
   if (phases.length === 0) return "not-started";
-  const statuses = phases.map((p) => derivePhaseStatus(p.id, tasks));
+  const statuses = phases.map((p) => derivePhaseStatus(p.id, tasks, p.sortOrder));
   if (statuses.every((s) => s === "complete")) return "complete";
+  if (statuses.some((s) => s === "overdue")) return "overdue";
   if (statuses.some((s) => s === "in-progress" || s === "complete"))
     return "in-progress";
   return "not-started";
+}
+
+function countOverdueTasks(tasks: Task[], phaseId: string, phaseSortOrder: number): number {
+  if (isBacklogPhase(phaseSortOrder)) return 0;
+  return tasks.filter(
+    (t) => t.phaseId === phaseId && t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate),
+  ).length;
 }
 
 export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
@@ -52,6 +74,10 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
 
   const projectStatus = deriveProjectStatus(phases, tasks);
   const sortedPhases = [...phases].sort((a, b) => a.sortOrder - b.sortOrder);
+  const projectOverdueCount = sortedPhases.reduce(
+    (sum, p) => sum + countOverdueTasks(tasks, p.id, p.sortOrder),
+    0,
+  );
 
   const handleProjectClick = () => {
     selectProject(project.id);
@@ -88,13 +114,22 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
             {project.name}
           </button>
           <ProgressDot status={projectStatus} />
+          {projectOverdueCount > 0 && (
+            <span
+              className="inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold px-1"
+              aria-label={`${projectOverdueCount} overdue task${projectOverdueCount === 1 ? "" : "s"}`}
+            >
+              {projectOverdueCount}
+            </span>
+          )}
         </div>
 
         {phases.length > 0 && (
           <CollapsibleContent>
             <div className="ml-7 border-l border-border/50">
               {sortedPhases.map((phase) => {
-                const phaseStatus = derivePhaseStatus(phase.id, tasks);
+                const phaseStatus = derivePhaseStatus(phase.id, tasks, phase.sortOrder);
+                const overdueCount = countOverdueTasks(tasks, phase.id, phase.sortOrder);
                 return (
                   <button
                     key={phase.id}
@@ -105,6 +140,14 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
                   >
                     <span className="flex-1 truncate">{phase.name}</span>
                     <ProgressDot status={phaseStatus} />
+                    {overdueCount > 0 && (
+                      <span
+                        className="inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold px-1"
+                        aria-label={`${overdueCount} overdue task${overdueCount === 1 ? "" : "s"}`}
+                      >
+                        {overdueCount}
+                      </span>
+                    )}
                   </button>
                 );
               })}
