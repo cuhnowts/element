@@ -27,7 +27,12 @@ export function useActionDispatch() {
         return { success: false, error: `Unknown action: ${actionName}` };
       }
       try {
-        const result = await invoke(action.tauriCommand, input);
+        // Transform input for actions that need parameter mapping
+        let invokeInput = input;
+        if (actionName === "reschedule_day") {
+          invokeInput = { date: new Date().toISOString().split("T")[0] };
+        }
+        const result = await invoke(action.tauriCommand, invokeInput);
         // Refresh stores so UI reflects the change immediately
         const store = useStore.getState();
         store.loadStandaloneTasks();
