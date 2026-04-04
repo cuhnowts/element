@@ -39,7 +39,7 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Briefing panel top padding (existing pattern from BriefingPanel) |
 | 3xl | 64px | Not used this phase |
 
-Exceptions: 44px minimum touch target height for date picker quick-select shortcut buttons.
+No exceptions.
 
 ---
 
@@ -123,7 +123,7 @@ Components needed for this phase, mapped to shadcn or custom.
   - "Tomorrow" -- sets to current date + 1 day
   - "Next week" -- sets to next Monday
   - "+1 month" -- sets to current date + 1 calendar month
-- Each button: 12px semibold text, 44px min touch height, 8px horizontal gap between buttons
+- Each button: 12px semibold text, 48px min height (grid-aligned, exceeds WCAG 44px touch target minimum), 8px horizontal gap between buttons
 - Clicking a shortcut sets the due date, closes the popover, and persists via `updateTask`
 - Below shortcuts: standard shadcn Calendar (react-day-picker) in single-select mode
 - Selecting a date on the calendar grid also sets the due date and closes the popover
@@ -268,7 +268,7 @@ No third-party registries declared for this phase.
 | Requirement | Implementation |
 |-------------|---------------|
 | Date picker keyboard navigation | Calendar grid supports arrow key navigation (react-day-picker built-in); Enter selects date; Escape closes popover |
-| Quick-select buttons | Each button has explicit text label (no icon-only buttons) |
+| Quick-select buttons | Each button has explicit text label (no icon-only buttons); 48px height meets WCAG touch target minimum |
 | Overdue badges | Badge text includes "Overdue" prefix -- color is not sole indicator |
 | Due soon badges | Badge text includes "Due" prefix -- color is not sole indicator |
 | ProgressDot overdue | aria-label updated to "overdue" when in overdue state |
