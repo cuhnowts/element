@@ -9,6 +9,13 @@ import {
 import { timeToPixelOffset, eventHeight } from "./calendarLayout";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useStore } from "@/stores";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 interface CalendarEventBlockProps {
   event: PositionedEvent;
@@ -52,6 +59,7 @@ export function CalendarEventBlock({
   const accountColor = CALENDAR_COLORS[accountColorIndex ?? 0];
 
   const timeLabel = `${formatMinutesToTime(event.startMinutes)} - ${formatMinutesToTimeWithPeriod(event.endMinutes)}`;
+  const popoverTimeLabel = `${formatMinutesToTimeWithPeriod(event.startMinutes)} - ${formatMinutesToTimeWithPeriod(event.endMinutes)}`;
   const ariaLabel = `${event.title}, ${formatMinutesToTimeWithPeriod(event.startMinutes)} to ${formatMinutesToTimeWithPeriod(event.endMinutes)}`;
 
   const handleClick = useCallback(() => {
@@ -75,58 +83,121 @@ export function CalendarEventBlock({
     [handleClick],
   );
 
+  const blockStyle = {
+    top,
+    height,
+    left,
+    width,
+    borderRadius: EVENT_BORDER_RADIUS,
+    cursor: isWorkOrBuffer ? "pointer" : "default",
+    ...(isMeeting
+      ? {
+          borderLeft: `3px solid ${accountColor}`,
+          backgroundColor: `color-mix(in oklch, ${accountColor} 40%, transparent)`,
+        }
+      : {
+          border: `1px solid ${WORK_BLOCK_COLOR}`,
+          backgroundColor: `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`,
+        }),
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (isMeeting) {
+      el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 55%, transparent)`;
+    } else {
+      el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 25%, transparent)`;
+    }
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (isMeeting) {
+      el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 40%, transparent)`;
+    } else {
+      el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`;
+    }
+  };
+
+  const blockContent = (
+    <div className="px-2 py-1 h-full flex flex-col justify-start">
+      <span className="text-sm truncate text-foreground leading-tight">
+        {event.title}
+      </span>
+      {height > 30 && (
+        <span className="text-xs text-muted-foreground truncate">
+          {timeLabel}
+        </span>
+      )}
+    </div>
+  );
+
+  // Meeting type: wrap in Popover
+  if (isMeeting) {
+    return (
+      <Popover>
+        <PopoverTrigger
+          render={
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={ariaLabel}
+              className="absolute overflow-hidden transition-opacity duration-150"
+              style={blockStyle}
+              onKeyDown={handleKeyDown}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+          }
+        >
+          {blockContent}
+        </PopoverTrigger>
+        <PopoverContent side="right" align="start" sideOffset={8}>
+          <div className="flex flex-col gap-2">
+            <h4 className="text-base font-semibold leading-tight">
+              {event.title}
+            </h4>
+            <span className="text-xs text-muted-foreground">
+              {popoverTimeLabel}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {event.location || "No location"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {event.attendees && event.attendees.length > 0
+                ? event.attendees.join(", ")
+                : "No attendees"}
+            </span>
+            {event.status && (
+              <>
+                <Separator />
+                <div>
+                  <Badge variant="outline" className="text-xs">
+                    {event.status}
+                  </Badge>
+                </div>
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  // Work/buffer type: no popover, click navigates
   return (
     <div
       role="button"
       tabIndex={0}
       aria-label={ariaLabel}
       className="absolute overflow-hidden transition-opacity duration-150"
-      style={{
-        top,
-        height,
-        left,
-        width,
-        borderRadius: EVENT_BORDER_RADIUS,
-        cursor: isWorkOrBuffer ? "pointer" : "default",
-        ...(isMeeting
-          ? {
-              borderLeft: `3px solid ${accountColor}`,
-              backgroundColor: `color-mix(in oklch, ${accountColor} 40%, transparent)`,
-            }
-          : {
-              border: `1px solid ${WORK_BLOCK_COLOR}`,
-              backgroundColor: `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`,
-            }),
-      }}
+      style={blockStyle}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget;
-        if (isMeeting) {
-          el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 55%, transparent)`;
-        } else {
-          el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 25%, transparent)`;
-        }
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget;
-        if (isMeeting) {
-          el.style.backgroundColor = `color-mix(in oklch, ${accountColor} 40%, transparent)`;
-        } else {
-          el.style.backgroundColor = `color-mix(in oklch, ${WORK_BLOCK_COLOR} 15%, transparent)`;
-        }
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <div className="px-2 py-1 h-full flex flex-col justify-start">
-        <span className="text-sm truncate text-foreground leading-tight">
-          {event.title}
-        </span>
-        {height > 30 && (
-          <span className="text-xs text-muted-foreground truncate">
-            {timeLabel}
-          </span>
-        )}
-      </div>
+      {blockContent}
     </div>
   );
 }
