@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use crate::commands::scheduling_commands::generate_schedule_for_date;
 use crate::db::connection::Database;
 use crate::models::task::TaskStatus;
 
@@ -101,6 +102,10 @@ pub fn build_manifest_string(db: &Database) -> Result<String, String> {
         }
     }
 
+    // Append today's schedule data
+    let schedule_section = build_schedule_section(db)?;
+    manifest.push_str(&schedule_section);
+
     // Enforce 8000 char token budget
     if manifest.len() > 8000 {
         manifest.truncate(7900);
@@ -108,6 +113,113 @@ pub fn build_manifest_string(db: &Database) -> Result<String, String> {
     }
 
     Ok(manifest)
+}
+
+/// Build a manifest section containing today's schedule data.
+///
+/// Includes: task time slots with priorities, available vs scheduled minutes
+/// (with OVERFLOW detection), and a list of tasks without due dates.
+pub fn build_schedule_section(db: &Database) -> Result<String, String> {
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let blocks = generate_schedule_for_date(db, &today)?;
+
+    let mut section = String::from("\n## Today's Schedule\n\n");
+
+    if blocks.is_empty() {
+        section.push_str("No tasks scheduled for today.\n");
+        // Still show undated tasks even when no schedule
+        append_undated_tasks(db, &mut section)?;
+        return Ok(section);
+    }
+
+    // Calculate totals
+    let mut total_task_minutes: i32 = 0;
+    let mut total_available_minutes: i32 = 0;
+
+    for block in &blocks {
+        let start_mins = parse_time_to_minutes(&block.start_time);
+        let end_mins = parse_time_to_minutes(&block.end_time);
+        let duration = end_mins - start_mins;
+        total_available_minutes += duration;
+        if block.task_id.is_some() {
+            total_task_minutes += duration;
+        }
+    }
+
+    section.push_str(&format!(
+        "Available: {} min | Scheduled: {} min{}\n\n",
+        total_available_minutes,
+        total_task_minutes,
+        if total_task_minutes > total_available_minutes {
+            " (OVERFLOW)"
+        } else {
+            ""
+        }
+    ));
+
+    // List scheduled tasks
+    for block in &blocks {
+        if let Some(ref title) = block.task_title {
+            let start_mins = parse_time_to_minutes(&block.start_time);
+            let end_mins = parse_time_to_minutes(&block.end_time);
+            let duration = end_mins - start_mins;
+            let priority = block.task_priority.as_deref().unwrap_or("medium");
+            section.push_str(&format!(
+                "- {} ({}-{}, {}min, {})\n",
+                title, block.start_time, block.end_time, duration, priority
+            ));
+        }
+    }
+
+    // Append undated tasks for suggestion feature
+    append_undated_tasks(db, &mut section)?;
+
+    Ok(section)
+}
+
+fn parse_time_to_minutes(time: &str) -> i32 {
+    let parts: Vec<&str> = time.split(':').collect();
+    if parts.len() == 2 {
+        let h: i32 = parts[0].parse().unwrap_or(0);
+        let m: i32 = parts[1].parse().unwrap_or(0);
+        h * 60 + m
+    } else {
+        0
+    }
+}
+
+fn append_undated_tasks(db: &Database, section: &mut String) -> Result<(), String> {
+    let undated = get_undated_tasks(db)?;
+    if !undated.is_empty() {
+        section.push_str("\n### Tasks Without Due Dates\n\n");
+        for (title, id) in undated.iter().take(10) {
+            section.push_str(&format!("- {} (id: {})\n", title, id));
+        }
+    }
+    Ok(())
+}
+
+fn get_undated_tasks(db: &Database) -> Result<Vec<(String, String)>, String> {
+    let conn = db.conn();
+    let mut stmt = conn
+        .prepare(
+            "SELECT t.title, t.id FROM tasks t
+             LEFT JOIN phases p ON t.phase_id = p.id
+             WHERE t.status != 'complete'
+             AND t.due_date IS NULL
+             AND (p.sort_order IS NULL OR p.sort_order < 999)
+             LIMIT 10",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|e| e.to_string())?;
+
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(test)]

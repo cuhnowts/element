@@ -5,6 +5,111 @@ use crate::db::connection::Database;
 use crate::models::task::TaskPriority;
 use crate::scheduling::types::{ScheduleBlock, TaskWithPriority, WorkHoursConfig};
 
+/// Default work hours used when none are configured in the database.
+fn default_work_hours() -> WorkHoursConfig {
+    WorkHoursConfig {
+        start_time: "09:00".to_string(),
+        end_time: "17:00".to_string(),
+        work_days: vec![
+            "mon".into(),
+            "tue".into(),
+            "wed".into(),
+            "thu".into(),
+            "fri".into(),
+        ],
+        buffer_minutes: 10,
+        min_block_minutes: 30,
+    }
+}
+
+/// Query non-complete, non-backlog tasks that have no confirmed schedule block for the given date.
+fn query_schedulable_tasks(db: &Database, date: &str) -> Result<Vec<TaskWithPriority>, String> {
+    let conn = db.conn();
+    let mut stmt = conn
+        .prepare(
+            "SELECT t.id, t.title, t.priority, t.due_date, t.estimated_minutes
+             FROM tasks t
+             LEFT JOIN phases p ON t.phase_id = p.id
+             WHERE t.status != 'complete'
+             AND (p.sort_order IS NULL OR p.sort_order < 999)
+             AND t.id NOT IN (
+                 SELECT sb.task_id FROM scheduled_blocks sb
+                 WHERE sb.schedule_date = ?1 AND sb.is_confirmed = 1 AND sb.task_id IS NOT NULL
+             )
+             ORDER BY t.created_at ASC",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(rusqlite::params![date], |row| {
+            let priority_str: String = row.get(2)?;
+            let due_date_str: Option<String> = row.get(3)?;
+            let due_date =
+                due_date_str.and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
+            let priority = TaskPriority::from_db_str(&priority_str).unwrap_or(TaskPriority::Medium);
+
+            Ok(TaskWithPriority {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                priority,
+                due_date,
+                estimated_minutes: row.get(4)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
+}
+
+/// Generate a schedule for a given date using a direct `&Database` reference.
+///
+/// This is the shared implementation used by both the Tauri command and the
+/// manifest builder (which has no async/Tauri context).
+pub fn generate_schedule_for_date(
+    db: &Database,
+    date: &str,
+) -> Result<Vec<ScheduleBlock>, String> {
+    // 1. Get work hours (default to 09:00-17:00 Mon-Fri if not configured)
+    let work_hours = read_work_hours_from_db(db)?.unwrap_or_else(default_work_hours);
+
+    // 2. Check if date's day-of-week is in work_days
+    let parsed_date = chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
+        .map_err(|e| format!("Invalid date format: {}", e))?;
+    let day_str = parsed_date.format("%a").to_string().to_lowercase();
+    let day_abbrev = day_str[..3].to_string();
+
+    if !work_hours.work_days.contains(&day_abbrev) {
+        return Ok(vec![]);
+    }
+
+    // 3. Calendar events placeholder
+    // TODO: Read from calendar_events table once calendar integration is wired up.
+    let calendar_events: Vec<crate::scheduling::types::CalendarEvent> = vec![];
+
+    // 4. Get non-backlog tasks with no confirmed schedule block for this date
+    let tasks = query_schedulable_tasks(db, date)?;
+
+    // 5. Find open blocks
+    let open_blocks = crate::scheduling::time_blocks::find_open_blocks(
+        &work_hours,
+        &calendar_events,
+        work_hours.buffer_minutes,
+        work_hours.min_block_minutes,
+    );
+
+    // 6. Assign tasks to blocks
+    let today = chrono::Local::now().date_naive();
+    let schedule_blocks =
+        crate::scheduling::assignment::assign_tasks_to_blocks(&open_blocks, &tasks, date, today);
+
+    // 7. Sort by start_time and return
+    let mut all_blocks = schedule_blocks;
+    all_blocks.sort_by(|a, b| a.start_time.cmp(&b.start_time));
+
+    Ok(all_blocks)
+}
+
 fn read_work_hours_from_db(db: &Database) -> Result<Option<WorkHoursConfig>, String> {
     let conn = db.conn();
     let mut stmt = conn
@@ -70,92 +175,7 @@ pub async fn generate_schedule(
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
 ) -> Result<Vec<ScheduleBlock>, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-
-    // 1. Get work hours (default to 09:00-17:00 Mon-Fri if not configured)
-    let work_hours = read_work_hours_from_db(&db)?
-        .unwrap_or(WorkHoursConfig {
-            start_time: "09:00".to_string(),
-            end_time: "17:00".to_string(),
-            work_days: vec!["mon".into(), "tue".into(), "wed".into(), "thu".into(), "fri".into()],
-            buffer_minutes: 10,
-            min_block_minutes: 30,
-        });
-
-    // 2. Check if date's day-of-week is in work_days
-    let parsed_date = chrono::NaiveDate::parse_from_str(&date, "%Y-%m-%d")
-        .map_err(|e| format!("Invalid date format: {}", e))?;
-    let day_str = parsed_date.format("%a").to_string().to_lowercase();
-    let day_abbrev = day_str[..3].to_string();
-
-    if !work_hours.work_days.contains(&day_abbrev) {
-        return Ok(vec![]);
-    }
-
-    // 3. Calendar events placeholder
-    // TODO: Read from calendar_events table once Phase 4 calendar integration is wired up.
-    // For now, use an empty vec -- the scheduling algorithm will treat the entire work day as open.
-    let calendar_events: Vec<crate::scheduling::types::CalendarEvent> = vec![];
-
-    // 4. Get tasks with status != 'complete' that have no confirmed schedule block for this date
-    let tasks: Vec<TaskWithPriority> = {
-        let conn = db.conn();
-        let mut stmt = conn
-            .prepare(
-                "SELECT t.id, t.title, t.priority, t.due_date, t.estimated_minutes
-                 FROM tasks t
-                 WHERE t.status != 'complete'
-                 AND t.id NOT IN (
-                     SELECT sb.task_id FROM scheduled_blocks sb
-                     WHERE sb.schedule_date = ?1 AND sb.is_confirmed = 1 AND sb.task_id IS NOT NULL
-                 )
-                 ORDER BY t.created_at ASC"
-            )
-            .map_err(|e| e.to_string())?;
-
-        let rows = stmt.query_map(rusqlite::params![&date], |row| {
-            let priority_str: String = row.get(2)?;
-            let due_date_str: Option<String> = row.get(3)?;
-            let due_date = due_date_str.and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
-            let priority = TaskPriority::from_db_str(&priority_str)
-                .unwrap_or(TaskPriority::Medium);
-
-            Ok(TaskWithPriority {
-                id: row.get(0)?,
-                title: row.get(1)?,
-                priority,
-                due_date,
-                estimated_minutes: row.get(4)?,
-            })
-        })
-        .map_err(|e| e.to_string())?;
-
-        rows.collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_string())?
-    };
-
-    // 5. Find open blocks
-    let open_blocks = crate::scheduling::time_blocks::find_open_blocks(
-        &work_hours,
-        &calendar_events,
-        work_hours.buffer_minutes,
-        work_hours.min_block_minutes,
-    );
-
-    // 6. Assign tasks to blocks
-    let today = chrono::Local::now().date_naive();
-    let schedule_blocks = crate::scheduling::assignment::assign_tasks_to_blocks(
-        &open_blocks,
-        &tasks,
-        &date,
-        today,
-    );
-
-    // 7. No calendar events to create Meeting/Buffer blocks for (placeholder),
-    //    so just return the work blocks sorted by start_time
-    let mut all_blocks = schedule_blocks;
-    all_blocks.sort_by(|a, b| a.start_time.cmp(&b.start_time));
-
-    Ok(all_blocks)
+    generate_schedule_for_date(&db, &date)
 }
 
 #[tauri::command]
