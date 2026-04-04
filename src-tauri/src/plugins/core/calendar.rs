@@ -4,17 +4,10 @@ use std::sync::Mutex;
 use crate::credentials::keychain::SecretStore;
 use crate::db::connection::Database;
 
-// Embedded OAuth client IDs -- users register their own OAuth apps.
-// Use option_env! so CI/dev builds compile without real credentials.
-pub const GOOGLE_CLIENT_ID_STR: &str = match option_env!("GOOGLE_CLIENT_ID") {
-    Some(id) => id,
-    None => "placeholder-google-client-id.apps.googleusercontent.com",
-};
-
-pub const MICROSOFT_CLIENT_ID_STR: &str = match option_env!("MICROSOFT_CLIENT_ID") {
-    Some(id) => id,
-    None => "placeholder-microsoft-client-id",
-};
+// OAuth client IDs loaded from .env or process environment via build.rs.
+// build.rs always sets these via cargo:rustc-env (defaults to placeholder if not configured).
+pub const GOOGLE_CLIENT_ID_STR: &str = env!("GOOGLE_CLIENT_ID");
+pub const MICROSOFT_CLIENT_ID_STR: &str = env!("MICROSOFT_CLIENT_ID");
 
 // ─── Error types ──────────────────────────────────────────────────────────────
 
