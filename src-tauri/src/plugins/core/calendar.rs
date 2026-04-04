@@ -4,9 +4,10 @@ use std::sync::Mutex;
 use crate::credentials::keychain::SecretStore;
 use crate::db::connection::Database;
 
-// OAuth client IDs loaded from .env or process environment via build.rs.
+// OAuth credentials loaded from .env or process environment via build.rs.
 // build.rs always sets these via cargo:rustc-env (defaults to placeholder if not configured).
 pub const GOOGLE_CLIENT_ID_STR: &str = env!("GOOGLE_CLIENT_ID");
+pub const GOOGLE_CLIENT_SECRET_STR: &str = env!("GOOGLE_CLIENT_SECRET");
 pub const MICROSOFT_CLIENT_ID_STR: &str = env!("MICROSOFT_CLIENT_ID");
 
 // ─── Error types ──────────────────────────────────────────────────────────────
@@ -478,10 +479,12 @@ pub async fn refresh_google_token_with_id(
     refresh_token: &str,
     client_id: &str,
 ) -> Result<(String, Option<String>), CalendarError> {
+    let client_secret = GOOGLE_CLIENT_SECRET_STR;
     let resp = client
         .post("https://oauth2.googleapis.com/token")
         .form(&[
             ("client_id", client_id),
+            ("client_secret", client_secret),
             ("grant_type", "refresh_token"),
             ("refresh_token", refresh_token),
         ])

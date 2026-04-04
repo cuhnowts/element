@@ -257,10 +257,20 @@ pub async fn connect_google_calendar(
 
     // Exchange code for tokens
     let client = reqwest::Client::new();
+    let google_client_secret = {
+        let db = state.lock().map_err(|e| e.to_string())?;
+        db.get_app_setting("google_client_secret")
+            .ok()
+            .flatten()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| calendar::GOOGLE_CLIENT_SECRET_STR.to_string())
+    };
+
     let token_resp = client
         .post("https://oauth2.googleapis.com/token")
         .form(&[
             ("client_id", google_client_id.as_str()),
+            ("client_secret", google_client_secret.as_str()),
             ("code", &auth_code),
             ("code_verifier", &code_verifier),
             ("grant_type", "authorization_code"),

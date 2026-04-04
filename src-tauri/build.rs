@@ -4,6 +4,7 @@ fn main() {
     let env_path = project_root.join(".env");
 
     let mut google_id = String::from("placeholder-google-client-id.apps.googleusercontent.com");
+    let mut google_secret = String::from("");
     let mut microsoft_id = String::from("placeholder-microsoft-client-id");
 
     // Check .env file first
@@ -19,6 +20,7 @@ fn main() {
                 if !value.is_empty() {
                     match key {
                         "GOOGLE_CLIENT_ID" => google_id = value.to_string(),
+                        "GOOGLE_CLIENT_SECRET" => google_secret = value.to_string(),
                         "MICROSOFT_CLIENT_ID" => microsoft_id = value.to_string(),
                         _ => {}
                     }
@@ -32,12 +34,16 @@ fn main() {
     if let Ok(val) = std::env::var("GOOGLE_CLIENT_ID") {
         if !val.is_empty() { google_id = val; }
     }
+    if let Ok(val) = std::env::var("GOOGLE_CLIENT_SECRET") {
+        if !val.is_empty() { google_secret = val; }
+    }
     if let Ok(val) = std::env::var("MICROSOFT_CLIENT_ID") {
         if !val.is_empty() { microsoft_id = val; }
     }
 
     // Set as rustc-env so env!() can read them
     println!("cargo:rustc-env=GOOGLE_CLIENT_ID={}", google_id);
+    println!("cargo:rustc-env=GOOGLE_CLIENT_SECRET={}", google_secret);
     println!("cargo:rustc-env=MICROSOFT_CLIENT_ID={}", microsoft_id);
 
     tauri_build::build()
