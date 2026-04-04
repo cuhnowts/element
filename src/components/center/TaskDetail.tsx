@@ -11,7 +11,9 @@ import { useTaskStore } from "@/stores/useTaskStore";
 import { ExecutionDiagram } from "./ExecutionDiagram";
 import { PromoteButton } from "./PromoteButton";
 import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
+import { DatePickerPopover } from "@/components/shared/DatePickerPopover";
 import { DurationChips } from "@/components/shared/DurationChips";
+import { isBacklogPhase } from "@/lib/date-utils";
 import {
   Accordion,
   AccordionItem,
@@ -275,12 +277,21 @@ export function TaskDetail() {
         <AccordionItem value="scheduling">
           <AccordionTrigger className="py-3 text-sm">Scheduling</AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-4">
+            <DatePickerPopover
+              value={selectedTask.dueDate}
+              onChange={(date) => updateTask(selectedTask.id, { dueDate: date ?? "" })}
+            />
             <SchedulingBadges
               dueDate={selectedTask.dueDate}
               scheduledDate={selectedTask.scheduledDate}
               scheduledTime={selectedTask.scheduledTime}
               durationMinutes={selectedTask.durationMinutes}
               recurrenceRule={selectedTask.recurrenceRule}
+              isBacklog={
+                selectedTask.phaseId
+                  ? isBacklogPhase(phases.find((p) => p.id === selectedTask.phaseId)?.sortOrder ?? 0)
+                  : false
+              }
             />
             <div>
               <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
