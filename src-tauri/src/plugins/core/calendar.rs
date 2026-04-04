@@ -24,6 +24,8 @@ pub enum CalendarError {
     ApiError(String),
     DbError(String),
     CredentialError(String),
+    SyncTokenExpired,         // Google 410 Gone -- sync token invalidated
+    TokenRevoked(String),     // invalid_grant -- permanent auth failure
 }
 
 impl std::fmt::Display for CalendarError {
@@ -33,6 +35,8 @@ impl std::fmt::Display for CalendarError {
             CalendarError::ApiError(msg) => write!(f, "API error: {}", msg),
             CalendarError::DbError(msg) => write!(f, "Database error: {}", msg),
             CalendarError::CredentialError(msg) => write!(f, "Credential error: {}", msg),
+            CalendarError::SyncTokenExpired => write!(f, "Sync token expired (410 Gone)"),
+            CalendarError::TokenRevoked(msg) => write!(f, "Token revoked: {}", msg),
         }
     }
 }
@@ -160,6 +164,26 @@ pub fn parse_google_events(json: &serde_json::Value, account_id: &str) -> Vec<Ca
         .iter()
         .filter_map(|item| {
             let id = item.get("id")?.as_str()?.to_string();
+            let status = item.get("status").and_then(|v| v.as_str()).unwrap_or("confirmed").to_string();
+
+            // Cancelled events from incremental sync only have id + status.
+            // Return a minimal event so the caller can hard-delete it from DB.
+            if status == "cancelled" {
+                return Some(CalendarEvent {
+                    id,
+                    account_id: account_id.to_string(),
+                    title: String::new(),
+                    description: String::new(),
+                    location: None,
+                    start_time: String::new(),
+                    end_time: String::new(),
+                    all_day: false,
+                    attendees: vec![],
+                    status: "cancelled".to_string(),
+                    updated_at: String::new(),
+                });
+            }
+
             let title = item
                 .get("summary")
                 .and_then(|v| v.as_str())
@@ -207,12 +231,6 @@ pub fn parse_google_events(json: &serde_json::Value, account_id: &str) -> Vec<Ca
                         .collect()
                 })
                 .unwrap_or_default();
-
-            let status = item
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("confirmed")
-                .to_string();
 
             let updated_at = item
                 .get("updated")
@@ -284,9 +302,9 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                 .and_then(|v| v.get("dateTime"))
                 .and_then(|v| v.as_str())
                 .map(|s| {
-                    // Microsoft Graph returns local time without timezone -- append Z
-                    if s.ends_with('Z') || s.contains('+') || s.contains("-05:")
-                    {
+                    // With outlook.timezone="UTC", times come back without offset or with Z.
+                    // Distinguish date-separator dashes (pos 4,7) from timezone offset dashes (pos > 10).
+                    if s.ends_with('Z') || s.contains('+') || s.rfind('-').map_or(false, |pos| pos > 10) {
                         s.to_string()
                     } else {
                         format!("{}Z", s)
@@ -298,8 +316,7 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                 .and_then(|v| v.get("dateTime"))
                 .and_then(|v| v.as_str())
                 .map(|s| {
-                    if s.ends_with('Z') || s.contains('+') || s.contains("-05:")
-                    {
+                    if s.ends_with('Z') || s.contains('+') || s.rfind('-').map_or(false, |pos| pos > 10) {
                         s.to_string()
                     } else {
                         format!("{}Z", s)
@@ -391,6 +408,11 @@ pub async fn sync_google_calendar(
         .send()
         .await?;
 
+    // D-03: 410 Gone means sync token invalidated -- caller should clear and retry
+    if resp.status() == reqwest::StatusCode::GONE {
+        return Err(CalendarError::SyncTokenExpired);
+    }
+
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
@@ -427,7 +449,7 @@ pub async fn sync_outlook_calendar(
     let resp = client
         .get(&url)
         .bearer_auth(access_token)
-        .header("Prefer", "outlook.body-content-type=\"text\"")
+        .header("Prefer", "outlook.timezone=\"UTC\", outlook.body-content-type=\"text\"")
         .send()
         .await?;
 
@@ -465,6 +487,9 @@ pub async fn refresh_google_token(
 
     if !resp.status().is_success() {
         let body = resp.text().await.unwrap_or_default();
+        if body.contains("invalid_grant") {
+            return Err(CalendarError::TokenRevoked(body));
+        }
         return Err(CalendarError::OAuthError(format!(
             "Google token refresh failed: {}",
             body
@@ -506,6 +531,9 @@ pub async fn refresh_outlook_token(
 
     if !resp.status().is_success() {
         let body = resp.text().await.unwrap_or_default();
+        if body.contains("invalid_grant") || body.contains("AADSTS700082") || body.contains("AADSTS50076") {
+            return Err(CalendarError::TokenRevoked(body));
+        }
         return Err(CalendarError::OAuthError(format!(
             "Microsoft token refresh failed: {}",
             body
@@ -667,6 +695,37 @@ pub fn update_sync_token(
         rusqlite::params![sync_token, last_synced_at, account_id],
     )?;
     Ok(())
+}
+
+/// Disable a calendar account (D-01: silent disable on token revocation).
+pub fn disable_calendar_account(
+    conn: &rusqlite::Connection,
+    account_id: &str,
+) -> Result<(), CalendarError> {
+    conn.execute(
+        "UPDATE calendar_accounts SET enabled = 0 WHERE id = ?1",
+        rusqlite::params![account_id],
+    )
+    .map_err(|e| CalendarError::DbError(e.to_string()))?;
+    Ok(())
+}
+
+/// Hard-delete calendar events by their IDs for a specific account (D-07).
+pub fn delete_events_by_ids(
+    conn: &rusqlite::Connection,
+    event_ids: &[String],
+    account_id: &str,
+) -> Result<usize, CalendarError> {
+    let mut deleted = 0;
+    for id in event_ids {
+        deleted += conn
+            .execute(
+                "DELETE FROM calendar_events WHERE id = ?1 AND account_id = ?2",
+                rusqlite::params![id, account_id],
+            )
+            .map_err(|e| CalendarError::DbError(e.to_string()))?;
+    }
+    Ok(deleted)
 }
 
 // ─── CalendarPlugin (orchestrator) ────────────────────────────────────────────
@@ -1428,5 +1487,155 @@ mod tests {
 
         let accounts = list_calendar_accounts(&conn).unwrap();
         assert_eq!(accounts[0].sync_token, Some(delta.to_string()));
+    }
+
+    // ─── Phase 26 bug-fix tests ──────────────────────────────────────────
+
+    #[test]
+    fn test_parse_google_cancelled_event() {
+        let json = serde_json::json!({
+            "items": [
+                {
+                    "id": "cancelled-evt-1",
+                    "status": "cancelled"
+                },
+                {
+                    "id": "normal-evt-1",
+                    "summary": "Normal Event",
+                    "start": { "dateTime": "2026-03-17T10:00:00Z" },
+                    "end": { "dateTime": "2026-03-17T11:00:00Z" },
+                    "status": "confirmed",
+                    "updated": "2026-03-17T09:00:00Z"
+                }
+            ]
+        });
+
+        let events = parse_google_events(&json, "acct-1");
+        assert_eq!(events.len(), 2);
+
+        // Cancelled event has status="cancelled" and empty start_time
+        let cancelled = &events[0];
+        assert_eq!(cancelled.id, "cancelled-evt-1");
+        assert_eq!(cancelled.status, "cancelled");
+        assert!(cancelled.start_time.is_empty());
+        assert!(cancelled.title.is_empty());
+
+        // Normal event parses normally
+        let normal = &events[1];
+        assert_eq!(normal.id, "normal-evt-1");
+        assert_eq!(normal.status, "confirmed");
+        assert_eq!(normal.title, "Normal Event");
+    }
+
+    #[test]
+    fn test_parse_outlook_utc_times() {
+        // Microsoft Graph with outlook.timezone="UTC" returns times like "2026-03-17T10:00:00.0000000"
+        let json = serde_json::json!({
+            "value": [
+                {
+                    "id": "o-utc-1",
+                    "subject": "UTC Test",
+                    "start": { "dateTime": "2026-03-17T10:00:00.0000000" },
+                    "end": { "dateTime": "2026-03-17T11:00:00.0000000" },
+                    "isAllDay": false,
+                    "showAs": "busy",
+                    "lastModifiedDateTime": "2026-03-16T11:00:00Z"
+                },
+                {
+                    "id": "o-utc-2",
+                    "subject": "Already Has Z",
+                    "start": { "dateTime": "2026-03-17T14:00:00Z" },
+                    "end": { "dateTime": "2026-03-17T15:00:00Z" },
+                    "isAllDay": false,
+                    "showAs": "busy",
+                    "lastModifiedDateTime": "2026-03-16T11:00:00Z"
+                },
+                {
+                    "id": "o-utc-3",
+                    "subject": "Negative Offset",
+                    "start": { "dateTime": "2026-03-17T10:00:00-08:00" },
+                    "end": { "dateTime": "2026-03-17T11:00:00-08:00" },
+                    "isAllDay": false,
+                    "showAs": "busy",
+                    "lastModifiedDateTime": "2026-03-16T11:00:00Z"
+                }
+            ]
+        });
+
+        let events = parse_outlook_events(&json, "acct-2");
+        assert_eq!(events.len(), 3);
+
+        // No timezone info -> Z appended
+        assert!(events[0].start_time.ends_with('Z'), "Expected Z suffix, got: {}", events[0].start_time);
+        assert!(events[0].end_time.ends_with('Z'));
+
+        // Already has Z -> unchanged
+        assert_eq!(events[1].start_time, "2026-03-17T14:00:00Z");
+
+        // Has negative offset (pos > 10) -> kept as-is
+        assert_eq!(events[2].start_time, "2026-03-17T10:00:00-08:00");
+    }
+
+    #[test]
+    fn test_disable_calendar_account() {
+        let conn = setup_test_db();
+        let account = make_test_account(&conn);
+
+        // Account starts enabled
+        let accounts = list_calendar_accounts(&conn).unwrap();
+        assert!(accounts[0].enabled);
+
+        // Disable it
+        disable_calendar_account(&conn, &account.id).unwrap();
+
+        // Verify disabled
+        let accounts = list_calendar_accounts(&conn).unwrap();
+        assert!(!accounts[0].enabled);
+    }
+
+    #[test]
+    fn test_delete_events_by_ids() {
+        let conn = setup_test_db();
+        let account = make_test_account(&conn);
+
+        let events = vec![
+            CalendarEvent {
+                id: "del-evt-1".to_string(),
+                account_id: account.id.clone(),
+                title: "To Delete".to_string(),
+                description: "".to_string(),
+                location: None,
+                start_time: "2026-03-17T10:00:00Z".to_string(),
+                end_time: "2026-03-17T11:00:00Z".to_string(),
+                all_day: false,
+                attendees: vec![],
+                status: "confirmed".to_string(),
+                updated_at: "2026-03-17T09:00:00Z".to_string(),
+            },
+            CalendarEvent {
+                id: "del-evt-2".to_string(),
+                account_id: account.id.clone(),
+                title: "Keep This".to_string(),
+                description: "".to_string(),
+                location: None,
+                start_time: "2026-03-17T14:00:00Z".to_string(),
+                end_time: "2026-03-17T15:00:00Z".to_string(),
+                all_day: false,
+                attendees: vec![],
+                status: "confirmed".to_string(),
+                updated_at: "2026-03-17T09:00:00Z".to_string(),
+            },
+        ];
+        save_events(&conn, &events).unwrap();
+
+        // Delete only the first event
+        let ids = vec!["del-evt-1".to_string()];
+        let deleted = delete_events_by_ids(&conn, &ids, &account.id).unwrap();
+        assert_eq!(deleted, 1);
+
+        // Verify only the second event remains
+        let remaining = list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].id, "del-evt-2");
     }
 }
