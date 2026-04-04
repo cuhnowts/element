@@ -820,13 +820,13 @@ impl CalendarPlugin {
 
 // ─── Background sync ──────────────────────────────────────────────────────────
 
-/// Start background sync that polls all enabled accounts every 5 minutes.
+/// Start background sync that polls all enabled accounts every 15 minutes (D-04).
 pub fn start_background_sync(app_handle: tauri::AppHandle) {
     use std::sync::Arc;
     use tauri::{Emitter, Manager};
 
     tauri::async_runtime::spawn(async move {
-        let interval = std::time::Duration::from_secs(300); // 5 minutes
+        let interval = std::time::Duration::from_secs(900); // 15 minutes (D-04)
 
         loop {
             tokio::time::sleep(interval).await;
@@ -884,6 +884,15 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
 
                 let (access_token, new_refresh) = match refresh_result {
                     Ok(r) => r,
+                    Err(CalendarError::TokenRevoked(msg)) => {
+                        // D-01: Disable account on permanent auth failure
+                        if let Ok(db_lock) = db.lock() {
+                            let _ = disable_calendar_account(db_lock.conn(), &account.id);
+                        }
+                        let _ = app_handle.emit("calendar-account-disabled", &account.id);
+                        eprintln!("Token revoked during refresh for {}: {} -- account disabled", account.email, msg);
+                        continue;
+                    }
                     Err(e) => {
                         eprintln!("Token refresh failed for {}: {}", account.email, e);
                         continue;
@@ -934,8 +943,16 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
                         for event in &mut events {
                             event.account_id = account.id.clone();
                         }
+                        // D-07: Hard-delete cancelled events
+                        let (cancelled, active): (Vec<_>, Vec<_>) =
+                            events.into_iter().partition(|e| e.status == "cancelled");
                         if let Ok(db_lock) = db.lock() {
-                            let _ = save_events(db_lock.conn(), &events);
+                            if !cancelled.is_empty() {
+                                let ids: Vec<String> =
+                                    cancelled.iter().map(|e| e.id.clone()).collect();
+                                let _ = delete_events_by_ids(db_lock.conn(), &ids, &account.id);
+                            }
+                            let _ = save_events(db_lock.conn(), &active);
                             let now = chrono::Utc::now().to_rfc3339();
                             let _ = update_sync_token(
                                 db_lock.conn(),
@@ -945,7 +962,30 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
                             );
                         }
                     }
+                    Err(CalendarError::SyncTokenExpired) => {
+                        // D-03: Clear sync token, will do full sync next interval
+                        if let Ok(db_lock) = db.lock() {
+                            let now = chrono::Utc::now().to_rfc3339();
+                            let _ = update_sync_token(db_lock.conn(), &account.id, None, &now);
+                        }
+                        eprintln!(
+                            "Sync token expired for {} -- will do full sync next interval",
+                            account.email
+                        );
+                    }
+                    Err(CalendarError::TokenRevoked(msg)) => {
+                        // D-01: Disable account
+                        if let Ok(db_lock) = db.lock() {
+                            let _ = disable_calendar_account(db_lock.conn(), &account.id);
+                        }
+                        let _ = app_handle.emit("calendar-account-disabled", &account.id);
+                        eprintln!(
+                            "Token revoked for {}: {} -- account disabled",
+                            account.email, msg
+                        );
+                    }
                     Err(e) => {
+                        // D-06: Transient errors silently logged
                         eprintln!("Sync failed for {}: {}", account.email, e);
                     }
                 }

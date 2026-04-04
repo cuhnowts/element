@@ -4,7 +4,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use crate::credentials::CredentialManager;
 use crate::db::connection::Database;
 use crate::plugins::core::calendar::{
-    self, CalendarAccount, CalendarEvent,
+    self, CalendarAccount, CalendarError, CalendarEvent,
 };
 
 #[tauri::command]
@@ -21,6 +21,15 @@ pub async fn connect_google_calendar(
     state: State<'_, Arc<Mutex<Database>>>,
     cred_state: State<'_, Mutex<CredentialManager>>,
 ) -> Result<CalendarAccount, String> {
+    // Guard: block connection if using placeholder OAuth credentials (D-02 / Pitfall 5)
+    if calendar::GOOGLE_CLIENT_ID_STR.contains("placeholder") {
+        return Err(
+            "Google Calendar OAuth is not configured. Set the GOOGLE_CLIENT_ID environment variable \
+             at build time. See https://console.cloud.google.com/apis/credentials to create an OAuth 2.0 Client ID \
+             (Desktop app type, with http://localhost as authorized redirect URI).".to_string()
+        );
+    }
+
     // Generate PKCE
     let code_verifier = calendar::generate_code_verifier();
     let code_challenge = calendar::compute_code_challenge(&code_verifier);
@@ -159,6 +168,15 @@ pub async fn connect_outlook_calendar(
     state: State<'_, Arc<Mutex<Database>>>,
     cred_state: State<'_, Mutex<CredentialManager>>,
 ) -> Result<CalendarAccount, String> {
+    // Guard: block connection if using placeholder OAuth credentials (D-02 / Pitfall 5)
+    if calendar::MICROSOFT_CLIENT_ID_STR.contains("placeholder") {
+        return Err(
+            "Outlook Calendar OAuth is not configured. Set the MICROSOFT_CLIENT_ID environment variable \
+             at build time. See https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps to register an app \
+             (Mobile and desktop applications platform, with http://localhost as redirect URI).".to_string()
+        );
+    }
+
     // Generate PKCE
     let code_verifier = calendar::generate_code_verifier();
     let code_challenge = calendar::compute_code_challenge(&code_verifier);
@@ -314,14 +332,25 @@ pub async fn sync_calendar(
 
     let client = reqwest::Client::new();
 
-    let (access_token, new_refresh) = match account.provider.as_str() {
-        "google" => calendar::refresh_google_token(&client, &refresh_token)
-            .await
-            .map_err(|e| e.to_string())?,
-        "outlook" => calendar::refresh_outlook_token(&client, &refresh_token)
-            .await
-            .map_err(|e| e.to_string())?,
+    // Token refresh with TokenRevoked detection (D-01)
+    let refresh_result = match account.provider.as_str() {
+        "google" => calendar::refresh_google_token(&client, &refresh_token).await,
+        "outlook" => calendar::refresh_outlook_token(&client, &refresh_token).await,
         other => return Err(format!("Unknown provider: {}", other)),
+    };
+
+    let (access_token, new_refresh) = match refresh_result {
+        Ok(r) => r,
+        Err(CalendarError::TokenRevoked(msg)) => {
+            // D-01: Disable the account, emit event for UI badge
+            let db = state.lock().map_err(|e| e.to_string())?;
+            calendar::disable_calendar_account(db.conn(), &account_id)
+                .map_err(|e| e.to_string())?;
+            drop(db);
+            let _ = app.emit("calendar-account-disabled", &account_id);
+            return Err(format!("Calendar account disabled -- token revoked: {}", msg));
+        }
+        Err(e) => return Err(e.to_string()),
     };
 
     if let Some(ref new_rt) = new_refresh {
@@ -331,34 +360,89 @@ pub async fn sync_calendar(
             .map_err(|e| e)?;
     }
 
-    let (mut events, next_token) = match account.provider.as_str() {
+    // Sync events with SyncTokenExpired and TokenRevoked handling
+    let sync_result = match account.provider.as_str() {
         "google" => calendar::sync_google_calendar(
             &client,
             &access_token,
             "primary",
             account.sync_token.as_deref(),
         )
-        .await
-        .map_err(|e| e.to_string())?,
+        .await,
         "outlook" => calendar::sync_outlook_calendar(
             &client,
             &access_token,
             account.sync_token.as_deref(),
         )
-        .await
-        .map_err(|e| e.to_string())?,
+        .await,
         _ => unreachable!(),
     };
 
-    for event in &mut events {
-        event.account_id = account.id.clone();
+    match sync_result {
+        Ok((mut events, next_token)) => {
+            for event in &mut events {
+                event.account_id = account.id.clone();
+            }
+            // D-07: Hard-delete cancelled events
+            let (cancelled, active): (Vec<_>, Vec<_>) =
+                events.into_iter().partition(|e| e.status == "cancelled");
+            let db = state.lock().map_err(|e| e.to_string())?;
+            if !cancelled.is_empty() {
+                let ids: Vec<String> = cancelled.iter().map(|e| e.id.clone()).collect();
+                let _ = calendar::delete_events_by_ids(db.conn(), &ids, &account_id);
+            }
+            calendar::save_events(db.conn(), &active).map_err(|e| e.to_string())?;
+            let now = chrono::Utc::now().to_rfc3339();
+            calendar::update_sync_token(db.conn(), &account.id, next_token.as_deref(), &now)
+                .map_err(|e| e.to_string())?;
+        }
+        Err(CalendarError::SyncTokenExpired) => {
+            // D-03: Clear sync token and retry as full sync
+            {
+                let db = state.lock().map_err(|e| e.to_string())?;
+                calendar::update_sync_token(
+                    db.conn(),
+                    &account_id,
+                    None,
+                    &chrono::Utc::now().to_rfc3339(),
+                )
+                .map_err(|e| e.to_string())?;
+            }
+            // Retry with no sync token (full sync)
+            let retry_result = match account.provider.as_str() {
+                "google" => {
+                    calendar::sync_google_calendar(&client, &access_token, "primary", None).await
+                }
+                _ => return Err("SyncTokenExpired only applies to Google".to_string()),
+            };
+            match retry_result {
+                Ok((mut events, next_token)) => {
+                    for event in &mut events {
+                        event.account_id = account.id.clone();
+                    }
+                    let (cancelled, active): (Vec<_>, Vec<_>) =
+                        events.into_iter().partition(|e| e.status == "cancelled");
+                    let db = state.lock().map_err(|e| e.to_string())?;
+                    if !cancelled.is_empty() {
+                        let ids: Vec<String> = cancelled.iter().map(|e| e.id.clone()).collect();
+                        let _ = calendar::delete_events_by_ids(db.conn(), &ids, &account_id);
+                    }
+                    let count =
+                        calendar::save_events(db.conn(), &active).map_err(|e| e.to_string())?;
+                    let now = chrono::Utc::now().to_rfc3339();
+                    calendar::update_sync_token(
+                        db.conn(),
+                        &account.id,
+                        next_token.as_deref(),
+                        &now,
+                    )
+                    .map_err(|e| e.to_string())?;
+                }
+                Err(e) => return Err(format!("Retry after 410 failed: {}", e)),
+            }
+        }
+        Err(e) => return Err(e.to_string()),
     }
-
-    let db = state.lock().map_err(|e| e.to_string())?;
-    calendar::save_events(db.conn(), &events).map_err(|e| e.to_string())?;
-    let now = chrono::Utc::now().to_rfc3339();
-    calendar::update_sync_token(db.conn(), &account.id, next_token.as_deref(), &now)
-        .map_err(|e| e.to_string())?;
 
     app.emit("calendar-synced", ())
         .map_err(|e| e.to_string())?;
@@ -398,6 +482,15 @@ pub async fn sync_all_calendars(
 
         let (access_token, new_refresh) = match token_result {
             Ok(r) => r,
+            Err(CalendarError::TokenRevoked(msg)) => {
+                // D-01: Disable account on permanent auth failure
+                if let Ok(db) = state.lock() {
+                    let _ = calendar::disable_calendar_account(db.conn(), &account.id);
+                }
+                let _ = app.emit("calendar-account-disabled", &account.id);
+                eprintln!("Token revoked for {}: {} -- account disabled", account.email, msg);
+                continue;
+            }
             Err(e) => {
                 eprintln!("Token refresh failed for {}: {}", account.email, e);
                 continue;
@@ -430,19 +523,43 @@ pub async fn sync_all_calendars(
             _ => continue,
         };
 
-        if let Ok((mut events, next_token)) = sync_result {
-            for event in &mut events {
-                event.account_id = account.id.clone();
+        match sync_result {
+            Ok((mut events, next_token)) => {
+                for event in &mut events {
+                    event.account_id = account.id.clone();
+                }
+                // D-07: Hard-delete cancelled events
+                let (cancelled, active): (Vec<_>, Vec<_>) =
+                    events.into_iter().partition(|e| e.status == "cancelled");
+                let db = state.lock().map_err(|e| e.to_string())?;
+                if !cancelled.is_empty() {
+                    let ids: Vec<String> = cancelled.iter().map(|e| e.id.clone()).collect();
+                    let _ = calendar::delete_events_by_ids(db.conn(), &ids, &account.id);
+                }
+                let _ = calendar::save_events(db.conn(), &active);
+                let now = chrono::Utc::now().to_rfc3339();
+                let _ = calendar::update_sync_token(
+                    db.conn(),
+                    &account.id,
+                    next_token.as_deref(),
+                    &now,
+                );
             }
-            let db = state.lock().map_err(|e| e.to_string())?;
-            let _ = calendar::save_events(db.conn(), &events);
-            let now = chrono::Utc::now().to_rfc3339();
-            let _ = calendar::update_sync_token(
-                db.conn(),
-                &account.id,
-                next_token.as_deref(),
-                &now,
-            );
+            Err(CalendarError::SyncTokenExpired) => {
+                // D-03: Clear sync token, will do full sync next interval
+                if let Ok(db) = state.lock() {
+                    let now = chrono::Utc::now().to_rfc3339();
+                    let _ = calendar::update_sync_token(db.conn(), &account.id, None, &now);
+                }
+                eprintln!(
+                    "Sync token expired for {} -- will retry as full sync",
+                    account.email
+                );
+            }
+            Err(e) => {
+                // D-06: Transient errors silently logged
+                eprintln!("Sync failed for {}: {}", account.email, e);
+            }
         }
     }
 
