@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type ProgressStatus = "complete" | "in-progress" | "not-started";
+export type ProgressStatus = "complete" | "in-progress" | "not-started" | "overdue";
 
 interface ProgressDotProps {
   status: ProgressStatus;
@@ -14,6 +14,7 @@ export function ProgressDot({ status }: ProgressDotProps) {
         "border border-primary bg-transparent": status === "in-progress",
         "border border-muted-foreground/40 bg-transparent":
           status === "not-started",
+        "bg-destructive": status === "overdue",
       })}
       aria-label={status}
     />
