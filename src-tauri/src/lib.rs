@@ -334,6 +334,7 @@ pub fn run() {
             create_work_block,
             move_work_block,
             delete_work_block,
+            list_work_blocks,
             get_heartbeat_config,
             set_heartbeat_config,
             trigger_heartbeat,

@@ -1,7 +1,19 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useStore } from "@/stores";
 import type { MergedEvent } from "./calendarTypes";
 import { normalizeToMinutes } from "./calendarLayout";
+
+interface WorkBlock {
+  id: string;
+  scheduleDate: string;
+  taskId: string | null;
+  blockType: string;
+  startTime: string;
+  endTime: string;
+  isConfirmed: boolean;
+  taskTitle: string | null;
+}
 
 export function useCalendarEvents(dateStr: string): {
   events: MergedEvent[];
@@ -10,15 +22,20 @@ export function useCalendarEvents(dateStr: string): {
 } {
   const calendarEvents = useStore((s) => s.calendarEvents);
   const calendarAccounts = useStore((s) => s.calendarAccounts);
-  const todaySchedule = useStore((s) => s.todaySchedule);
-  const scheduleDate = useStore((s) => s.scheduleDate);
-  const isScheduleLoading = useStore((s) => s.isScheduleLoading);
+  const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([]);
+
+  // Fetch work blocks for the selected date
+  useEffect(() => {
+    invoke<WorkBlock[]>("list_work_blocks", { date: dateStr })
+      .then(setWorkBlocks)
+      .catch(() => setWorkBlocks([]));
+  }, [dateStr]);
 
   return useMemo(() => {
     const merged: MergedEvent[] = [];
     const allDay: MergedEvent[] = [];
 
-    // Filter calendar events to the target date
+    // Calendar events (meetings)
     for (const ce of calendarEvents) {
       const eventDate = ce.startTime.slice(0, 10);
       if (eventDate !== dateStr) continue;
@@ -40,24 +57,20 @@ export function useCalendarEvents(dateStr: string): {
       else merged.push(me);
     }
 
-    // Merge schedule blocks (only available for scheduleDate, typically today)
-    if (scheduleDate === dateStr) {
-      for (const sb of todaySchedule) {
-        if (sb.blockType === "meeting") continue; // skip meeting blocks, already from calendar
-        merged.push({
-          id: sb.id,
-          type: sb.blockType as "work" | "buffer",
-          title: sb.taskTitle ?? sb.eventTitle ?? "Work Block",
-          startMinutes: normalizeToMinutes(sb.startTime),
-          endMinutes: normalizeToMinutes(sb.endTime),
-          allDay: false,
-          taskId: sb.taskId,
-          taskPriority: sb.taskPriority,
-          isConfirmed: sb.isConfirmed,
-        });
-      }
+    // Work blocks from scheduled_blocks table
+    for (const wb of workBlocks) {
+      merged.push({
+        id: wb.id,
+        type: "work",
+        title: wb.taskTitle ?? "Work Block",
+        startMinutes: normalizeToMinutes(wb.startTime),
+        endMinutes: normalizeToMinutes(wb.endTime),
+        allDay: false,
+        taskId: wb.taskId ?? undefined,
+        isConfirmed: wb.isConfirmed,
+      });
     }
 
-    return { events: merged, allDayEvents: allDay, isLoading: isScheduleLoading };
-  }, [calendarEvents, calendarAccounts, todaySchedule, scheduleDate, dateStr, isScheduleLoading]);
+    return { events: merged, allDayEvents: allDay, isLoading: false };
+  }, [calendarEvents, calendarAccounts, workBlocks, dateStr]);
 }

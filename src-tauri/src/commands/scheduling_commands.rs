@@ -507,6 +507,43 @@ pub async fn delete_work_block(
     }))
 }
 
+#[tauri::command]
+pub async fn list_work_blocks(
+    date: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let mut stmt = db
+        .conn()
+        .prepare(
+            "SELECT sb.id, sb.schedule_date, sb.task_id, sb.block_type, sb.start_time, sb.end_time, sb.is_confirmed, t.title as task_title
+             FROM scheduled_blocks sb
+             LEFT JOIN tasks t ON sb.task_id = t.id
+             WHERE sb.schedule_date = ?1 AND sb.block_type = 'work'
+             ORDER BY sb.start_time",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let blocks = stmt
+        .query_map(rusqlite::params![&date], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "scheduleDate": row.get::<_, String>(1)?,
+                "taskId": row.get::<_, Option<String>>(2)?,
+                "blockType": row.get::<_, String>(3)?,
+                "startTime": row.get::<_, String>(4)?,
+                "endTime": row.get::<_, String>(5)?,
+                "isConfirmed": row.get::<_, bool>(6)?,
+                "taskTitle": row.get::<_, Option<String>>(7)?,
+            }))
+        })
+        .map_err(|e| e.to_string())?
+        .filter_map(|r| r.ok())
+        .collect();
+
+    Ok(blocks)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
