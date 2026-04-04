@@ -195,10 +195,12 @@ pub async fn connect_google_calendar(
     };
 
     if google_client_id.contains("placeholder") {
+        // Open the setup page directly
+        let _ = open::that("https://console.cloud.google.com/apis/credentials");
         return Err(
-            "Google Calendar OAuth is not configured. Go to Settings > Calendar and enter your \
-             Google Client ID. See https://console.cloud.google.com/apis/credentials to create an \
-             OAuth 2.0 Client ID (Desktop app type, with http://localhost as authorized redirect URI).".to_string()
+            "Google Calendar needs a one-time setup. A browser tab opened to Google Cloud Console. \
+             Create an OAuth 2.0 Client ID (Desktop app type), then add it to your .env file as \
+             GOOGLE_CLIENT_ID=your-id and restart Element.".to_string()
         );
     }
 
@@ -372,10 +374,11 @@ pub async fn connect_outlook_calendar(
     };
 
     if microsoft_client_id.contains("placeholder") {
+        let _ = open::that("https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps");
         return Err(
-            "Outlook Calendar OAuth is not configured. Go to Settings > Calendar and enter your \
-             Microsoft Client ID. See https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps \
-             to register an app (Mobile and desktop applications platform, with http://localhost as redirect URI).".to_string()
+            "Outlook Calendar needs a one-time setup. A browser tab opened to Azure Portal. \
+             Register an app (Personal accounts, Mobile/Desktop platform, http://localhost redirect), \
+             then add the Application ID to your .env file as MICROSOFT_CLIENT_ID=your-id and restart Element.".to_string()
         );
     }
 
