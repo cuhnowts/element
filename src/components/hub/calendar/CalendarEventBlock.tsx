@@ -92,15 +92,12 @@ export function CalendarEventBlock({
     cursor: isWorkOrBuffer ? "pointer" : "default",
     ...(isMeeting
       ? {
-          borderLeft: `3px solid ${accountColor}`,
-          backgroundColor: "hsl(var(--muted))",
-          border: "1px solid hsl(var(--border))",
-          borderLeftWidth: "3px",
-          borderLeftColor: accountColor,
+          borderLeft: `4px solid ${accountColor}`,
+          backgroundColor: "rgba(100, 160, 220, 0.15)",
         }
       : {
-          border: `1px solid ${WORK_BLOCK_COLOR}`,
-          backgroundColor: "hsl(var(--accent))",
+          borderLeft: `4px solid ${WORK_BLOCK_COLOR}`,
+          backgroundColor: "rgba(120, 100, 220, 0.15)",
         }),
   };
 
@@ -113,15 +110,13 @@ export function CalendarEventBlock({
   };
 
   const blockContent = (
-    <div className="px-2 py-1 h-full flex flex-col justify-start">
-      <span className="text-sm truncate text-foreground leading-tight">
+    <div className="px-2 py-1 h-full flex flex-col justify-start overflow-hidden">
+      <span className="text-xs font-semibold truncate text-foreground leading-tight">
         {event.title}
       </span>
-      {height > 30 && (
-        <span className="text-xs text-muted-foreground truncate">
-          {timeLabel}
-        </span>
-      )}
+      <span className="text-[11px] text-muted-foreground truncate">
+        {timeLabel}
+      </span>
     </div>
   );
 
