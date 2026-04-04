@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Time Bounded
-status: planning
-stopped_at: Phase 29 context gathered
-last_updated: "2026-04-04T01:38:40.733Z"
-last_activity: 2026-04-02 -- Roadmap created for v1.5 Time Bounded
+status: Ready to plan
+stopped_at: "Completed 27-03-PLAN.md (awaiting checkpoint:human-verify)"
+last_updated: "2026-04-04T12:50:32.502Z"
 progress:
   total_phases: 11
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 2
+  total_plans: 13
+  completed_plans: 7
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 26 - Calendar Sync Foundation
+**Current focus:** Phase 28 — due-dates-daily-planning
 
 ## Current Position
 
-Phase: 26 of 30 (Calendar Sync Foundation)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-04-02 -- Roadmap created for v1.5 Time Bounded
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 29
+Plan: Not started
 
 ## Performance Metrics
 
@@ -64,6 +58,16 @@ Recent decisions affecting current work:
 - [v1.5 research]: Suggest-never-auto-apply pattern for all schedule changes
 - [v1.5 research]: scheduling_commands.rs:97 empty vec is the critical 15-line fix unlocking everything
 - [v1.5 research]: Ollama HTTP API (2 endpoints) via existing reqwest, no ollama-rs crate
+- [Phase 27]: Store hubSelectedDate as ISO string for Zustand selector stability
+- [Phase 28]: Extracted generate_schedule_for_date as synchronous DB helper for manifest use; show undated tasks even on empty schedule days
+- [Phase 28]: Empty string convention for clearing due dates through Tauri invoke
+- [Phase 28]: Three-tier urgency pattern: overdue=destructive, due-soon=warning, normal=outline with backlog exemption
+- [Phase 26]: D-01: TokenRevoked disables account silently and emits calendar-account-disabled event
+- [Phase 26]: D-03: Google 410 Gone returns SyncTokenExpired, caller clears token and retries
+- [Phase 27]: color-mix(in oklch) for dynamic opacity on event blocks
+- [Phase 28]: Used isContinuation field on schedule blocks for overflow detection
+- [Phase 28]: Added input transform in useActionDispatch for reschedule_day to map reason to date param
+- [Phase 27]: Week grid columns driven by workHours.workDays with DAY_KEY_TO_OFFSET map, schedule blocks only in today column
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T01:38:40.729Z
-Stopped at: Phase 29 context gathered
-Resume file: .planning/phases/29-calendar-mcp-tools/29-CONTEXT.md
+Last session: 2026-04-04T12:47:30.455Z
+Stopped at: Completed 27-03-PLAN.md (awaiting checkpoint:human-verify)
+Resume file: None

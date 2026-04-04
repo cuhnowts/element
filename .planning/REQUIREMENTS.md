@@ -1,7 +1,7 @@
 # Requirements: Element
 
 **Defined:** 2026-04-03
-**Core Value:** The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
+**Core Value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
 ## v1.5 Requirements
 
@@ -9,23 +9,23 @@ Requirements for v1.5 Time Bounded milestone. Each maps to roadmap phases.
 
 ### Calendar Sync
 
-- [ ] **CAL-01**: Google Calendar OAuth sync works reliably with token refresh and 410 handling
-- [ ] **CAL-02**: Outlook Calendar OAuth sync works with correct timezone parsing
+- [x] **CAL-01**: Google Calendar OAuth sync works reliably with token refresh and 410 handling
+- [x] **CAL-02**: Outlook Calendar OAuth sync works with correct timezone parsing
 - [ ] **CAL-03**: Calendar events are wired to the scheduling engine for gap detection
 - [ ] **CAL-04**: Calendar sync runs on a background interval with debounced refresh
 
 ### Calendar View
 
-- [ ] **VIEW-01**: Hub right column shows a day view with time slots, meetings, and work blocks
-- [ ] **VIEW-02**: User can switch between day and week view
-- [ ] **VIEW-03**: AI-scheduled work blocks appear alongside external calendar events
-- [ ] **VIEW-04**: Clicking a work block navigates to the associated task
+- [x] **VIEW-01**: Hub right column shows a day view with time slots, meetings, and work blocks
+- [x] **VIEW-02**: User can switch between day and week view
+- [x] **VIEW-03**: AI-scheduled work blocks appear alongside external calendar events
+- [x] **VIEW-04**: Clicking a work block navigates to the associated task
 
 ### Due Dates
 
-- [ ] **DUE-01**: User can set due dates on tasks and phases via a date picker
-- [ ] **DUE-02**: Overdue and upcoming tasks are visually indicated in the goals tree and task views
-- [ ] **DUE-03**: Backlog items (999.x phases) are exempt from due date enforcement and alerts
+- [x] **DUE-01**: User can set due dates on tasks and phases via a date picker
+- [x] **DUE-02**: Overdue and upcoming tasks are visually indicated in the goals tree and task views
+- [x] **DUE-03**: Backlog items (999.x phases) are exempt from due date enforcement and alerts
 
 ### Calendar MCP Tools
 
@@ -35,17 +35,17 @@ Requirements for v1.5 Time Bounded milestone. Each maps to roadmap phases.
 
 ### Daily Planning
 
-- [ ] **PLAN-01**: Bot presents a prioritized daily plan on hub load: tasks ranked by importance against available time
-- [ ] **PLAN-02**: Bot asks "What should we work on today?" when there's more work than time
-- [ ] **PLAN-03**: Bot suggests due dates for tasks without them through conversation
-- [ ] **PLAN-04**: Bot can reschedule work when the user reports lost time or new priorities
+- [x] **PLAN-01**: Bot presents a prioritized daily plan on hub load: tasks ranked by importance against available time
+- [x] **PLAN-02**: Bot asks "What should we work on today?" when there's more work than time
+- [x] **PLAN-03**: Bot suggests due dates for tasks without them through conversation
+- [x] **PLAN-04**: Bot can reschedule work when the user reports lost time or new priorities
 
 ### Heartbeat
 
 - [ ] **BEAT-01**: Background process periodically evaluates deadline risk (remaining work vs remaining capacity)
 - [ ] **BEAT-02**: Heartbeat prefers local LLM (Ollama) for summary, falls back to CLI tool
 - [ ] **BEAT-03**: Deadline risks surface as notifications and briefing updates
-- [ ] **BEAT-04**: Heartbeat respects backlog exemption — does not alert on 999.x items
+- [ ] **BEAT-04**: Heartbeat respects backlog exemption -- does not alert on 999.x items
 
 ## Future Requirements
 
@@ -78,9 +78,9 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Full autonomous rescheduling without confirmation | Users must approve schedule changes — auto-apply causes anxiety (Motion's #1 complaint) |
-| LLM-generated schedules | LLM narrates algorithm output, does not generate schedules — unreliable for time math |
-| External calendar write-back | Read-only for v1.5 — write-back deferred to avoid sync conflicts |
+| Full autonomous rescheduling without confirmation | Users must approve schedule changes -- auto-apply causes anxiety (Motion's #1 complaint) |
+| LLM-generated schedules | LLM narrates algorithm output, does not generate schedules -- unreliable for time math |
+| External calendar write-back | Read-only for v1.5 -- write-back deferred to avoid sync conflicts |
 | Mobile push notifications | Desktop-only app, OS notifications sufficient |
 
 ## Traceability
@@ -89,13 +89,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| CAL-01 | Phase 26 | Complete |
+| CAL-02 | Phase 26 | Complete |
+| CAL-03 | Phase 26 | Pending |
+| CAL-04 | Phase 26 | Pending |
+| VIEW-01 | Phase 27 | Complete |
+| VIEW-02 | Phase 27 | Complete |
+| VIEW-03 | Phase 27 | Complete |
+| VIEW-04 | Phase 27 | Complete |
+| DUE-01 | Phase 28 | Complete |
+| DUE-02 | Phase 28 | Complete |
+| DUE-03 | Phase 28 | Complete |
+| PLAN-01 | Phase 28 | Complete |
+| PLAN-02 | Phase 28 | Complete |
+| PLAN-03 | Phase 28 | Complete |
+| PLAN-04 | Phase 28 | Complete |
+| MCP-01 | Phase 29 | Pending |
+| MCP-02 | Phase 29 | Pending |
+| MCP-03 | Phase 29 | Pending |
+| BEAT-01 | Phase 30 | Pending |
+| BEAT-02 | Phase 30 | Pending |
+| BEAT-03 | Phase 30 | Pending |
+| BEAT-04 | Phase 30 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-02 after roadmap creation*

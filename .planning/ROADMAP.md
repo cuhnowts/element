@@ -81,7 +81,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 - [ ] **Phase 26: Calendar Sync Foundation** - Fix OAuth bugs and wire calendar events to scheduling engine
 - [ ] **Phase 27: Hub Calendar View** - Day/week time-grid showing meetings and work blocks
-- [ ] **Phase 28: Due Dates & Daily Planning** - Due date enforcement with backlog exemption and AI daily planning skill
+- [x] **Phase 28: Due Dates & Daily Planning** - Due date enforcement with backlog exemption and AI daily planning skill (completed 2026-04-04)
 - [ ] **Phase 29: Calendar MCP Tools** - Bot tools for reading calendar and managing work blocks
 - [ ] **Phase 30: Heartbeat & Schedule Negotiation** - Background deadline monitoring and conversational rescheduling
 
@@ -203,7 +203,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
 | 26. Calendar Sync Foundation | v1.5 | 0/2 | Planned    |  |
 | 27. Hub Calendar View | v1.5 | 2/3 | In Progress|  |
-| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Planned    |  |
+| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Complete    | 2026-04-04 |
 | 29. Calendar MCP Tools | v1.5 | 0/2 | Planned    |  |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 0/3 | Planned    |  |
 
@@ -213,7 +213,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
