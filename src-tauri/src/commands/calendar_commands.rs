@@ -270,20 +270,29 @@ pub async fn connect_google_calendar(
         .await
         .map_err(|e| format!("Token exchange failed: {}", e))?;
 
-    let token_json: serde_json::Value = token_resp
-        .json()
+    let token_text = token_resp
+        .text()
         .await
-        .map_err(|e| format!("Failed to parse token response: {}", e))?;
+        .map_err(|e| format!("Failed to read token response: {}", e))?;
 
-    let refresh_token = token_json
-        .get("refresh_token")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "No refresh_token in response".to_string())?;
+    let token_json: serde_json::Value = serde_json::from_str(&token_text)
+        .map_err(|e| format!("Token parse error: {} — raw: {}", e, token_text))?;
+
+    if let Some(err) = token_json.get("error").and_then(|v| v.as_str()) {
+        let desc = token_json.get("error_description").and_then(|v| v.as_str()).unwrap_or("");
+        return Err(format!("Google OAuth error: {} — {}", err, desc));
+    }
 
     let access_token = token_json
         .get("access_token")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| "No access_token in response".to_string())?;
+        .ok_or_else(|| format!("No access_token in response: {}", token_text))?;
+
+    // refresh_token only comes on first auth. Use access_token as fallback credential.
+    let refresh_token = token_json
+        .get("refresh_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or(access_token);
 
     // Get user email from Google
     let userinfo: serde_json::Value = client
