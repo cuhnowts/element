@@ -6,7 +6,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
-import { CalendarPlaceholder } from "@/components/hub/CalendarPlaceholder";
+import { HubCalendar } from "@/components/hub/calendar/HubCalendar";
 import { MinimizedColumn, ColumnRibbon } from "@/components/hub/MinimizedColumn";
 import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
@@ -118,7 +118,7 @@ export function HubView() {
             <div className="h-full flex flex-col">
               <ColumnRibbon label="Calendar" onMinimize={() => calendarPanelRef.current?.collapse()} />
               <div className="flex-1 min-h-0">
-                <CalendarPlaceholder />
+                <HubCalendar />
               </div>
             </div>
           </ResizablePanel>
