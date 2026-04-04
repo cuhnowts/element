@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Time Bounded
 status: Ready to execute
-stopped_at: Completed 29-01-PLAN.md
-last_updated: "2026-04-04T17:22:47.346Z"
+stopped_at: Completed 30-02-PLAN.md
+last_updated: "2026-04-04T17:35:00.000Z"
 progress:
   total_phases: 11
   completed_phases: 3
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 30 (heartbeat-schedule-negotiation) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -71,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 26]: AppHandle.state() pattern for Send-safe async helpers instead of State<> parameters
 - [Phase 26]: Post-connect sync spawned as background task to avoid non-Send State across await
 - [Phase 29]: Port Rust find_open_blocks to TypeScript using minutes-since-midnight integer arithmetic; calendar events get buffer, work blocks do not
+- [Phase 30]: Sleep-per-tick pattern for heartbeat reconfiguration; risk fingerprint dedup via app_settings
+- [Phase 30]: Briefing risk summary prepended to manifest for D-06 second channel
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T17:22:47.344Z
-Stopped at: Completed 29-01-PLAN.md
+Last session: 2026-04-04T17:35:00.000Z
+Stopped at: Completed 30-02-PLAN.md
 Resume file: None
