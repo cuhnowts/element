@@ -274,11 +274,72 @@ const EXPECTED_TOOLS = [
       required: ["path", "content", "projectId"],
     },
   },
+  {
+    name: "list_calendar_events",
+    description: "List calendar events for a date range",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        startDate: { type: "string", description: "Start date (YYYY-MM-DD)" },
+        endDate: { type: "string", description: "End date (YYYY-MM-DD)" },
+      },
+      required: ["startDate", "endDate"],
+    },
+  },
+  {
+    name: "get_available_slots",
+    description: "Get available time slots for a given day",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        date: { type: "string", description: "Date (YYYY-MM-DD)" },
+      },
+      required: ["date"],
+    },
+  },
+  {
+    name: "create_work_block",
+    description: "Create a work block on the calendar for a specific task and time slot",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        date: { type: "string", description: "Date (YYYY-MM-DD)" },
+        taskId: { type: "string", description: "Task ID to assign to this block" },
+        startTime: { type: "string", description: "Start time (HH:mm)" },
+        endTime: { type: "string", description: "End time (HH:mm)" },
+      },
+      required: ["date", "taskId", "startTime", "endTime"],
+    },
+  },
+  {
+    name: "move_work_block",
+    description: "Move an existing work block to a new time slot",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        blockId: { type: "string", description: "Scheduled block ID" },
+        startTime: { type: "string", description: "New start time (HH:mm)" },
+        endTime: { type: "string", description: "New end time (HH:mm)" },
+      },
+      required: ["blockId", "startTime", "endTime"],
+    },
+  },
+  {
+    name: "delete_work_block",
+    description: "Delete a work block from the calendar",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        blockId: { type: "string", description: "Scheduled block ID" },
+      },
+      required: ["blockId"],
+    },
+  },
 ];
 
 describe("MCP Tool Registry", () => {
-  it("registers exactly 18 tools", () => {
-    expect(EXPECTED_TOOLS).toHaveLength(18);
+  it("registers exactly 23 tools", () => {
+    expect(EXPECTED_TOOLS).toHaveLength(23);
   });
 
   it("every tool has name, description, and inputSchema", () => {
@@ -317,6 +378,11 @@ describe("MCP Tool Registry", () => {
     expect(names).toContain("create_project");
     expect(names).toContain("create_theme");
     expect(names).toContain("create_file");
+    expect(names).toContain("list_calendar_events");
+    expect(names).toContain("get_available_slots");
+    expect(names).toContain("create_work_block");
+    expect(names).toContain("move_work_block");
+    expect(names).toContain("delete_work_block");
   });
 
   it("request_approval requires projectId, projectName, phaseName, reason", () => {

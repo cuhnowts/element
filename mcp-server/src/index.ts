@@ -26,6 +26,13 @@ import {
   handleCreateTheme,
   handleCreateFile,
 } from "./tools/write-tools.js";
+import {
+  handleListCalendarEvents,
+  handleGetAvailableSlots,
+  handleCreateWorkBlock,
+  handleMoveWorkBlock,
+  handleDeleteWorkBlock,
+} from "./tools/calendar-tools.js";
 
 const server = new Server(
   { name: "element-mcp", version: "1.0.0" },
@@ -312,6 +319,67 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["path", "content", "projectId"],
       },
     },
+    {
+      name: "list_calendar_events",
+      description: "List calendar events for a date range",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          startDate: { type: "string", description: "Start date (YYYY-MM-DD)" },
+          endDate: { type: "string", description: "End date (YYYY-MM-DD)" },
+        },
+        required: ["startDate", "endDate"],
+      },
+    },
+    {
+      name: "get_available_slots",
+      description: "Get available time slots for a given day",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          date: { type: "string", description: "Date (YYYY-MM-DD)" },
+        },
+        required: ["date"],
+      },
+    },
+    {
+      name: "create_work_block",
+      description: "Create a work block on the calendar for a specific task and time slot",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          date: { type: "string", description: "Date (YYYY-MM-DD)" },
+          taskId: { type: "string", description: "Task ID to assign to this block" },
+          startTime: { type: "string", description: "Start time (HH:mm)" },
+          endTime: { type: "string", description: "End time (HH:mm)" },
+        },
+        required: ["date", "taskId", "startTime", "endTime"],
+      },
+    },
+    {
+      name: "move_work_block",
+      description: "Move an existing work block to a new time slot",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          blockId: { type: "string", description: "Scheduled block ID" },
+          startTime: { type: "string", description: "New start time (HH:mm)" },
+          endTime: { type: "string", description: "New end time (HH:mm)" },
+        },
+        required: ["blockId", "startTime", "endTime"],
+      },
+    },
+    {
+      name: "delete_work_block",
+      description: "Delete a work block from the calendar",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          blockId: { type: "string", description: "Scheduled block ID" },
+        },
+        required: ["blockId"],
+      },
+    },
   ],
 }));
 
@@ -455,6 +523,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         db,
         dbPath,
         args as { path: string; content: string; projectId: string }
+      );
+
+    case "list_calendar_events":
+      return handleListCalendarEvents(
+        db,
+        args as { startDate: string; endDate: string }
+      );
+
+    case "get_available_slots":
+      return handleGetAvailableSlots(
+        db,
+        args as { date: string }
+      );
+
+    case "create_work_block":
+      return handleCreateWorkBlock(
+        db,
+        dbPath,
+        args as { date: string; taskId: string; startTime: string; endTime: string }
+      );
+
+    case "move_work_block":
+      return handleMoveWorkBlock(
+        db,
+        dbPath,
+        args as { blockId: string; startTime: string; endTime: string }
+      );
+
+    case "delete_work_block":
+      return handleDeleteWorkBlock(
+        db,
+        dbPath,
+        args as { blockId: string }
       );
 
     default:
