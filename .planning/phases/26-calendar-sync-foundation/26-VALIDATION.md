@@ -38,20 +38,20 @@ created: 2026-04-03
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 26-01-01 | 01 | 1 | CAL-01 | unit | `cargo test google_sync` | ❌ W0 | ⬜ pending |
-| 26-01-02 | 01 | 1 | CAL-01 | unit | `cargo test google_410` | ❌ W0 | ⬜ pending |
-| 26-02-01 | 02 | 1 | CAL-02 | unit | `cargo test outlook_timezone` | ❌ W0 | ⬜ pending |
-| 26-03-01 | 03 | 2 | CAL-03 | unit | `cargo test scheduler_busy` | ❌ W0 | ⬜ pending |
-| 26-04-01 | 04 | 2 | CAL-04 | unit | `cargo test background_sync` | ❌ W0 | ⬜ pending |
+| 26-01-01 | 01 | 1 | CAL-01 | unit | `cargo test test_parse_google_cancelled_event test_disable_calendar_account test_delete_events_by_ids` | create in task | pending |
+| 26-01-01 | 01 | 1 | CAL-02 | unit | `cargo test test_parse_outlook_utc_times` | create in task | pending |
+| 26-01-02 | 01 | 1 | CAL-01, CAL-02 | compile | `cargo check` | N/A | pending |
+| 26-02-01 | 02 | 2 | CAL-03 | unit | `cargo test test_calendar_event_type_conversion` | create in task | pending |
+| 26-02-02 | 02 | 2 | CAL-04 | unit | `cargo test test_should_sync_debounce` | create in task | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `src-tauri/src/tests/calendar_sync_tests.rs` — test stubs for CAL-01 through CAL-04
-- [ ] Test fixtures for mock Google/Outlook API responses
+- [ ] Tests are created inline within their respective tasks (no separate test scaffold needed)
+- [ ] Test fixtures for mock Google/Outlook API responses created within test functions
 
 *Existing cargo test infrastructure covers framework needs.*
 
@@ -64,6 +64,7 @@ created: 2026-04-03
 | OAuth token refresh flow | CAL-01 | Requires live Google OAuth | Connect Google account, wait for token expiry, verify re-sync |
 | Outlook OAuth flow | CAL-02 | Requires live Microsoft OAuth | Connect Outlook account, verify events sync with correct timezone |
 | Background sync timer fires | CAL-04 | Requires app running with timer | Launch app, wait for sync interval, check logs for sync execution |
+| Post-connect sync trigger | CAL-04 | Requires live OAuth flow | Connect account, verify events appear immediately after connect |
 
 ---
 
