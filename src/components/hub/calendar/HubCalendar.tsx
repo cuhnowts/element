@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { startOfWeek, endOfWeek, addDays } from "date-fns";
 import { useStore } from "@/stores";
+import { api } from "@/lib/tauri";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarDayGrid } from "./CalendarDayGrid";
 import { CalendarWeekGrid } from "./CalendarWeekGrid";
@@ -12,11 +13,20 @@ export function HubCalendar() {
   const hubViewMode = useStore((s) => s.hubViewMode);
   const fetchCalendarEvents = useStore((s) => s.fetchCalendarEvents);
   const { allDayEvents } = useCalendarEvents(hubSelectedDate);
+  const hasSynced = useRef(false);
 
   const weekStart = startOfWeek(new Date(hubSelectedDate + "T00:00:00"), {
     weekStartsOn: 1,
   });
   const weekStartStr = weekStart.toISOString().split("T")[0];
+
+  // Auto-sync calendar on mount (if stale)
+  useEffect(() => {
+    if (!hasSynced.current) {
+      hasSynced.current = true;
+      api.syncAllIfStale().catch(() => {});
+    }
+  }, []);
 
   // Fetch events when date or view mode changes
   useEffect(() => {

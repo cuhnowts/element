@@ -150,6 +150,7 @@ export const api = {
   syncCalendar: (accountId: string) =>
     invoke<void>("sync_calendar", { accountId }),
   syncAllCalendars: () => invoke<void>("sync_all_calendars"),
+  syncAllIfStale: () => invoke<string>("sync_all_if_stale"),
   disconnectCalendar: (accountId: string) =>
     invoke<void>("disconnect_calendar", { accountId }),
   listCalendarEvents: (start: string, end: string) =>
