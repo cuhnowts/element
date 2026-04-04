@@ -1,7 +1,8 @@
 ---
 phase: 30
 slug: heartbeat-schedule-negotiation
-status: draft
+status: approved
+reviewed_at: 2026-04-03
 shadcn_initialized: true
 preset: base-nova
 created: 2026-04-03
@@ -76,7 +77,9 @@ Font sizes used this phase: 12px (risk badge labels, timestamps, settings helper
 | Heartbeat status dot (active) | `--color-chart-2` oklch(0.6 0.118 184.714) (teal) | 6px pulsing dot in settings when heartbeat is running |
 | Heartbeat status dot (inactive) | `--color-muted-foreground` oklch(0.708 0 0) | 6px static dot in settings when heartbeat is stopped |
 
-Accent reserved for: warning-level risk indicators (amber badge, amber left border), heartbeat active state dot in settings.
+**Semantic color justification:** Amber (`--color-chart-4`) is the risk/warning semantic color — signals user-facing urgency about deadlines. Teal (`--color-chart-2`) is the system-status semantic color — signals whether the background heartbeat process is active. They occupy different semantic domains (user risk vs. system state) and are never used on the same element type.
+
+Accent reserved for: warning-level risk indicators (amber badge, amber left border). Heartbeat active state dot uses teal as a distinct system-status semantic color.
 
 ---
 
@@ -121,9 +124,10 @@ Components needed for this phase, mapped to shadcn or custom.
   - After line: 14px regular, `--color-foreground`, e.g., "Tomorrow 9:00 - 11:00 AM"
   - Side effects (if any): 12px regular, `--color-muted-foreground`, e.g., "This pushes 'Code review' to tomorrow afternoon"
   - Separator
-  - Action row: "Dismiss" (outline button, left) + "Confirm Move" (default button, right)
+  - Action row: "Dismiss Change" (outline button, left) + "Confirm Move" (default button, right)
 - Card uses `role="alertdialog"` with `aria-labelledby` and `aria-describedby` (same pattern as ActionConfirmCard)
 - Keyboard: Enter confirms, Escape dismisses
+- **Focal point:** The before/after diff lines — strikethrough + new-time contrast draws the eye first; action buttons are secondary
 - After resolution: card fades to 50% opacity, buttons replaced with "Confirmed" or "Dismissed" text (12px, muted-foreground)
 
 ### D-12: Risk Notification with Suggested Fix
@@ -147,6 +151,7 @@ Components needed for this phase, mapped to shadcn or custom.
   2. **Check interval** -- Select with options: "15 minutes", "30 minutes" (default), "1 hour", "2 hours". Disabled when heartbeat switch is off
   3. **AI provider** -- Select with options populated from configured AI providers plus "None (template only)". Helper text "Used for risk summaries. Falls back to template when unavailable." (12px, muted-foreground)
 - Status indicator: 6px circle dot to the right of the "Heartbeat" heading. Teal pulsing when active, muted static when inactive. `aria-label="Heartbeat is running"` or `"Heartbeat is stopped"`
+- **Focal point:** The enable/disable Switch — it gates all other fields and is the primary interaction target
 
 ---
 
@@ -191,7 +196,7 @@ Integration with existing stores (read-only references, no new fields):
 | Schedule change card after | "{day} {start} - {end}" |
 | Schedule change card side effect | "This pushes '{other_task}' to {day} {time}" |
 | Schedule change confirm button | "Confirm Move" |
-| Schedule change dismiss button | "Dismiss" |
+| Schedule change dismiss button | "Dismiss Change" |
 | Schedule change resolved (approved) | "Confirmed" |
 | Schedule change resolved (rejected) | "Dismissed" |
 | Briefing risk section heading | "Deadline Risks" (rendered as markdown H3 in briefing) |
@@ -237,11 +242,11 @@ No third-party registries declared for this phase.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS (FLAG fixed — "Dismiss" → "Dismiss Change")
+- [x] Dimension 2 Visuals: PASS (FLAG fixed — focal points added)
+- [x] Dimension 3 Color: PASS (FLAG fixed — semantic justification added)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-04-03
