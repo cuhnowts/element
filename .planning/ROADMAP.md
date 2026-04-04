@@ -116,7 +116,7 @@ Plans:
 
 Plans:
 - [x] 27-01-PLAN.md -- Types, layout math (TDD), Zustand state, and data hooks
-- [ ] 27-02-PLAN.md -- Day view UI components and HubView wiring
+- [x] 27-02-PLAN.md -- Day view UI components and HubView wiring
 - [ ] 27-03-PLAN.md -- Week view, meeting popover, MiniCalendar coordination, and integration tests
 
 ### Phase 28: Due Dates & Daily Planning
@@ -160,7 +160,13 @@ Plans:
   2. When deadline risk is detected, the user sees a notification and the daily briefing reflects the risk
   3. Heartbeat uses a local LLM (Ollama) for risk summaries when available, falling back to the configured CLI tool
   4. Backlog items (999.x phases) are ignored by the heartbeat -- no false alarms on intentionally unscheduled work
-**Plans**: TBD
+**Plans**: 3 plans
+**UI hint**: yes
+
+Plans:
+- [ ] 30-01-PLAN.md -- Heartbeat types, deterministic risk calculation (TDD), and LLM summary with provider fallback
+- [ ] 30-02-PLAN.md -- Background timer, notification creation, deduplication, Tauri commands, and lib.rs wiring
+- [ ] 30-03-PLAN.md -- Frontend heartbeat settings, ScheduleChangeCard, Zustand slice, and notification click handler
 
 ## Progress
 
@@ -196,10 +202,10 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
 | 26. Calendar Sync Foundation | v1.5 | 0/2 | Planned    |  |
-| 27. Hub Calendar View | v1.5 | 1/3 | In Progress|  |
+| 27. Hub Calendar View | v1.5 | 2/3 | In Progress|  |
 | 28. Due Dates & Daily Planning | v1.5 | 0/3 | Planned    |  |
 | 29. Calendar MCP Tools | v1.5 | 0/2 | Planned    |  |
-| 30. Heartbeat & Schedule Negotiation | v1.5 | 0/? | Not started | - |
+| 30. Heartbeat & Schedule Negotiation | v1.5 | 0/3 | Planned    |  |
 
 ## Backlog
 
@@ -207,7 +213,7 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
