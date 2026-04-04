@@ -213,6 +213,7 @@ export function HubChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dispatchedActionsRef = useRef<Set<string>>(new Set());
+  const feedbackRoundRef = useRef(0);
 
   // Auto-scroll on new content
   useEffect(() => {
@@ -321,9 +322,10 @@ export function HubChat() {
         };
         setActionResults((prev) => [...prev, actionResult]);
 
-        // Send results back for lookup actions so the bot can act on them
+        // Send results back for lookup actions so the bot can act on them (max 2 rounds)
         const lookupActions = ["search_tasks", "list_calendar_events", "get_available_slots"];
-        if (!toolUse.id.startsWith("cli-") || lookupActions.includes(toolUse.name)) {
+        if (lookupActions.includes(toolUse.name) && feedbackRoundRef.current < 2) {
+          feedbackRoundRef.current++;
           await sendToolResult(toolUse.id, result);
         }
       }
@@ -422,6 +424,7 @@ export function HubChat() {
     addUserMessage(text);
     dispatchedActionsRef.current.clear();
     chunkBufferRef.current = "";
+    feedbackRoundRef.current = 0;
 
     const allMessages = useHubChatStore.getState().messages;
     const chatMessages = allMessages.map((m) => ({
