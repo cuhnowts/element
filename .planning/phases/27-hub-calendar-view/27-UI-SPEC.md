@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: base-nova
 created: 2026-04-03
+revised: 2026-04-03
 ---
 
 # Phase 27 — UI Design Contract
@@ -32,7 +33,7 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Time label inline padding, gap between time and title on event blocks |
-| sm | 8px | Event block internal padding (px-2 py-1), gap between stacked elements |
+| sm | 8px | Event block internal padding (px-2 py-1), gap between stacked elements, now-line circle diameter |
 | md | 16px | Panel padding (p-4), header bar padding |
 | lg | 24px | Section break between header bar and grid |
 | xl | 32px | Not used this phase |
@@ -52,7 +53,7 @@ Exceptions: 44px minimum touch target height for event blocks to satisfy pointer
 | Heading | 16px | 600 (semibold) | 1.25 |
 | Time slot label | 12px | 400 (regular) | 1.0 |
 
-Font sizes used this phase: 12px (time labels, event time ranges, section labels), 14px (event titles, body text), 16px (panel heading "Calendar"), 10px (overflow indicator counts only).
+Font sizes used this phase: 12px (time labels, event time ranges, section labels, overflow indicator counts), 14px (event titles, body text), 16px (panel heading "Calendar").
 
 ---
 
@@ -71,7 +72,7 @@ Font sizes used this phase: 12px (time labels, event time ranges, section labels
 |---------|-------|-------------------|
 | External meeting blocks | Per-account from CALENDAR_COLORS array: `--color-chart-2` (teal), `--color-chart-4` (amber), `--color-chart-1` (orange), `--color-chart-5` (gold) | Solid fill at 40% opacity; 3px left border at full opacity |
 | AI work blocks | `oklch(0.585 0.156 272)` (indigo) | 15% opacity fill; 1px solid border at full opacity. Distinct lighter treatment vs solid meetings. |
-| Now-line | `oklch(0.585 0.156 272)` (indigo) | Full opacity, 2px height, spans full grid width. Circle indicator at left edge (6px diameter). |
+| Now-line | `oklch(0.585 0.156 272)` (indigo) | Full opacity, 2px height, spans full grid width. Circle indicator at left edge (8px diameter). |
 | Slot gridlines | `--color-border` oklch(0.269 0 0) | 1px solid for hour lines, 1px dashed at 50% opacity for half-hour lines |
 | Today column (week view) | `--color-card` oklch(0.205 0 0) | Full column background highlight |
 
@@ -92,6 +93,7 @@ These are the pixel-level specifications for the time grid layout.
 | Event block border-radius | 6px (var(--radius) minus 4px) | Slightly tighter than card radius for nested feel |
 | All-day banner height | 28px per row | Stacks if multiple all-day events |
 | Header bar height | 40px | Contains date nav + view toggle |
+| Now-line circle diameter | 8px | Aligns to spacing scale; visually proportionate to 2px line height |
 | Overlap column split | Equal width per overlapping event | Max 4 columns; 5+ events show "+N more" badge |
 
 ---
@@ -147,7 +149,7 @@ Components needed for this phase, mapped to shadcn or custom.
 
 - 2px tall horizontal line at the pixel position corresponding to current time
 - Indigo color (`oklch(0.585 0.156 272)`)
-- 6px diameter circle at the left edge (overlapping the time gutter)
+- 8px diameter circle at the left edge (overlapping the time gutter)
 - Updates position every 60 seconds
 - On initial load, scroll position centers the now-line vertically in the viewport
 
@@ -205,6 +207,9 @@ Data sources (read-only, already exist):
 | Today button | "Today" |
 | Empty state heading | "No events today" |
 | Empty state body | "Your calendar is clear. Connect a calendar account in Settings to see your meetings here." |
+| Error state heading | "Couldn't load your calendar" |
+| Error state body | "Check your connection and try again, or reconnect your calendar account in Settings." |
+| Error state retry button | "Try Again" |
 | Loading state | Skeleton grid: 3 shimmer blocks at varied heights in the time grid area |
 | Overflow indicator (above work hours) | "N earlier" (clickable, expands) |
 | Overflow indicator (below work hours) | "N later" (clickable, expands) |
@@ -232,6 +237,7 @@ No third-party registries declared for this phase.
 |-------------|---------------|
 | Event blocks keyboard-navigable | Tab order flows through events chronologically; Enter activates click action |
 | Screen reader announcements | Each event block has aria-label: "{title}, {start time} to {end time}" |
+| Date nav arrow buttons | Left arrow: aria-label="Previous day" (day view) / "Previous week" (week view). Right arrow: aria-label="Next day" / "Next week". |
 | Color not sole differentiator | Work blocks have dashed/lighter border pattern in addition to color difference from meetings |
 | Now-line | aria-hidden="true" (decorative) |
 | View toggle | Role="tablist" with aria-selected on active tab |
