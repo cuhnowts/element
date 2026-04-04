@@ -220,6 +220,88 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
     destructive: true,
     tauriCommand: "execute_bot_shell",
   },
+  {
+    name: "list_calendar_events",
+    description:
+      "List calendar events for a date range. Returns event titles, times, and locations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        startDate: {
+          type: "string",
+          description: "Start date (YYYY-MM-DD)",
+        },
+        endDate: { type: "string", description: "End date (YYYY-MM-DD)" },
+      },
+      required: ["startDate", "endDate"],
+    },
+    destructive: false,
+    tauriCommand: "list_calendar_events_for_range",
+  },
+  {
+    name: "get_available_slots",
+    description:
+      "Get available time slots for a given day. Returns gaps between meetings and work blocks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "Date (YYYY-MM-DD)" },
+      },
+      required: ["date"],
+    },
+    destructive: false,
+    tauriCommand: "get_available_slots",
+  },
+  {
+    name: "create_work_block",
+    description:
+      "Schedule a work block for a task on the calendar. Requires user approval.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "Date (YYYY-MM-DD)" },
+        taskId: {
+          type: "string",
+          description: "Task ID to assign to this block",
+        },
+        startTime: { type: "string", description: "Start time (HH:mm)" },
+        endTime: { type: "string", description: "End time (HH:mm)" },
+      },
+      required: ["date", "taskId", "startTime", "endTime"],
+    },
+    destructive: true,
+    tauriCommand: "create_work_block",
+  },
+  {
+    name: "move_work_block",
+    description:
+      "Move an existing work block to a new time. Requires user approval.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockId: { type: "string", description: "Scheduled block ID" },
+        startTime: { type: "string", description: "New start time (HH:mm)" },
+        endTime: { type: "string", description: "New end time (HH:mm)" },
+      },
+      required: ["blockId", "startTime", "endTime"],
+    },
+    destructive: true,
+    tauriCommand: "move_work_block",
+  },
+  {
+    name: "delete_work_block",
+    description:
+      "Remove a work block from the calendar. Requires user approval.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        blockId: { type: "string", description: "Scheduled block ID" },
+      },
+      required: ["blockId"],
+    },
+    destructive: true,
+    tauriCommand: "delete_work_block",
+  },
 ];
 
 /**

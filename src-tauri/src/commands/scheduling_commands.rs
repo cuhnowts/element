@@ -261,6 +261,248 @@ pub async fn apply_schedule(
     Ok(())
 }
 
+// ---------------------------------------------------------------------------
+// Calendar tool Tauri commands (Phase 29, Plan 02)
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn list_calendar_events_for_range(
+    start_date: String,
+    end_date: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let conn = db.conn();
+    let start_iso = format!("{}T00:00:00", start_date);
+    let end_iso = format!("{}T23:59:59", end_date);
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, title, description, location, start_time, end_time, all_day, status
+             FROM calendar_events WHERE start_time >= ?1 AND end_time <= ?2 ORDER BY start_time",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![start_iso, end_iso], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "title": row.get::<_, String>(1)?,
+                "description": row.get::<_, String>(2)?,
+                "location": row.get::<_, Option<String>>(3)?,
+                "start_time": row.get::<_, String>(4)?,
+                "end_time": row.get::<_, String>(5)?,
+                "all_day": row.get::<_, bool>(6)?,
+                "status": row.get::<_, String>(7)?,
+            }))
+        })
+        .map_err(|e| e.to_string())?;
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn get_available_slots(
+    date: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+) -> Result<Vec<serde_json::Value>, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let work_hours = read_work_hours_from_db(&db)?.unwrap_or_else(default_work_hours);
+
+    let conn = db.conn();
+    let start_iso = format!("{}T00:00:00", date);
+    let end_iso = format!("{}T23:59:59", date);
+
+    // Fetch calendar events for this date, convert ISO datetime -> HH:mm
+    let mut evt_stmt = conn
+        .prepare(
+            "SELECT id, title, start_time, end_time FROM calendar_events
+             WHERE start_time >= ?1 AND start_time < ?2",
+        )
+        .map_err(|e| e.to_string())?;
+    let cal_events: Vec<crate::scheduling::types::CalendarEvent> = evt_stmt
+        .query_map(rusqlite::params![start_iso, end_iso], |row| {
+            let start_full: String = row.get(2)?;
+            let end_full: String = row.get(3)?;
+            let start_hm = if start_full.len() >= 16 {
+                start_full[11..16].to_string()
+            } else {
+                "00:00".to_string()
+            };
+            let end_hm = if end_full.len() >= 16 {
+                end_full[11..16].to_string()
+            } else {
+                "23:59".to_string()
+            };
+            Ok(crate::scheduling::types::CalendarEvent {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                start_time: start_hm,
+                end_time: end_hm,
+                account_color: None,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    // Fetch existing confirmed work blocks as additional occupied ranges
+    let mut blk_stmt = conn
+        .prepare(
+            "SELECT start_time, end_time FROM scheduled_blocks
+             WHERE schedule_date = ?1 AND is_confirmed = 1",
+        )
+        .map_err(|e| e.to_string())?;
+    let work_blocks: Vec<(String, String)> = blk_stmt
+        .query_map(rusqlite::params![&date], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|e| e.to_string())?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+
+    // Step 1: Get open blocks considering calendar events (with buffer)
+    let open_after_cal = crate::scheduling::time_blocks::find_open_blocks(
+        &work_hours,
+        &cal_events,
+        work_hours.buffer_minutes,
+        work_hours.min_block_minutes,
+    );
+
+    // Step 2: Subtract confirmed work blocks from open blocks
+    let mut result_slots: Vec<serde_json::Value> = Vec::new();
+    for open in &open_after_cal {
+        let mut sub_ranges = vec![(open.start, open.end)];
+        for (wb_start_str, wb_end_str) in &work_blocks {
+            let wb_start = chrono::NaiveTime::parse_from_str(wb_start_str, "%H:%M")
+                .unwrap_or(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            let wb_end = chrono::NaiveTime::parse_from_str(wb_end_str, "%H:%M")
+                .unwrap_or(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+            let mut new_ranges = Vec::new();
+            for (rs, re) in &sub_ranges {
+                if wb_end <= *rs || wb_start >= *re {
+                    new_ranges.push((*rs, *re));
+                } else {
+                    if *rs < wb_start {
+                        new_ranges.push((*rs, wb_start));
+                    }
+                    if wb_end < *re {
+                        new_ranges.push((wb_end, *re));
+                    }
+                }
+            }
+            sub_ranges = new_ranges;
+        }
+        for (s, e) in sub_ranges {
+            let dur = (e - s).num_minutes() as i32;
+            if dur >= work_hours.min_block_minutes {
+                result_slots.push(serde_json::json!({
+                    "start": s.format("%H:%M").to_string(),
+                    "end": e.format("%H:%M").to_string(),
+                    "duration_minutes": dur,
+                }));
+            }
+        }
+    }
+
+    Ok(result_slots)
+}
+
+#[tauri::command]
+pub async fn create_work_block(
+    date: String,
+    task_id: String,
+    start_time: String,
+    end_time: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    app: AppHandle,
+) -> Result<serde_json::Value, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    // Verify task exists
+    let task_exists: bool = db
+        .conn()
+        .prepare("SELECT 1 FROM tasks WHERE id = ?1")
+        .map_err(|e| e.to_string())?
+        .exists(rusqlite::params![&task_id])
+        .map_err(|e| e.to_string())?;
+    if !task_exists {
+        return Err("Task not found. Search for a task first, then schedule it.".to_string());
+    }
+    let id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    db.conn()
+        .execute(
+            "INSERT INTO scheduled_blocks (id, schedule_date, task_id, block_type, start_time, end_time, is_confirmed, created_at)
+             VALUES (?1, ?2, ?3, 'work', ?4, ?5, 1, ?6)",
+            rusqlite::params![&id, &date, &task_id, &start_time, &end_time, &now],
+        )
+        .map_err(|e| e.to_string())?;
+    app.emit("schedule-applied", &date)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({
+        "id": id,
+        "date": date,
+        "taskId": task_id,
+        "startTime": start_time,
+        "endTime": end_time,
+    }))
+}
+
+#[tauri::command]
+pub async fn move_work_block(
+    block_id: String,
+    start_time: String,
+    end_time: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    app: AppHandle,
+) -> Result<serde_json::Value, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let schedule_date: String = db
+        .conn()
+        .prepare("SELECT schedule_date FROM scheduled_blocks WHERE id = ?1")
+        .map_err(|e| e.to_string())?
+        .query_row(rusqlite::params![&block_id], |row| row.get(0))
+        .map_err(|_| "Work block not found.".to_string())?;
+    db.conn()
+        .execute(
+            "UPDATE scheduled_blocks SET start_time = ?1, end_time = ?2 WHERE id = ?3",
+            rusqlite::params![&start_time, &end_time, &block_id],
+        )
+        .map_err(|e| e.to_string())?;
+    app.emit("schedule-applied", &schedule_date)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({
+        "blockId": block_id,
+        "startTime": start_time,
+        "endTime": end_time,
+    }))
+}
+
+#[tauri::command]
+pub async fn delete_work_block(
+    block_id: String,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    app: AppHandle,
+) -> Result<serde_json::Value, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let schedule_date: String = db
+        .conn()
+        .prepare("SELECT schedule_date FROM scheduled_blocks WHERE id = ?1")
+        .map_err(|e| e.to_string())?
+        .query_row(rusqlite::params![&block_id], |row| row.get(0))
+        .map_err(|_| "Work block not found.".to_string())?;
+    db.conn()
+        .execute(
+            "DELETE FROM scheduled_blocks WHERE id = ?1",
+            rusqlite::params![&block_id],
+        )
+        .map_err(|e| e.to_string())?;
+    app.emit("schedule-applied", &schedule_date)
+        .map_err(|e| e.to_string())?;
+    Ok(serde_json::json!({
+        "blockId": block_id,
+        "deleted": true,
+    }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

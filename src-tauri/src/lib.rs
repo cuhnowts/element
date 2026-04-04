@@ -318,6 +318,11 @@ pub fn run() {
             generate_briefing,
             execute_bot_shell,
             search_tasks,
+            list_calendar_events_for_range,
+            get_available_slots,
+            create_work_block,
+            move_work_block,
+            delete_work_block,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
