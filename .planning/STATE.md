@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Time Bounded
-status: Ready to execute
-stopped_at: Completed 30-02-PLAN.md
-last_updated: "2026-04-04T17:35:00.000Z"
+status: Ready to plan
+stopped_at: Completed 29-02-PLAN.md
+last_updated: "2026-04-04T17:32:28.416Z"
 progress:
   total_phases: 11
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 30 (heartbeat-schedule-negotiation) — EXECUTING
-Plan: 3 of 3
+Phase: 30
+Plan: Not started
 
 ## Performance Metrics
 
@@ -71,8 +71,9 @@ Recent decisions affecting current work:
 - [Phase 26]: AppHandle.state() pattern for Send-safe async helpers instead of State<> parameters
 - [Phase 26]: Post-connect sync spawned as background task to avoid non-Send State across await
 - [Phase 29]: Port Rust find_open_blocks to TypeScript using minutes-since-midnight integer arithmetic; calendar events get buffer, work blocks do not
-- [Phase 30]: Sleep-per-tick pattern for heartbeat reconfiguration; risk fingerprint dedup via app_settings
-- [Phase 30]: Briefing risk summary prepended to manifest for D-06 second channel
+- [Phase 30]: RiskSeverity derives Ord for sorting (Critical < Warning < Info)
+- [Phase 30]: Ollama defaults to llama3.2:3b model for heartbeat summaries
+- [Phase 29]: list_calendar_events action maps to list_calendar_events_for_range Tauri command to avoid collision
 
 ### Pending Todos
 
@@ -86,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T17:35:00.000Z
-Stopped at: Completed 30-02-PLAN.md
+Last session: 2026-04-04T17:28:31.834Z
+Stopped at: Completed 29-02-PLAN.md
 Resume file: None

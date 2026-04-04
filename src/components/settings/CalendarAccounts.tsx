@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Unlink, Loader2, AlertCircle } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useStore } from "@/stores";
 
 const CALENDAR_COLORS = [
@@ -43,10 +45,24 @@ export function CalendarAccounts() {
     email: string;
   } | null>(null);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [microsoftClientId, setMicrosoftClientId] = useState("");
 
   useEffect(() => {
     fetchCalendarAccounts();
+    // Load saved OAuth client IDs
+    invoke<string | null>("get_app_setting", { key: "google_client_id" }).then(
+      (v) => v && setGoogleClientId(v),
+    );
+    invoke<string | null>("get_app_setting", { key: "microsoft_client_id" }).then(
+      (v) => v && setMicrosoftClientId(v),
+    );
   }, [fetchCalendarAccounts]);
+
+  const saveClientIds = async () => {
+    await invoke("set_app_setting", { key: "google_client_id", value: googleClientId });
+    await invoke("set_app_setting", { key: "microsoft_client_id", value: microsoftClientId });
+  };
 
   const handleSync = async (accountId: string) => {
     setSyncingAccountId(accountId);
@@ -72,11 +88,36 @@ export function CalendarAccounts() {
           Connect a Google or Outlook calendar to see your events in Element.
         </p>
 
+        <div className="mt-6 w-full max-w-md space-y-3 text-left">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Google Client ID</label>
+            <Input
+              value={googleClientId}
+              onChange={(e) => setGoogleClientId(e.target.value)}
+              onBlur={saveClientIds}
+              placeholder="your-app.apps.googleusercontent.com"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Microsoft Client ID</label>
+            <Input
+              value={microsoftClientId}
+              onChange={(e) => setMicrosoftClientId(e.target.value)}
+              onBlur={saveClientIds}
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              className="mt-1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Enter your OAuth app credentials to enable calendar sync.
+          </p>
+        </div>
+
         {calendarError && (
           <div className="mt-4 flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <AlertCircle className="size-4 shrink-0" />
-            Calendar connection failed. Check your internet connection and try
-            again.
+            {String(calendarError)}
           </div>
         )}
 

@@ -471,14 +471,24 @@ pub async fn sync_outlook_calendar(
 // ─── Token refresh ────────────────────────────────────────────────────────────
 
 /// Refresh a Google OAuth access token using a refresh token.
+/// If `client_id` is None, falls back to the compile-time GOOGLE_CLIENT_ID_STR.
 pub async fn refresh_google_token(
     client: &reqwest::Client,
     refresh_token: &str,
 ) -> Result<(String, Option<String>), CalendarError> {
+    refresh_google_token_with_id(client, refresh_token, GOOGLE_CLIENT_ID_STR).await
+}
+
+/// Refresh a Google OAuth access token using a specific client ID.
+pub async fn refresh_google_token_with_id(
+    client: &reqwest::Client,
+    refresh_token: &str,
+    client_id: &str,
+) -> Result<(String, Option<String>), CalendarError> {
     let resp = client
         .post("https://oauth2.googleapis.com/token")
         .form(&[
-            ("client_id", GOOGLE_CLIENT_ID_STR),
+            ("client_id", client_id),
             ("grant_type", "refresh_token"),
             ("refresh_token", refresh_token),
         ])

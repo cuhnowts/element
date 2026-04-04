@@ -7,6 +7,24 @@ use crate::plugins::core::calendar::{
     self, CalendarAccount, CalendarError, CalendarEvent,
 };
 
+/// Resolve Google client ID: app setting > compile-time env > placeholder.
+fn resolve_google_client_id(db: &Database) -> String {
+    db.get_app_setting("google_client_id")
+        .ok()
+        .flatten()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| calendar::GOOGLE_CLIENT_ID_STR.to_string())
+}
+
+/// Resolve Microsoft client ID: app setting > compile-time env > placeholder.
+fn resolve_microsoft_client_id(db: &Database) -> String {
+    db.get_app_setting("microsoft_client_id")
+        .ok()
+        .flatten()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| calendar::MICROSOFT_CLIENT_ID_STR.to_string())
+}
+
 /// Per-account sync helper -- reusable by sync_all_if_stale and post-connect triggers.
 /// Uses AppHandle to resolve state internally, avoiding Send issues across await points.
 /// Returns the number of events synced on success.
@@ -36,9 +54,15 @@ pub async fn sync_calendar_for_account(
 
     let client = reqwest::Client::new();
 
+    // Resolve runtime client IDs for token refresh
+    let google_cid = {
+        let db = db_arc.lock().map_err(|e| e.to_string())?;
+        resolve_google_client_id(&db)
+    };
+
     // Token refresh with TokenRevoked detection (D-01)
     let refresh_result = match account.provider.as_str() {
-        "google" => calendar::refresh_google_token(&client, &refresh_token).await,
+        "google" => calendar::refresh_google_token_with_id(&client, &refresh_token, &google_cid).await,
         "outlook" => calendar::refresh_outlook_token(&client, &refresh_token).await,
         other => return Err(format!("Unknown provider: {}", other)),
     };
@@ -164,12 +188,17 @@ pub async fn connect_google_calendar(
     state: State<'_, Arc<Mutex<Database>>>,
     cred_state: State<'_, Mutex<CredentialManager>>,
 ) -> Result<CalendarAccount, String> {
-    // Guard: block connection if using placeholder OAuth credentials (D-02 / Pitfall 5)
-    if calendar::GOOGLE_CLIENT_ID_STR.contains("placeholder") {
+    // Resolve client ID from app settings or compile-time env
+    let google_client_id = {
+        let db = state.lock().map_err(|e| e.to_string())?;
+        resolve_google_client_id(&db)
+    };
+
+    if google_client_id.contains("placeholder") {
         return Err(
-            "Google Calendar OAuth is not configured. Set the GOOGLE_CLIENT_ID environment variable \
-             at build time. See https://console.cloud.google.com/apis/credentials to create an OAuth 2.0 Client ID \
-             (Desktop app type, with http://localhost as authorized redirect URI).".to_string()
+            "Google Calendar OAuth is not configured. Go to Settings > Calendar and enter your \
+             Google Client ID. See https://console.cloud.google.com/apis/credentials to create an \
+             OAuth 2.0 Client ID (Desktop app type, with http://localhost as authorized redirect URI).".to_string()
         );
     }
 
@@ -192,7 +221,18 @@ pub async fn connect_google_calendar(
     .map_err(|e| format!("Failed to start OAuth server: {}", e))?;
 
     // Build Google OAuth URL and open in system browser
-    let auth_url = calendar::build_google_auth_url(port, &code_challenge);
+    let auth_url = format!(
+        "https://accounts.google.com/o/oauth2/v2/auth?\
+         client_id={}&\
+         redirect_uri=http://localhost:{}/callback&\
+         response_type=code&\
+         scope=https://www.googleapis.com/auth/calendar.readonly&\
+         code_challenge={}&\
+         code_challenge_method=S256&\
+         access_type=offline&\
+         prompt=consent",
+        google_client_id, port, code_challenge
+    );
     open::that(&auth_url).map_err(|e| format!("Failed to open browser: {}", e))?;
 
     // Wait for callback with auth code (or timeout)
@@ -218,7 +258,7 @@ pub async fn connect_google_calendar(
     let token_resp = client
         .post("https://oauth2.googleapis.com/token")
         .form(&[
-            ("client_id", calendar::GOOGLE_CLIENT_ID_STR),
+            ("client_id", google_client_id.as_str()),
             ("code", &auth_code),
             ("code_verifier", &code_verifier),
             ("grant_type", "authorization_code"),
@@ -325,12 +365,17 @@ pub async fn connect_outlook_calendar(
     state: State<'_, Arc<Mutex<Database>>>,
     cred_state: State<'_, Mutex<CredentialManager>>,
 ) -> Result<CalendarAccount, String> {
-    // Guard: block connection if using placeholder OAuth credentials (D-02 / Pitfall 5)
-    if calendar::MICROSOFT_CLIENT_ID_STR.contains("placeholder") {
+    // Resolve client ID from app settings or compile-time env
+    let microsoft_client_id = {
+        let db = state.lock().map_err(|e| e.to_string())?;
+        resolve_microsoft_client_id(&db)
+    };
+
+    if microsoft_client_id.contains("placeholder") {
         return Err(
-            "Outlook Calendar OAuth is not configured. Set the MICROSOFT_CLIENT_ID environment variable \
-             at build time. See https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps to register an app \
-             (Mobile and desktop applications platform, with http://localhost as redirect URI).".to_string()
+            "Outlook Calendar OAuth is not configured. Go to Settings > Calendar and enter your \
+             Microsoft Client ID. See https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps \
+             to register an app (Mobile and desktop applications platform, with http://localhost as redirect URI).".to_string()
         );
     }
 
@@ -352,7 +397,16 @@ pub async fn connect_outlook_calendar(
     )
     .map_err(|e| format!("Failed to start OAuth server: {}", e))?;
 
-    let auth_url = calendar::build_outlook_auth_url(port, &code_challenge);
+    let auth_url = format!(
+        "https://login.microsoftonline.com/common/oauth2/v2/authorize?\
+         client_id={}&\
+         redirect_uri=http://localhost:{}/callback&\
+         response_type=code&\
+         scope=https://graph.microsoft.com/Calendars.Read offline_access&\
+         code_challenge={}&\
+         code_challenge_method=S256",
+        microsoft_client_id, port, code_challenge
+    );
     open::that(&auth_url).map_err(|e| format!("Failed to open browser: {}", e))?;
 
     // Wait for callback
@@ -377,7 +431,7 @@ pub async fn connect_outlook_calendar(
     let token_resp = client
         .post("https://login.microsoftonline.com/common/oauth2/v2.0/token")
         .form(&[
-            ("client_id", calendar::MICROSOFT_CLIENT_ID_STR),
+            ("client_id", microsoft_client_id.as_str()),
             ("code", &auth_code),
             ("code_verifier", &code_verifier),
             ("grant_type", "authorization_code"),

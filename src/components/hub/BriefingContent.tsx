@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { invoke } from "@tauri-apps/api/core";
 import { useBriefingStore } from "@/stores/useBriefingStore";
 import { useStore } from "@/stores";
 import { DailyPlanSection, type ScheduleBlock } from "./DailyPlanSection";
@@ -75,8 +76,14 @@ export function BriefingContent({
                 taskId={s.taskId}
                 taskTitle={s.taskTitle}
                 suggestedDate={s.date}
-                onConfirm={(taskId, date) => {
-                  updateTask(taskId, { dueDate: date });
+                onConfirm={async (taskId, date) => {
+                  try {
+                    // Validate task exists before updating
+                    await invoke("get_task", { id: taskId });
+                    updateTask(taskId, { dueDate: date });
+                  } catch {
+                    // Task ID doesn't exist — hallucinated by LLM, skip silently
+                  }
                   setDismissedSuggestions(
                     (prev) => new Set(prev).add(taskId),
                   );
