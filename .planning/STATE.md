@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 ## Current Position
 
 Phase: 33 (briefing-rework) — EXECUTING
-Plan: 2 of 4 complete (Wave 1 done, Wave 2 next)
+Plan: 3 of 4 complete (Wave 1 + Plan 02 done, Wave 3 next)
 
 ## Performance Metrics
 
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 33]: Empty Rust test bodies (not todo!()) for Wave 0 stubs to avoid cargo test panics
 - [Phase 33-01]: compute_scores_for_date pattern for deterministic testing of date-dependent scoring logic
 - [Phase 33-01]: ProjectTag uses kebab-case serde for direct alignment with TypeScript BriefingTag union
+- [Phase 33-02]: Used CompletionResponse.content for full response instead of channel accumulation
+- [Phase 33-02]: Template-based context summary (no LLM call) for greeting area
+- [Phase 33-02]: Race condition guard in store rejects requests while loading/streaming
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T12:06:17.662Z
-Stopped at: Completed Wave 1 (33-00, 33-01)
-Resume file: .planning/phases/33-briefing-rework/33-02-PLAN.md
+Last session: 2026-04-05T12:17:06Z
+Stopped at: Completed 33-02 (briefing data pipeline)
+Resume file: .planning/phases/33-briefing-rework/33-03-PLAN.md
