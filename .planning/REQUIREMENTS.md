@@ -24,9 +24,9 @@ Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
 
 ### Project Detail
 
-- [ ] **PROJ-01**: User sees the project goal prominently displayed as a hero card above phases
-- [ ] **PROJ-02**: User can set and edit the project goal directly in the project detail UI
-- [ ] **PROJ-03**: Project detail provides a streamlined workspace entry (goal → directory + AI terminal → work)
+- [x] **PROJ-01**: User sees the project goal prominently displayed as a hero card above phases
+- [x] **PROJ-02**: User can set and edit the project goal directly in the project detail UI
+- [x] **PROJ-03**: Project detail provides a streamlined workspace entry (goal → directory + AI terminal → work)
 
 ### Drawer
 
@@ -36,9 +36,9 @@ Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
 
 ### Bug Fixes
 
-- [ ] **FIX-01**: Calendar week view shows "Today" label only on the actual current day
-- [ ] **FIX-02**: Overdue tasks are detected deterministically (due_date < today and not complete) without LLM
-- [ ] **FIX-03**: Workflows section can be fully minimized when not in use
+- [x] **FIX-01**: Calendar week view shows "Today" label only on the actual current day
+- [x] **FIX-02**: Overdue tasks are detected deterministically (due_date < today and not complete) without LLM
+- [x] **FIX-03**: Workflows section can be fully minimized when not in use
 
 ## v1.5 Requirements (Complete)
 
@@ -135,12 +135,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BRIEF-02 | Phase 33 | Complete |
 | BRIEF-03 | Phase 33 | Complete |
 | BRIEF-04 | Phase 33 | Complete |
-| PROJ-01 | Phase 34 | Pending |
-| PROJ-02 | Phase 34 | Pending |
-| PROJ-03 | Phase 34 | Pending |
-| FIX-01 | Phase 35 | Pending |
-| FIX-02 | Phase 35 | Pending |
-| FIX-03 | Phase 35 | Pending |
+| PROJ-01 | Phase 34 | Complete |
+| PROJ-02 | Phase 34 | Complete |
+| PROJ-03 | Phase 34 | Complete |
+| FIX-01 | Phase 35 | Complete |
+| FIX-02 | Phase 35 | Complete |
+| FIX-03 | Phase 35 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 18 total

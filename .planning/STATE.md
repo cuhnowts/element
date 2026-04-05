@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Clarity
 status: Ready to plan
-stopped_at: Completed 34-01-PLAN.md
-last_updated: "2026-04-05T12:39:19.945Z"
+stopped_at: Completed 34-02-PLAN.md
+last_updated: "2026-04-05T12:48:20.946Z"
 progress:
   total_phases: 12
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: 999.4
+Phase: 35
 Plan: Not started
 
 ## Performance Metrics
@@ -71,6 +71,7 @@ Recent decisions affecting current work:
 - [Phase 35]: FIX-02 audit: all overdue paths are deterministic (date-utils isOverdue, inline parseISO) -- no code changes needed
 - [Phase 35]: Workflows default collapsed per D-09 to reduce sidebar clutter
 - [Phase 34]: Separate update_project_goal command instead of extending update_project -- prevents goal from being silently cleared by name/description saves
+- [Phase 34]: WorkspaceButton fires startFileWatcher as fire-and-forget to avoid blocking UI actions behind async await
 
 ### Pending Todos
 
@@ -83,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T12:38:57.644Z
-Stopped at: Completed 34-01-PLAN.md
+Last session: 2026-04-05T12:44:14.843Z
+Stopped at: Completed 34-02-PLAN.md
 Resume file: None
