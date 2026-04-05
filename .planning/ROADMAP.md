@@ -108,7 +108,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   2. User can switch to an "Element AI" tab in the bottom drawer and see agent activity and terminal output
   3. The right sidebar agent panel is gone -- AppLayout renders only sidebar + center + bottom drawer
   4. Agent lifecycle (queue watcher, auto-start) continues working regardless of whether the AI drawer tab is visible
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 31-01-PLAN.md -- State layer: DrawerTab union, agent store refactor, lifecycle decoupling, keyboard shortcut rewire
+- [ ] 31-02-PLAN.md -- UI: Element AI drawer pane, tab bar update, right sidebar removal, dead component cleanup
+
 **UI hint**: yes
 
 ### Phase 32: Hub Layout Overhaul
@@ -211,7 +216,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 28. Due Dates & Daily Planning | v1.5 | 3/3 | Complete | 2026-04-04 |
 | 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
-| 31. Drawer Consolidation | v1.6 | 0/0 | Not started | - |
+| 31. Drawer Consolidation | v1.6 | 0/2 | Not started | - |
 | 32. Hub Layout Overhaul | v1.6 | 0/2 | Not started | - |
 | 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
 | 34. Goal-First Project Detail | v1.6 | 0/2 | Not started | - |
