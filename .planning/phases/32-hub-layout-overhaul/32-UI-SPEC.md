@@ -48,9 +48,11 @@ Exceptions: none
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.4 |
+| Label | 14px | 400 (regular) | 1.4 |
 | Heading | 24px | 600 (semibold) | 1.2 |
 | Day Pulse | 14px | 400 (regular) | 1.5 |
+
+Label is distinguished from Body by uppercase transforms, muted color (`--color-muted-foreground`), or tighter spacing -- not by font weight.
 
 Source: existing `body { font-size: 14px; line-height: 1.5 }` in app.css. Heading matches existing `BriefingGreeting` at `text-2xl font-semibold`.
 
@@ -209,6 +211,7 @@ Both buttons can be active simultaneously (D-05). Clicking an active button clos
 | Position | Fixed bottom-right of the center view, 16px from edges |
 | Style | shadcn `Button`, `variant="secondary"`, `size="icon"`, circular (`rounded-full`) |
 | Icon | `ChevronUp` from lucide-react, 16px |
+| Accessibility | `aria-label="Back to top"` |
 
 ### Panel Dismissal (D-06)
 
