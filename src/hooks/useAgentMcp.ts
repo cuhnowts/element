@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { appDataDir, resolveResource } from "@tauri-apps/api/path";
+import { appDataDir } from "@tauri-apps/api/path";
 import { invoke } from "@tauri-apps/api/core";
 
 export function useAgentMcp() {
@@ -20,10 +20,8 @@ export function useAgentMcp() {
 
       await ensureDir(agentDir);
 
-      // Resolve the MCP server bundle path
-      const mcpServerPath = await resolveResource(
-        "mcp-server/dist/index.js"
-      );
+      // Resolve the MCP server bundle path (handles dev + production)
+      const mcpServerPath = await invoke<string>("resolve_mcp_server_path");
 
       const config = {
         mcpServers: {

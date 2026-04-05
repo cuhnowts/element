@@ -284,6 +284,7 @@ pub fn run() {
             apply_schedule,
             run_cli_tool,
             write_agent_file,
+            resolve_mcp_server_path,
             create_theme,
             list_themes,
             update_theme,

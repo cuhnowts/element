@@ -155,8 +155,8 @@ export function AppLayout() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <ResizablePanelGroup direction="vertical" className="flex-1">
               <ResizablePanel
-                defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
-                minSize="30%"
+                defaultSize={drawerOpen ? 100 - drawerHeight : 100}
+                minSize={30}
               >
                 <CenterPanel />
               </ResizablePanel>
@@ -196,11 +196,16 @@ export function AppLayout() {
               </ResizableHandle>
 
               <ResizablePanel
-                defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
-                minSize="0%"
-                maxSize="60%"
+                defaultSize={drawerOpen ? drawerHeight : 0}
+                minSize={0}
+                maxSize={60}
                 collapsible
                 panelRef={drawerPanelRef}
+                onResize={(size) => {
+                  const collapsed = size.asPercentage === 0;
+                  if (collapsed && drawerOpen) toggleDrawer();
+                  if (!collapsed && !drawerOpen) toggleDrawer();
+                }}
               >
                 <OutputDrawer />
               </ResizablePanel>

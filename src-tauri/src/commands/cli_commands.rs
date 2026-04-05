@@ -100,3 +100,39 @@ pub fn write_agent_file(
         .map(|s| s.to_string())
         .ok_or_else(|| "Path contains invalid UTF-8".to_string())
 }
+
+/// Resolve the MCP server script path. In dev mode, uses the source tree.
+/// In production, uses the Tauri resource bundle.
+#[tauri::command]
+pub fn resolve_mcp_server_path(app: AppHandle) -> Result<String, String> {
+    // Try Tauri resource resolution first (production builds)
+    if let Ok(resource_path) = app.path().resolve("mcp-server/dist/index.js", tauri::path::BaseDirectory::Resource) {
+        if resource_path.exists() {
+            return resource_path
+                .to_str()
+                .map(|s| s.to_string())
+                .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+        }
+    }
+
+    // Dev mode fallback: walk up from the executable to find the project root
+    if let Ok(exe) = std::env::current_exe() {
+        // In dev, exe is at src-tauri/target/debug/element
+        // Project root is 3 levels up, then mcp-server/dist/index.js
+        let mut dir = exe.parent().map(|p| p.to_path_buf());
+        for _ in 0..5 {
+            if let Some(ref d) = dir {
+                let candidate = d.join("mcp-server/dist/index.js");
+                if candidate.exists() {
+                    return candidate
+                        .to_str()
+                        .map(|s| s.to_string())
+                        .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+                }
+                dir = d.parent().map(|p| p.to_path_buf());
+            }
+        }
+    }
+
+    Err("MCP server not found. Run 'npm run build:mcp' in the mcp-server directory.".to_string())
+}
