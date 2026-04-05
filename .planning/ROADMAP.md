@@ -180,7 +180,11 @@ Plans:
   2. Claude Code can call `run_tests` with a specific test name/file and receive structured results (pass/fail/error per test)
   3. Claude Code can call `check_coverage_gaps` and receive a list of uncovered files/functions from coverage reports
   4. All MCP server command execution uses argument arrays (no shell string interpolation) to prevent injection attacks
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 40-01-PLAN.md -- Project scaffold, types, secure runner, and output parsers
+- [ ] 40-02-PLAN.md -- Tool handlers, MCP server wiring, and build
 
 ## Progress
 
@@ -226,11 +230,11 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
-| 36. Linting Foundation | v1.7 | 0/3 | Planning | - |
+| 36. Linting Foundation | v1.7 | 0/3 | Planned    |  |
 | 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planning | - |
 | 38. Error Logger | v1.7 | 0/2 | Planning | - |
 | 39. Claude Code Hooks | v1.7 | 0/1 | Planning | - |
-| 40. Testing MCP Server | v1.7 | 0/0 | Not started | - |
+| 40. Testing MCP Server | v1.7 | 0/2 | Planning | - |
 
 ## Backlog
 
@@ -238,7 +242,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 0/3 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
