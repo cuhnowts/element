@@ -45,6 +45,8 @@ v1.6 Phase 32 complete: Hub layout overhaul — single full-width center view (C
 
 v1.6 Phase 35 complete: Bug fixes & polish — calendar "Today" highlight uses local timezone (date-fns format) instead of UTC, overdue detection confirmed deterministic across all rendering paths, workflows sidebar section collapsible with persisted state.
 
+v1.6 Phase 34 complete: Goal-first project detail — GoalHeroCard with inline editing and auto-save, WorkspaceButton replacing separate Open AI + Directory Link, ProjectDetail restructured to goal-first layout with details accordion.
+
 ## Requirements
 
 ### Validated
@@ -98,7 +100,7 @@ v1.6 Phase 35 complete: Bug fixes & polish — calendar "Today" highlight uses l
 ### Active
 
 - [ ] Hub overhaul: single center view with opt-in slide-in panels, no horizontal scroll
-- [ ] Project detail: goal-first layout aligned with .planning markdowns, streamlined workspace entry
+- [x] Project detail: goal-first layout aligned with .planning markdowns, streamlined workspace entry — v1.6
 - [ ] Briefing: on-demand generation with visual styling for scannability
 - [ ] Drawer: click-to-toggle minimize/maximize, AI panel consolidated into bottom drawer
 
@@ -199,4 +201,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 35 bug-fixes-polish complete*
+*Last updated: 2026-04-05 after Phase 34 goal-first-project-detail complete*
