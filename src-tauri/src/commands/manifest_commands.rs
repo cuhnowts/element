@@ -248,3 +248,34 @@ pub fn spawn_manifest_rebuilder(app_handle: AppHandle) -> tokio::sync::mpsc::Sen
 
     tx
 }
+
+#[cfg(test)]
+mod briefing_json_tests {
+    use super::*;
+
+    #[test]
+    fn test_strip_json_fences_clean_json() {
+        // strip_json_fences returns clean JSON unchanged
+        // Will be implemented when strip_json_fences is created in Plan 02
+    }
+
+    #[test]
+    fn test_strip_json_fences_with_backticks() {
+        // strip_json_fences removes ```json ... ``` wrapping
+    }
+
+    #[test]
+    fn test_strip_json_fences_with_plain_backticks() {
+        // strip_json_fences removes ``` ... ``` wrapping (no json tag)
+    }
+
+    #[test]
+    fn test_briefing_json_parse_valid() {
+        // Valid BriefingJSON string parses to expected structure
+    }
+
+    #[test]
+    fn test_briefing_json_parse_invalid() {
+        // Invalid JSON string returns parse error
+    }
+}
