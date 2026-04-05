@@ -3,7 +3,7 @@ status: complete
 phase: 31-drawer-consolidation
 source: [31-01-SUMMARY.md, 31-02-SUMMARY.md]
 started: 2026-04-05T12:30:00Z
-updated: 2026-04-05T12:35:00Z
+updated: 2026-04-05T17:00:00Z
 ---
 
 ## Current Test
@@ -31,8 +31,8 @@ result: pass
 ### 5. Pending Approval Badge on Element AI Tab
 expected: When the agent has a pending approval, a badge/indicator appears on the Element AI tab label in the drawer tab bar.
 result: blocked
-blocked_by: server
-reason: "MCP config path with spaces not quoted — claude CLI splits path at space. Assumed good per user."
+blocked_by: other
+reason: "Approval file written to queue correctly but Tauri fs plugin capabilities may need explicit read_dir/stat permissions. Fix added to capabilities/default.json, needs rebuild to verify."
 
 ### 6. Agent Boots on App Load
 expected: After a fresh app load, the agent process starts automatically without needing to open the drawer or click anything. You can confirm by opening the Element AI tab and seeing agent activity/terminal output.
