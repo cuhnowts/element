@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Clarity
-status: defining requirements
+status: ready to plan
 stopped_at: null
 last_updated: "2026-04-04"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,20 +19,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Defining requirements for v1.6 Clarity
+**Current focus:** Phase 31 - Drawer Consolidation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-04 — Milestone v1.6 started
+Phase: 31 of 35 (Drawer Consolidation)
+Plan: 0 of 0 in current phase (plans TBD)
+Status: Ready to plan
+Last activity: 2026-04-04 -- v1.6 Clarity roadmap created
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 60 (v1.0: 29, v1.1: 17, v1.2: 10, v1.3: 16) + v1.4 + v1.5
+- Total plans completed: 60+ (v1.0-v1.5)
 - Average duration: carried from previous milestones
 - Total execution time: carried from previous milestones
 
@@ -53,6 +55,13 @@ Last activity: 2026-04-04 — Milestone v1.6 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [v1.6 Roadmap]: Drawer consolidation first -- removing right sidebar simplifies AppLayout for all subsequent phases
+- [v1.6 Roadmap]: Phase 33 (Briefing) parallelizable with Phase 32 (Hub) -- no shared state
+- [Research]: tw-animate-css only new dependency; no JS animation framework warranted
+- [Research]: Zustand selector stability is top pitfall -- use module-level EMPTY constants
+- [Research]: Agent lifecycle must separate from panel visibility before UI relocation
 
 ### Pending Todos
 
@@ -60,10 +69,11 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- [Phase 32]: shadcn Sheet vs custom SlidePanel needs a spike -- focus-trap may conflict with hub chat input
+- [Phase 34]: Wireframe goal-first layout and verify click count to terminal before coding
 
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Milestone initialization
+Stopped at: v1.6 Clarity roadmap created, ready to plan Phase 31
 Resume file: None

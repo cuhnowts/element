@@ -1,7 +1,7 @@
 # Requirements: Element
 
 **Defined:** 2026-04-04
-**Core Value:** The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
+**Core Value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
 ## v1.6 Requirements
 
@@ -93,9 +93,9 @@ Deferred to future releases. Tracked but not in current roadmap.
 
 ### Intelligence
 
-- **INT-01**: Hub urgency scoring — AI-driven priority scoring for tasks and projects
-- **INT-02**: Hub email signal ingestion — email context fed into daily briefing
-- **INT-03**: Memory system — full context model that learns user preferences, habits, and patterns
+- **INT-01**: Hub urgency scoring -- AI-driven priority scoring for tasks and projects
+- **INT-02**: Hub email signal ingestion -- email context fed into daily briefing
+- **INT-03**: Memory system -- full context model that learns user preferences, habits, and patterns
 
 ### Platform
 
@@ -123,30 +123,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| HUB-01 | — | Pending |
-| HUB-02 | — | Pending |
-| HUB-03 | — | Pending |
-| HUB-04 | — | Pending |
-| HUB-05 | — | Pending |
-| BRIEF-01 | — | Pending |
-| BRIEF-02 | — | Pending |
-| BRIEF-03 | — | Pending |
-| BRIEF-04 | — | Pending |
-| PROJ-01 | — | Pending |
-| PROJ-02 | — | Pending |
-| PROJ-03 | — | Pending |
-| DRAW-01 | — | Pending |
-| DRAW-02 | — | Pending |
-| DRAW-03 | — | Pending |
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
-| FIX-03 | — | Pending |
+| DRAW-01 | Phase 31 | Pending |
+| DRAW-02 | Phase 31 | Pending |
+| DRAW-03 | Phase 31 | Pending |
+| HUB-01 | Phase 32 | Pending |
+| HUB-02 | Phase 32 | Pending |
+| HUB-03 | Phase 32 | Pending |
+| HUB-04 | Phase 32 | Pending |
+| HUB-05 | Phase 32 | Pending |
+| BRIEF-01 | Phase 33 | Pending |
+| BRIEF-02 | Phase 33 | Pending |
+| BRIEF-03 | Phase 33 | Pending |
+| BRIEF-04 | Phase 33 | Pending |
+| PROJ-01 | Phase 34 | Pending |
+| PROJ-02 | Phase 34 | Pending |
+| PROJ-03 | Phase 34 | Pending |
+| FIX-01 | Phase 35 | Pending |
+| FIX-02 | Phase 35 | Pending |
+| FIX-03 | Phase 35 | Pending |
 
 **Coverage:**
 - v1.6 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after initial definition*
+*Last updated: 2026-04-04 after roadmap creation*

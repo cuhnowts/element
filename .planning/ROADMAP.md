@@ -11,7 +11,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.2 Intelligent Planning** -- Phases 12-16 (shipped 2026-03-28) -- [archive](milestones/v1.2-ROADMAP.md)
 - ✅ **v1.3 Foundation & Execution** -- Phases 17-21 (shipped 2026-04-01) -- [archive](milestones/v1.3-ROADMAP.md)
 - ✅ **v1.4 Daily Hub** -- Phases 22-25 (shipped 2026-04-03) -- [archive](milestones/v1.4-ROADMAP.md)
-- 🚧 **v1.5 Time Bounded** -- Phases 26-30 (in progress)
+- ✅ **v1.5 Time Bounded** -- Phases 26-30 (shipped 2026-04-05) -- [archive](milestones/v1.5-ROADMAP.md)
+- 🚧 **v1.6 Clarity** -- Phases 31-35 (in progress)
 
 ## Phases
 
@@ -71,107 +72,97 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.5 Time Bounded (In Progress)
+<details>
+<summary>v1.5 Time Bounded (Phases 26-30) -- SHIPPED 2026-04-05</summary>
 
-**Milestone Goal:** Turn Element into a daily scheduling assistant that reads your calendar, knows your tasks and deadlines, and opens with "Here's what you have time for today."
+- [x] Phase 26: Calendar Sync Foundation (2/2 plans) -- completed 2026-04-04
+- [x] Phase 27: Hub Calendar View (3/3 plans) -- completed 2026-04-04
+- [x] Phase 28: Due Dates & Daily Planning (3/3 plans) -- completed 2026-04-04
+- [x] Phase 29: Calendar MCP Tools (2/2 plans) -- completed 2026-04-04
+- [x] Phase 30: Heartbeat & Schedule Negotiation (3/3 plans) -- completed 2026-04-05
+
+</details>
+
+### v1.6 Clarity (In Progress)
+
+**Milestone Goal:** Strip the UI down to what matters -- goal-first projects, a hub that doesn't scroll sideways, and a briefing you actually want to read.
 
 **Phase Numbering:**
-- Integer phases (26, 27, 28...): Planned milestone work
-- Decimal phases (26.1, 26.2): Urgent insertions (marked with INSERTED)
+- Integer phases (31, 32, 33...): Planned milestone work
+- Decimal phases (31.1, 31.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 26: Calendar Sync Foundation** - Fix OAuth bugs and wire calendar events to scheduling engine
-- [ ] **Phase 27: Hub Calendar View** - Day/week time-grid showing meetings and work blocks
-- [x] **Phase 28: Due Dates & Daily Planning** - Due date enforcement with backlog exemption and AI daily planning skill (completed 2026-04-04)
-- [x] **Phase 29: Calendar MCP Tools** - Bot tools for reading calendar and managing work blocks (completed 2026-04-04)
-- [ ] **Phase 30: Heartbeat & Schedule Negotiation** - Background deadline monitoring and conversational rescheduling
+- [ ] **Phase 31: Drawer Consolidation** - Click-to-toggle drawer with AI panel as bottom drawer tab, right sidebar removed
+- [ ] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout
+- [ ] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections
+- [ ] **Phase 34: Goal-First Project Detail** - Goal hero card above phases with streamlined workspace entry
+- [ ] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows
 
 ## Phase Details
 
-### Phase 26: Calendar Sync Foundation
-**Goal**: Calendar events reliably flow from Google and Outlook into the app and feed the scheduling engine
-**Depends on**: Nothing (first phase of v1.5; built on v1.4 infrastructure)
-**Requirements**: CAL-01, CAL-02, CAL-03, CAL-04
+### Phase 31: Drawer Consolidation
+**Goal**: Users interact with one unified bottom drawer that houses terminals, output, and AI -- no more right sidebar column
+**Depends on**: Nothing (first phase of v1.6; simplifies AppLayout for all subsequent changes)
+**Requirements**: DRAW-01, DRAW-02, DRAW-03
 **Success Criteria** (what must be TRUE):
-  1. User with a Google Calendar connected sees their events appear in the app within one sync cycle, including after token refresh and 410 sync token invalidation
-  2. User with an Outlook Calendar connected sees events with correct times regardless of their timezone
-  3. The scheduling engine detects busy time from real calendar events when generating a schedule (empty vec tech debt resolved)
-  4. Calendar sync runs automatically in the background on a timer without user intervention
-**Plans**: 2 plans
-
-Plans:
-- [x] 26-01-PLAN.md -- Fix Google/Outlook sync bugs (410, timezone, invalid_grant, cancelled events, placeholder guards)
-- [ ] 26-02-PLAN.md -- Wire scheduler to real calendar events and finalize background sync timing
-
-### Phase 27: Hub Calendar View
-**Goal**: Users can see their day at a glance -- meetings from external calendars and AI-scheduled work blocks in one view
-**Depends on**: Phase 26
-**Requirements**: VIEW-01, VIEW-02, VIEW-03, VIEW-04
-**Success Criteria** (what must be TRUE):
-  1. Hub right column displays a time-grid day view with time slots showing both external meetings and internal work blocks
-  2. User can toggle between day view and week view
-  3. Work blocks scheduled by the AI are visually distinct from external calendar meetings
-  4. Clicking a work block navigates the user to the associated task's detail view
-**Plans**: 3 plans
+  1. User can click a tab bar or chevron to toggle the bottom drawer between fully collapsed and expanded states
+  2. User can switch to an "Element AI" tab in the bottom drawer and see agent activity and terminal output
+  3. The right sidebar agent panel is gone -- AppLayout renders only sidebar + center + bottom drawer
+  4. Agent lifecycle (queue watcher, auto-start) continues working regardless of whether the AI drawer tab is visible
+**Plans**: TBD
 **UI hint**: yes
 
-Plans:
-- [x] 27-01-PLAN.md -- Types, layout math (TDD), Zustand state, and data hooks
-- [x] 27-02-PLAN.md -- Day view UI components and HubView wiring
-- [ ] 27-03-PLAN.md -- Week view, meeting popover, MiniCalendar coordination, and integration tests
-
-### Phase 28: Due Dates & Daily Planning
-**Goal**: Users get a conversational daily planning experience -- the AI presents what fits today, suggests due dates, and adapts when plans change, while backlog items stay out of the way
-**Depends on**: Phase 26, Phase 27
-**Requirements**: DUE-01, DUE-02, DUE-03, PLAN-01, PLAN-02, PLAN-03, PLAN-04
+### Phase 32: Hub Layout Overhaul
+**Goal**: Users see a focused single-view hub with optional context panels that slide in on demand -- no forced horizontal scrolling
+**Depends on**: Phase 31
+**Requirements**: HUB-01, HUB-02, HUB-03, HUB-04, HUB-05
 **Success Criteria** (what must be TRUE):
-  1. User can set a due date on any task or phase via a date picker in the UI
-  2. Overdue and upcoming-soon tasks are visually flagged in the goals tree and task detail views
-  3. Tasks in backlog phases (999.x) do not show due date warnings or nag the user
-  4. On hub load, the bot presents a prioritized daily plan showing tasks ranked against available calendar time
-  5. User can tell the bot about lost time or changed priorities and get an updated plan suggestion (not auto-applied)
-**Plans**: 3 plans
+  1. Opening the hub shows a single full-width center view (chat and briefing) with no horizontal scroll or column competition
+  2. User can toggle a Goals panel that slides in from the left via a toolbar button
+  3. User can toggle a Calendar panel that slides in from the right via a toolbar button
+  4. User can toggle a Briefing panel from the toolbar (or briefing is accessible inline in the center view)
+  5. Slide-in panels animate smoothly using CSS transforms with no layout jank or content reflow
+**Plans**: TBD
 **UI hint**: yes
 
-Plans:
-- [ ] 28-01-PLAN.md -- Date utilities, badge warning variant, DatePickerPopover, SchedulingBadges three-tier, GoalsTreeNode overdue badges
-- [ ] 28-02-PLAN.md -- Rust manifest extension with today's schedule data and briefing prompt update
-- [ ] 28-03-PLAN.md -- DailyPlanSection, DueDateSuggestion, BriefingPanel wiring, HubChat rescheduling
-
-### Phase 29: Calendar MCP Tools
-**Goal**: External AI agents can read the user's calendar and manage work blocks through the MCP server
-**Depends on**: Phase 26, Phase 28
-**Requirements**: MCP-01, MCP-02, MCP-03
+### Phase 33: Briefing Rework
+**Goal**: Users get a scannable, visually structured briefing they generate on demand -- not a wall of markdown auto-fired on load
+**Depends on**: Nothing (component-isolated, parallelizable with Phase 32)
+**Requirements**: BRIEF-01, BRIEF-02, BRIEF-03, BRIEF-04
 **Success Criteria** (what must be TRUE):
-  1. An MCP client can list calendar events for any date range and receive structured event data
-  2. An MCP client can create and move work blocks, which then appear in the hub calendar view
-  3. An MCP client can query available time slots for a given day and receive gap data
-**Plans**: 2 plans
-
-Plans:
-- [x] 29-01-PLAN.md -- MCP server calendar tool handlers, gap detection algorithm, and unit tests
-- [ ] 29-02-PLAN.md -- Tauri commands, action registry entries, and system prompt update for hub chat integration
-
-### Phase 30: Heartbeat & Schedule Negotiation
-**Goal**: The app proactively warns about deadline risks and lets users conversationally renegotiate their schedule
-**Depends on**: Phase 28
-**Requirements**: BEAT-01, BEAT-02, BEAT-03, BEAT-04
-**Success Criteria** (what must be TRUE):
-  1. A background process periodically evaluates whether remaining work can fit before deadlines, without user action
-  2. When deadline risk is detected, the user sees a notification and the daily briefing reflects the risk
-  3. Heartbeat uses a local LLM (Ollama) for risk summaries when available, falling back to the configured CLI tool
-  4. Backlog items (999.x phases) are ignored by the heartbeat -- no false alarms on intentionally unscheduled work
-**Plans**: 3 plans
+  1. User sees a "Generate Briefing" button on hub load instead of an auto-triggered streaming briefing
+  2. Generated briefing displays distinct sections (summary, deadlines, blockers, wins) with clear hierarchy
+  3. Each briefing section renders as a visually distinct card -- not a single markdown block
+  4. Briefing and hub chat share one interface with shared conversation context
+**Plans**: TBD
 **UI hint**: yes
 
-Plans:
-- [x] 30-01-PLAN.md -- Heartbeat types, deterministic risk calculation (TDD), and LLM summary with provider fallback
-- [ ] 30-02-PLAN.md -- Background timer, notification creation, deduplication, Tauri commands, and lib.rs wiring
-- [ ] 30-03-PLAN.md -- Frontend heartbeat settings, ScheduleChangeCard, Zustand slice, and notification click handler
+### Phase 34: Goal-First Project Detail
+**Goal**: Users immediately see what a project is trying to achieve and can get into workspace flow with minimal clicks
+**Depends on**: Phase 31
+**Requirements**: PROJ-01, PROJ-02, PROJ-03
+**Success Criteria** (what must be TRUE):
+  1. User sees the project goal displayed as a prominent hero card above the phase list when opening a project
+  2. User can set and edit the project goal directly in the project detail view without navigating elsewhere
+  3. User can reach the workspace (directory + AI terminal) from the project detail in two clicks or fewer
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 35: Bug Fixes & Polish
+**Goal**: Three standalone issues are resolved -- calendar labeling, overdue detection, and workflows clutter
+**Depends on**: Nothing (independent of all other v1.6 phases)
+**Requirements**: FIX-01, FIX-02, FIX-03
+**Success Criteria** (what must be TRUE):
+  1. In calendar week view, only the actual current day shows the "Today" label -- other days show only their date
+  2. Overdue tasks are detected by a deterministic database query (due_date < today AND status != complete) with no LLM involvement
+  3. User can fully minimize the Workflows section when not actively using it, and it stays minimized across sessions
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
+Phases execute in numeric order: 31 -> 32 -> 33 -> 34 -> 35
+Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -201,11 +192,16 @@ Phases execute in numeric order: 26 -> 27 -> 28 -> 29 -> 30
 | 23. Context Manifest and AI Briefing | v1.4 | 2/2 | Complete | 2026-04-03 |
 | 24. Hub Chat | v1.4 | 3/3 | Complete | 2026-04-03 |
 | 25. Bot Skills and MCP Write Tools | v1.4 | 4/4 | Complete | 2026-04-03 |
-| 26. Calendar Sync Foundation | v1.5 | 1/2 | In Progress|  |
-| 27. Hub Calendar View | v1.5 | 2/3 | In Progress|  |
-| 28. Due Dates & Daily Planning | v1.5 | 0/3 | Complete    | 2026-04-04 |
-| 29. Calendar MCP Tools | v1.5 | 1/2 | Complete    | 2026-04-04 |
-| 30. Heartbeat & Schedule Negotiation | v1.5 | 1/3 | In Progress|  |
+| 26. Calendar Sync Foundation | v1.5 | 2/2 | Complete | 2026-04-04 |
+| 27. Hub Calendar View | v1.5 | 3/3 | Complete | 2026-04-04 |
+| 28. Due Dates & Daily Planning | v1.5 | 3/3 | Complete | 2026-04-04 |
+| 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
+| 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
+| 31. Drawer Consolidation | v1.6 | 0/0 | Not started | - |
+| 32. Hub Layout Overhaul | v1.6 | 0/0 | Not started | - |
+| 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
+| 34. Goal-First Project Detail | v1.6 | 0/0 | Not started | - |
+| 35. Bug Fixes & Polish | v1.6 | 0/0 | Not started | - |
 
 ## Backlog
 
