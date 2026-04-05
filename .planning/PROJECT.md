@@ -41,6 +41,8 @@ v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/
 
 v1.5 delivered: Google Calendar OAuth sync with .env-based credentials, Outlook-style calendar day/week view with event blocks, due date picker with three-tier urgency visuals (overdue/due-soon/normal), daily planning with scheduled task blocks and due date suggestions, calendar MCP tools (5 handlers for events and work blocks), heartbeat deadline risk engine, and work block CRUD via hub chat.
 
+v1.6 Phase 32 complete: Hub layout overhaul — single full-width center view (CommandHub) replacing 3-column ResizablePanelGroup, slide-over overlay panels for Calendar (left) and Goals (right) with CSS transform animations, HubToolbar with toggle buttons, action buttons (Run Daily Briefing, Organize Calendar, Organize Goals), DayPulse placeholder, and JumpToTop with IntersectionObserver.
+
 ## Requirements
 
 ### Validated
@@ -194,4 +196,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after v1.6 Clarity milestone start*
+*Last updated: 2026-04-05 after Phase 32 hub-layout-overhaul complete*
