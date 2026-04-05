@@ -1,7 +1,5 @@
-import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAgentStore } from "@/stores/useAgentStore";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
 import type { AgentStatus } from "@/types/agent";
 
@@ -25,8 +23,6 @@ export function AgentPanelHeader() {
   const status = useAgentStore((s) => s.status);
   const activeTab = useAgentStore((s) => s.activeTab);
   const setActiveTab = useAgentStore((s) => s.setActiveTab);
-  // togglePanel removed (D-14) -- close button now toggles drawer
-  const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
   const { restartAgent } = useAgentLifecycle();
 
   const tabClass = (tab: "activity" | "terminal") =>
@@ -55,9 +51,6 @@ export function AgentPanelHeader() {
         <button type="button" onClick={() => setActiveTab("terminal")} className={tabClass("terminal")}>
           Terminal
         </button>
-        <Button variant="ghost" size="sm" className="size-7 p-0" onClick={toggleDrawer}>
-          <ChevronRight className="size-4" />
-        </Button>
       </div>
     </div>
   );

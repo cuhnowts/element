@@ -26,9 +26,9 @@ import { CenterPanel } from "@/components/layout/CenterPanel";
 import { OutputDrawer } from "@/components/layout/OutputDrawer";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
-import { AgentPanel } from "@/components/agent/AgentPanel";
-import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { Badge } from "@/components/ui/badge";
+import { useAgentStore } from "@/stores/useAgentStore";
 import { useAgentQueue } from "@/hooks/useAgentQueue";
 import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
 import { useNotificationEvents } from "@/hooks/useNotificationEvents";
@@ -45,7 +45,7 @@ export function AppLayout() {
   }, [startAgent]);
 
   const settingsOpen = useStore((s) => s.settingsOpen);
-  // agentPanelOpen removed (D-14) -- AgentPanel always visible until Plan 02 removes it
+  const pendingApprovalCount = useAgentStore((s) => s.pendingApprovalCount);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
@@ -142,8 +142,7 @@ export function AppLayout() {
             <SettingsPage />
           </div>
         ) : (
-          <div className="flex-1 flex flex-row overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <ResizablePanelGroup direction="vertical" className="flex-1">
               <ResizablePanel
                 defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`}
@@ -156,14 +155,22 @@ export function AppLayout() {
                 <div className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer">
                   <div className="flex items-center gap-1">
                     <GripHorizontal className="size-3 text-muted-foreground mr-1 flex-shrink-0" />
-                    {(["terminal", "logs", "history"] as DrawerTab[]).map((tab) => (
+                    {(["elementai", "terminal", "logs", "history"] as DrawerTab[]).map((tab) => (
                       <button
                         key={tab}
                         type="button"
                         onClick={() => handleTabClick(tab)}
-                        className={tabClass(tab)}
+                        className={`relative ${tabClass(tab)}`}
                       >
-                        {tab === "logs" ? "Logs" : tab === "history" ? "History" : "Terminal"}
+                        {tab === "elementai" ? "Element AI" : tab === "terminal" ? "Terminal" : tab === "logs" ? "Logs" : "History"}
+                        {tab === "elementai" && pendingApprovalCount() > 0 && (
+                          <Badge
+                            variant="destructive"
+                            className="size-4 p-0 text-[10px] justify-center absolute -top-1 -right-1"
+                          >
+                            {pendingApprovalCount() > 9 ? "9+" : pendingApprovalCount()}
+                          </Badge>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -174,7 +181,6 @@ export function AppLayout() {
                       </Button>
                     )}
                     <NotificationBell />
-                    <AgentToggleButton />
                   </div>
                 </div>
               </ResizableHandle>
@@ -189,8 +195,6 @@ export function AppLayout() {
                 <OutputDrawer />
               </ResizablePanel>
             </ResizablePanelGroup>
-            </div>
-            <AgentPanel />
           </div>
         )}
       </div>
