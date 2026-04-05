@@ -117,7 +117,7 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
   const { nowPixelOffset, isVisible: nowIsVisible } =
     useNowLine(gridStartMinutes);
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = format(new Date(), "yyyy-MM-dd");
 
   // Build account color index map
   const accountColorMap = useMemo(() => {
