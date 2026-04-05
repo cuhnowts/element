@@ -8,6 +8,7 @@ use crate::ai::gateway::AiGateway;
 use crate::ai::types::CompletionRequest;
 use crate::db::connection::Database;
 use crate::models::manifest::{build_manifest_string, ManifestRebuildTrigger, ManifestState};
+use crate::models::scoring::{compute_scores, ScoringResult};
 
 /// Build (or rebuild) the context manifest and cache it.
 /// Returns the manifest markdown string.
@@ -32,53 +33,43 @@ pub async fn build_context_manifest(
 /// Generate an AI briefing by streaming LLM output as Tauri events.
 ///
 /// Events emitted:
-/// - `briefing-chunk`: each streamed text chunk
+/// - `briefing-chunk`: each streamed text chunk (for progress indication)
+/// - `briefing-data`: complete parsed JSON briefing data
 /// - `briefing-complete`: when generation finishes successfully
 /// - `briefing-error`: on failure or missing provider
 #[tauri::command]
 pub async fn generate_briefing(
     app: AppHandle,
     db_state: State<'_, Arc<Mutex<Database>>>,
-    manifest_state: State<'_, ManifestState>,
+    _manifest_state: State<'_, ManifestState>,
     gateway: State<'_, AiGateway>,
     heartbeat_state: State<'_, crate::heartbeat::HeartbeatState>,
 ) -> Result<(), String> {
-    // Read cached manifest (or build if empty)
-    let manifest = {
-        let cached = manifest_state.cached.lock().map_err(|e| e.to_string())?;
-        cached.clone()
-    };
-
-    let manifest = if manifest.is_empty() {
+    // Compute scored project data from the scoring engine
+    let scoring_result = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        let fresh = build_manifest_string(&db)?;
-        {
-            let mut cached = manifest_state.cached.lock().map_err(|e| e.to_string())?;
-            *cached = fresh.clone();
-        }
-        fresh
-    } else {
-        manifest
+        compute_scores(&db)?
     };
 
-    // Prepend heartbeat risk summary if available (D-06: risks surface in daily briefing)
-    let manifest_with_risks = {
-        let assessment = heartbeat_state.latest_assessment.lock().map_err(|e| e.to_string())?;
+    // Serialize scoring result as JSON for the LLM user message
+    let mut user_message =
+        serde_json::to_string_pretty(&scoring_result).map_err(|e| e.to_string())?;
+
+    // Prepend heartbeat risk summary if available
+    {
+        let assessment = heartbeat_state
+            .latest_assessment
+            .lock()
+            .map_err(|e| e.to_string())?;
         if let Some(ref assessment) = *assessment {
             if !assessment.risks.is_empty() {
-                format!(
+                user_message = format!(
                     "## Deadline Risk Alert\n\n{}\n\nAssessed at: {}\n\n---\n\n{}",
-                    assessment.summary,
-                    assessment.assessed_at,
-                    manifest
-                )
-            } else {
-                manifest
+                    assessment.summary, assessment.assessed_at, user_message
+                );
             }
-        } else {
-            manifest
         }
-    };
+    }
 
     // Get provider (API provider first, falls back to CLI tool)
     let provider = {
@@ -96,20 +87,20 @@ pub async fn generate_briefing(
     };
 
     let request = CompletionRequest {
-        system_prompt: build_briefing_system_prompt(),
-        user_message: manifest_with_risks,
+        system_prompt: build_briefing_system_prompt_json(),
+        user_message,
         max_tokens: 1024,
         temperature: 0.7,
         tools: None,
         tool_results: None,
     };
 
-    // Create channel for streaming
+    // Create channel for streaming -- forward chunks for progress indication
     let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(32);
 
     let app_clone = app.clone();
 
-    // Spawn forwarder task to emit briefing chunks to frontend
+    // Spawn forwarder task to emit briefing chunks to frontend (progress indication)
     let forwarder = tokio::spawn(async move {
         while let Some(chunk) = rx.recv().await {
             let _ = app_clone.emit("briefing-chunk", &chunk);
@@ -123,8 +114,29 @@ pub async fn generate_briefing(
     let _ = forwarder.await;
 
     match result {
-        Ok(_) => {
-            let _ = app.emit("briefing-complete", ());
+        Ok(response) => {
+            // Accumulate the full LLM response and parse as JSON
+            let raw = response.content;
+            let cleaned = strip_json_fences(&raw);
+
+            match serde_json::from_str::<serde_json::Value>(cleaned) {
+                Ok(mut parsed) => {
+                    // Merge projectId from scoring data into parsed JSON
+                    // (LLM may not reliably echo IDs -- per Research open question 3)
+                    merge_project_ids(&mut parsed, &scoring_result);
+
+                    let final_json_string =
+                        serde_json::to_string(&parsed).map_err(|e| e.to_string())?;
+                    let _ = app.emit("briefing-data", &final_json_string);
+                    let _ = app.emit("briefing-complete", ());
+                }
+                Err(_) => {
+                    let _ = app.emit(
+                        "briefing-error",
+                        "Briefing could not be generated. Check your AI provider settings and try again.",
+                    );
+                }
+            }
             Ok(())
         }
         Err(e) => {
@@ -135,8 +147,85 @@ pub async fn generate_briefing(
     }
 }
 
-/// Build a time-aware system prompt for the daily briefing.
-fn build_briefing_system_prompt() -> String {
+/// Generate a template-based context summary from scoring data (no LLM call).
+/// Used for the greeting area (per D-04).
+#[tauri::command]
+pub async fn generate_context_summary(
+    db_state: State<'_, Arc<Mutex<Database>>>,
+) -> Result<String, String> {
+    let db = db_state.lock().map_err(|e| e.to_string())?;
+    let scoring = compute_scores(&db)?;
+
+    let summary = if scoring.projects.is_empty() {
+        "Nothing on the radar today. Enjoy the clear schedule.".to_string()
+    } else {
+        let busy_text = if scoring.busy_score > 0.8 {
+            "Packed day"
+        } else if scoring.busy_score > 0.5 {
+            "Moderate day"
+        } else {
+            "Light day"
+        };
+        let meetings_text = if scoring.total_meetings > 0 {
+            format!(
+                "{} meeting{}",
+                scoring.total_meetings,
+                if scoring.total_meetings == 1 { "" } else { "s" }
+            )
+        } else {
+            "no meetings".to_string()
+        };
+        let tasks_text = if scoring.total_tasks_due > 0 {
+            format!(
+                "{} task{} due",
+                scoring.total_tasks_due,
+                if scoring.total_tasks_due == 1 { "" } else { "s" }
+            )
+        } else {
+            "nothing due".to_string()
+        };
+        format!("{} -- {} and {}.", busy_text, meetings_text, tasks_text)
+    };
+
+    Ok(summary)
+}
+
+/// Strip common JSON wrappers (```json ... ```) from LLM output.
+fn strip_json_fences(raw: &str) -> &str {
+    let trimmed = raw.trim();
+    if trimmed.starts_with("```json") {
+        let after_fence = &trimmed[7..]; // skip ```json
+        if let Some(end) = after_fence.rfind("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    if trimmed.starts_with("```") {
+        let after_fence = &trimmed[3..];
+        if let Some(end) = after_fence.rfind("```") {
+            return after_fence[..end].trim();
+        }
+    }
+    trimmed
+}
+
+/// Merge projectId from scoring data into parsed JSON by matching project names.
+fn merge_project_ids(parsed: &mut serde_json::Value, scoring: &ScoringResult) {
+    if let Some(projects) = parsed.get_mut("projects") {
+        if let Some(arr) = projects.as_array_mut() {
+            for project in arr.iter_mut() {
+                if let Some(name) = project.get("name").and_then(|n| n.as_str()) {
+                    // Find matching scored project by name
+                    if let Some(scored) = scoring.projects.iter().find(|sp| sp.name == name) {
+                        project["projectId"] = serde_json::json!(scored.project_id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Build a time-aware system prompt for the daily briefing that requests JSON output.
+fn build_briefing_system_prompt_json() -> String {
     let hour = chrono::Local::now().hour();
     let time_context = if hour < 12 {
         "morning. Focus on planning the day ahead and highlighting top priorities."
@@ -147,57 +236,34 @@ fn build_briefing_system_prompt() -> String {
     };
 
     format!(
-        "You are an executive briefing assistant. The user's current time is {}.\n\
+        "You are an executive briefing assistant. The user's current time is {}\n\
         \n\
-        Given the project status below, produce a structured daily briefing.\n\
+        You will receive scored project data with tags, priorities, and metrics.\n\
+        Your job is to narrate this data as a concise briefing.\n\
         \n\
-        **Format (strict):**\n\
+        Output ONLY valid JSON matching this schema (no markdown fences, no extra text):\n\
+        {{\n\
+          \"summary\": \"1-2 sentence overview of the day\",\n\
+          \"projects\": [\n\
+            {{\n\
+              \"name\": \"Project Name\",\n\
+              \"projectId\": 123,\n\
+              \"tags\": [\"overdue\", \"blocked\"],\n\
+              \"blockers\": [\"Description of blocker\"],\n\
+              \"deadlines\": [\"Task X due tomorrow\"],\n\
+              \"wins\": [\"Completed Task Y yesterday\"]\n\
+            }}\n\
+          ]\n\
+        }}\n\
         \n\
-        Start with a 2-3 sentence executive summary: the most important thing right now, \
-        overall trajectory, and one clear recommendation for today.\n\
-        \n\
-        Then for each active project, use exactly this markdown structure:\n\
-        \n\
-        ---\n\
-        \n\
-        #### Project Name\n\
-        \n\
-        - **Status:** on track / needs attention / blocked\n\
-        - **Current phase:** phase name — X% complete\n\
-          - Key accomplishment or blocker detail\n\
-          - Second detail if relevant\n\
-        - **Next action:** specific, concrete next step\n\
-        \n\
-        Skip projects with no active work.\n\
-        \n\
-        **Writing rules:**\n\
-        - Use nested bullet points (indented with two spaces) for supporting details\n\
-        - Front-load every bullet with the conclusion first\n\
-        - Bold all project names, phase names, and key terms\n\
-        - Use `---` horizontal rules between projects for visual separation\n\
-        - Be direct — no filler, no cheerleading, no \"let's\" or \"we should\"\n\
-        - Do NOT include a greeting — the app adds one separately\n\
-        - Do NOT echo raw data — synthesize and prioritize\n\
-        - Keep total response under 500 words\n\
-        \n\
-        ---\n\
-        \n\
-        #### Today's Plan\n\
-        \n\
-        After the project summaries, add a \"Today's Plan\" section.\n\
-        Use the \"Today's Schedule\" data from the project status to narrate what the user should work on.\n\
-        \n\
-        **Rules for Today's Plan:**\n\
-        - List the scheduled tasks in time order with their time slots\n\
-        - If the schedule shows OVERFLOW, explicitly state which tasks won't fit and ask: \
-        \"What should we work on today?\"\n\
-        - If tasks have no due date, suggest 1-2 that would benefit from a deadline. \
-        Format each suggestion on its own line as: SUGGEST_DUE_DATE:{{\"taskId\":\"<id>\",\"date\":\"<YYYY-MM-DD>\",\"taskTitle\":\"<title>\"}}\n\
-        - Never auto-apply changes. Only suggest.\n\
-        - If no schedule data is present, say the day is open and suggest reviewing undated tasks\n\
-        \n\
-        If the input begins with a \"## Deadline Risk Alert\" section, lead your briefing with a concise \
-        risk summary. Highlight the most urgent risks first, then transition to the standard briefing format.",
+        Rules:\n\
+        - Keep the summary to 1-2 sentences. Tone: concise executive brief.\n\
+        - Projects are already ranked by priority. Preserve the order.\n\
+        - Each description should be a single readable sentence.\n\
+        - Omit empty sections (if no blockers, omit the blockers array or leave empty).\n\
+        - Do NOT add projects not present in the input data.\n\
+        - Do NOT include markdown formatting in any field.\n\
+        - The projectId field MUST match the projectId from the input data exactly.",
         time_context
     )
 }
@@ -255,27 +321,79 @@ mod briefing_json_tests {
 
     #[test]
     fn test_strip_json_fences_clean_json() {
-        // strip_json_fences returns clean JSON unchanged
-        // Will be implemented when strip_json_fences is created in Plan 02
+        let input = r#"{"summary":"test"}"#;
+        assert_eq!(strip_json_fences(input), input);
     }
 
     #[test]
     fn test_strip_json_fences_with_backticks() {
-        // strip_json_fences removes ```json ... ``` wrapping
+        let input = "```json\n{\"summary\":\"test\"}\n```";
+        assert_eq!(strip_json_fences(input), r#"{"summary":"test"}"#);
     }
 
     #[test]
     fn test_strip_json_fences_with_plain_backticks() {
-        // strip_json_fences removes ``` ... ``` wrapping (no json tag)
+        let input = "```\n{\"summary\":\"test\"}\n```";
+        assert_eq!(strip_json_fences(input), r#"{"summary":"test"}"#);
     }
 
     #[test]
     fn test_briefing_json_parse_valid() {
-        // Valid BriefingJSON string parses to expected structure
+        let json_str = r#"{
+            "summary": "Busy day ahead with 3 projects needing attention.",
+            "projects": [
+                {
+                    "name": "Project Alpha",
+                    "projectId": 1,
+                    "tags": ["overdue", "blocked"],
+                    "blockers": ["API integration stuck"],
+                    "deadlines": ["Deploy by tomorrow"],
+                    "wins": ["Completed auth module"]
+                }
+            ]
+        }"#;
+        let parsed: serde_json::Value = serde_json::from_str(json_str).unwrap();
+        assert_eq!(
+            parsed["summary"],
+            "Busy day ahead with 3 projects needing attention."
+        );
+        let projects = parsed["projects"].as_array().unwrap();
+        assert_eq!(projects.len(), 1);
+        assert_eq!(projects[0]["name"], "Project Alpha");
+        assert_eq!(projects[0]["tags"][0], "overdue");
+        assert_eq!(projects[0]["blockers"][0], "API integration stuck");
     }
 
     #[test]
     fn test_briefing_json_parse_invalid() {
-        // Invalid JSON string returns parse error
+        let result = serde_json::from_str::<serde_json::Value>("not json");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_merge_project_ids() {
+        let scoring = ScoringResult {
+            projects: vec![crate::models::scoring::ScoredProject {
+                project_id: 42,
+                name: "My Project".to_string(),
+                priority_score: 100.0,
+                tags: vec![],
+                blockers: vec![],
+                deadlines: vec![],
+                wins: vec![],
+            }],
+            busy_score: 0.5,
+            total_meetings: 1,
+            total_tasks_due: 2,
+        };
+
+        let mut parsed: serde_json::Value = serde_json::from_str(
+            r#"{"summary":"test","projects":[{"name":"My Project","projectId":0}]}"#,
+        )
+        .unwrap();
+
+        merge_project_ids(&mut parsed, &scoring);
+
+        assert_eq!(parsed["projects"][0]["projectId"], 42);
     }
 }

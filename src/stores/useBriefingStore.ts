@@ -1,36 +1,49 @@
 import { create } from "zustand";
+import type { BriefingJSON, BriefingStatus } from "@/types/briefing";
 
-type BriefingStatus = "idle" | "loading" | "streaming" | "complete" | "error";
+// Module-level empty constant for selector stability (per project memory: never return new refs)
+const EMPTY_BRIEFING: BriefingJSON | null = null;
 
 interface BriefingState {
-  briefingContent: string;
+  briefingData: BriefingJSON | null; // replaces briefingContent: string
   briefingStatus: BriefingStatus;
   briefingError: string | null;
+  contextSummary: string | null; // greeting summary from scoring engine
   lastRefreshedAt: number | null;
+
   requestBriefing: () => void;
-  appendChunk: (chunk: string) => void;
+  setBriefingData: (data: BriefingJSON) => void; // replaces appendChunk
   completeBriefing: () => void;
   failBriefing: (error: string) => void;
+  setContextSummary: (summary: string) => void;
 }
 
-export const useBriefingStore = create<BriefingState>()((set) => ({
-  briefingContent: "",
+export const useBriefingStore = create<BriefingState>()((set, get) => ({
+  briefingData: EMPTY_BRIEFING,
   briefingStatus: "idle",
   briefingError: null,
+  contextSummary: null,
   lastRefreshedAt: null,
 
-  requestBriefing: () =>
-    set({ briefingContent: "", briefingStatus: "loading", briefingError: null }),
+  requestBriefing: () => {
+    // Guard against concurrent requests (per Research Pitfall 3)
+    const current = get().briefingStatus;
+    if (current === "streaming" || current === "loading") return;
+    set({
+      briefingData: EMPTY_BRIEFING,
+      briefingStatus: "loading",
+      briefingError: null,
+    });
+  },
 
-  appendChunk: (chunk: string) =>
-    set((s) => ({
-      briefingContent: s.briefingContent + chunk,
-      briefingStatus: "streaming",
-    })),
+  setBriefingData: (data: BriefingJSON) =>
+    set({ briefingData: data, briefingStatus: "streaming" }),
 
   completeBriefing: () =>
     set({ briefingStatus: "complete", lastRefreshedAt: Date.now() }),
 
   failBriefing: (error: string) =>
     set({ briefingStatus: "error", briefingError: error }),
+
+  setContextSummary: (summary: string) => set({ contextSummary: summary }),
 }));

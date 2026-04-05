@@ -327,6 +327,7 @@ pub fn run() {
             hub_chat_stop,
             build_context_manifest,
             generate_briefing,
+            generate_context_summary,
             execute_bot_shell,
             search_tasks,
             list_calendar_events_for_range,
