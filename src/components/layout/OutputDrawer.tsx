@@ -10,6 +10,10 @@ import { RunHistoryDetail } from "@/components/output/RunHistoryDetail";
 import { TerminalPane } from "@/components/output/TerminalPane";
 import { SessionTabBar } from "@/components/output/SessionTabBar";
 import { TerminalEmptyState } from "@/components/output/TerminalEmptyState";
+import { AgentPanelHeader } from "@/components/agent/AgentPanelHeader";
+import { AgentActivityTab } from "@/components/agent/AgentActivityTab";
+import { AgentTerminalTab } from "@/components/agent/AgentTerminalTab";
+import { useAgentStore } from "@/stores/useAgentStore";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -23,6 +27,7 @@ export function OutputDrawer() {
 
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
+  const agentActiveTab = useAgentStore((s) => s.activeTab);
 
   const selectedWorkflowId = useWorkflowStore((s) => s.selectedWorkflowId);
   const runs = useWorkflowStore((s) => s.runs);
@@ -63,6 +68,14 @@ export function OutputDrawer() {
   return (
     <div className="flex flex-col h-full bg-card">
       <div className="flex-1 overflow-hidden relative">
+        <div style={{ display: activeDrawerTab === "elementai" ? "block" : "none" }} className="h-full">
+          <div className="flex flex-col h-full">
+            <AgentPanelHeader />
+            <div className="flex-1 overflow-hidden">
+              {agentActiveTab === "activity" ? <AgentActivityTab /> : <AgentTerminalTab />}
+            </div>
+          </div>
+        </div>
         <div style={{ display: activeDrawerTab === "logs" ? "block" : "none" }} className="h-full">
           <LogViewer entries={executionLogs} />
         </div>
