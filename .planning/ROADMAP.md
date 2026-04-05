@@ -166,7 +166,10 @@ Plans:
   2. When Claude Code edits a file, related tests run automatically and results are visible
   3. When Claude Code edits a TypeScript file, Biome auto-formats it after the edit completes
   4. Hooks complete within their configured timeouts (300s for cargo builds on cold cache) without hanging
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 39-01-PLAN.md -- Pre-commit gate, test-on-save, and auto-format hooks configuration
 
 ### Phase 40: Testing MCP Server
 **Goal**: Claude Code can discover, run, and analyze tests through MCP tools -- making it a self-directed test-writing agent
@@ -226,7 +229,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 36. Linting Foundation | v1.7 | 0/3 | Planning | - |
 | 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planning | - |
 | 38. Error Logger | v1.7 | 0/2 | Planning | - |
-| 39. Claude Code Hooks | v1.7 | 0/0 | Not started | - |
+| 39. Claude Code Hooks | v1.7 | 0/1 | Planning | - |
 | 40. Testing MCP Server | v1.7 | 0/0 | Not started | - |
 
 ## Backlog
