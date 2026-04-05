@@ -198,7 +198,7 @@ export function AppLayout() {
               <ResizablePanel
                 defaultSize={drawerOpen ? drawerHeight : 0}
                 minSize={0}
-                maxSize={60}
+                maxSize={80}
                 collapsible
                 panelRef={drawerPanelRef}
                 onResize={(size) => {
