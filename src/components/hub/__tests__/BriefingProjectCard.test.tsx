@@ -6,7 +6,7 @@ import type { BriefingProject } from "@/types/briefing";
 
 const baseProject: BriefingProject = {
   name: "Test Project",
-  projectId: 42,
+  projectId: "abc-123",
   tags: ["on-track"],
   blockers: ["API endpoint failing"],
   deadlines: ["Feature due tomorrow"],

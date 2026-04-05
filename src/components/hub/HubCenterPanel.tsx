@@ -49,22 +49,28 @@ export function HubCenterPanel() {
     return () => scrollEl.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const onRunBriefing = useCallback(() => {
+  const onRunBriefing = useCallback(async () => {
     requestBriefing();
-    invoke("build_context_manifest")
-      .then(() => invoke("generate_briefing"))
-      .catch(() => {
-        useBriefingStore
-          .getState()
-          .failBriefing(
-            "Briefing could not be generated. Check your AI provider settings and try again.",
-          );
-      });
+    try {
+      await invoke("build_context_manifest");
+    } catch (err) {
+      console.error("[Briefing] build_context_manifest failed:", err);
+    }
+    try {
+      await invoke("generate_briefing");
+    } catch (err) {
+      console.error("[Briefing] generate_briefing failed:", err);
+      useBriefingStore
+        .getState()
+        .failBriefing(
+          String(err) || "Briefing could not be generated. Check your AI provider settings and try again.",
+        );
+    }
   }, [requestBriefing]);
 
   const handleProjectNavigate = useCallback(
-    (projectId: number) => {
-      selectProject(String(projectId));
+    (projectId: string) => {
+      selectProject(projectId);
     },
     [selectProject],
   );

@@ -17,7 +17,7 @@ pub enum ProjectTag {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScoredProject {
-    pub project_id: i64,
+    pub project_id: String,
     pub name: String,
     pub priority_score: f64,
     pub tags: Vec<ProjectTag>,
@@ -41,7 +41,7 @@ struct TaskRow {
     status: String,
     due_date: Option<NaiveDate>,
     updated_at: String,
-    project_id: Option<i64>,
+    project_id: Option<String>,
     project_name: Option<String>,
 }
 
@@ -59,7 +59,7 @@ fn compute_scores_for_date(db: &Database, today: NaiveDate) -> Result<ScoringRes
     let mut stmt = conn
         .prepare(
             "SELECT t.id, t.title, t.status, t.due_date, t.updated_at,
-                    p.rowid as project_rowid, p.name as project_name
+                    p.id as project_id, p.name as project_name
              FROM tasks t
              LEFT JOIN projects p ON t.project_id = p.id
              LEFT JOIN phases ph ON t.phase_id = ph.id
@@ -87,13 +87,13 @@ fn compute_scores_for_date(db: &Database, today: NaiveDate) -> Result<ScoringRes
         .map_err(|e| format!("Failed to query tasks: {}", e))?;
 
     // Group tasks by project
-    let mut project_tasks: HashMap<i64, (String, Vec<TaskRow>)> = HashMap::new();
+    let mut project_tasks: HashMap<String, (String, Vec<TaskRow>)> = HashMap::new();
 
     for row in rows {
         let task = row.map_err(|e| format!("Failed to read task row: {}", e))?;
-        if let (Some(pid), Some(ref pname)) = (task.project_id, &task.project_name) {
+        if let (Some(ref pid), Some(ref pname)) = (&task.project_id, &task.project_name) {
             let entry = project_tasks
-                .entry(pid)
+                .entry(pid.clone())
                 .or_insert_with(|| (pname.clone(), Vec::new()));
             entry.1.push(task);
         }
@@ -147,7 +147,7 @@ fn compute_scores_for_date(db: &Database, today: NaiveDate) -> Result<ScoringRes
             .collect();
 
         scored_projects.push(ScoredProject {
-            project_id: *project_id,
+            project_id: project_id.clone(),
             name: name.clone(),
             priority_score,
             tags,

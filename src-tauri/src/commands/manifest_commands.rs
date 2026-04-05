@@ -95,34 +95,16 @@ pub async fn generate_briefing(
         tool_results: None,
     };
 
-    // Create channel for streaming -- forward chunks for progress indication
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(32);
-
-    let app_clone = app.clone();
-
-    // Spawn forwarder task to emit briefing chunks to frontend (progress indication)
-    let forwarder = tokio::spawn(async move {
-        while let Some(chunk) = rx.recv().await {
-            let _ = app_clone.emit("briefing-chunk", &chunk);
-        }
-    });
-
-    // Run the streaming completion
-    let result = provider.complete_stream(request, tx).await;
-
-    // Wait for forwarder to finish
-    let _ = forwarder.await;
+    // Use non-streaming complete() to avoid channel/forwarder complexity
+    let result = provider.complete(request).await;
 
     match result {
         Ok(response) => {
-            // Accumulate the full LLM response and parse as JSON
             let raw = response.content;
             let cleaned = strip_json_fences(&raw);
 
             match serde_json::from_str::<serde_json::Value>(cleaned) {
                 Ok(mut parsed) => {
-                    // Merge projectId from scoring data into parsed JSON
-                    // (LLM may not reliably echo IDs -- per Research open question 3)
                     merge_project_ids(&mut parsed, &scoring_result);
 
                     let final_json_string =
@@ -133,7 +115,7 @@ pub async fn generate_briefing(
                 Err(_) => {
                     let _ = app.emit(
                         "briefing-error",
-                        "Briefing could not be generated. Check your AI provider settings and try again.",
+                        "Briefing could not be generated. The AI response was not valid JSON.",
                     );
                 }
             }
@@ -374,7 +356,7 @@ mod briefing_json_tests {
     fn test_merge_project_ids() {
         let scoring = ScoringResult {
             projects: vec![crate::models::scoring::ScoredProject {
-                project_id: 42,
+                project_id: "abc-123".to_string(),
                 name: "My Project".to_string(),
                 priority_score: 100.0,
                 tags: vec![],
@@ -394,6 +376,6 @@ mod briefing_json_tests {
 
         merge_project_ids(&mut parsed, &scoring);
 
-        assert_eq!(parsed["projects"][0]["projectId"], 42);
+        assert_eq!(parsed["projects"][0]["projectId"], "abc-123");
     }
 }

@@ -1,6 +1,6 @@
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { HubToolbar } from "@/components/hub/HubToolbar";
-import { CommandHub } from "@/components/hub/CommandHub";
+import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
 import { SlideOverPanel } from "@/components/hub/SlideOverPanel";
 import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
 import { HubCalendar } from "@/components/hub/calendar/HubCalendar";
@@ -16,7 +16,7 @@ export function HubView() {
 
       {/* Center content -- always full width per D-03 */}
       <div className="relative flex-1 min-h-0">
-        <CommandHub />
+        <HubCenterPanel />
 
         {/* Overlay panels -- absolute positioned, float over center per D-03 */}
         <SlideOverPanel open={calendarOpen} side="left">

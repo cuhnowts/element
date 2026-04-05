@@ -7,7 +7,7 @@ export type BriefingTag =
 
 export interface BriefingProject {
   name: string;
-  projectId?: number;
+  projectId?: string;
   tags: BriefingTag[];
   blockers: string[];
   deadlines: string[];

@@ -17,7 +17,7 @@ const TAG_VARIANTS: Record<
 
 interface BriefingProjectCardProps {
   project: BriefingProject;
-  onNavigate: (projectId: number) => void;
+  onNavigate: (projectId: string) => void;
 }
 
 export function BriefingProjectCard({
