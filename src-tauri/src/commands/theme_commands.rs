@@ -112,3 +112,46 @@ pub async fn assign_task_theme(
     app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     Ok(task)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_fixtures::setup_test_db;
+    use std::sync::{Arc, Mutex};
+
+    fn setup_managed_db() -> Arc<Mutex<Database>> {
+        Arc::new(Mutex::new(setup_test_db()))
+    }
+
+    #[test]
+    fn test_create_theme_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+        let input = CreateThemeInput {
+            name: "Work".into(),
+            color: "#ff0000".into(),
+        };
+        let theme = db.create_theme(input).unwrap();
+        assert_eq!(theme.name, "Work");
+        assert_eq!(theme.color, "#ff0000");
+        assert!(!theme.id.is_empty());
+    }
+
+    #[test]
+    fn test_list_themes_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a theme
+        db.create_theme(CreateThemeInput {
+            name: "Personal".into(),
+            color: "#00ff00".into(),
+        })
+        .unwrap();
+
+        // Verify list returns it
+        let themes = db.list_themes().unwrap();
+        assert_eq!(themes.len(), 1);
+        assert_eq!(themes[0].name, "Personal");
+    }
+}

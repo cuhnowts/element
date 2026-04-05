@@ -238,3 +238,123 @@ pub async fn list_tasks_by_theme(
     let db = state.lock().map_err(|e| e.to_string())?;
     db.list_tasks_by_theme(&theme_id).map_err(|e| e.to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::task::CreateTaskInput;
+    use crate::test_fixtures::setup_test_db;
+    use std::sync::{Arc, Mutex};
+
+    /// Helper: create Arc<Mutex<Database>> matching the managed state pattern used by commands.
+    fn setup_managed_db() -> Arc<Mutex<Database>> {
+        Arc::new(Mutex::new(setup_test_db()))
+    }
+
+    #[test]
+    fn test_create_task_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+        let input = CreateTaskInput {
+            project_id: None,
+            theme_id: None,
+            title: "Test Task".into(),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+            phase_id: None,
+        };
+        let task = db.create_task(input).unwrap();
+        assert_eq!(task.title, "Test Task");
+        assert!(!task.id.is_empty());
+    }
+
+    #[test]
+    fn test_list_tasks_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a project (list_tasks requires project_id)
+        let project = db
+            .create_project(crate::models::project::CreateProjectInput {
+                name: "Test Project".into(),
+                description: None,
+            })
+            .unwrap();
+
+        // Create a task in the project
+        db.create_task(CreateTaskInput {
+            project_id: Some(project.id.clone()),
+            theme_id: None,
+            title: "Listed Task".into(),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+            phase_id: None,
+        })
+        .unwrap();
+
+        // Verify list_tasks returns the task
+        let tasks = db.list_tasks(&project.id).unwrap();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].title, "Listed Task");
+    }
+
+    #[test]
+    fn test_update_task_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a task
+        let task = db
+            .create_task(CreateTaskInput {
+                project_id: None,
+                theme_id: None,
+                title: "Original Title".into(),
+                description: None,
+                context: None,
+                priority: None,
+                external_path: None,
+                due_date: None,
+                scheduled_date: None,
+                scheduled_time: None,
+                duration_minutes: None,
+                recurrence_rule: None,
+                estimated_minutes: None,
+                phase_id: None,
+            })
+            .unwrap();
+
+        // Update via the same path the command uses
+        let input = UpdateTaskInput {
+            title: Some("Updated Title".into()),
+            description: None,
+            context: None,
+            priority: None,
+            external_path: None,
+            due_date: None,
+            scheduled_date: None,
+            scheduled_time: None,
+            duration_minutes: None,
+            recurrence_rule: None,
+            estimated_minutes: None,
+            phase_id: None,
+        };
+        let updated = db.update_task(&task.id, input).unwrap();
+        assert_eq!(updated.title, "Updated Title");
+    }
+}
