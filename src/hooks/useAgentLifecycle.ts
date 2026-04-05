@@ -43,34 +43,34 @@ export function useAgentLifecycle() {
       const rawArgs = await api.getAppSetting("cli_args");
       const userArgs = rawArgs
         ? rawArgs
-            // Sanitize em-dashes (copy-paste from docs often converts -- to em-dash)
             .replace(/\u2014/g, "--")
             .replace(/\u2013/g, "--")
             .split(/\s+/)
             .filter(Boolean)
         : [];
 
-      // 4. Get DB path for MCP server
-      const dataDir = await appDataDir();
-      const dbPath = `${dataDir}/element.db`;
+      // 4. Try to generate MCP config + prompt (best-effort — don't block agent start)
+      const extraArgs: string[] = [];
+      try {
+        const dataDir = await appDataDir();
+        const dbPath = `${dataDir}/element.db`;
+        const configPath = await generateMcpConfig(dbPath);
+        extraArgs.push("--mcp-config", configPath);
+      } catch {
+        // MCP config failed — agent starts without Element tools
+      }
+      try {
+        const promptPath = await generateSystemPrompt();
+        extraArgs.push(`@${promptPath}`);
+      } catch {
+        // System prompt failed — agent starts without custom prompt
+      }
 
-      // 5. Generate MCP config and system prompt
-      const configPath = await generateMcpConfig(dbPath);
-      const promptPath = await generateSystemPrompt();
-
-      // 6. Build agent launch args
-      const agentArgs = [
-        ...userArgs,
-        "--mcp-config",
-        configPath,
-        `@${promptPath}`,
-      ];
-
-      // 7. Store command/args for AgentTerminalTab to consume
+      // 5. Store command/args for AgentTerminalTab to consume
       setAgentCommand(command);
-      setAgentArgs(agentArgs);
+      setAgentArgs([...userArgs, ...extraArgs]);
 
-      // 8. Set running and reset restart count
+      // 6. Set running and reset restart count
       setStatus("running");
       resetRestartCount();
     } catch (err) {
@@ -81,22 +81,18 @@ export function useAgentLifecycle() {
 
   const handleAgentExit = useCallback(
     (exitCode: number) => {
-      // Clear any existing restart timer
       if (restartTimerRef.current) {
         clearTimeout(restartTimerRef.current);
         restartTimerRef.current = null;
       }
 
-      // Graceful exit
       if (exitCode === 0) {
         setStatus("idle");
         return;
       }
 
-      // Check restart count from store
       const { restartCount } = useAgentStore.getState();
 
-      // Max retries exceeded
       if (restartCount >= MAX_RETRIES) {
         setStatus("stopped");
         toast(
@@ -105,7 +101,6 @@ export function useAgentLifecycle() {
         return;
       }
 
-      // Schedule restart with backoff
       setStatus("error");
       incrementRestart();
       const delay = BACKOFF_MS[restartCount] ?? BACKOFF_MS[BACKOFF_MS.length - 1];
@@ -115,7 +110,6 @@ export function useAgentLifecycle() {
   );
 
   const restartAgent = useCallback(async () => {
-    // Clear any pending restart timer
     if (restartTimerRef.current) {
       clearTimeout(restartTimerRef.current);
       restartTimerRef.current = null;
