@@ -8,6 +8,17 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
+## Current Milestone: v1.6 Clarity
+
+**Goal:** Strip the UI down to what matters — goal-first projects, a hub that doesn't scroll sideways, and a briefing you actually want to read.
+
+**Target features:**
+- Hub overhaul: single center view with opt-in slide-in panels (goals, calendar, briefing), no horizontal scroll
+- Project detail redesign: lead with the goal/problem being solved, then workspace (directory + AI-wired terminal)
+- Briefing rework: on-demand generation, visually styled and scannable
+- Drawer consolidation: click-to-toggle minimize/maximize, AI panel moves from right sidebar to bottom drawer tab
+- Bug fixes: calendar "Today" label, deterministic overdue detection, workflows section minimizable
+
 ## Current State
 
 **Shipped:** v1.5 Time Bounded (2026-04-05)
@@ -78,7 +89,13 @@ v1.5 delivered: Google Calendar OAuth sync with .env-based credentials, Outlook-
 
 ### Active
 
-(None — planning next milestone)
+- [ ] Hub overhaul: single center view with opt-in slide-in panels, no horizontal scroll
+- [ ] Project detail: goal-first layout aligned with .planning markdowns, streamlined workspace entry
+- [ ] Briefing: on-demand generation with visual styling for scannability
+- [ ] Drawer: click-to-toggle minimize/maximize, AI panel consolidated into bottom drawer
+- [ ] Calendar: fix "Today" label showing on every day in week view
+- [ ] Overdue detection: deterministic query-based (due_date < today, not complete), not LLM
+- [ ] Workflows section: fully minimizable when not in use
 
 ### Future
 
@@ -177,4 +194,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after v1.5 Time Bounded milestone completion*
+*Last updated: 2026-04-04 after v1.6 Clarity milestone start*
