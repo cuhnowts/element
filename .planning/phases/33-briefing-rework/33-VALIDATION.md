@@ -2,7 +2,7 @@
 phase: 33
 slug: briefing-rework
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-04
 ---
@@ -38,12 +38,16 @@ created: 2026-04-04
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 33-01-01 | 01 | 1 | BRIEF-01 | unit (React) | `npx vitest run src/components/hub/__tests__/HubCenterPanel.test.tsx -x` | ❌ W0 | ⬜ pending |
-| 33-01-02 | 01 | 1 | BRIEF-02 | unit (React) | `npx vitest run src/components/hub/__tests__/BriefingProjectCard.test.tsx -x` | ❌ W0 | ⬜ pending |
-| 33-01-03 | 01 | 1 | BRIEF-03 | unit (React) | `npx vitest run src/components/hub/__tests__/BriefingSummaryCard.test.tsx -x` | ❌ W0 | ⬜ pending |
-| 33-01-04 | 01 | 1 | BRIEF-04 | unit (React) | `npx vitest run src/components/hub/__tests__/HubCenterPanel.test.tsx -x` | ❌ W0 | ⬜ pending |
-| 33-01-05 | 01 | 1 | D-05 | unit (Rust) | `cd src-tauri && cargo test scoring` | ❌ W0 | ⬜ pending |
-| 33-01-06 | 01 | 1 | D-12 | unit (Rust) | `cd src-tauri && cargo test briefing_json` | ❌ W0 | ⬜ pending |
+| 33-00-01 | 00 | 0 | BRIEF-01..04 | stub (React) | `npx vitest run src/components/hub/__tests__/ --reporter=verbose` | Created by 33-00 | ⬜ pending |
+| 33-00-02 | 00 | 0 | D-12 | stub (Rust) | `cd src-tauri && cargo test briefing_json` | Created by 33-00 | ⬜ pending |
+| 33-01-01 | 01 | 1 | BRIEF-02, BRIEF-03 | unit (React) | `grep -c "export" src/types/briefing.ts` | N/A (type file) | ⬜ pending |
+| 33-01-02 | 01 | 1 | D-05 | unit (Rust) | `cd src-tauri && cargo test scoring -- --nocapture` | Inline in scoring.rs | ⬜ pending |
+| 33-02-01 | 02 | 2 | D-12 | unit (Rust) | `cd src-tauri && cargo build && cargo test briefing_json -- --nocapture` | In manifest_commands.rs | ⬜ pending |
+| 33-02-02 | 02 | 2 | BRIEF-01, BRIEF-04 | unit (React) | `npx tsc --noEmit` | N/A (store/hook) | ⬜ pending |
+| 33-03-01 | 03 | 3 | BRIEF-02, BRIEF-03 | unit (React) | `npx vitest run src/components/hub/__tests__/BriefingProjectCard.test.tsx src/components/hub/__tests__/BriefingSummaryCard.test.tsx src/components/hub/__tests__/ActionChipBar.test.tsx --reporter=verbose` | Created by 33-00 | ⬜ pending |
+| 33-03-02a | 03 | 3 | BRIEF-01, BRIEF-04 | unit (React) | `npx vitest run src/components/hub/__tests__/HubCenterPanel.test.tsx --reporter=verbose` | Created by 33-00 | ⬜ pending |
+| 33-03-02b | 03 | 3 | BRIEF-04 | type check | `npx tsc --noEmit` | N/A | ⬜ pending |
+| 33-03-03 | 03 | 3 | ALL | manual | Human visual verification | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,14 +55,14 @@ created: 2026-04-04
 
 ## Wave 0 Requirements
 
-- [ ] `src/components/hub/__tests__/HubCenterPanel.test.tsx` — stubs for BRIEF-01, BRIEF-04
-- [ ] `src/components/hub/__tests__/BriefingProjectCard.test.tsx` — stubs for BRIEF-02, BRIEF-03
-- [ ] `src/components/hub/__tests__/BriefingSummaryCard.test.tsx` — stubs for BRIEF-03
-- [ ] `src/components/hub/__tests__/ActionChipBar.test.tsx` — stubs for BRIEF-01 chip behavior
-- [ ] `src-tauri/src/models/scoring.rs` tests inline — stubs for D-05 tag computation
-- [ ] `src-tauri/src/commands/manifest_commands.rs` tests for JSON parsing — stubs for D-12
+- [ ] `src/components/hub/__tests__/HubCenterPanel.test.tsx` — stubs for BRIEF-01, BRIEF-04 (Plan 33-00, Task 1)
+- [ ] `src/components/hub/__tests__/BriefingProjectCard.test.tsx` — stubs for BRIEF-02, BRIEF-03 (Plan 33-00, Task 1)
+- [ ] `src/components/hub/__tests__/BriefingSummaryCard.test.tsx` — stubs for BRIEF-03 (Plan 33-00, Task 1)
+- [ ] `src/components/hub/__tests__/ActionChipBar.test.tsx` — stubs for BRIEF-01 chip behavior (Plan 33-00, Task 1)
+- [ ] `src-tauri/src/models/scoring.rs` tests inline — stubs for D-05 tag computation (Plan 33-01, Task 2 creates inline)
+- [ ] `src-tauri/src/commands/manifest_commands.rs` tests for JSON parsing — stubs for D-12 (Plan 33-00, Task 2)
 
-*Existing infrastructure covers framework installation — vitest and cargo test already configured.*
+*All Wave 0 test stubs are created by Plan 33-00 (wave 0). Existing infrastructure covers framework installation — vitest and cargo test already configured.*
 
 ---
 
@@ -73,9 +77,9 @@ created: 2026-04-04
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 30s
 - [ ] `nyquist_compliant: true` set in frontmatter
