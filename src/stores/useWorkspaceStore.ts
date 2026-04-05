@@ -46,6 +46,12 @@ interface WorkspaceState {
   hubLayout: HubLayout;
   setHubLayout: (partial: Partial<HubLayout>) => void;
 
+  // Hub panel overlay toggles (session-only, not persisted per D-10)
+  hubCalendarOpen: boolean;
+  hubGoalsOpen: boolean;
+  toggleHubCalendar: () => void;
+  toggleHubGoals: () => void;
+
   // Terminal/drawer tab state
   activeDrawerTab: DrawerTab;
   hasAutoOpenedTerminal: boolean;  // session-only, per D-03
@@ -77,6 +83,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       drawerOpen: true,
       calendarVisible: true,
       selectedTaskId: null,
+      // Hub panel overlay toggles (session-only, not persisted per D-10)
+      hubCalendarOpen: false,
+      hubGoalsOpen: false,
+      toggleHubCalendar: () => set((s) => ({ hubCalendarOpen: !s.hubCalendarOpen })),
+      toggleHubGoals: () => set((s) => ({ hubGoalsOpen: !s.hubGoalsOpen })),
+
       activeDrawerTab: "terminal" as DrawerTab,
       hasAutoOpenedTerminal: false,
 
