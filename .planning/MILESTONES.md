@@ -1,5 +1,25 @@
 # Milestones
 
+## v1.5 Time Bounded (Shipped: 2026-04-05)
+
+**Phases completed:** 7 phases, 13 plans, 24 tasks
+
+**Key accomplishments:**
+
+- Six calendar sync bugs fixed: Google 410 recovery, Outlook UTC timezone header, invalid_grant detection for both providers, cancelled event hard-deletion, and placeholder OAuth credential guards
+- Scheduler reads real calendar events from DB with RFC3339-to-HH:mm conversion, debounced sync_all_if_stale command for frontend triggers, and post-connect sync for both OAuth providers
+- TDD-verified layout math (16 tests), MergedEvent type, Zustand hub state, and data hooks for calendar grid rendering
+- Scrollable day-view time grid with meeting/work blocks, now-line, date navigation, and Day/Week toggle replacing CalendarPlaceholder
+- Configurable week-view grid driven by workHours.workDays, meeting click popover with details, sidebar MiniCalendar hub navigation, and 7 integration tests
+- DatePickerPopover with quick-select shortcuts, three-tier urgency badges (overdue red, due-soon amber, normal outline), GoalsTreeNode overdue count badges with backlog exemption
+- Status:
+- 1. [Rule 1 - Bug] Fixed reschedule_day input mismatch
+- 5 calendar MCP tool handlers with gap detection algorithm ported from Rust, enabling AI agents to read calendar data and manage work blocks
+- 5 Tauri commands + action registry entries wiring calendar MCP tools into hub chat bot with read-auto/write-approval flow
+- 1. [Rule 3 - Blocking] Calendar events schema mismatch
+
+---
+
 ## v1.4 Daily Hub (Shipped: 2026-04-03)
 
 **Phases completed:** 6 phases, 12 plans, 23 tasks

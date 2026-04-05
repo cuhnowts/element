@@ -8,25 +8,9 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## Current Milestone: v1.5 Time Bounded
-
-**Goal:** Turn Element into a daily scheduling assistant — it reads your calendar, knows your tasks and deadlines, and opens with "Here's what you have time for today. What should we work on?" Then helps you carve work blocks into the gaps.
-
-**Target features:**
-- Calendar sync fix — debug existing Google/Outlook OAuth, reliable background sync
-- Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks
-- Hub calendar view — real day/week view showing meetings + work blocks side by side
-- Daily planning skill — AI presents prioritized to-dos against available time, asks "what should we do today?"
-- Due date enforcement — all tasks/phases get due dates, AI suggests them conversationally
-- Heartbeat — periodic background check (local LLM preferred, CLI fallback) that flags deadline risks and suggests reshuffles
-- Schedule negotiation — conversational renegotiation when plans change
-- Backlog exemption — backlog items immune to due date enforcement
-
 ## Current State
 
-**Shipped:** v1.4 Daily Hub (2026-04-03)
-**Phase 28 complete (2026-04-04):** Due dates & daily planning — date picker, three-tier urgency visuals, manifest schedule data, daily plan UI with suggestions and rescheduling
-**Phase 29 complete (2026-04-04):** Calendar MCP tools — 5 MCP tool handlers (list events, get slots, create/move/delete work blocks), gap detection algorithm, hub chat bot dual-registration wiring
+**Shipped:** v1.5 Time Bounded (2026-04-05)
 **Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
@@ -43,6 +27,8 @@ v1.3 Phase 18 complete: Sidebar left-click navigates directly, theme sections co
 v1.3 Phase 19 complete: Multi-terminal sessions with per-project isolation, named tabs (SessionTabBar), mount-all/show-one rendering for scroll preservation, graceful PTY cleanup (SIGTERM+3s+SIGKILL), refresh AI context dialog, sidebar session indicator, app-quit cleanup hook.
 
 v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/phase hierarchy, progress dots, chores checkboxes), AI daily briefing (CLI-powered, CEO-style formatting, 30-min cache), conversational hub chat with markdown rendering and multi-turn context, bot skill system (action registry, search_tasks, shell allowlist, MCP write tools), CLI AI provider fallback, and column minimize/expand ribbons.
+
+v1.5 delivered: Google Calendar OAuth sync with .env-based credentials, Outlook-style calendar day/week view with event blocks, due date picker with three-tier urgency visuals (overdue/due-soon/normal), daily planning with scheduled task blocks and due date suggestions, calendar MCP tools (5 handlers for events and work blocks), heartbeat deadline risk engine, and work block CRUD via hub chat.
 
 ## Requirements
 
@@ -82,16 +68,17 @@ v1.4 delivered: 3-column daily hub replacing TodayView with goals tree (project/
 - ✓ Central context manifest: auto-generated project status for orchestrator consumption — v1.4
 - ✓ CLI AI provider: fallback to configured CLI tool when no API keys available — v1.4
 
+- ✓ Calendar sync: Google OAuth with token refresh, 410 recovery, background auto-sync — v1.5
+- ✓ Calendar MCP tools: 5 tools for reading events, managing work blocks — v1.5
+- ✓ Hub calendar view: day/week time grid with Outlook-style event blocks — v1.5
+- ✓ Daily planning skill: prioritized daily plan with due date suggestions — v1.5
+- ✓ Due date enforcement: date picker, three-tier urgency visuals, backlog exemption — v1.5
+- ✓ Heartbeat core: deadline risk calculation, background evaluation loop — v1.5
+- ✓ Schedule negotiation: reschedule_day action, calendar-aware work block CRUD — v1.5
+
 ### Active
 
-- [ ] Calendar sync fix — debug Google/Outlook OAuth plugin, reliable background sync
-- ✓ Calendar MCP tools — bot reads meetings, blocks time for tasks, moves work blocks — v1.5 Phase 29
-- [ ] Hub calendar view — real day/week view showing meetings + work blocks
-- ✓ Daily planning skill — AI presents prioritized to-dos against available time conversationally — v1.5 Phase 28
-- ✓ Due date enforcement — all tasks/phases get due dates, AI suggests them through conversation — v1.5 Phase 28
-- [ ] Heartbeat — periodic background LLM check flagging deadline risks and suggesting reshuffles
-- [ ] Schedule negotiation — conversational renegotiation when plans change
-- ✓ Backlog exemption — backlog items immune to due date enforcement — v1.5 Phase 28
+(None — planning next milestone)
 
 ### Future
 
@@ -190,4 +177,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 29 Calendar MCP Tools completed*
+*Last updated: 2026-04-05 after v1.5 Time Bounded milestone completion*
