@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
-use tokio_cron_scheduler::{Job, JobScheduler};
 use tauri::{AppHandle, Emitter, Manager};
+use tokio_cron_scheduler::{Job, JobScheduler};
 
 use crate::db::connection::Database;
 
@@ -13,7 +13,9 @@ pub async fn init_scheduler(
     // Load active schedules from DB via managed state
     let schedules = {
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .list_active_schedules()
             .map_err(|e| format!("Failed to list schedules: {}", e))?
@@ -80,10 +82,7 @@ fn should_catch_up(cron_expression: &str, last_run_at: &str) -> bool {
     let now = chrono::Utc::now();
 
     // Check if there's at least one scheduled occurrence between last_run and now
-    schedule
-        .after(&last_run_utc)
-        .take(1)
-        .any(|next| next < now)
+    schedule.after(&last_run_utc).take(1).any(|next| next < now)
 }
 
 /// Execute a catch-up run for a workflow that missed its scheduled execution.
@@ -93,7 +92,9 @@ async fn catch_up_run(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let run = {
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         let _workflow = db_lock
             .get_workflow(workflow_id)
             .map_err(|e| format!("Failed to get workflow: {}", e))?;
@@ -108,7 +109,9 @@ async fn catch_up_run(
     // Mark as completed (actual step execution will be handled by the pipeline executor)
     {
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .complete_workflow_run(&run.id, "completed", None)
             .map_err(|e| format!("Failed to complete run: {}", e))?;
@@ -127,7 +130,9 @@ async fn scheduled_run(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let run = {
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         let _workflow = db_lock
             .get_workflow(workflow_id)
             .map_err(|e| format!("Failed to get workflow: {}", e))?;
@@ -142,7 +147,9 @@ async fn scheduled_run(
     // Mark as completed (actual step execution will be handled by the pipeline executor)
     {
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .complete_workflow_run(&run.id, "completed", None)
             .map_err(|e| format!("Failed to complete run: {}", e))?;
@@ -152,7 +159,9 @@ async fn scheduled_run(
     {
         let cron_expr = {
             let db_state = app.state::<Arc<Mutex<Database>>>();
-            let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+            let db_lock = db_state
+                .lock()
+                .map_err(|e| format!("DB lock error: {}", e))?;
             let schedule = db_lock
                 .get_schedule(schedule_id)
                 .map_err(|e| format!("Failed to get schedule: {}", e))?;
@@ -165,7 +174,9 @@ async fn scheduled_run(
             .and_then(|v| v.into_iter().next());
 
         let db_state = app.state::<Arc<Mutex<Database>>>();
-        let db_lock = db_state.lock().map_err(|e| format!("DB lock error: {}", e))?;
+        let db_lock = db_state
+            .lock()
+            .map_err(|e| format!("DB lock error: {}", e))?;
         db_lock
             .update_schedule_last_run(schedule_id, &now, next_runs.as_deref())
             .map_err(|e| format!("Failed to update schedule: {}", e))?;

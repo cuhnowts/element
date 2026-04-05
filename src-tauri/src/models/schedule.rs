@@ -120,10 +120,8 @@ impl Database {
     }
 
     pub fn delete_schedule(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.conn().execute(
-            "DELETE FROM schedules WHERE id = ?1",
-            rusqlite::params![id],
-        )?;
+        self.conn()
+            .execute("DELETE FROM schedules WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 
@@ -198,9 +196,7 @@ mod tests {
         let db = setup_test_db();
         let workflow_id = create_test_workflow(&db);
 
-        let schedule = db
-            .create_schedule(&workflow_id, "0 9 * * *")
-            .unwrap();
+        let schedule = db.create_schedule(&workflow_id, "0 9 * * *").unwrap();
 
         assert_eq!(schedule.workflow_id, workflow_id);
         assert_eq!(schedule.cron_expression, "0 9 * * *");
@@ -218,9 +214,7 @@ mod tests {
         let db = setup_test_db();
         let workflow_id = create_test_workflow(&db);
 
-        let schedule = db
-            .create_schedule(&workflow_id, "0 9 * * *")
-            .unwrap();
+        let schedule = db.create_schedule(&workflow_id, "0 9 * * *").unwrap();
         assert!(schedule.is_active);
 
         let toggled = db.toggle_schedule(&schedule.id, false).unwrap();

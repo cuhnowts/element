@@ -49,7 +49,9 @@ pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
     let criterion_plain_re = Regex::new(r"^\s+\d+\.\s+(.+)$").unwrap();
     let backlog_re = Regex::new(r"^## Backlog|^### Phase 999").unwrap();
     // Progress table row: | N. Name | vX.Y | M/N | Complete | date |
-    let progress_re = Regex::new(r"^\|\s*(\d+(?:\.\d+)?)\.\s*.+?\|\s*v[\d.]+\s*\|\s*\d+/\d+\s*\|\s*(\w+)").unwrap();
+    let progress_re =
+        Regex::new(r"^\|\s*(\d+(?:\.\d+)?)\.\s*.+?\|\s*v[\d.]+\s*\|\s*\d+/\d+\s*\|\s*(\w+)")
+            .unwrap();
 
     // First pass: extract completion status from progress table
     let mut completed_phases: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -113,7 +115,10 @@ pub fn parse_roadmap(content: &str) -> Result<ParseResult, String> {
                 let title = caps[1].trim().to_string();
                 if let Some(ref mut phase) = current_phase {
                     // If the phase itself is complete, mark all tasks complete
-                    phase.tasks.push(ParsedTask { title, is_complete: phase.is_complete });
+                    phase.tasks.push(ParsedTask {
+                        title,
+                        is_complete: phase.is_complete,
+                    });
                 }
             } else if !line.trim().is_empty() && !line.starts_with("  ") {
                 in_success_criteria = false;
@@ -372,7 +377,10 @@ Element is a desktop task orchestration platform.
 "#;
         let result = super::parse_roadmap(content).unwrap();
         assert_eq!(result.phases.len(), 2);
-        assert_eq!(result.phases[0].name, "Phase 12: CLI Settings and Schema Foundation");
+        assert_eq!(
+            result.phases[0].name,
+            "Phase 12: CLI Settings and Schema Foundation"
+        );
         assert_eq!(result.phases[0].tasks.len(), 3);
         assert!(result.phases[0].tasks[0].is_complete);
         assert!(result.phases[0].tasks[1].is_complete);

@@ -59,8 +59,8 @@ pub struct ScheduleBlock {
 pub struct CalendarEvent {
     pub id: String,
     pub title: String,
-    pub start_time: String,  // HH:mm format
-    pub end_time: String,    // HH:mm format
+    pub start_time: String, // HH:mm format
+    pub end_time: String,   // HH:mm format
     pub account_color: Option<String>,
 }
 

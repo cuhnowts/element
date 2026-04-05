@@ -3,9 +3,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::credentials::CredentialManager;
 use crate::db::connection::Database;
-use crate::plugins::core::calendar::{
-    self, CalendarAccount, CalendarError, CalendarEvent,
-};
+use crate::plugins::core::calendar::{self, CalendarAccount, CalendarError, CalendarEvent};
 
 /// Resolve Google client ID: app setting > compile-time env > placeholder.
 fn resolve_google_client_id(db: &Database) -> String {
@@ -28,18 +26,14 @@ fn resolve_microsoft_client_id(db: &Database) -> String {
 /// Per-account sync helper -- reusable by sync_all_if_stale and post-connect triggers.
 /// Uses AppHandle to resolve state internally, avoiding Send issues across await points.
 /// Returns the number of events synced on success.
-pub async fn sync_calendar_for_account(
-    app: &AppHandle,
-    account_id: &str,
-) -> Result<usize, String> {
+pub async fn sync_calendar_for_account(app: &AppHandle, account_id: &str) -> Result<usize, String> {
     use tauri::Manager;
 
     let db_arc = app.state::<Arc<Mutex<Database>>>().inner().clone();
 
     let account = {
         let db = db_arc.lock().map_err(|e| e.to_string())?;
-        let accounts =
-            calendar::list_calendar_accounts(db.conn()).map_err(|e| e.to_string())?;
+        let accounts = calendar::list_calendar_accounts(db.conn()).map_err(|e| e.to_string())?;
         accounts
             .into_iter()
             .find(|a| a.id == account_id)
@@ -62,7 +56,9 @@ pub async fn sync_calendar_for_account(
 
     // Token refresh with TokenRevoked detection (D-01)
     let refresh_result = match account.provider.as_str() {
-        "google" => calendar::refresh_google_token_with_id(&client, &refresh_token, &google_cid).await,
+        "google" => {
+            calendar::refresh_google_token_with_id(&client, &refresh_token, &google_cid).await
+        }
         "outlook" => calendar::refresh_outlook_token(&client, &refresh_token).await,
         other => return Err(format!("Unknown provider: {}", other)),
     };
@@ -71,11 +67,13 @@ pub async fn sync_calendar_for_account(
         Ok(r) => r,
         Err(CalendarError::TokenRevoked(msg)) => {
             let db = db_arc.lock().map_err(|e| e.to_string())?;
-            calendar::disable_calendar_account(db.conn(), account_id)
-                .map_err(|e| e.to_string())?;
+            calendar::disable_calendar_account(db.conn(), account_id).map_err(|e| e.to_string())?;
             drop(db);
             let _ = app.emit("calendar-account-disabled", account_id);
-            return Err(format!("Calendar account disabled -- token revoked: {}", msg));
+            return Err(format!(
+                "Calendar account disabled -- token revoked: {}",
+                msg
+            ));
         }
         Err(e) => return Err(e.to_string()),
     };
@@ -90,19 +88,19 @@ pub async fn sync_calendar_for_account(
 
     // Sync events
     let sync_result = match account.provider.as_str() {
-        "google" => calendar::sync_google_calendar(
-            &client,
-            &access_token,
-            "primary",
-            account.sync_token.as_deref(),
-        )
-        .await,
-        "outlook" => calendar::sync_outlook_calendar(
-            &client,
-            &access_token,
-            account.sync_token.as_deref(),
-        )
-        .await,
+        "google" => {
+            calendar::sync_google_calendar(
+                &client,
+                &access_token,
+                "primary",
+                account.sync_token.as_deref(),
+            )
+            .await
+        }
+        "outlook" => {
+            calendar::sync_outlook_calendar(&client, &access_token, account.sync_token.as_deref())
+                .await
+        }
         _ => unreachable!(),
     };
 
@@ -139,9 +137,7 @@ pub async fn sync_calendar_for_account(
                 "google" => {
                     calendar::sync_google_calendar(&client, &access_token, "primary", None).await
                 }
-                "outlook" => {
-                    calendar::sync_outlook_calendar(&client, &access_token, None).await
-                }
+                "outlook" => calendar::sync_outlook_calendar(&client, &access_token, None).await,
                 _ => unreachable!(),
             };
             match retry_result {
@@ -156,7 +152,8 @@ pub async fn sync_calendar_for_account(
                         let ids: Vec<String> = cancelled.iter().map(|e| e.id.clone()).collect();
                         let _ = calendar::delete_events_by_ids(db.conn(), &ids, account_id);
                     }
-                    let count = calendar::save_events(db.conn(), &active).map_err(|e| e.to_string())?;
+                    let count =
+                        calendar::save_events(db.conn(), &active).map_err(|e| e.to_string())?;
                     let now = chrono::Utc::now().to_rfc3339();
                     calendar::update_sync_token(
                         db.conn(),
@@ -238,13 +235,10 @@ pub async fn connect_google_calendar(
     open::that(&auth_url).map_err(|e| format!("Failed to open browser: {}", e))?;
 
     // Wait for callback with auth code (or timeout)
-    let callback_url = tokio::time::timeout(
-        std::time::Duration::from_secs(300),
-        rx,
-    )
-    .await
-    .map_err(|_| "OAuth flow timed out after 5 minutes".to_string())?
-    .map_err(|_| "OAuth callback channel closed".to_string())?;
+    let callback_url = tokio::time::timeout(std::time::Duration::from_secs(300), rx)
+        .await
+        .map_err(|_| "OAuth flow timed out after 5 minutes".to_string())?
+        .map_err(|_| "OAuth callback channel closed".to_string())?;
 
     // Extract the authorization code from the callback URL
     let parsed = url::Url::parse(&callback_url)
@@ -274,7 +268,10 @@ pub async fn connect_google_calendar(
             ("code", &auth_code),
             ("code_verifier", &code_verifier),
             ("grant_type", "authorization_code"),
-            ("redirect_uri", &format!("http://localhost:{}/callback", port)),
+            (
+                "redirect_uri",
+                &format!("http://localhost:{}/callback", port),
+            ),
         ])
         .send()
         .await
@@ -289,7 +286,10 @@ pub async fn connect_google_calendar(
         .map_err(|e| format!("Token parse error: {} — raw: {}", e, token_text))?;
 
     if let Some(err) = token_json.get("error").and_then(|v| v.as_str()) {
-        let desc = token_json.get("error_description").and_then(|v| v.as_str()).unwrap_or("");
+        let desc = token_json
+            .get("error_description")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         return Err(format!("Google OAuth error: {} — {}", err, desc));
     }
 
@@ -371,7 +371,10 @@ pub async fn connect_google_calendar(
         let email = account.email.clone();
         tauri::async_runtime::spawn(async move {
             if let Err(e) = sync_calendar_for_account(&app_clone, &account_id).await {
-                eprintln!("Post-connect sync failed for Google account {}: {}", email, e);
+                eprintln!(
+                    "Post-connect sync failed for Google account {}: {}",
+                    email, e
+                );
                 // Non-fatal -- account is connected, sync will happen on next interval
             }
         });
@@ -432,13 +435,10 @@ pub async fn connect_outlook_calendar(
     open::that(&auth_url).map_err(|e| format!("Failed to open browser: {}", e))?;
 
     // Wait for callback
-    let callback_url = tokio::time::timeout(
-        std::time::Duration::from_secs(300),
-        rx,
-    )
-    .await
-    .map_err(|_| "OAuth flow timed out after 5 minutes".to_string())?
-    .map_err(|_| "OAuth callback channel closed".to_string())?;
+    let callback_url = tokio::time::timeout(std::time::Duration::from_secs(300), rx)
+        .await
+        .map_err(|_| "OAuth flow timed out after 5 minutes".to_string())?
+        .map_err(|_| "OAuth callback channel closed".to_string())?;
 
     let parsed = url::Url::parse(&callback_url)
         .map_err(|e| format!("Failed to parse callback URL: {}", e))?;
@@ -457,8 +457,14 @@ pub async fn connect_outlook_calendar(
             ("code", &auth_code),
             ("code_verifier", &code_verifier),
             ("grant_type", "authorization_code"),
-            ("redirect_uri", &format!("http://localhost:{}/callback", port)),
-            ("scope", "https://graph.microsoft.com/Calendars.Read offline_access"),
+            (
+                "redirect_uri",
+                &format!("http://localhost:{}/callback", port),
+            ),
+            (
+                "scope",
+                "https://graph.microsoft.com/Calendars.Read offline_access",
+            ),
         ])
         .send()
         .await
@@ -546,7 +552,10 @@ pub async fn connect_outlook_calendar(
         let email = account.email.clone();
         tauri::async_runtime::spawn(async move {
             if let Err(e) = sync_calendar_for_account(&app_clone, &account_id).await {
-                eprintln!("Post-connect sync failed for Outlook account {}: {}", email, e);
+                eprintln!(
+                    "Post-connect sync failed for Outlook account {}: {}",
+                    email, e
+                );
                 // Non-fatal -- account is connected, sync will happen on next interval
             }
         });
@@ -563,7 +572,9 @@ pub async fn sync_calendar(
     account_id: String,
 ) -> Result<(), String> {
     // Delegate to shared helper that handles runtime client IDs
-    sync_calendar_for_account(&app, &account_id).await.map(|_| ())
+    sync_calendar_for_account(&app, &account_id)
+        .await
+        .map(|_| ())
 }
 
 #[tauri::command]
@@ -604,7 +615,10 @@ pub async fn sync_all_calendars(
                     let _ = calendar::disable_calendar_account(db.conn(), &account.id);
                 }
                 let _ = app.emit("calendar-account-disabled", &account.id);
-                eprintln!("Token revoked for {}: {} -- account disabled", account.email, msg);
+                eprintln!(
+                    "Token revoked for {}: {} -- account disabled",
+                    account.email, msg
+                );
                 continue;
             }
             Err(e) => {
@@ -679,8 +693,7 @@ pub async fn sync_all_calendars(
         }
     }
 
-    app.emit("calendar-synced", ())
-        .map_err(|e| e.to_string())?;
+    app.emit("calendar-synced", ()).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -694,8 +707,7 @@ pub async fn disconnect_calendar(
 ) -> Result<(), String> {
     let credential_id = {
         let db = state.lock().map_err(|e| e.to_string())?;
-        let accounts =
-            calendar::list_calendar_accounts(db.conn()).map_err(|e| e.to_string())?;
+        let accounts = calendar::list_calendar_accounts(db.conn()).map_err(|e| e.to_string())?;
         accounts
             .iter()
             .find(|a| a.id == account_id)

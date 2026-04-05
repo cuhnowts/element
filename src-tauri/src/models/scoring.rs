@@ -222,9 +222,9 @@ fn compute_scores_for_date(db: &Database, today: NaiveDate) -> Result<ScoringRes
 fn compute_project_tags(tasks: &[TaskRow], today: NaiveDate) -> Vec<ProjectTag> {
     let mut tags = Vec::new();
 
-    let has_overdue = tasks.iter().any(|t| {
-        t.due_date.map(|d| d < today).unwrap_or(false) && t.status != "complete"
-    });
+    let has_overdue = tasks
+        .iter()
+        .any(|t| t.due_date.map(|d| d < today).unwrap_or(false) && t.status != "complete");
     let has_approaching = tasks.iter().any(|t| {
         t.due_date
             .map(|d| {

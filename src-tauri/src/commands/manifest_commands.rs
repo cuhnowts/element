@@ -161,7 +161,11 @@ pub async fn generate_context_summary(
             format!(
                 "{} task{} due",
                 scoring.total_tasks_due,
-                if scoring.total_tasks_due == 1 { "" } else { "s" }
+                if scoring.total_tasks_due == 1 {
+                    ""
+                } else {
+                    "s"
+                }
             )
         } else {
             "nothing due".to_string()

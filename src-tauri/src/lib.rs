@@ -1,9 +1,9 @@
+use std::sync::{Arc, Mutex};
 use tauri::{
     menu::{Menu, MenuItem, SubmenuBuilder},
     tray::TrayIconBuilder,
     Emitter, Listener, Manager,
 };
-use std::sync::{Arc, Mutex};
 use tokio_cron_scheduler::JobScheduler;
 
 mod ai;
@@ -11,35 +11,35 @@ mod commands;
 mod credentials;
 mod db;
 mod engine;
+mod heartbeat;
 mod models;
 mod plugins;
 mod scheduling;
-mod heartbeat;
 #[cfg(test)]
 mod test_fixtures;
 
-use db::connection::Database;
 use commands::ai_commands::*;
 use commands::calendar_commands::*;
 use commands::cli_commands::*;
 use commands::credential_commands::*;
 use commands::execution_commands::*;
+use commands::file_explorer_commands::*;
+use commands::heartbeat_commands::*;
+use commands::hub_chat_commands::*;
+use commands::manifest_commands::*;
+use commands::notification_commands::*;
+use commands::onboarding_commands::*;
 use commands::phase_commands::*;
+use commands::planning_sync_commands::*;
 use commands::plugin_commands::*;
 use commands::project_commands::*;
 use commands::schedule_commands::*;
 use commands::scheduling_commands::*;
+use commands::shell_commands::*;
 use commands::task_commands::*;
 use commands::theme_commands::*;
-use commands::file_explorer_commands::*;
-use commands::onboarding_commands::*;
-use commands::planning_sync_commands::*;
 use commands::workflow_commands::*;
-use commands::manifest_commands::*;
-use commands::notification_commands::*;
-use commands::hub_chat_commands::*;
-use commands::heartbeat_commands::*;
-use commands::shell_commands::*;
+use db::connection::Database;
 
 pub fn run() {
     tauri::Builder::default()
@@ -51,7 +51,10 @@ pub fn run() {
             app.manage(db_arc.clone());
 
             // Initialize plugin host
-            let app_data_dir = app.handle().path().app_data_dir()
+            let app_data_dir = app
+                .handle()
+                .path()
+                .app_data_dir()
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
             let plugins_dir = app_data_dir.join("plugins");
             std::fs::create_dir_all(&plugins_dir)?;
@@ -74,9 +77,9 @@ pub fn run() {
             app.manage(ai::gateway::AiGateway::new());
 
             // Initialize hub chat cancellation flag
-            app.manage(commands::hub_chat_commands::HubChatCancelFlag(
-                Arc::new(std::sync::atomic::AtomicBool::new(false))
-            ));
+            app.manage(commands::hub_chat_commands::HubChatCancelFlag(Arc::new(
+                std::sync::atomic::AtomicBool::new(false),
+            )));
 
             // Initialize manifest state (context manifest for AI briefing)
             app.manage(models::manifest::ManifestState {
@@ -90,7 +93,8 @@ pub fn run() {
             });
 
             // Spawn debounced manifest rebuilder and manage the trigger
-            let rebuild_tx = commands::manifest_commands::spawn_manifest_rebuilder(app.handle().clone());
+            let rebuild_tx =
+                commands::manifest_commands::spawn_manifest_rebuilder(app.handle().clone());
             app.manage(models::manifest::ManifestRebuildTrigger(rebuild_tx));
 
             // Initialize file watcher state
@@ -121,9 +125,15 @@ pub fn run() {
 
             // Backend event bus listener for notification:create (Phase 21 agent integration point)
             let notif_app = app.handle().clone();
-            let notif_db = app.state::<std::sync::Arc<std::sync::Mutex<Database>>>().inner().clone();
+            let notif_db = app
+                .state::<std::sync::Arc<std::sync::Mutex<Database>>>()
+                .inner()
+                .clone();
             app.listen("notification:create", move |event: tauri::Event| {
-                if let Ok(input) = serde_json::from_str::<models::notification::CreateNotificationInput>(event.payload()) {
+                if let Ok(input) = serde_json::from_str::<
+                    models::notification::CreateNotificationInput,
+                >(event.payload())
+                {
                     let title = input.title.clone();
                     let body = input.body.clone();
                     let priority = input.priority.clone();
@@ -132,7 +142,12 @@ pub fn run() {
                             let _ = db.prune_notifications(100);
                             if priority == "critical" {
                                 use tauri_plugin_notification::NotificationExt;
-                                let _ = notif_app.notification().builder().title(&title).body(&body).show();
+                                let _ = notif_app
+                                    .notification()
+                                    .builder()
+                                    .title(&title)
+                                    .body(&body)
+                                    .show();
                             }
                             let _ = notif_app.emit("notification:created", &notification);
                         }
@@ -187,16 +202,14 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&app_menu, &file_menu, &edit_menu])?;
             app.set_menu(menu)?;
 
-            app.on_menu_event(move |app_handle, event| {
-                match event.id().0.as_str() {
-                    "new-project" => {
-                        let _ = app_handle.emit("menu-new-project", ());
-                    }
-                    "new-task" => {
-                        let _ = app_handle.emit("menu-new-task", ());
-                    }
-                    _ => {}
+            app.on_menu_event(move |app_handle, event| match event.id().0.as_str() {
+                "new-project" => {
+                    let _ = app_handle.emit("menu-new-project", ());
                 }
+                "new-task" => {
+                    let _ = app_handle.emit("menu-new-task", ());
+                }
+                _ => {}
             });
 
             // Start background calendar sync (every 5 minutes)

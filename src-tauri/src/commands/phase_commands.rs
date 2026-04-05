@@ -113,7 +113,6 @@ pub async fn set_task_phase(
     let task = db
         .set_task_phase(&task_id, phase_id.as_deref())
         .map_err(|e| e.to_string())?;
-    app.emit("task-updated", &task)
-        .map_err(|e| e.to_string())?;
+    app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     Ok(task)
 }

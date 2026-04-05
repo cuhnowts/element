@@ -106,7 +106,10 @@ pub fn write_agent_file(
 #[tauri::command]
 pub fn resolve_mcp_server_path(app: AppHandle) -> Result<String, String> {
     // Try Tauri resource resolution first (production builds)
-    if let Ok(resource_path) = app.path().resolve("mcp-server/dist/index.js", tauri::path::BaseDirectory::Resource) {
+    if let Ok(resource_path) = app.path().resolve(
+        "mcp-server/dist/index.js",
+        tauri::path::BaseDirectory::Resource,
+    ) {
         if resource_path.exists() {
             return resource_path
                 .to_str()

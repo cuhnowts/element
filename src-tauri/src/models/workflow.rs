@@ -192,10 +192,8 @@ impl Database {
     }
 
     pub fn delete_workflow_db(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.conn().execute(
-            "DELETE FROM workflows WHERE id = ?1",
-            rusqlite::params![id],
-        )?;
+        self.conn()
+            .execute("DELETE FROM workflows WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 

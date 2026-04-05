@@ -139,10 +139,7 @@ impl AiProvider for OpenAiProvider {
 
         Ok(CompletionResponse {
             content,
-            model: json["model"]
-                .as_str()
-                .unwrap_or(&self.model)
-                .to_string(),
+            model: json["model"].as_str().unwrap_or(&self.model).to_string(),
             usage: TokenUsage {
                 input_tokens,
                 output_tokens,
@@ -236,10 +233,8 @@ impl AiProvider for OpenAiProvider {
                                 let _ = event_sender.send(tool_event.to_string()).await;
                             }
                             tool_call_id = id.to_string();
-                            tool_call_name = tc["function"]["name"]
-                                .as_str()
-                                .unwrap_or("")
-                                .to_string();
+                            tool_call_name =
+                                tc["function"]["name"].as_str().unwrap_or("").to_string();
                             tool_call_args.clear();
                             in_tool_call = true;
                         }

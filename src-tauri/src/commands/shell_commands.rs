@@ -160,9 +160,17 @@ mod tests {
     fn test_is_command_allowed_defaults() {
         let custom: Vec<String> = Vec::new();
         assert!(is_command_allowed("ls", DEFAULT_ALLOWLIST, &custom));
-        assert!(is_command_allowed("ls -la /tmp", DEFAULT_ALLOWLIST, &custom));
+        assert!(is_command_allowed(
+            "ls -la /tmp",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
         assert!(is_command_allowed("git status", DEFAULT_ALLOWLIST, &custom));
-        assert!(is_command_allowed("git log --oneline", DEFAULT_ALLOWLIST, &custom));
+        assert!(is_command_allowed(
+            "git log --oneline",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
         assert!(is_command_allowed("npm test", DEFAULT_ALLOWLIST, &custom));
     }
 
@@ -170,26 +178,62 @@ mod tests {
     fn test_is_command_allowed_rejects_unknown() {
         let custom: Vec<String> = Vec::new();
         assert!(!is_command_allowed("rm -rf /", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("curl evil.com", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("python script.py", DEFAULT_ALLOWLIST, &custom));
+        assert!(!is_command_allowed(
+            "curl evil.com",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "python script.py",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
     }
 
     #[test]
     fn test_is_command_allowed_rejects_metacharacters() {
         let custom: Vec<String> = Vec::new();
-        assert!(!is_command_allowed("ls; rm -rf /", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("ls | grep foo", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("echo $(whoami)", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("ls > /tmp/out", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("ls & echo hi", DEFAULT_ALLOWLIST, &custom));
+        assert!(!is_command_allowed(
+            "ls; rm -rf /",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "ls | grep foo",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "echo $(whoami)",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "ls > /tmp/out",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "ls & echo hi",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
     }
 
     #[test]
     fn test_is_command_allowed_custom() {
         let custom = vec!["docker".to_string(), "cargo build".to_string()];
         assert!(is_command_allowed("docker ps", DEFAULT_ALLOWLIST, &custom));
-        assert!(is_command_allowed("cargo build --release", DEFAULT_ALLOWLIST, &custom));
-        assert!(!is_command_allowed("cargo test", DEFAULT_ALLOWLIST, &custom));
+        assert!(is_command_allowed(
+            "cargo build --release",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
+        assert!(!is_command_allowed(
+            "cargo test",
+            DEFAULT_ALLOWLIST,
+            &custom
+        ));
     }
 
     #[test]

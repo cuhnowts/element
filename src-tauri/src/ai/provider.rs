@@ -1,5 +1,7 @@
+use crate::ai::types::{
+    AiError, ChatRequest, CompletionRequest, CompletionResponse, ModelInfo, ProviderType,
+};
 use async_trait::async_trait;
-use crate::ai::types::{ChatRequest, CompletionRequest, CompletionResponse, AiError, ModelInfo, ProviderType};
 
 #[async_trait]
 pub trait AiProvider: Send + Sync {

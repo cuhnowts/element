@@ -45,11 +45,8 @@ impl ShellPlugin {
             .spawn()
             .map_err(|e| PluginError::LoadError(format!("Failed to spawn process: {}", e)))?;
 
-        match tokio::time::timeout(
-            Duration::from_secs(timeout_secs),
-            child.wait_with_output(),
-        )
-        .await
+        match tokio::time::timeout(Duration::from_secs(timeout_secs), child.wait_with_output())
+            .await
         {
             Ok(Ok(output)) => {
                 let exit_code = output.status.code().unwrap_or(-1);

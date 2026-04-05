@@ -175,10 +175,7 @@ impl Database {
         steps.collect()
     }
 
-    pub fn get_execution_logs(
-        &self,
-        execution_id: &str,
-    ) -> Result<Vec<LogEntry>, rusqlite::Error> {
+    pub fn get_execution_logs(&self, execution_id: &str) -> Result<Vec<LogEntry>, rusqlite::Error> {
         let mut stmt = self.conn().prepare(
             "SELECT timestamp, level, message FROM execution_logs WHERE execution_id = ?1 ORDER BY id ASC",
         )?;
@@ -365,9 +362,7 @@ impl Database {
         results.collect()
     }
 
-    pub fn get_todays_tasks(
-        &self,
-    ) -> Result<Vec<crate::models::task::Task>, rusqlite::Error> {
+    pub fn get_todays_tasks(&self) -> Result<Vec<crate::models::task::Task>, rusqlite::Error> {
         let today = chrono::Local::now().format("%Y-%m-%d").to_string();
         let query = format!(
             "SELECT {} FROM tasks WHERE \
@@ -544,9 +539,7 @@ mod tests {
             })
             .unwrap();
 
-        let run = db
-            .create_workflow_run(&workflow.id, "manual")
-            .unwrap();
+        let run = db.create_workflow_run(&workflow.id, "manual").unwrap();
         assert_eq!(run.workflow_id, workflow.id);
         assert_eq!(run.trigger_type, "manual");
         assert_eq!(run.status, "running");
@@ -571,13 +564,9 @@ mod tests {
             })
             .unwrap();
 
-        let run = db
-            .create_workflow_run(&workflow.id, "manual")
-            .unwrap();
+        let run = db.create_workflow_run(&workflow.id, "manual").unwrap();
 
-        let s1 = db
-            .create_step_result(&run.id, 0, "Build", "shell")
-            .unwrap();
+        let s1 = db.create_step_result(&run.id, 0, "Build", "shell").unwrap();
         let s2 = db
             .create_step_result(&run.id, 1, "Deploy", "shell")
             .unwrap();
@@ -699,10 +688,22 @@ mod tests {
         let todays = db.get_todays_tasks().unwrap();
         let titles: Vec<&str> = todays.iter().map(|t| t.title.as_str()).collect();
 
-        assert!(titles.contains(&"Today Scheduled"), "Should include today's scheduled task");
-        assert!(titles.contains(&"Overdue Task"), "Should include overdue task");
-        assert!(titles.contains(&"Unscheduled Task"), "Should include unscheduled incomplete task");
-        assert!(!titles.contains(&"Tomorrow Task"), "Should NOT include tomorrow's task");
+        assert!(
+            titles.contains(&"Today Scheduled"),
+            "Should include today's scheduled task"
+        );
+        assert!(
+            titles.contains(&"Overdue Task"),
+            "Should include overdue task"
+        );
+        assert!(
+            titles.contains(&"Unscheduled Task"),
+            "Should include unscheduled incomplete task"
+        );
+        assert!(
+            !titles.contains(&"Tomorrow Task"),
+            "Should NOT include tomorrow's task"
+        );
         assert_eq!(todays.len(), 3);
 
         // Verify overdue tasks come first (sorted by CASE WHEN due_date < today)

@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use crate::ai::provider::AiProvider;
 use crate::ai::types::{
-    AiError, ChatRequest, CompletionRequest, CompletionResponse, ModelInfo, ProviderType, TokenUsage,
+    AiError, ChatRequest, CompletionRequest, CompletionResponse, ModelInfo, ProviderType,
+    TokenUsage,
 };
 
 pub struct OllamaProvider {
@@ -73,10 +74,7 @@ impl AiProvider for OllamaProvider {
 
         Ok(CompletionResponse {
             content,
-            model: json["model"]
-                .as_str()
-                .unwrap_or(&self.model)
-                .to_string(),
+            model: json["model"].as_str().unwrap_or(&self.model).to_string(),
             usage: TokenUsage {
                 input_tokens,
                 output_tokens,
@@ -161,9 +159,8 @@ impl AiProvider for OllamaProvider {
         request: ChatRequest,
         event_sender: tokio::sync::mpsc::Sender<String>,
     ) -> Result<CompletionResponse, AiError> {
-        let mut messages: Vec<serde_json::Value> = vec![
-            json!({"role": "system", "content": request.system_prompt})
-        ];
+        let mut messages: Vec<serde_json::Value> =
+            vec![json!({"role": "system", "content": request.system_prompt})];
         for m in &request.messages {
             messages.push(json!({"role": &m.role, "content": &m.content}));
         }

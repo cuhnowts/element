@@ -1,7 +1,7 @@
-use chrono::NaiveDate;
-use crate::scheduling::types::{ScheduleBlock, BlockType, TaskWithPriority};
-use crate::scheduling::time_blocks::OpenBlock;
 use crate::models::task::TaskPriority;
+use crate::scheduling::time_blocks::OpenBlock;
+use crate::scheduling::types::{BlockType, ScheduleBlock, TaskWithPriority};
+use chrono::NaiveDate;
 
 pub fn score_task(task: &TaskWithPriority, today: NaiveDate) -> f64 {
     let priority_weight = match task.priority {
@@ -40,17 +40,13 @@ pub fn assign_tasks_to_blocks(
     }
 
     // Score and sort tasks descending
-    let mut scored: Vec<(&TaskWithPriority, f64)> = tasks
-        .iter()
-        .map(|t| (t, score_task(t, today)))
-        .collect();
+    let mut scored: Vec<(&TaskWithPriority, f64)> =
+        tasks.iter().map(|t| (t, score_task(t, today))).collect();
     scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
     // Track remaining capacity per block: (start_cursor, end, original_index)
-    let mut block_capacities: Vec<(chrono::NaiveTime, chrono::NaiveTime)> = open_blocks
-        .iter()
-        .map(|b| (b.start, b.end))
-        .collect();
+    let mut block_capacities: Vec<(chrono::NaiveTime, chrono::NaiveTime)> =
+        open_blocks.iter().map(|b| (b.start, b.end)).collect();
 
     let mut result: Vec<ScheduleBlock> = Vec::new();
 
@@ -101,7 +97,13 @@ mod tests {
     use super::*;
     use chrono::NaiveTime;
 
-    fn make_task(id: &str, title: &str, priority: TaskPriority, due_date: Option<NaiveDate>, est_min: Option<i32>) -> TaskWithPriority {
+    fn make_task(
+        id: &str,
+        title: &str,
+        priority: TaskPriority,
+        due_date: Option<NaiveDate>,
+        est_min: Option<i32>,
+    ) -> TaskWithPriority {
         TaskWithPriority {
             id: id.to_string(),
             title: title.to_string(),
@@ -115,7 +117,11 @@ mod tests {
         let start = NaiveTime::from_hms_opt(start_h, start_m, 0).unwrap();
         let end = NaiveTime::from_hms_opt(end_h, end_m, 0).unwrap();
         let duration_minutes = (end - start).num_minutes() as i32;
-        OpenBlock { start, end, duration_minutes }
+        OpenBlock {
+            start,
+            end,
+            duration_minutes,
+        }
     }
 
     fn today() -> NaiveDate {
@@ -149,7 +155,13 @@ mod tests {
 
     #[test]
     fn score_overdue_adds_50() {
-        let task = make_task("1", "T", TaskPriority::Medium, Some(NaiveDate::from_ymd_opt(2026, 3, 17).unwrap()), None);
+        let task = make_task(
+            "1",
+            "T",
+            TaskPriority::Medium,
+            Some(NaiveDate::from_ymd_opt(2026, 3, 17).unwrap()),
+            None,
+        );
         assert_eq!(score_task(&task, today()), 100.0); // 50 + 50
     }
 
@@ -161,13 +173,25 @@ mod tests {
 
     #[test]
     fn score_due_within_3_days_adds_25() {
-        let task = make_task("1", "T", TaskPriority::Medium, Some(NaiveDate::from_ymd_opt(2026, 3, 20).unwrap()), None);
+        let task = make_task(
+            "1",
+            "T",
+            TaskPriority::Medium,
+            Some(NaiveDate::from_ymd_opt(2026, 3, 20).unwrap()),
+            None,
+        );
         assert_eq!(score_task(&task, today()), 75.0); // 50 + 25
     }
 
     #[test]
     fn score_due_this_week_adds_10() {
-        let task = make_task("1", "T", TaskPriority::Medium, Some(NaiveDate::from_ymd_opt(2026, 3, 24).unwrap()), None);
+        let task = make_task(
+            "1",
+            "T",
+            TaskPriority::Medium,
+            Some(NaiveDate::from_ymd_opt(2026, 3, 24).unwrap()),
+            None,
+        );
         assert_eq!(score_task(&task, today()), 60.0); // 50 + 10
     }
 
@@ -196,7 +220,13 @@ mod tests {
     fn assign_splits_task_across_blocks() {
         // Two 60-minute blocks, one 90-minute task
         let blocks = vec![make_block(9, 0, 10, 0), make_block(11, 0, 12, 0)];
-        let tasks = vec![make_task("1", "Big Task", TaskPriority::High, None, Some(90))];
+        let tasks = vec![make_task(
+            "1",
+            "Big Task",
+            TaskPriority::High,
+            None,
+            Some(90),
+        )];
         let result = assign_tasks_to_blocks(&blocks, &tasks, "2026-03-18", today());
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].is_continuation, false);

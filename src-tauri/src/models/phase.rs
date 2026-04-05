@@ -94,10 +94,8 @@ impl Database {
     }
 
     pub fn delete_phase(&self, id: &str) -> Result<(), rusqlite::Error> {
-        self.conn().execute(
-            "DELETE FROM phases WHERE id = ?1",
-            rusqlite::params![id],
-        )?;
+        self.conn()
+            .execute("DELETE FROM phases WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 

@@ -55,9 +55,7 @@ pub async fn start_plan_watcher(
         move |events: Result<Vec<notify_debouncer_mini::DebouncedEvent>, notify::Error>| {
             if let Ok(events) = events {
                 for event in events {
-                    if event.path.file_name()
-                        == Some(std::ffi::OsStr::new("plan-output.json"))
-                    {
+                    if event.path.file_name() == Some(std::ffi::OsStr::new("plan-output.json")) {
                         if let Ok(content) = std::fs::read_to_string(&event.path) {
                             match crate::models::onboarding::parse_plan_output_file(&content) {
                                 Ok(plan) => {
@@ -87,9 +85,7 @@ pub async fn start_plan_watcher(
 }
 
 #[tauri::command]
-pub async fn stop_plan_watcher(
-    watcher_state: State<'_, PlanWatcherState>,
-) -> Result<(), String> {
+pub async fn stop_plan_watcher(watcher_state: State<'_, PlanWatcherState>) -> Result<(), String> {
     let mut state = watcher_state.0.lock().map_err(|e| e.to_string())?;
     *state = None; // Drop the debouncer, stops watching
     Ok(())
@@ -102,8 +98,8 @@ pub async fn parse_plan_output(
     let path = PathBuf::from(&project_dir)
         .join(".element")
         .join("plan-output.json");
-    let content = std::fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read plan output: {}", e))?;
+    let content =
+        std::fs::read_to_string(&path).map_err(|e| format!("Failed to read plan output: {}", e))?;
     crate::models::onboarding::parse_plan_output_file(&content)
 }
 
@@ -227,8 +223,7 @@ pub async fn generate_context_file(
     let tier = tier_override
         .or_else(|| project.planning_tier.clone())
         .unwrap_or_else(|| "quick".to_string());
-    let effective_description = description_override
-        .unwrap_or_else(|| project.description.clone());
+    let effective_description = description_override.unwrap_or_else(|| project.description.clone());
 
     let directory_path = project
         .directory_path
@@ -317,11 +312,13 @@ pub async fn generate_context_file(
         is_empty,
     };
 
-    let cli_tool = db.get_app_setting("cli_command")
+    let cli_tool = db
+        .get_app_setting("cli_command")
         .map_err(|e| format!("Failed to get CLI setting: {}", e))?
         .unwrap_or_else(|| "claude".to_string());
 
-    let content = crate::models::onboarding::generate_context_file_content(&context_data, &tier, &cli_tool);
+    let content =
+        crate::models::onboarding::generate_context_file_content(&context_data, &tier, &cli_tool);
 
     // Write to .element/context.md
     let element_dir = PathBuf::from(&directory_path).join(".element");
@@ -361,8 +358,8 @@ pub async fn validate_cli_tool(command: String) -> Result<bool, String> {
 
     match result {
         Ok(Ok(status)) => Ok(status.success()),
-        Ok(Err(_)) => Ok(false),  // Command not found or failed to spawn
-        Err(_) => Ok(false),       // Timeout
+        Ok(Err(_)) => Ok(false), // Command not found or failed to spawn
+        Err(_) => Ok(false),     // Timeout
     }
 }
 

@@ -7,7 +7,8 @@ const SERVICE_NAME: &str = "com.element.ai-providers";
 pub fn store_api_key(credential_key: &str, api_key: &str) -> Result<(), String> {
     let entry = Entry::new(SERVICE_NAME, credential_key)
         .map_err(|e| format!("Failed to create keychain entry: {}", e))?;
-    entry.set_password(api_key)
+    entry
+        .set_password(api_key)
         .map_err(|e| format!("Failed to store API key in keychain: {}", e))
 }
 

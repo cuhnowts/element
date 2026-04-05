@@ -146,9 +146,7 @@ mod tests {
             .unwrap();
 
         match result {
-            FsStepOutput::Written {
-                bytes_written, ..
-            } => assert_eq!(bytes_written, 15),
+            FsStepOutput::Written { bytes_written, .. } => assert_eq!(bytes_written, 15),
             _ => panic!("Expected Written output"),
         }
 

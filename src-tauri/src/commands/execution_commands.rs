@@ -32,18 +32,13 @@ pub async fn get_task_detail(
 ) -> Result<TaskDetailResponse, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let task = db.get_task(&task_id).map_err(|e| e.to_string())?;
-    let tags = db
-        .get_tags_for_task(&task_id)
-        .map_err(|e| e.to_string())?;
+    let tags = db.get_tags_for_task(&task_id).map_err(|e| e.to_string())?;
 
     // Get the latest execution record's steps if any
     let history = db
         .get_execution_history(&task_id)
         .map_err(|e| e.to_string())?;
-    let steps = history
-        .first()
-        .map(|r| r.steps.clone())
-        .unwrap_or_default();
+    let steps = history.first().map(|r| r.steps.clone()).unwrap_or_default();
 
     Ok(TaskDetailResponse {
         task,

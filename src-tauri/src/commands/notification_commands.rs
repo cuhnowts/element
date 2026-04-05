@@ -28,7 +28,12 @@ pub async fn create_notification(
 
     if priority == "critical" {
         use tauri_plugin_notification::NotificationExt;
-        let _ = app.notification().builder().title(&title).body(&body).show();
+        let _ = app
+            .notification()
+            .builder()
+            .title(&title)
+            .body(&body)
+            .show();
     }
 
     app.emit("notification:created", &notification)
@@ -77,8 +82,7 @@ pub async fn clear_all_notifications(
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-    db.clear_all_notifications()
-        .map_err(|e| e.to_string())?;
+    db.clear_all_notifications().map_err(|e| e.to_string())?;
     app.emit("notifications:cleared", ())
         .map_err(|e| e.to_string())?;
     Ok(())

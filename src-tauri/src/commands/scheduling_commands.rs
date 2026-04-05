@@ -67,10 +67,7 @@ fn query_schedulable_tasks(db: &Database, date: &str) -> Result<Vec<TaskWithPrio
 ///
 /// This is the shared implementation used by both the Tauri command and the
 /// manifest builder (which has no async/Tauri context).
-pub fn generate_schedule_for_date(
-    db: &Database,
-    date: &str,
-) -> Result<Vec<ScheduleBlock>, String> {
+pub fn generate_schedule_for_date(db: &Database, date: &str) -> Result<Vec<ScheduleBlock>, String> {
     // 1. Get work hours (default to 09:00-17:00 Mon-Fri if not configured)
     let work_hours = read_work_hours_from_db(db)?.unwrap_or_else(default_work_hours);
 
@@ -109,7 +106,10 @@ pub fn generate_schedule_for_date(
                 })
                 .collect(),
             Err(e) => {
-                eprintln!("Warning: failed to load calendar events for {}: {}", date, e);
+                eprintln!(
+                    "Warning: failed to load calendar events for {}: {}",
+                    date, e
+                );
                 vec![] // Graceful fallback -- schedule without calendar awareness
             }
         }
@@ -146,7 +146,10 @@ fn read_work_hours_from_db(db: &Database) -> Result<Option<WorkHoursConfig>, Str
 
     stmt.query_row([], |row| {
         let work_days_str: String = row.get(2)?;
-        let work_days: Vec<String> = work_days_str.split(',').map(|s| s.trim().to_string()).collect();
+        let work_days: Vec<String> = work_days_str
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .collect();
         Ok(WorkHoursConfig {
             start_time: row.get(0)?,
             end_time: row.get(1)?,
@@ -247,7 +250,7 @@ pub async fn apply_schedule(
                 block.block_type.to_string(),
                 block.start_time,
                 block.end_time,
-                block.event_title,  // stored as source_event_id for meeting blocks
+                block.event_title, // stored as source_event_id for meeting blocks
                 now,
             ])
             .map_err(|e| e.to_string())?;
@@ -579,9 +582,18 @@ mod tests {
         };
 
         // Verify format is HH:MM
-        assert!(scheduler_event.start_time.len() == 5, "Start time should be HH:MM format");
-        assert!(scheduler_event.end_time.len() == 5, "End time should be HH:MM format");
-        assert!(scheduler_event.start_time.contains(':'), "Start time should contain :");
+        assert!(
+            scheduler_event.start_time.len() == 5,
+            "Start time should be HH:MM format"
+        );
+        assert!(
+            scheduler_event.end_time.len() == 5,
+            "End time should be HH:MM format"
+        );
+        assert!(
+            scheduler_event.start_time.contains(':'),
+            "Start time should contain :"
+        );
     }
 
     #[test]
@@ -633,6 +645,9 @@ mod tests {
             .filter(|e| e.status != "cancelled")
             .collect();
 
-        assert!(filtered.is_empty(), "Cancelled events should be filtered out");
+        assert!(
+            filtered.is_empty(),
+            "Cancelled events should be filtered out"
+        );
     }
 }

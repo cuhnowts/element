@@ -66,9 +66,7 @@ pub async fn test_provider_connection(
         gateway.test_connection(&db, &id)?
     };
 
-    let provider = gateway
-        .build_provider(&config)
-        .map_err(|e| e.to_string())?;
+    let provider = gateway.build_provider(&config).map_err(|e| e.to_string())?;
 
     provider.test_connection().await.map_err(|e| e.to_string())
 }
@@ -85,9 +83,7 @@ pub async fn list_provider_models(
         gateway.list_models_for_provider(&db, &id)?
     };
 
-    let provider = gateway
-        .build_provider(&config)
-        .map_err(|e| e.to_string())?;
+    let provider = gateway.build_provider(&config).map_err(|e| e.to_string())?;
 
     provider.list_models().await.map_err(|e| e.to_string())
 }
@@ -107,9 +103,7 @@ pub async fn ai_assist_task(
             .project_id
             .as_deref()
             .and_then(|pid| db.get_project(pid).map(|p| p.name).ok());
-        let config = gateway
-            .get_default_config(&db)
-            .map_err(|e| e.to_string())?;
+        let config = gateway.get_default_config(&db).map_err(|e| e.to_string())?;
         (task, project_name, config)
     };
 
@@ -144,8 +138,8 @@ pub async fn ai_assist_task(
 
     match result {
         Ok(response) => {
-            let scaffold = prompts::parse_scaffold_response(&response.content)
-                .map_err(|e| e.to_string())?;
+            let scaffold =
+                prompts::parse_scaffold_response(&response.content).map_err(|e| e.to_string())?;
             let _ = app.emit("ai-stream-complete", &scaffold);
             Ok(())
         }

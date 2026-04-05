@@ -29,9 +29,7 @@ impl AnthropicProvider {
         if let Some(content_arr) = json["content"].as_array() {
             for block in content_arr {
                 if block["type"].as_str() == Some("tool_use") {
-                    if let (Some(id), Some(name)) =
-                        (block["id"].as_str(), block["name"].as_str())
-                    {
+                    if let (Some(id), Some(name)) = (block["id"].as_str(), block["name"].as_str()) {
                         blocks.push(ToolUseBlock {
                             id: id.to_string(),
                             name: name.to_string(),
@@ -45,11 +43,7 @@ impl AnthropicProvider {
     }
 
     /// Build the request body, conditionally including tools and tool_results.
-    fn build_request_body(
-        &self,
-        request: &CompletionRequest,
-        stream: bool,
-    ) -> Value {
+    fn build_request_body(&self, request: &CompletionRequest, stream: bool) -> Value {
         let mut messages = Vec::new();
 
         // If tool_results are present, we need a multi-turn conversation:
@@ -160,10 +154,7 @@ impl AiProvider for AnthropicProvider {
 
         Ok(CompletionResponse {
             content,
-            model: json["model"]
-                .as_str()
-                .unwrap_or(&self.model)
-                .to_string(),
+            model: json["model"].as_str().unwrap_or(&self.model).to_string(),
             usage: TokenUsage {
                 input_tokens,
                 output_tokens,
@@ -241,9 +232,8 @@ impl AiProvider for AnthropicProvider {
                     "content_block_start" => {
                         let block_type = chunk["content_block"]["type"].as_str().unwrap_or("");
                         if block_type == "tool_use" {
-                            current_tool_id = chunk["content_block"]["id"]
-                                .as_str()
-                                .map(|s| s.to_string());
+                            current_tool_id =
+                                chunk["content_block"]["id"].as_str().map(|s| s.to_string());
                             current_tool_name = chunk["content_block"]["name"]
                                 .as_str()
                                 .map(|s| s.to_string());
@@ -269,8 +259,7 @@ impl AiProvider for AnthropicProvider {
                             (current_tool_id.take(), current_tool_name.take())
                         {
                             let input: Value =
-                                serde_json::from_str(&current_tool_input_json)
-                                    .unwrap_or(json!({}));
+                                serde_json::from_str(&current_tool_input_json).unwrap_or(json!({}));
                             current_tool_input_json.clear();
 
                             let block = ToolUseBlock {
@@ -287,15 +276,12 @@ impl AiProvider for AnthropicProvider {
                                 "name": name,
                                 "input": input,
                             });
-                            let _ = event_sender
-                                .send(tool_event.to_string())
-                                .await;
+                            let _ = event_sender.send(tool_event.to_string()).await;
                         }
                     }
                     "message_delta" => {
-                        output_tokens = chunk["usage"]["output_tokens"]
-                            .as_u64()
-                            .unwrap_or(0) as u32;
+                        output_tokens =
+                            chunk["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32;
                     }
                     _ => {}
                 }
@@ -411,12 +397,10 @@ impl AiProvider for AnthropicProvider {
                             .unwrap_or(0) as u32;
                     }
                     "content_block_start" => {
-                        let block_type =
-                            chunk["content_block"]["type"].as_str().unwrap_or("");
+                        let block_type = chunk["content_block"]["type"].as_str().unwrap_or("");
                         if block_type == "tool_use" {
-                            current_tool_id = chunk["content_block"]["id"]
-                                .as_str()
-                                .map(|s| s.to_string());
+                            current_tool_id =
+                                chunk["content_block"]["id"].as_str().map(|s| s.to_string());
                             current_tool_name = chunk["content_block"]["name"]
                                 .as_str()
                                 .map(|s| s.to_string());
@@ -431,9 +415,7 @@ impl AiProvider for AnthropicProvider {
                                 let _ = event_sender.send(text.to_string()).await;
                             }
                         } else if delta_type == "input_json_delta" {
-                            if let Some(partial) =
-                                chunk["delta"]["partial_json"].as_str()
-                            {
+                            if let Some(partial) = chunk["delta"]["partial_json"].as_str() {
                                 current_tool_input_json.push_str(partial);
                             }
                         }
@@ -443,8 +425,7 @@ impl AiProvider for AnthropicProvider {
                             (current_tool_id.take(), current_tool_name.take())
                         {
                             let input: Value =
-                                serde_json::from_str(&current_tool_input_json)
-                                    .unwrap_or(json!({}));
+                                serde_json::from_str(&current_tool_input_json).unwrap_or(json!({}));
                             current_tool_input_json.clear();
 
                             let block = ToolUseBlock {
@@ -460,15 +441,12 @@ impl AiProvider for AnthropicProvider {
                                 "name": name,
                                 "input": input,
                             });
-                            let _ = event_sender
-                                .send(tool_event.to_string())
-                                .await;
+                            let _ = event_sender.send(tool_event.to_string()).await;
                         }
                     }
                     "message_delta" => {
-                        output_tokens = chunk["usage"]["output_tokens"]
-                            .as_u64()
-                            .unwrap_or(0) as u32;
+                        output_tokens =
+                            chunk["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32;
                     }
                     _ => {}
                 }

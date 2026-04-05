@@ -137,12 +137,8 @@ impl PluginHost {
                     for event in &events {
                         // Find the plugin directory (first-level subdirectory)
                         if let Ok(relative) = event.path.strip_prefix(&plugins_dir) {
-                            if let Some(plugin_dir_name) =
-                                relative.components().next()
-                            {
-                                changed_dirs.insert(
-                                    plugins_dir.join(plugin_dir_name.as_os_str()),
-                                );
+                            if let Some(plugin_dir_name) = relative.components().next() {
+                                changed_dirs.insert(plugins_dir.join(plugin_dir_name.as_os_str()));
                             }
                         }
                     }
@@ -180,11 +176,7 @@ impl PluginHost {
                                     .map(|n| n.to_string_lossy().to_string())
                                     .unwrap_or_default();
                                 if let Ok(mut reg) = registry.write() {
-                                    reg.set_status(
-                                        &name,
-                                        PluginStatus::Error,
-                                        Some(e.to_string()),
-                                    );
+                                    reg.set_status(&name, PluginStatus::Error, Some(e.to_string()));
                                 }
                             }
                         }
@@ -195,10 +187,7 @@ impl PluginHost {
 
         debouncer
             .watcher()
-            .watch(
-                &self.plugins_dir,
-                notify::RecursiveMode::Recursive,
-            )?;
+            .watch(&self.plugins_dir, notify::RecursiveMode::Recursive)?;
 
         self.watcher = Some(debouncer);
         Ok(())

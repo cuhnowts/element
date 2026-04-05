@@ -81,10 +81,7 @@ pub async fn get_heartbeat_status(
     state: State<'_, HeartbeatState>,
 ) -> Result<serde_json::Value, String> {
     let running = state.running.load(Ordering::SeqCst);
-    let assessment = state
-        .latest_assessment
-        .lock()
-        .map_err(|e| e.to_string())?;
+    let assessment = state.latest_assessment.lock().map_err(|e| e.to_string())?;
 
     Ok(serde_json::json!({
         "running": running,

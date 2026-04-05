@@ -1,10 +1,10 @@
-pub mod types;
 pub mod risk;
 pub mod summary;
+pub mod types;
 
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -71,7 +71,8 @@ pub(crate) async fn run_heartbeat_tick(app_handle: &tauri::AppHandle) -> Result<
         (tasks, work_hours, events, today, max_due)
     }; // lock dropped
 
-    let daily_capacity = risk::calculate_daily_capacity(&work_hours, &events_by_date, today, max_due);
+    let daily_capacity =
+        risk::calculate_daily_capacity(&work_hours, &events_by_date, today, max_due);
     let risks = risk::assess_deadline_risks(&tasks, &daily_capacity, today);
 
     // If no risks, clear HeartbeatState and return
@@ -142,7 +143,9 @@ pub(crate) async fn run_heartbeat_tick(app_handle: &tauri::AppHandle) -> Result<
 // ---------------------------------------------------------------------------
 
 /// Query tasks with due dates, excluding backlog (999.x phases) and completed tasks.
-fn get_tasks_with_due_dates_excluding_backlog(db: &Database) -> Result<Vec<types::TaskWithDueDate>, String> {
+fn get_tasks_with_due_dates_excluding_backlog(
+    db: &Database,
+) -> Result<Vec<types::TaskWithDueDate>, String> {
     let conn = db.conn();
     let mut stmt = conn
         .prepare(
@@ -173,7 +176,8 @@ fn get_tasks_with_due_dates_excluding_backlog(db: &Database) -> Result<Vec<types
         })
         .map_err(|e| e.to_string())?;
 
-    rows.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
 }
 
 /// Read work hours configuration from app_settings.
@@ -210,12 +214,9 @@ fn get_calendar_events_for_range(
     let from_str = format!("{}T00:00:00Z", from.format("%Y-%m-%d"));
     let through_str = format!("{}T23:59:59Z", through.format("%Y-%m-%d"));
 
-    let db_events = crate::plugins::core::calendar::list_events_for_range(
-        db.conn(),
-        &from_str,
-        &through_str,
-    )
-    .map_err(|e| format!("{}", e))?;
+    let db_events =
+        crate::plugins::core::calendar::list_events_for_range(db.conn(), &from_str, &through_str)
+            .map_err(|e| format!("{}", e))?;
 
     let mut result: HashMap<NaiveDate, Vec<CalendarEvent>> = HashMap::new();
 
@@ -265,10 +266,15 @@ pub fn fingerprint_changed(stored: Option<&str>, current: &str) -> bool {
 }
 
 /// Update the stored risk fingerprint for deduplication.
-fn update_risk_fingerprint(db: &Database, risk: &DeadlineRisk, today: NaiveDate) -> Result<(), String> {
+fn update_risk_fingerprint(
+    db: &Database,
+    risk: &DeadlineRisk,
+    today: NaiveDate,
+) -> Result<(), String> {
     let key = format!("heartbeat_risk_{}", risk.task_id());
     let fingerprint = risk.risk_fingerprint(today);
-    db.set_app_setting(&key, &fingerprint).map_err(|e| e.to_string())
+    db.set_app_setting(&key, &fingerprint)
+        .map_err(|e| e.to_string())
 }
 
 /// Build a CreateNotificationInput from a risk (pure, testable without DB).
@@ -293,7 +299,10 @@ pub fn build_notification_input(risk: &DeadlineRisk, summary: &str) -> CreateNot
         priority: priority.to_string(),
         category: Some("deadline-risk".to_string()),
         project_id: risk.project_id().map(String::from),
-        action_url: Some(format!("hub://chat?context=risk&task_id={}", risk.task_id())),
+        action_url: Some(format!(
+            "hub://chat?context=risk&task_id={}",
+            risk.task_id()
+        )),
     }
 }
 
@@ -304,7 +313,9 @@ fn read_heartbeat_interval(app_handle: &tauri::AppHandle) -> Result<u64, String>
         None => return Ok(30),
     };
     let db = db_arc.lock().map_err(|e| e.to_string())?;
-    let val = db.get_app_setting("heartbeat_interval_minutes").map_err(|e| e.to_string())?;
+    let val = db
+        .get_app_setting("heartbeat_interval_minutes")
+        .map_err(|e| e.to_string())?;
     match val {
         Some(s) => s.parse::<u64>().map_err(|e| e.to_string()),
         None => Ok(30),
@@ -334,8 +345,8 @@ fn is_heartbeat_enabled(app_handle: &tauri::AppHandle) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
     use crate::heartbeat::types::{DeadlineRisk, TaskWithDueDate};
+    use chrono::NaiveDate;
 
     fn make_task(id: &str, title: &str, due: NaiveDate, est: Option<i32>) -> TaskWithDueDate {
         TaskWithDueDate {
@@ -351,19 +362,33 @@ mod tests {
 
     #[test]
     fn test_create_risk_notification_critical_priority() {
-        let task = make_task("t1", "Deploy fix", NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(), Some(60));
+        let task = make_task(
+            "t1",
+            "Deploy fix",
+            NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(),
+            Some(60),
+        );
         let risk = DeadlineRisk::Overdue { task };
         let input = build_notification_input(&risk, "Risk summary text");
 
         assert!(input.title.starts_with("Deadline risk:"));
         assert_eq!(input.priority, "critical");
         assert_eq!(input.category, Some("deadline-risk".to_string()));
-        assert!(input.action_url.as_ref().unwrap().contains("hub://chat?context=risk&task_id="));
+        assert!(input
+            .action_url
+            .as_ref()
+            .unwrap()
+            .contains("hub://chat?context=risk&task_id="));
     }
 
     #[test]
     fn test_create_risk_notification_warning_priority() {
-        let task = make_task("t2", "Write report", NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(), Some(240));
+        let task = make_task(
+            "t2",
+            "Write report",
+            NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(),
+            Some(240),
+        );
         let risk = DeadlineRisk::AtRisk {
             task,
             needed_minutes: 240,
@@ -377,7 +402,12 @@ mod tests {
 
     #[test]
     fn test_create_risk_notification_info_priority() {
-        let task = make_task("t3", "Review PR", NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), None);
+        let task = make_task(
+            "t3",
+            "Review PR",
+            NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(),
+            None,
+        );
         let risk = DeadlineRisk::NoEstimate {
             task,
             days_remaining: 7, // Info severity (>3 days)
@@ -389,7 +419,12 @@ mod tests {
 
     #[test]
     fn test_create_risk_notification_includes_suggested_fix() {
-        let task = make_task("t4", "Write report", NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(), Some(240));
+        let task = make_task(
+            "t4",
+            "Write report",
+            NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(),
+            Some(240),
+        );
         let risk = DeadlineRisk::AtRisk {
             task,
             needed_minutes: 240,

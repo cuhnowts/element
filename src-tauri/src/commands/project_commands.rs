@@ -75,8 +75,7 @@ pub async fn delete_project(
     project_id: String,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-    db.delete_project(&project_id)
-        .map_err(|e| e.to_string())?;
+    db.delete_project(&project_id).map_err(|e| e.to_string())?;
     app.emit("project-deleted", &project_id)
         .map_err(|e| e.to_string())?;
     Ok(())

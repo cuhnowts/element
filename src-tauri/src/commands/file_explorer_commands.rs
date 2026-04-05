@@ -103,10 +103,7 @@ pub fn list_directory_impl(dir_path: &str, show_hidden: bool) -> Result<Vec<File
             if entry.path() == root {
                 continue;
             }
-            let name = entry
-                .file_name()
-                .to_string_lossy()
-                .to_string();
+            let name = entry.file_name().to_string_lossy().to_string();
             // Skip hardcoded excludes
             if HARDCODED_EXCLUDES.contains(&name.as_str()) {
                 continue;
@@ -136,10 +133,7 @@ pub fn list_directory_impl(dir_path: &str, show_hidden: bool) -> Result<Vec<File
 
 /// List a single directory level, respecting .gitignore and hardcoded excludes.
 #[tauri::command]
-pub async fn list_directory(
-    dir_path: String,
-    show_hidden: bool,
-) -> Result<Vec<FileEntry>, String> {
+pub async fn list_directory(dir_path: String, show_hidden: bool) -> Result<Vec<FileEntry>, String> {
     tokio::task::spawn_blocking(move || list_directory_impl(&dir_path, show_hidden))
         .await
         .map_err(|e| format!("Task join error: {}", e))?
@@ -208,10 +202,7 @@ pub async fn start_file_watcher(
                 let changed_dirs: HashSet<String> = events
                     .iter()
                     .filter_map(|event| {
-                        event
-                            .path
-                            .parent()
-                            .map(|p| p.to_string_lossy().to_string())
+                        event.path.parent().map(|p| p.to_string_lossy().to_string())
                     })
                     .collect();
                 let changed_dirs_vec: Vec<String> = changed_dirs.into_iter().collect();
@@ -228,10 +219,7 @@ pub async fn start_file_watcher(
     if let Some(ref mut debouncer) = *guard {
         debouncer
             .watcher()
-            .watch(
-                Path::new(&dir_path),
-                notify::RecursiveMode::Recursive,
-            )
+            .watch(Path::new(&dir_path), notify::RecursiveMode::Recursive)
             .map_err(|e| format!("Failed to watch directory: {}", e))?;
     }
 
@@ -240,9 +228,7 @@ pub async fn start_file_watcher(
 
 /// Stop the file watcher, releasing all resources.
 #[tauri::command]
-pub async fn stop_file_watcher(
-    state: tauri::State<'_, FileWatcherState>,
-) -> Result<(), String> {
+pub async fn stop_file_watcher(state: tauri::State<'_, FileWatcherState>) -> Result<(), String> {
     let mut guard = state
         .watcher
         .lock()

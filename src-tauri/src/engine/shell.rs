@@ -28,7 +28,9 @@ pub async fn execute_shell(
         cmd.stdin(Stdio::piped());
     }
 
-    let mut child = cmd.spawn().map_err(|e| EngineError::SpawnFailed(e.to_string()))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| EngineError::SpawnFailed(e.to_string()))?;
 
     // Write stdin if provided
     if let Some(input) = stdin_input {

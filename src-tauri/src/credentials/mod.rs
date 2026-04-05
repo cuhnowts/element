@@ -179,7 +179,9 @@ mod tests {
     #[test]
     fn test_create_stores_metadata_and_secret() {
         let mgr = setup_test_credential_manager();
-        let cred = mgr.create("my-api-key", "api_key", "sk-123", "Test key").unwrap();
+        let cred = mgr
+            .create("my-api-key", "api_key", "sk-123", "Test key")
+            .unwrap();
 
         assert!(!cred.id.is_empty());
         assert_eq!(cred.name, "my-api-key");
@@ -230,7 +232,9 @@ mod tests {
     #[test]
     fn test_update_metadata_and_optionally_secret() {
         let mgr = setup_test_credential_manager();
-        let cred = mgr.create("original", "api_key", "old-secret", "old notes").unwrap();
+        let cred = mgr
+            .create("original", "api_key", "old-secret", "old notes")
+            .unwrap();
 
         // Update metadata only
         let updated = mgr
