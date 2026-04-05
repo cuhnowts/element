@@ -1,202 +1,211 @@
 # Pitfalls Research
 
-**Domain:** AI scheduling assistant + calendar sync + heartbeat for Tauri/React desktop app
-**Researched:** 2026-04-02
-**Confidence:** HIGH (verified against codebase + official API docs + community reports)
+**Domain:** UI restructuring of a complex React/Tauri desktop app (layout system overhaul, panel animations, drawer consolidation, component relocation)
+**Researched:** 2026-04-04
+**Confidence:** HIGH (based on direct codebase analysis + known project history of 3 Zustand crashes + user feedback)
 
 ## Critical Pitfalls
 
-### Pitfall 1: Google OAuth Refresh Tokens Expire After 7 Days in Testing Mode
+### Pitfall 1: Zustand Selector Reference Instability During Store Refactoring
 
 **What goes wrong:**
-Google Cloud projects with OAuth consent screen set to "Testing" publish status automatically revoke refresh tokens after 7 days. The app silently loses calendar access and sync stops working. Users see no error until they open the calendar view and find stale data.
+When refactoring `useWorkspaceStore` to support the new hub layout (replacing `HubLayout` with slide-in panel state, adding AI tab to drawer, changing drawer toggle behavior), new selectors return fresh object/array references on every call. This triggers `useSyncExternalStore` infinite render loops -- `Maximum update depth exceeded` crashes.
 
 **Why it happens:**
-This is a Google policy, not a bug. The current codebase uses `option_env!("GOOGLE_CLIENT_ID")` with placeholder fallbacks (`calendar.rs:9-16`), which means development builds always use testing-mode credentials. Even with real credentials, if the Google Cloud Console project stays in "Testing" mode, tokens expire weekly.
+The v1.6 changes touch the workspace store heavily: new `DrawerTab` values (adding "ai"), new panel visibility booleans, possibly new hub panel state replacing `HubLayout`. Each new selector is an opportunity to introduce `s.foo ?? []`, `.filter()`, or object-spread patterns that create unstable references. This has already caused 3 crashes in this project (TerminalPane, OutputDrawer x2).
 
 **How to avoid:**
-1. Publish the OAuth consent screen to "Production" status (requires Google verification for sensitive scopes like `calendar.readonly`).
-2. If staying in Testing mode during development, implement a proactive token refresh that detects `invalid_grant` errors and triggers re-authentication with a user-facing notification.
-3. Store `token_issued_at` alongside the refresh token and warn the user 24 hours before the 7-day expiry.
-4. On `invalid_grant`, surface a clear "Reconnect your Google Calendar" action in the hub -- never silently fail.
+- Every new selector must be audited for referential stability before use
+- Use module-level constants for fallbacks: `const EMPTY: T[] = []` instead of `?? []`
+- Select primitives individually instead of constructing objects: `useStore(s => s.panelVisible)` not `useStore(s => ({ visible: s.panelVisible, tab: s.activeTab }))`
+- When deriving arrays, select the source and use `useMemo` in the component
+- Run the existing test suite after every store change -- the crashes manifest immediately
 
 **Warning signs:**
-- Calendar sync works for a week after connecting, then silently stops.
-- `invalid_grant` errors in logs after day 7.
-- Users report "calendar was working, now it's empty."
+- `Maximum update depth exceeded` error in console
+- Component flickering or freezing on mount
+- Any selector containing `.map()`, `.filter()`, `Object.keys()`, `?? []`, or `{ ...spread }` syntax
 
 **Phase to address:**
-Calendar sync fix phase (first phase). Must be resolved before any downstream feature depends on calendar data.
+Phase 1 (drawer consolidation) -- this is where most store changes happen. Establish the pattern early.
 
 ---
 
-### Pitfall 2: Microsoft Graph Outlook Timezone Handling Is Already Broken in the Codebase
+### Pitfall 2: Hub Layout Regression -- Losing ResizablePanel State During Replacement
 
 **What goes wrong:**
-The existing `parse_outlook_events` function (`calendar.rs:282-307`) has a critical timezone bug: it checks for `-05:` as the only timezone offset, then blindly appends `Z` (UTC) to all other times. Microsoft Graph returns times in the **calendar's timezone** (not UTC) unless you request `Prefer: outlook.timezone="UTC"`. A user in PST (-08:00) would have all their meetings displayed 8 hours off.
+The current `HubView` uses `react-resizable-panels` with 3 panels (Goals, Briefing, Calendar), each with panel refs, collapse state, and persisted layout sizes in `useWorkspaceStore.hubLayout`. Replacing this with a single center view + slide-in overlays means removing this entire panel group. If done incrementally (panel by panel), intermediate states break -- a 2-panel `ResizablePanelGroup` behaves differently than a 3-panel one, and size percentages no longer add to 100%.
 
 **Why it happens:**
-The original implementation assumed Microsoft Graph returns UTC, but it returns times in the event's timezone. The `-05:` check was likely a quick fix for one developer's timezone (EST/CDT) during initial development.
+`react-resizable-panels` calculates sizes as percentages of the group. Removing one panel without recalculating the others leaves the layout broken. The persisted `hubLayout` in localStorage (`element-workspace` key) still contains the old 3-panel sizes, causing hydration mismatches on reload.
 
 **How to avoid:**
-1. Set the `Prefer: outlook.timezone="UTC"` header on all Microsoft Graph calendar requests -- this forces UTC response times regardless of user timezone.
-2. Alternatively, read the `start.timeZone` and `end.timeZone` fields from the response and convert properly.
-3. Remove the hardcoded `-05:` check entirely.
-4. All-day events from Microsoft Graph are a separate problem: they return midnight-to-midnight in the **organizer's** timezone, but the organizer timezone is not in the response body. Use the `Prefer: outlook.timezone` header to normalize.
+- Replace the entire `HubView` component in one pass, not incrementally
+- Clear or migrate the persisted `hubLayout` state -- add a version field to the persisted workspace state and run a migration on load
+- Remove the `HubLayout` interface and `hubLayout` from the workspace store's `partialize` config once the new layout is in place
+- Test with a fresh localStorage state AND with existing persisted state from v1.5
 
 **Warning signs:**
-- Events appear at wrong times for any user not in UTC-5.
-- All-day events span the wrong calendar day.
-- Meeting conflicts are missed because times are offset.
+- Panels render at 0% width or overflow the container
+- Layout "jumps" on page load (hydration mismatch between initial render and persisted state)
+- Console warnings from `react-resizable-panels` about invalid size constraints
 
 **Phase to address:**
-Calendar sync fix phase (first phase). This is a pre-existing bug that must be fixed before the scheduling algorithm consumes calendar events.
+The hub overhaul phase -- do this as a complete replacement, not incremental refactor.
 
 ---
 
-### Pitfall 3: Calendar Events Not Wired to Scheduler (Known Tech Debt)
+### Pitfall 3: AgentPanel Relocation Breaks Auto-Start and Queue Lifecycle
 
 **What goes wrong:**
-The scheduling algorithm (`scheduling_commands.rs:94-97`) passes an empty `calendar_events` vec to `find_open_blocks`. The scheduler treats the entire work day as open time, double-booking work blocks on top of actual meetings. This is already documented as tech debt in PROJECT.md.
+`AgentPanel` currently mounts as a sibling to the vertical `ResizablePanelGroup` in `AppLayout` (line 187: `{agentPanelOpen && <AgentPanel />}`). It auto-starts the agent on mount via `useEffect(() => { startAgent(); }, [startAgent])`. Moving it into the bottom drawer as a tab means it now conditionally renders based on `activeDrawerTab === "ai"` -- so the agent only starts when the user switches to the AI tab, and unmounting the tab kills the lifecycle hooks.
 
 **Why it happens:**
-Calendar integration and scheduling were built in separate phases. The scheduler was built first with a placeholder for calendar events that was never connected.
+The agent panel was designed as an always-available sidebar that mounts once and stays mounted. Drawer tabs in `OutputDrawer` use `display: none` for inactive tabs (terminal, logs, history) but the agent lifecycle depends on React mount/unmount behavior. If the AI tab uses conditional rendering, mount/unmount breaks the lifecycle. If it uses `display: none`, the agent stays mounted but invisible (wasting resources if not needed).
 
 **How to avoid:**
-1. Wire `calendar_events` table data into `generate_schedule` as the first integration task.
-2. Add an integration test that creates calendar events and verifies the scheduler respects them.
-3. Never ship the calendar view or daily planning skill until this integration is verified end-to-end.
+- Separate the agent lifecycle (queue watcher, auto-start) from the agent UI
+- The lifecycle hooks (`useAgentQueue` at AppLayout line 39, agent auto-start) should stay in `AppLayout` or a top-level provider, independent of the panel visibility
+- The AI drawer tab should only render the UI (activity feed, terminal) using the same `display: none` pattern as other drawer tabs
+- Remove `AgentPanel`'s internal `useEffect` auto-start -- `useAgentQueue()` already runs in `AppLayout`
+- Test: open AI tab, close it, verify agent queue still processes
 
 **Warning signs:**
-- Work blocks overlap with meetings in the schedule view.
-- AI suggests "you have 8 hours free today" when the user has 5 hours of meetings.
+- Agent stops responding after switching away from AI tab
+- Double agent starts when switching back to AI tab (lifecycle hook fires again on remount)
+- Agent terminal loses scroll position or state on tab switch
 
 **Phase to address:**
-Must be completed in the calendar sync phase, before any scheduling or daily planning features are built.
+Drawer consolidation phase -- must be designed before implementation, not retrofitted.
 
 ---
 
-### Pitfall 4: No Sync Token Invalidation Handling (410 Gone)
+### Pitfall 4: Slide-In Panel Animations Cause Layout Shift and Content Reflow
 
 **What goes wrong:**
-Google Calendar API invalidates sync tokens periodically and responds with `410 Gone` when an expired sync token is used. The current `sync_google_calendar` function (`calendar.rs:362-410`) checks `resp.status().is_success()` but has no special handling for 410. A 410 response causes the sync to fail permanently until the user manually removes and re-adds the account.
+Adding slide-in panels (Goals, Calendar, Briefing) that overlay or push the hub center content causes the center content to reflow on every open/close. If the briefing has streaming text, the reflow interrupts the stream visually. If the center view has a scrolled position, the reflow resets it. Chat input loses focus. Calendar time grid jumps.
 
 **Why it happens:**
-Incremental sync was implemented (the code stores and uses `sync_token`) but the required error-recovery path was not. Google documents this as a required part of their sync protocol.
+Two implementation approaches, both with traps:
+1. **Push layout** (panel slides in, center shrinks): Triggers reflow of all center content. If center uses `flex-1`, the resize causes re-renders of everything inside.
+2. **Overlay layout** (panel slides over center): Content behind is obscured but not reflowed. Better for performance but worse for usability if the user needs to see both.
+
+CSS `transition` on width/transform works but triggers layout thrashing if the center content has complex DOM (chat messages, calendar grid).
 
 **How to avoid:**
-1. On 410 response, clear the stored `sync_token` for that account.
-2. Automatically retry with a full sync (no sync token, with `timeMin`/`timeMax` parameters).
-3. Log the full-sync-required event but do not surface it to the user -- it should be transparent.
-4. Microsoft Graph has an equivalent: delta links can expire, returning a `410` or `404`. Same pattern applies.
+- Use overlay (absolute/fixed positioning + transform) for the slide-in panels, not push layout
+- Animate with `transform: translateX()` only -- this is GPU-composited, does not trigger layout recalculation
+- Never animate `width`, `margin`, `padding`, or `left/right` properties
+- Keep center content mounted and stable regardless of panel state
+- Use `will-change: transform` on the panel container (but remove it after animation completes to free GPU memory)
+- Test with the briefing actively streaming while opening/closing panels
 
 **Warning signs:**
-- Calendar sync fails with "API returned 410" in logs.
-- Calendar data becomes permanently stale after token invalidation.
-- Users must disconnect and reconnect calendar accounts to recover.
+- Janky/stuttering animation (below 60fps)
+- Content "jumps" when panel opens
+- Chat input loses focus during animation
+- Scroll position resets in the center view
 
 **Phase to address:**
-Calendar sync fix phase (first phase). Critical for reliable background sync.
+Hub overhaul phase -- the panel animation system must be designed before building individual panels.
 
 ---
 
-### Pitfall 5: LLM Cannot Reliably Optimize Multi-Day Schedules
+### Pitfall 5: Drawer Toggle Behavior Change Breaks Per-Project State Restore
 
 **What goes wrong:**
-Using an LLM to algorithmically schedule tasks across a week or month produces inconsistent, suboptimal, and sometimes contradictory results. The LLM might schedule 3 hours of deep work at 4:30 PM, put a due-tomorrow task on Thursday, or suggest impossible schedules that violate constraints.
+The current drawer has complex per-project state: each project saves/restores `drawerOpen`, `drawerTab`, and `centerTab` via `useWorkspaceStore.projectStates`. Changing the drawer to click-to-toggle (no drag resize) and adding a new "ai" tab alters the state shape. The `restoreProjectState` function applies saved `drawerOpen` and `drawerTab` -- if the drawer toggle behavior changed (fixed height vs. resizable), restoring `drawerHeight` from global persisted state could conflict.
 
 **Why it happens:**
-LLMs are text prediction engines, not constraint solvers. Even a simple 5-task scheduling problem across a week has millions of possible orderings. LLMs handle this through pattern matching rather than systematic optimization, leading to missed constraints and inconsistencies across separate LLM calls.
+`ProjectWorkspaceState` is session-only (not persisted to localStorage), so cold starts are safe. But within a session, switching between projects that were opened before and after the drawer refactor creates inconsistent state. Also, `drawerHeight` is persisted globally -- if the drawer becomes fixed-height click-to-toggle, this persisted value becomes dead state that could interfere if drag resize is ever re-added.
 
 **How to avoid:**
-1. Use the LLM for **conversational input** only: "What should we prioritize today?" and "This deadline moved, how should we adjust?"
-2. Use **deterministic algorithms** for actual scheduling: priority sorting, deadline-first assignment, time-block fitting. The existing `assign_tasks_to_blocks` function is the right pattern.
-3. Let the LLM **review and narrate** the algorithmically-generated schedule rather than generate it.
-4. For the daily planning conversation, the LLM should present the algorithm's output conversationally and let the user adjust, not generate the schedule from scratch.
+- Add "ai" to the `DrawerTab` type union cleanly -- TypeScript will flag any switch/if statements that don't handle it
+- Remove `drawerHeight` from persisted state if moving to fixed toggle (no more resizable), or set a fixed value
+- Update `DEFAULT_PROJECT_STATE` to reflect the new defaults
+- Test the full cycle: open project A, switch to project B, switch back -- verify drawer state is correct for each
 
 **Warning signs:**
-- AI suggests schedules that violate due dates or overlap with meetings.
-- Different prompts for the same day produce wildly different schedules.
-- Users stop trusting the scheduling suggestions.
+- Drawer opens at wrong height or wrong tab after project switch
+- Drawer appears "stuck" (neither open nor closed) after switching projects
+- TypeScript errors about exhaustive checks on `DrawerTab`
 
 **Phase to address:**
-Daily planning skill phase. The architecture decision (LLM as conversational layer, algorithm as scheduler) must be locked in before any planning skill code is written.
+Drawer consolidation phase -- update the store interface and defaults first, then the UI.
 
 ---
 
-### Pitfall 6: Heartbeat LLM Calls Drain System Resources on Desktop
+### Pitfall 6: Moving Components Between Layout Regions Orphans Event Listeners and Destroys Terminal Canvas
 
 **What goes wrong:**
-A periodic heartbeat that calls an LLM (especially a local model like Ollama) every N minutes consumes significant CPU, memory, and potentially GPU resources. If the user is in a video call or compiling code, the heartbeat check causes noticeable system lag. Local LLMs (7B-13B models) can spike to 4-8GB RAM and saturate CPU during inference.
+Moving the AI panel from a right sidebar to a drawer tab, or moving the briefing from a resizable panel column to a slide-in overlay, means unmounting from one DOM location and remounting in another. Components with xterm.js terminal instances will have their canvas destroyed -- xterm.js cannot be reparented in the DOM. The briefing stream SSE connection tears down. Agent event listeners detach.
 
 **Why it happens:**
-Server-side heartbeats are cheap (API call to a remote model). Desktop heartbeats with local LLM preference are fundamentally different -- the inference runs on the same machine the user is working on.
+React keys determine component identity. When a component moves to a different parent in the tree, React treats it as an unmount+remount. The `TerminalPane` already uses a mount-all/show-one pattern (all sessions mount, only active one is visible via `display: none`) to preserve state -- but this pattern only works if the terminal's DOM parent does not change.
 
 **How to avoid:**
-1. **System load gating**: Check CPU/memory usage before triggering heartbeat. Skip if system is under load (compile, video call, etc.).
-2. **Adaptive intervals**: Start at 30-60 minutes, not 5-10. Increase frequency only near deadlines.
-3. **Local LLM size cap**: Use the smallest model that works (a 1-3B model, not 7B+). Quantized models (Q4_K_M) reduce memory by 60-75%.
-4. **Graceful degradation**: If local LLM is unavailable or system is busy, fall back to CLI/API provider silently.
-5. **User control**: Let users set heartbeat frequency or disable it entirely. Never run inference without user awareness.
-6. **Use Tauri events, not polling**: The existing codebase uses Tauri's event-driven architecture. The heartbeat timer should live in Rust (tokio interval) and emit events to the frontend, not poll from JavaScript.
+- For the agent terminal: keep the terminal instance mounted at a stable DOM location, render into the drawer tab via `display: none` pattern, never unmount/remount
+- For the briefing: `useBriefingStream` maintains state in `useBriefingStore`, so the stream state survives unmount. But verify the SSE listener cleanup does not kill an in-progress stream
+- For project terminal sessions: maintain the existing mount-all/show-one pattern unchanged -- do not alter the terminal container's parent element
+- Never reparent an xterm.js instance -- this destroys the canvas irreversibly
 
 **Warning signs:**
-- Users report fan noise or system slowdown at regular intervals.
-- Heartbeat checks take 30+ seconds on older hardware.
-- Activity Monitor shows Element using 4GB+ RAM.
+- Terminal goes blank after layout change
+- Briefing restarts streaming from scratch when panel reopens
+- Memory leaks from event listeners that were not cleaned up during the old component's unmount
+- Console errors about destroyed or detached DOM nodes
 
 **Phase to address:**
-Heartbeat phase. Must be designed with resource awareness from the start -- bolting on resource limits after the fact is harder.
+Every phase that moves a component -- but especially the drawer consolidation (agent panel move) and hub overhaul (briefing/goals/calendar relocation).
 
 ---
 
-### Pitfall 7: Auto-Rescheduling Destroys User Trust
+### Pitfall 7: Goal-First Project Detail Loses Existing Workspace Entry Points
 
 **What goes wrong:**
-When the AI automatically moves work blocks, reorders task priorities, or changes due dates without explicit user consent, users feel loss of control. They open the app to find their carefully arranged day reshuffled. Even when the AI's rescheduling is objectively better, unsanctioned changes feel like a violation.
+Redesigning `ProjectDetail` to lead with the goal/problem being solved risks burying or removing the workspace entry points (directory link button, "Open AI" button, file explorer tab, terminal access). Users who rely on the current flow (click project -> see tasks -> open terminal) find the workflow broken because the workspace controls moved or disappeared.
 
 **Why it happens:**
-Developers optimize for "correct scheduling" rather than "user autonomy." The assumption is that if the AI produces a better schedule, users will appreciate it. In practice, users value predictability and control over optimization.
+Goal-first redesign focuses on "what matters" -- the project's purpose. But for active development projects, "what matters" is getting into the workspace quickly. The redesign optimizes for comprehension over action. Both are needed, but action must not require more clicks.
 
 **How to avoid:**
-1. **Never auto-apply schedule changes.** Always present changes as suggestions: "Your 2pm meeting was cancelled. Want me to move the design review into that slot?"
-2. **Show diffs**: When suggesting reschedules, show what changed and why. "Moved X from 3pm to 1pm because Y is due tomorrow."
-3. **Distinguish user-pinned vs. AI-suggested blocks**: Let users pin blocks that should never be moved. The AI only reshuffles unpinned blocks.
-4. **Batch suggestions**: Collect multiple changes and present them together rather than interrupting with each change.
-5. **Undo support**: Every AI-suggested change that the user accepts should be undoable.
+- Keep workspace controls (directory link, Open AI button, terminal shortcut) in a persistent header/toolbar area, not inside scrollable content
+- The goal section should be prominent but compact -- a card or banner, not a full-page hero
+- Maintain the `ProjectTabBar` (detail/files toggle) -- it works well
+- Test the "I just want to start coding" flow: click project in sidebar -> 1 click to terminal. If this takes more clicks than today, the redesign regressed
 
 **Warning signs:**
-- Users express frustration about "things moving around."
-- Users stop checking the AI's suggestions.
-- Users manually recreate schedules the AI reshuffled.
+- Users scrolling past goal content to find the "Open AI" button
+- Directory link button no longer visible without scrolling
+- The `ProjectTabBar` was removed "for simplicity" but no replacement exists
 
 **Phase to address:**
-Schedule negotiation phase. But the UI pattern (suggest, don't auto-apply) must be established in the daily planning skill phase.
+Project detail redesign phase -- wireframe the layout before coding, verify click-count for workspace entry.
 
 ---
 
-### Pitfall 8: Due Date Enforcement Without Escape Valves Creates Anxiety
+### Pitfall 8: Concurrent State Mutations from Multiple Active Panels
 
 **What goes wrong:**
-If every task and phase requires a due date and the system constantly flags overdue items, users feel nagged. Tasks that are aspirational or low-priority get the same urgency treatment as genuinely time-sensitive work. Users start ignoring due date warnings entirely (alert fatigue) or gaming the system by setting far-future dates.
+With slide-in panels, the hub chat, briefing, calendar, and goals tree can all be visible simultaneously. Each has its own store slice/store and async operations. If the briefing regenerates (calling `generate_briefing` via Tauri invoke), the goals tree refreshes (calling `loadProjects`), and the chat sends a message (calling the CLI AI provider) all at once, the frontend stores update in unpredictable order. The UI flickers as partial state updates arrive.
 
 **Why it happens:**
-Time-bounded systems assume all work has deadlines. In reality, personal project management has a mix of hard deadlines (client deliverable Friday), soft targets (finish refactor this month), and aspirational goals (learn Rust someday).
+The app uses multiple separate stores (`useStore`, `useWorkspaceStore`, `useBriefingStore`, `useHubChatStore`, `useTerminalSessionStore`, `useAgentStore`). Cross-store coordination is manual (e.g., `navigateToHub` in `uiSlice` calls `useWorkspaceStore.getState()` and `useAgentStore.setState()`). During heavy concurrent async operations, these cross-store calls can race.
 
 **How to avoid:**
-1. **The backlog exemption** (already planned) is essential -- ship it alongside due date enforcement, not after.
-2. **Due date types**: Distinguish "hard deadline" (external commitment) from "target date" (self-imposed goal). Different visual treatment and different escalation behavior.
-3. **Snooze, don't nag**: When a target date passes, offer to snooze it ("push to next week?") rather than flagging it red.
-4. **AI suggests, user confirms**: When the AI suggests due dates conversationally, make it easy to say "no date for this one" or "backlog it."
-5. **Overdue != failure**: The language matters. "This is past its target date, want to reschedule?" not "OVERDUE: Task X."
+- Do not add new cross-store mutations without understanding the existing dependency graph
+- Keep panel operations independent: briefing refresh should not trigger goals reload
+- If the AI tab consolidation means briefing and chat share context, share it through a store, not through cross-component callbacks
+- Debounce rapid state updates if panels trigger reloads on visibility change
+- Never call `invoke()` in a `useEffect` that depends on frequently-changing state
 
 **Warning signs:**
-- Users set all due dates to December 31st.
-- Users report feeling stressed by the app.
-- Backlog items accumulate overdue warnings.
+- UI "flickers" when multiple panels are open
+- Stale data appears briefly before correct data loads
+- Race condition: briefing shows data from previous generation after refresh
 
 **Phase to address:**
-Due date enforcement phase. The backlog exemption and due date types must ship in the same phase, not as a follow-up.
+Hub overhaul phase -- establish clear data flow boundaries before building slide-in panels.
 
 ---
 
@@ -206,82 +215,66 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Store OAuth tokens in SQLite instead of keychain | Simpler implementation | Tokens accessible if DB file is copied; violates platform security model | Never -- the existing `SecretStore` trait already solves this correctly |
-| Skip Microsoft `Prefer: outlook.timezone` header | Fewer API concepts to understand | Every Outlook event is potentially hours off | Never -- the existing code already has this bug |
-| Use LLM for schedule generation instead of algorithm | Impressive demo, less code | Inconsistent, slow, expensive per-invocation | Only for conversational review, never for actual block assignment |
-| Heartbeat at fixed short interval (5 min) | Responsive deadline warnings | Constant resource drain, user frustration | Never for local LLM; acceptable for lightweight API-only checks |
-| Store calendar events without timezone metadata | Simpler data model | Cannot correctly display events in user's timezone or handle DST transitions | Never -- always store as UTC with original timezone info |
-| Auto-apply schedule changes without confirmation | Fewer user interactions | Users lose trust, feel loss of control | Never for schedule-altering changes; acceptable for cosmetic updates |
+| Using `display: none` for all drawer tabs including AI | Quick implementation, preserves mount state | AI panel stays mounted and running even when not visible, consuming resources (agent queue, terminal) | Acceptable if agent resource usage is negligible when idle |
+| Inlining animation styles instead of extracting a `SlidePanel` component | Faster to ship one panel | Each new slide-in panel reimplements animation, inconsistent timing/easing | Never -- extract a reusable `SlidePanel` component from the start |
+| Keeping `drawerHeight` in persisted state after removing drag resize | No migration needed | Stale persisted value causes confusion if drag resize is ever re-added; dead code in store | Acceptable for v1.6, clean up in v1.7 |
+| Skipping localStorage migration for `hubLayout` | Saves time, existing users will just see defaults | Old persisted state causes broken layout on first load after update | Never -- add a schema version and migrate |
+| Duplicating briefing rendering code for slide-in vs. hub center | Ship faster without refactoring | Two diverging implementations of same content | Never -- extract shared `BriefingContent` component (already exists, reuse it) |
+| Hardcoding drawer height to 450px without making it a constant | Matches user's target height request | Magic number scattered through layout code | Never -- define as a named constant in the workspace store or a layout config |
 
 ## Integration Gotchas
 
-Common mistakes when connecting to external services.
+Common mistakes when connecting restructured components to existing systems.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Google Calendar OAuth | Not handling `invalid_grant` on refresh -- app silently loses access | Catch `invalid_grant`, clear stored tokens, prompt user to re-authenticate with toast notification |
-| Google Calendar Sync | Ignoring 410 Gone on sync token expiry -- sync breaks permanently | On 410, clear sync token and restart with full sync automatically |
-| Google Calendar OAuth | Using `prompt=consent` on every auth -- user sees consent screen repeatedly | Only use `prompt=consent` on first auth or when re-auth is needed; store and reuse refresh token |
-| Microsoft Graph Calendar | Appending `Z` to non-UTC times -- events display at wrong times | Set `Prefer: outlook.timezone="UTC"` header, or read `timeZone` field from response |
-| Microsoft Graph Calendar | Ignoring delta link expiration -- same as Google 410 problem | Handle expired delta links by falling back to full sync |
-| Google Calendar API | Not handling pagination (`nextPageToken`) for users with many events | Loop until no `nextPageToken` in response; the current code does not paginate |
-| Both Calendar APIs | Treating all-day events like timed events -- scheduling algorithm treats them as 24-hour blocks | Filter all-day events separately; they should mark a day as "has all-day event" but not block specific time slots |
-| Local LLM (Ollama) | Assuming Ollama is always running -- heartbeat fails if user hasn't started it | Check Ollama availability before each heartbeat call; fall back to CLI provider gracefully |
-| MCP Calendar Tools | Write tools that modify calendar without confirmation -- user discovers unexpected events in Google/Outlook | All calendar write operations (block time, move events) must require explicit user approval through the existing MCP approval flow |
+| Agent lifecycle + drawer tab | Auto-starting agent inside the AI tab component -- breaks when tab is not active | Keep `useAgentQueue()` in `AppLayout`, only render UI in drawer tab |
+| Terminal sessions + drawer consolidation | Changing the terminal mount structure, breaking xterm canvas | Keep mount-all/show-one pattern unchanged; only modify the container's parent if using `display: none` |
+| Briefing + slide-in panel | Triggering `generate_briefing` every time the panel slides open | Check `lastRefreshedAt` staleness before regenerating; panel open != refresh trigger |
+| Per-project workspace state + new drawer tabs | Not updating `ProjectWorkspaceState` interface for new `DrawerTab` values | Update the type, defaults, save/restore functions, and test project switching |
+| Hub chat + panel overlays | Chat input losing focus when a slide-in panel opens over it | Slide-in panels should not steal focus; use `tabIndex` management and `pointer-events` carefully |
+| ResizablePanel removal + AppLayout | Removing `ResizablePanelGroup` from hub but leaving its handle in `AppLayout` | The vertical resizable (center + drawer) is separate from the hub's horizontal resizable -- only remove the hub's horizontal `ResizablePanelGroup`, leave AppLayout's vertical one intact |
+| Keyboard shortcuts + new panel system | Global shortcuts (Cmd+K, etc.) fire while typing in a slide-in panel | Review `useGlobalShortcut` to ensure it checks `document.activeElement` before firing |
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
+Patterns that work at small scale but fail as the app grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Full calendar sync on every app launch | 2-5 second startup delay, API rate limit hits | Use sync tokens for incremental sync; only full-sync on first connect or 410 | Users with 500+ events or multiple calendar accounts |
-| LLM heartbeat context includes full task list | Heartbeat takes 30+ seconds, uses excessive tokens | Summarize: only include tasks due within 7 days, overdue items, and today's schedule | Users with 100+ active tasks across projects |
-| Rendering all calendar events in the week view | UI jank when scrolling, slow initial render | Virtualize the event list; only render events visible in viewport | Users with 20+ events per day (common in corporate environments) |
-| Re-generating schedule from scratch on every change | 1-2 second delay per user interaction | Diff-based updates: when one block moves, recalculate only affected slots | Schedules with 15+ blocks per day |
-| Polling calendar API for changes | Wastes API quota, delayed updates | Use push notifications (Google: webhook, Microsoft: subscriptions) or sync on app-focus | Sync intervals under 5 minutes |
-| Storing full event JSON in SQLite | Database bloat, slow queries | Store only the fields you use (id, title, start, end, all_day, status); discard body/attachments | After 6 months of synced history |
-
-## Security Mistakes
-
-Domain-specific security issues beyond general web security.
-
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Logging OAuth tokens in debug output | Token theft from log files | Never log tokens; log only token type and expiry timestamp |
-| Storing refresh tokens in SQLite `calendar_accounts` table | Token theft if DB file is exfiltrated | Use the existing `SecretStore` (keychain) for all tokens; store only a credential_id reference in SQLite |
-| Placeholder OAuth client IDs in production builds | Auth flow fails or uses wrong OAuth app | Add a build-time check that rejects placeholder IDs in release builds; `option_env!` fallback should panic in release |
-| Local LLM heartbeat sending task data to cloud API on fallback | User's private task data sent to API provider without awareness | Clearly indicate when heartbeat is using cloud vs. local; let user opt out of cloud fallback |
-| MCP calendar write tools without scope restrictions | AI could delete/modify real calendar events | Calendar write MCP tools should only manage Element-created events (identifiable by a tag/prefix), never modify user's real meetings |
+| Animating `width` or `height` for slide-in panels | Janky animation, dropped frames, layout thrashing | Use `transform: translateX()` only -- GPU composited, no layout recalc | Immediately on lower-end hardware |
+| Re-rendering entire hub on any panel visibility toggle | Visible lag when opening/closing panels | Panel visibility state should only trigger re-render in the panel wrapper, not parent | With 3+ panels and complex content (calendar grid, chat messages) |
+| Mounting/unmounting xterm.js on drawer tab switch | Terminal goes blank, shell history lost, PTY process keeps running detached | Use `display: none` pattern, never unmount terminal instances | Immediately -- users will notice on first tab switch |
+| `useEffect` with Tauri `invoke` on panel mount | Every panel open triggers backend calls, blocks UI | Gate invocations behind staleness checks (timestamp comparison) | When user rapidly toggles panels open/closed |
+| CSS `transition` on `all` properties | Every CSS property animates, including `background`, `border`, `color` | Only transition `transform` and `opacity` on panel containers | Immediate visual jank with themed components |
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
+Common user experience mistakes in layout restructuring.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Calendar view shows only Element work blocks, not real meetings | User must check two calendars; the whole point is unified view | Overlay synced calendar events with Element work blocks in the same view |
-| AI daily planning asks too many questions before showing a plan | User wanted a quick "here's your day" and got an interview | Lead with the generated schedule, then ask "want to adjust anything?" |
-| Heartbeat notifications interrupt focus work | User is deep in code, gets a "you're behind on X" notification | Batch heartbeat insights; show them when user returns to Element, not as OS notifications during work |
-| Schedule shows precise minute-level blocks (9:00-9:47) | Feels robotic and inflexible | Round to 15-minute increments; leave buffer between blocks |
-| No visual distinction between meetings and work blocks | User can't tell what's a real meeting vs. suggested work time | Different colors, opacity, or border styles for meetings (solid) vs. work blocks (dashed/lighter) |
-| Due date reminders use same urgency for all task types | Everything feels urgent, nothing feels urgent | Tiered urgency: hard deadlines get strong visual treatment, target dates get subtle indicators |
-| Calendar write-back creates duplicate events | User sees the same block in both Element and Google Calendar | Either write back OR show in Element, not both. If writing back, mark as Element-managed and hide from Element's sync import |
+| Slide-in panel with no clear close affordance | User trapped in panel, does not know how to dismiss | Visible close button + click-outside-to-dismiss + Escape key |
+| Removing horizontal scroll but replacing with overlapping panels | New layout is more confusing than the old one | Panels should be clearly optional overlays; center view must be fully usable without any panel open |
+| Drawer click-to-toggle with no visual state indicator | User cannot tell if drawer is "open" or "closed" | Tab bar styling should clearly differentiate active/inactive state; add a chevron indicator |
+| Goal-first project detail that buries action buttons | Users take more clicks to reach their workspace | Keep action buttons (Open AI, Directory Link) in a persistent toolbar, above scroll |
+| Briefing "generate" button without loading feedback | User clicks, nothing happens for 5-10 seconds | Show skeleton/spinner immediately on click, stream content as it arrives (existing pattern in `BriefingPanel`) |
+| Panel animations without reduced-motion support | Users with motion sensitivity or vestibular disorders experience discomfort | Respect `prefers-reduced-motion` media query -- instant show/hide, no animation |
 
 ## "Looks Done But Isn't" Checklist
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **Calendar sync:** Often missing 410/expired-token recovery -- verify by invalidating a sync token and confirming automatic full-sync recovery
-- [ ] **Calendar sync:** Often missing pagination for users with many events -- verify with a test account that has 300+ events in 30 days
-- [ ] **OAuth flow:** Often missing re-auth flow when refresh token is permanently revoked -- verify by revoking token in Google/Microsoft account settings and confirming the app recovers gracefully
-- [ ] **Timezone handling:** Often missing DST transition handling -- verify events created during DST change week display at correct times
-- [ ] **Scheduling algorithm:** Often missing all-day event handling -- verify that all-day events don't create a 24-hour "busy" block that eliminates the entire work day
-- [ ] **Heartbeat:** Often missing system load awareness -- verify heartbeat skips when CPU usage is above 80% or a meeting is in progress
-- [ ] **Daily planning:** Often missing "nothing to do today" state -- verify the AI handles days with no tasks or no available time gracefully
-- [ ] **Due dates:** Often missing bulk operations -- verify user can set/clear due dates for an entire phase's tasks at once, not one by one
-- [ ] **Calendar view:** Often missing recurring event rendering -- verify weekly standup appears on each day, not just the first occurrence
-- [ ] **Schedule negotiation:** Often missing undo -- verify user can revert the last accepted AI suggestion
+- [ ] **Hub slide-in panels:** Often missing keyboard navigation (Escape to close, Tab to focus panel content) -- verify keyboard-only usage works
+- [ ] **Drawer AI tab:** Often missing agent lifecycle separation -- verify agent still processes queue when AI tab is not active
+- [ ] **Click-to-toggle drawer:** Often missing persisted state migration -- verify app works with stale `element-workspace` localStorage from v1.5
+- [ ] **Goal-first project detail:** Often missing workspace quick-access -- verify "project click to terminal" takes the same number of clicks as before (currently: 2 clicks)
+- [ ] **Briefing on-demand generation:** Often missing the "already cached" case -- verify that reopening the hub shows cached briefing instantly, not a blank state
+- [ ] **Panel animations:** Often missing `prefers-reduced-motion` support -- verify animations respect OS accessibility setting
+- [ ] **Calendar Today label fix:** Often tested only in day view -- verify it works in week view across timezone boundaries (midnight edge case)
+- [ ] **Overdue detection:** Often only tested with UTC dates -- verify with local timezone where `due_date` date boundary differs from UTC
+- [ ] **Slide-in panels:** Often missing mobile-width behavior -- verify panels don't break at narrow window sizes (Tauri window can be resized small)
+- [ ] **Drawer tab addition:** Often missing the `handleTabClick` logic update in `AppLayout` -- verify the new "ai" tab follows the same open/close/switch pattern as existing tabs
 
 ## Recovery Strategies
 
@@ -289,13 +282,14 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Timezone bug shipped (events at wrong times) | MEDIUM | Add migration to re-sync all events with correct timezone handling; notify affected users |
-| OAuth tokens expired silently | LOW | Detect on next sync attempt; show "reconnect" prompt; no data loss since events are in provider |
-| LLM generated bad schedule and user accepted | LOW | Undo the acceptance; revert to previous schedule state. Requires storing schedule history |
-| Heartbeat resource drain reported | LOW | Ship config update that increases interval and adds system load check; no data impact |
-| Auto-rescheduling lost user's manual arrangement | HIGH | Requires schedule history/undo. If not built, user must manually recreate. This is why "suggest, don't auto-apply" is critical |
-| Sync token invalidation cascades (multiple accounts) | MEDIUM | Full re-sync all accounts; may hit rate limits. Stagger re-syncs with exponential backoff |
-| Calendar write-back created duplicate events | MEDIUM | Must identify and delete Element-managed events in external calendar; requires a reliable event tagging scheme |
+| Zustand infinite render loop | LOW | Identify the bad selector, add module-level constant or `useMemo`. 5-minute fix once identified |
+| Hub layout hydration mismatch | LOW | Clear `element-workspace` from localStorage, add version migration. 30-minute fix |
+| Agent lifecycle broken by drawer move | MEDIUM | Extract lifecycle hooks to `AppLayout` level, keep only UI in drawer tab. 1-2 hour refactor |
+| Slide-in animation causing layout thrash | MEDIUM | Replace width/margin animation with `transform: translateX()`. 1-hour refactor if caught early |
+| Terminal canvas destroyed by remount | HIGH | Requires redesigning the mount structure; xterm.js does not support DOM reparenting. Must use `display: none` from the start -- cannot be fixed retroactively without losing all terminal state |
+| Per-project state corruption | LOW | Reset `projectStates` to empty object, update defaults. Session-only state so no persistence migration needed |
+| Lost workspace entry points in project detail | MEDIUM | Add persistent toolbar above scroll area. Requires design iteration, 2-4 hour fix |
+| Cross-store race conditions | MEDIUM | Add debouncing to concurrent panel operations; isolate store boundaries. 2-4 hours to audit and fix |
 
 ## Pitfall-to-Phase Mapping
 
@@ -303,30 +297,23 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Google OAuth 7-day token expiry | Calendar sync fix | Token survives 8+ days in testing; production mode publish verified |
-| Outlook timezone bug | Calendar sync fix | Events from multiple timezones display at correct local times |
-| Calendar events not wired to scheduler | Calendar sync fix | `generate_schedule` with 3 meetings shows 3 fewer hours of available time |
-| No 410 Gone handling | Calendar sync fix | Invalidate sync token in DB, trigger sync, verify automatic recovery |
-| LLM schedule generation unreliability | Daily planning skill | LLM narrates algorithm output; does not generate schedule independently |
-| Heartbeat resource drain | Heartbeat | CPU stays under 10% increase during heartbeat; system load gating works |
-| Auto-rescheduling trust loss | Schedule negotiation | All schedule changes presented as suggestions with accept/reject UI |
-| Due date anxiety | Due date enforcement | Backlog exemption and date-type distinction ship in same phase |
-| Calendar view rendering | Hub calendar view | Week view with 20+ events/day renders without jank (< 16ms frame time) |
-| MCP calendar write safety | Calendar MCP tools | All write operations require approval; only Element-managed events are modifiable |
+| Zustand selector instability | Drawer consolidation (first) | Zero `Maximum update depth` errors after store changes; run full test suite |
+| Hub layout hydration | Hub overhaul phase | App loads correctly with both fresh localStorage and stale v1.5 localStorage |
+| Agent lifecycle breakage | Drawer consolidation (first) | Agent processes queue items when AI tab is not the active drawer tab |
+| Slide-in animation performance | Hub overhaul phase | 60fps animation measured with DevTools Performance panel; no layout shift (CLS = 0) |
+| Drawer toggle state conflicts | Drawer consolidation (first) | Switch between 3 projects, verify drawer state restores correctly for each |
+| Component relocation orphaned refs | Every component-moving phase | No console warnings about memory leaks; terminals retain scroll history after tab switches |
+| Goal-first losing workspace entry | Project detail phase | Click count from sidebar to terminal is <= current count (2 clicks) |
+| Concurrent panel state mutations | Hub overhaul phase | Open all panels, trigger briefing refresh + chat message simultaneously, no flicker or stale data |
 
 ## Sources
 
-- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2) -- token lifecycle and refresh behavior
-- [Google Calendar API Sync Guide](https://developers.google.com/workspace/calendar/api/guides/sync) -- incremental sync and 410 handling
-- [Google Calendar API Error Handling](https://developers.google.com/workspace/calendar/api/guides/errors) -- error response formats
-- [Microsoft Graph Throttling Limits](https://learn.microsoft.com/en-us/graph/throttling-limits) -- rate limits per endpoint (4 req/s per mailbox for calendar)
-- [Microsoft Graph Throttling Guidance](https://learn.microsoft.com/en-us/graph/throttling) -- Retry-After, exponential backoff, delta queries
-- [Microsoft Graph All-Day Events Timezone Issue](https://learn.microsoft.com/en-us/answers/questions/5760696/microsoft-graph-all-day-events-return-incorrect-ut) -- organizer timezone not in response
-- [Google OAuth Testing Mode Token Expiry](https://nango.dev/blog/google-oauth-invalid-grant-token-has-been-expired-or-revoked) -- 7-day refresh token expiry in testing mode
-- [LLMs Can't Optimize Schedules (Timefold)](https://timefold.ai/blog/llms-cant-optimize-schedules-but-ai-can) -- why LLMs fail at constraint-based scheduling
-- [Tauri Background Tasks Discussion](https://github.com/tauri-apps/tauri/issues/14117) -- event-driven vs. polling for desktop apps
-- Codebase analysis: `calendar.rs:282-307` (Outlook timezone bug), `scheduling_commands.rs:94-97` (empty calendar events vec), `calendar.rs:9-16` (placeholder OAuth IDs)
+- Direct codebase analysis: `AppLayout.tsx` (layout structure, agent panel mounting), `HubView.tsx` (3-panel resizable layout), `OutputDrawer.tsx` (drawer tab display:none pattern), `CenterPanel.tsx` (view routing, project state restore), `AgentPanel.tsx` (agent lifecycle hooks), `useWorkspaceStore.ts` (persisted state, project state, hub layout), `uiSlice.ts` (view navigation, cross-store mutations)
+- Project memory: `feedback_zustand_selector_stability.md` -- 3 prior crashes from unstable selectors (TerminalPane, OutputDrawer x2)
+- Project memory: `project_ui_overhaul_v16.md` -- user's stated design intent for all v1.6 changes
+- `react-resizable-panels` behavior: percentage-based sizing breaks when panel count changes mid-session
+- xterm.js limitation: canvas-based rendering cannot survive DOM reparenting (canvas context is destroyed)
 
 ---
-*Pitfalls research for: AI scheduling assistant + calendar sync + heartbeat for Tauri/React desktop app*
-*Researched: 2026-04-02*
+*Pitfalls research for: v1.6 Clarity UI restructuring*
+*Researched: 2026-04-04*

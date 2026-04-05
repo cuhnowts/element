@@ -1,232 +1,166 @@
-# Stack Research
+# Stack Research: v1.6 Clarity
 
-**Domain:** Desktop scheduling assistant -- calendar sync, local LLM heartbeat, day/week calendar view, background scheduling agent
-**Researched:** 2026-04-02
+**Domain:** Desktop app UI overhaul -- hub restructuring, slide-in panels, briefing restyling, drawer consolidation
+**Researched:** 2026-04-04
 **Confidence:** HIGH
 
-## Existing Stack (DO NOT change)
+## Executive Summary
 
-Already validated and shipping. Listed for context only:
+v1.6 Clarity is a UI restructuring milestone, not a new-technology milestone. The existing stack (React 19, Tailwind CSS 4, shadcn/ui, react-resizable-panels, Zustand) handles 90% of what is needed. The only meaningful addition is **tw-animate-css** for slide-in/slide-out panel transitions. No animation framework (Motion/Framer Motion) is warranted -- the animations here are simple state-driven show/hide transitions that CSS handles natively, and adding a 40KB+ JS animation library for slide panels in a desktop app is engineering vanity.
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Tauri | ~2.10 | Desktop shell, Rust backend |
-| React | ^19.2.4 | Frontend UI |
-| SQLite (rusqlite) | 0.32 | Local-first storage |
-| Zustand | ^5.0.11 | State management |
-| shadcn/ui + Tailwind | v4.2.1 | Component library + styling |
-| tokio | 1 (full) | Async runtime |
-| reqwest | 0.12 | HTTP client (already used for calendar API calls) |
-| chrono | 0.4 | Date/time handling |
-| @modelcontextprotocol/sdk | ^1.28.0 | MCP server sidecar |
-| better-sqlite3 | ^11.0.0 | MCP server DB access |
-| tokio-cron-scheduler | 0.15 | Cron job scheduling |
+## Recommended Additions
 
-## Recommended Stack Additions
-
-### 1. Calendar MCP Tools -- No new libraries needed
-
-**Decision: Extend existing MCP server with calendar SQL queries.**
-
-The MCP server (`mcp-server/`) already reads the same SQLite DB that the Rust backend writes to. Calendar events are already stored in `calendar_events` table by the existing sync pipeline. New MCP tools (`list_calendar_events`, `create_time_block`, `move_time_block`, `delete_time_block`) are pure SQL operations against existing tables via `better-sqlite3`.
+### New Dependencies
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| (none new) | -- | Calendar MCP tools | Existing `better-sqlite3` + `@modelcontextprotocol/sdk` already in `mcp-server/package.json`. Tools are SQL queries, not new dependencies. |
+| tw-animate-css | ^1.x | CSS-based enter/exit animations for slide-in panels | shadcn/ui's official replacement for tailwindcss-animate on Tailwind v4. Provides `animate-in`, `animate-out`, `slide-in-from-right`, `slide-in-from-left`, `fade-in`, `fade-out` utilities. Zero JS -- pure CSS keyframes composed via Tailwind classes. Already the standard for shadcn/ui projects on Tailwind v4. |
 
-**Critical: OAuth scope upgrade required (not a library change).** Current scopes are read-only:
-- Google: `calendar.readonly` --> needs `https://www.googleapis.com/auth/calendar.events` for write
-- Microsoft: `Calendars.Read` --> needs `Calendars.ReadWrite`
+### Existing Stack -- No Changes Needed
 
-This is a code change in `calendar.rs` (lines 127, 143) and `calendar_commands.rs` (line 210), not a new dependency. Users with existing tokens will need to re-authenticate to get upgraded scopes.
-
-### 2. Local LLM (Heartbeat) -- Use reqwest directly against Ollama API
-
-**Decision: Call Ollama's HTTP API via reqwest. No Rust Ollama crate.**
-
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Ollama (runtime) | 0.18.x | Local LLM server | De facto standard for local LLM hosting. OpenAI-compatible API at `localhost:11434`. 165k+ GitHub stars, active development (0.18.0 released March 2026). |
-| reqwest (existing) | 0.12 | HTTP client for Ollama | Already a dependency. Ollama's API is two endpoints: `POST /api/chat` (streaming) and `POST /api/chat` with `"stream": false` (non-streaming). Adding a dedicated crate like `ollama-rs` is unnecessary overhead for what amounts to one HTTP POST with JSON body. |
-
-**Why NOT add ollama-rs or ollama-rest-rs:**
-- reqwest is already in `Cargo.toml` and battle-tested in this codebase (used for Google/Microsoft calendar API calls)
-- Ollama's API surface is tiny: one endpoint for chat, one for health check (`GET /api/tags`)
-- Adding a crate means tracking its release cycle, compatibility, and potential tokio version conflicts
-- The heartbeat only needs non-streaming completions (fire request, get JSON response, parse)
-
-**Ollama API contract for heartbeat:**
-```
-POST http://localhost:11434/api/chat
-{
-  "model": "llama3.2:3b",
-  "messages": [{"role": "user", "content": "..."}],
-  "stream": false
-}
-```
-Response: `{ "message": { "role": "assistant", "content": "..." }, "done": true }`
-
-**Model recommendation:** `llama3.2:3b` (or `phi-4-mini`) -- small enough to run on 8GB RAM Macs, fast enough for periodic background checks (< 5s response for short prompts). User should configure model name in settings.
-
-### 3. Hub Calendar View -- Build custom with Tailwind, no calendar library
-
-**Decision: Custom day/week calendar grid using Tailwind CSS + date-fns.**
-
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| date-fns | ^4.1.0 | Date arithmetic (week boundaries, day iteration, formatting) | Lightweight (tree-shakeable), no moment.js baggage. Handles `startOfWeek`, `eachDayOfInterval`, `format`, `addDays` etc. |
-
-**Why NOT react-big-calendar:**
-- Brings its own CSS, event model, and drag system -- fights shadcn/ui theming
-- 1.19.4 last published 10 months ago (lower maintenance cadence)
-- The calendar view in Element is NOT a general-purpose calendar -- it shows two specific things: external calendar events (read-only blocks) and Element schedule blocks (work time). This is a constrained layout, not a full event management UI.
-- Custom Tailwind grid gives pixel-perfect control matching existing shadcn aesthetic
-- Google Calendar-style time grid is ~200 lines of TSX: a 24-row grid with positioned event/block overlays
-
-**Why NOT @daypilot/daypilot-lite-react:**
-- Heavy library for a simple need
-- Its own styling system conflicts with Tailwind/shadcn
-
-**Implementation pattern:**
-```
-7-column CSS grid (week) or 1-column (day)
-Each column: 24 time slots (or work-hours subset)
-Events/blocks: absolute-positioned divs within column, top/height calculated from start/end times
-Color coding: calendar events (muted), work blocks (accent), breaks (transparent)
-```
-
-The existing `react-day-picker` (^9.14.0, already installed) handles the mini-calendar date picker in the sidebar -- keep using it for date navigation.
-
-### 4. Background Heartbeat Timer -- Use tokio::spawn + tokio::time::interval
-
-**Decision: Tokio interval loop spawned at app startup. No new crate.**
-
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| tokio::time::interval (existing) | 1.x | Periodic heartbeat timer | Already available via `tokio = { features = ["full"] }` in Cargo.toml. `interval(Duration::from_secs(N))` is the standard Rust async pattern for periodic work. |
-
-**Why NOT tokio-cron-scheduler for this:**
-- Already used for workflow cron jobs, but cron is overkill for a simple "every N minutes" check
-- `tokio::time::interval` is simpler, more precise, and doesn't need cron expression parsing
-- The heartbeat period should be configurable (default: 30 min) via a settings value, not a cron string
-
-**Architecture:**
-```rust
-// Spawned once in setup() or after app.run()
-tauri::async_runtime::spawn(async move {
-    let mut interval = tokio::time::interval(Duration::from_secs(1800)); // 30 min
-    loop {
-        interval.tick().await;
-        // 1. Check if Ollama is running (GET /api/tags)
-        // 2. If yes: build context (deadlines, schedule, overdue tasks)
-        // 3. POST /api/chat with context prompt
-        // 4. Parse response for flags/suggestions
-        // 5. Emit event to frontend or create notification
-    }
-});
-```
-
-### 5. MCP SDK Version -- Stay on v1.x
-
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| @modelcontextprotocol/sdk | ^1.29.0 | MCP server tools | Bump from ^1.28.0 to ^1.29.0. v2 was anticipated Q1 2026 but v1.x is still recommended for production. v1.x will get security fixes for 6+ months post-v2 ship. Upgrade to v2 later as a separate task. |
-
-## Supporting Libraries
-
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| date-fns | ^4.1.0 | Date math for calendar view | Week boundaries, day ranges, time formatting in the calendar grid component |
-
-This is the ONLY new npm dependency. Everything else uses existing packages.
+| Technology | Current Version | Role in v1.6 | Notes |
+|------------|----------------|--------------|-------|
+| react-resizable-panels | ^4.7.3 | Hub layout restructuring | Already used for 3-column hub and drawer. Will be simplified -- remove the 3-panel horizontal layout, replace with single center panel + overlay slide-in panels. Keep for center-vs-drawer vertical split. |
+| Zustand | ^5.0.11 | Panel visibility state | Already manages `hubLayout`, `drawerOpen`, `activeDrawerTab`. Extend with `hubPanelOpen: Record<'goals'\|'calendar'\|'briefing', boolean>` for slide-in toggle state. |
+| shadcn/ui | (components) | UI primitives | Sheet component provides slide-in drawer pattern out of the box. Use for hub slide-in panels. |
+| Tailwind CSS | ^4.2.1 | Styling, transitions | `transition-all`, `duration-300`, `translate-x-*` classes handle slide animations natively. `transition-discrete` (new in v4) enables animating `display: none` toggling. |
+| react-markdown + remark-gfm | ^10.1.0 / ^4.0.1 | Briefing content rendering | Already used. Briefing visual rework is CSS/component restructuring, not a library change. |
+| lucide-react | ^0.577.0 | Icons for panel toggle buttons | Already used throughout. |
 
 ## Installation
 
 ```bash
-# Frontend -- single new dependency
-cd /Users/cuhnowts/projects/element
-npm install date-fns@^4.1.0
-
-# MCP server -- bump SDK
-cd /Users/cuhnowts/projects/element/mcp-server
-npm install @modelcontextprotocol/sdk@^1.29.0
-
-# Rust -- no new crates needed
-# Ollama API calls use existing reqwest
-# Background timer uses existing tokio
+# Single new dependency
+npm install tw-animate-css
 ```
 
-## Alternatives Considered
+Then update `src/app.css`:
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Custom calendar grid | react-big-calendar | If you later need drag-and-drop event creation, multi-resource views, or recurring event display. Element's current needs don't justify the styling overhead. |
-| reqwest direct to Ollama | ollama-rs crate | If Ollama API surface grows significantly (model management, embeddings, multimodal) and you need a typed client for many endpoints. Currently only need chat + health check. |
-| date-fns | dayjs / luxon | If you already had one of these. date-fns is tree-shakeable and aligns with react-day-picker's internal date handling. |
-| Ollama | LM Studio / llamafile | If user wants a GUI for model management. Ollama is CLI/API-first which fits Element's headless integration better. Support both by making the base URL configurable. |
-| tokio::time::interval | tokio-cron-scheduler | If heartbeat needs complex scheduling (different intervals on weekdays vs weekends). Simple interval covers the "every N minutes" requirement. |
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+```
 
-## What NOT to Use
+That is the entire installation. No config files, no plugins, no build changes.
+
+## Architecture Decisions for v1.6 Features
+
+### Hub Overhaul: Single Center View + Slide-In Panels
+
+**Decision:** Use shadcn/ui `Sheet` component (Radix Dialog-based) for slide-in panels, NOT react-resizable-panels.
+
+**Why:** The current 3-column `ResizablePanelGroup` in `HubView.tsx` is the problem v1.6 is solving -- it forces horizontal scrolling and makes all three panels compete for space. The new design calls for a single center view with *opt-in* slide-in overlays. This is exactly what a `Sheet` (side drawer) provides: an overlay that slides in from the edge, overlapping content rather than displacing it.
+
+**Implementation pattern:**
+- Center panel (briefing + chat) takes full width
+- Goals panel: `Sheet` anchored left, toggled by button in hub header
+- Calendar panel: `Sheet` anchored right, toggled by button in hub header
+- Briefing panel: remains inline in center (it IS the center content)
+
+**Alternative considered:** Absolute-positioned divs with CSS transitions. Rejected because shadcn/ui Sheet already handles focus trapping, click-outside-to-close, escape key, scroll locking, and smooth transitions. Reimplementing these is wasted effort.
+
+### Briefing Visual Redesign
+
+**Decision:** Pure CSS/component restructuring. No new libraries.
+
+**Why:** The current `BriefingContent.tsx` renders markdown through `react-markdown` with `prose prose-sm prose-invert`. The visual rework is about:
+1. Better section spacing and hierarchy (Tailwind utility classes)
+2. Scannable card-based sections instead of raw markdown flow (custom ReactMarkdown component overrides)
+3. Status indicators and progress visuals (existing `Badge`, `Progress` components from shadcn/ui)
+4. Greeting and time-of-day theming (conditional Tailwind classes)
+
+ReactMarkdown already supports custom component renderers via the `components` prop -- use this to wrap `h2`, `h3`, `ul`, `blockquote` in styled cards/sections. No library needed.
+
+### Drawer Click-to-Toggle
+
+**Decision:** Zustand state change + CSS transition. No new libraries.
+
+**Why:** The current drawer already toggles via `toggleDrawer()` in the workspace store, which calls `panel.collapse()` / `panel.resize()` on the `react-resizable-panels` ref. The "click to toggle" behavior is a UX change (clicking the drawer header bar toggles open/close), not a technology change. The drawer already collapses/expands -- the fix is making the entire header bar clickable, not just the "Show/Hide Output" button.
+
+For the AI panel moving from right sidebar to drawer tab: extend `DrawerTab` type from `"logs" | "history" | "runs" | "terminal"` to include `"agent"`. Render `AgentPanel` content inside `OutputDrawer` when `activeDrawerTab === "agent"`. Remove the fixed `w-80 border-l` right sidebar.
+
+### Goal-First Project Layout
+
+**Decision:** Component restructuring of `ProjectDetail.tsx`. No new libraries.
+
+**Why:** The current `ProjectDetail.tsx` leads with project name/description editing, then phases/tasks. The v1.6 redesign leads with the goal/problem statement (read from `.planning/PROJECT.md` or project description), then provides a streamlined entry point to the workspace (directory + terminal). This is a component reordering and styling change. The existing `react-markdown` handles rendering any markdown goal content.
+
+## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| react-big-calendar | Styling conflicts with shadcn/ui, overkill for constrained layout, stale release cadence | Custom Tailwind CSS grid |
-| moment.js / moment-timezone | Deprecated, huge bundle size, mutable API | date-fns (tree-shakeable, immutable) |
-| ollama-rs / ollama-rest-rs | Unnecessary abstraction over a 2-endpoint API when reqwest is already in the project | reqwest direct HTTP calls |
-| Full calendar libraries (FullCalendar, DayPilot Pro) | Commercial licenses, heavy bundles, their own theming systems | Custom build |
-| Separate Node.js process for heartbeat | Adds process management complexity, Rust already has tokio + reqwest | Rust tokio::spawn in the Tauri backend |
-| OpenAI SDK for Ollama | Ollama has OpenAI-compatible endpoints, but adding the SDK means another dependency for the same HTTP calls reqwest already handles | reqwest with Ollama's native `/api/chat` endpoint |
+| `motion` (formerly framer-motion) | 40KB+ for animations that CSS handles. Slide-in panels are simple translate transitions, not physics-based springs. The app targets desktop with no gesture interactions. Adding a JS animation library for `translateX` is over-engineering. | `tw-animate-css` + Tailwind transition utilities + shadcn/ui Sheet |
+| `@react-spring/web` | Same rationale as Motion. Spring physics are not needed for panel show/hide. | Tailwind CSS transitions |
+| `tailwindcss-animate` | Deprecated for Tailwind v4. Plugin-based approach replaced by CSS import approach. | `tw-animate-css` (the official successor) |
+| `vaul` (drawer library) | Already have react-resizable-panels handling the bottom drawer. Vaul is designed for mobile bottom sheets with drag gestures -- wrong paradigm for a desktop app. | Existing react-resizable-panels collapse/expand |
+| `@headlessui/react` | Overlaps with Radix primitives already used via shadcn/ui. Adding a second headless UI library creates confusion about which to use. | shadcn/ui components (Sheet, Dialog, Collapsible) |
+| `react-transition-group` | Legacy library. React 19 + CSS transitions + tw-animate-css cover all cases. | Tailwind transition classes |
+| Custom animation hooks | `useSpring`, `useTransition` custom hooks add complexity. The animations in v1.6 are binary (open/closed), not continuous. | CSS `transition-all duration-300` |
 
-## Stack Patterns by Variant
+## shadcn/ui Components to Leverage
 
-**If Ollama is not installed/running:**
-- Heartbeat degrades gracefully -- skip LLM analysis, still check deadlines via pure date math
-- Fall back to CLI AI provider (already implemented in v1.4) for on-demand schedule analysis
-- Show a settings hint: "Install Ollama for automatic schedule monitoring"
+These components are already available via shadcn/ui and should be used for v1.6 features rather than building custom equivalents:
 
-**If user wants cloud LLM for heartbeat instead of local:**
-- Make the heartbeat endpoint configurable: `base_url` + `model` + `api_key` (optional)
-- Ollama and OpenAI-compatible APIs use the same request format
-- Default to `http://localhost:11434` (Ollama), but allow `https://api.openai.com` with key
+| Component | v1.6 Use Case | Notes |
+|-----------|---------------|-------|
+| **Sheet** | Hub slide-in panels (goals, calendar) | Side-anchored overlay with built-in transitions. Use `side="left"` for goals, `side="right"` for calendar. |
+| **Collapsible** | Workflows section minimizable, drawer sections | Animate open/close with `tw-animate-css` classes. |
+| **Tabs** | Drawer tab bar (terminal, logs, history, agent) | Already partially implemented manually in `AppLayout.tsx`. Consider migrating to the shadcn Tabs component for consistency. |
+| **Card** | Briefing section cards | Already used in `BriefingPanel.tsx`. Extend usage for individual briefing sections. |
+| **Badge** | Status indicators in briefing | Already available. |
+| **Separator** | Visual section breaks in briefing | Already available. |
 
-**If calendar write-back to Google/Outlook is needed (v1.5 or future):**
-- OAuth scope upgrade is the main change (code, not library)
-- Google Calendar API write: `POST https://www.googleapis.com/calendar/v3/calendars/{calendarId}/events` (reqwest, already available)
-- Microsoft Graph API write: `POST https://graph.microsoft.com/v1.0/me/events` (reqwest, already available)
-- No new dependencies -- just different HTTP endpoints and upgraded OAuth scopes
+Generate any missing shadcn components before starting implementation:
+
+```bash
+ls src/components/ui/sheet.tsx 2>/dev/null || npx shadcn@latest add sheet
+ls src/components/ui/collapsible.tsx 2>/dev/null || npx shadcn@latest add collapsible
+ls src/components/ui/tabs.tsx 2>/dev/null || npx shadcn@latest add tabs
+```
 
 ## Version Compatibility
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| date-fns@4.x | react-day-picker@9.x | react-day-picker uses date-fns internally. Version 9 supports date-fns v4 adapters. Shared dependency reduces bundle. |
-| @modelcontextprotocol/sdk@1.29 | better-sqlite3@11.x | Already working together in mcp-server. Minor version bump is safe. |
-| reqwest@0.12 + tokio@1 | Tauri 2.10 | Already validated in the codebase. Ollama calls use the same client. |
-| Ollama 0.18.x | llama3.2:3b, phi-4-mini, qwen2.5:3b | Small models that run on 8GB Macs. User picks model in settings. |
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| tw-animate-css ^1.x | Tailwind CSS ^4.x | CSS import approach, no plugin config needed |
+| shadcn/ui Sheet | Radix UI (already installed via @radix-ui/react-slot) | May need `@radix-ui/react-dialog` if not already pulled in by existing Dialog component |
+| react-resizable-panels ^4.7.3 | React 19 | Already validated in v1.4/v1.5 |
 
-## Integration Points Summary
+## Migration Notes
 
-| New Feature | Touches Backend (Rust) | Touches Frontend (TS) | Touches MCP Server |
-|-------------|----------------------|----------------------|-------------------|
-| Calendar MCP tools | No | No | Yes -- new tool handlers reading calendar_events + schedule_blocks tables |
-| OAuth scope upgrade | Yes -- calendar.rs scope strings | No | No |
-| Heartbeat timer | Yes -- new tokio::spawn loop, reqwest to Ollama, emit events | Yes -- listen for heartbeat events, show notifications | No |
-| Calendar view | No | Yes -- new CalendarDayView + CalendarWeekView components replacing CalendarPlaceholder | No |
-| Schedule negotiation | Yes -- new scheduling_commands for move/swap | Yes -- chat skill UI | Yes -- new MCP tools for block manipulation |
-| Ollama settings | Yes -- new settings table fields | Yes -- settings UI for model/URL/interval | No |
+### HubView.tsx Restructuring
+
+The current `HubView.tsx` uses a horizontal `ResizablePanelGroup` with three panels (Goals, Center, Calendar). In v1.6:
+
+1. **Remove** the horizontal `ResizablePanelGroup` entirely
+2. **Keep** the center content (briefing + chat) as the full-width hub view
+3. **Add** Sheet overlays for goals (left) and calendar (right) panels
+4. **Add** toggle buttons in a hub header bar
+5. **Move** panel visibility state from `hubLayout.goalsCollapsed` / `hubLayout.calendarCollapsed` to explicit `hubPanels: { goals: boolean, calendar: boolean }` in workspace store
+
+### AppLayout.tsx Drawer Changes
+
+1. **Add** `"agent"` to the `DrawerTab` union type
+2. **Add** agent tab button to the drawer header bar
+3. **Remove** the `{agentPanelOpen && <AgentPanel />}` right sidebar rendering
+4. **Render** `AgentPanel` content (activity + terminal tabs) inside `OutputDrawer` when agent tab is active
+5. **Make** the entire drawer header bar clickable to toggle (not just the button)
+
+### BriefingPanel.tsx Visual Rework
+
+1. **Add** custom ReactMarkdown component overrides for section styling
+2. **Use** Card components to wrap briefing sections
+3. **Add** visual hierarchy with spacing, dividers, and typography scale
+4. **Keep** existing streaming/skeleton/error state machine unchanged
 
 ## Sources
 
-- [Ollama GitHub](https://github.com/ollama/ollama) -- API docs, current version 0.18.x (HIGH confidence)
-- [Ollama API docs](https://github.com/ollama/ollama/blob/main/docs/api.md) -- endpoint format verified (HIGH confidence)
-- [@modelcontextprotocol/sdk npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) -- v1.29.0 latest, v2 pending (HIGH confidence)
-- [react-big-calendar npm](https://www.npmjs.com/package/react-big-calendar) -- v1.19.4, last published 10 months ago (HIGH confidence)
-- [@daypilot/daypilot-lite-react npm](https://www.npmjs.com/package/@daypilot/daypilot-lite-react) -- v5.4.0 (HIGH confidence)
-- [shadcn-ui-big-calendar](https://github.com/list-jonas/shadcn-ui-big-calendar) -- community integration reference (MEDIUM confidence)
-- [tokio::time::interval docs](https://docs.rs/tokio/latest/tokio/time/fn.interval.html) -- standard periodic timer (HIGH confidence)
-- [ollama-rs](https://github.com/pepperoni21/ollama-rs) -- evaluated but not recommended (HIGH confidence)
-- Existing codebase: `calendar.rs`, `scheduling_commands.rs`, `mcp-server/src/index.ts`, `calendarSlice.ts` -- verified current state (HIGH confidence)
+- shadcn/ui Tailwind v4 migration guide: https://ui.shadcn.com/docs/tailwind-v4 -- confirmed tw-animate-css as replacement (HIGH confidence)
+- tw-animate-css / tailwindcss-animate GitHub: https://github.com/jamiebuilds/tailwindcss-animate -- verified CSS import approach for v4 (HIGH confidence)
+- Motion (framer-motion) docs: https://motion.dev/docs/react -- confirmed current version 12.x, evaluated and rejected (HIGH confidence)
+- Tailwind CSS v4 transition docs: https://tailwindcss.com/docs/transition-property -- verified transition-discrete support (HIGH confidence)
+- Codebase analysis: package.json, AppLayout.tsx, HubView.tsx, BriefingPanel.tsx, DrawerHeader.tsx -- direct inspection (HIGH confidence)
 
 ---
-*Stack research for: Element v1.5 Time Bounded features*
-*Researched: 2026-04-02*
+*Stack research for: v1.6 Clarity UI overhaul*
+*Researched: 2026-04-04*

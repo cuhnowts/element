@@ -1,479 +1,374 @@
 # Architecture Research
 
-**Domain:** Time-bounded scheduling features for existing Tauri 2.x desktop app
-**Researched:** 2026-04-02
-**Confidence:** HIGH (based on direct codebase analysis of existing architecture)
+**Domain:** UI restructuring of existing Tauri 2.x + React 19 + Zustand desktop app
+**Researched:** 2026-04-04
+**Confidence:** HIGH (this is a refactor of known code, not greenfield)
 
-## System Overview
+## System Overview: Current vs Target
+
+### Current Layout
 
 ```
-+-----------------------------------------------------------------------+
-|                          React 19 Frontend                             |
-|  +-------------+  +-----------------+  +----------------------------+  |
-|  | GoalsTree   |  | HubCenterPanel  |  | CalendarView (NEW)         |  |
-|  | Panel       |  | Briefing + Chat |  | replaces CalendarPlaceholder|  |
-|  +------+------+  +--------+--------+  +-------------+--------------+  |
-|         |                  |                          |                 |
-|  +------+------------------+-------+------------------+--------------+ |
-|  |  Zustand Store (calendarSlice, schedulingSlice, briefingStore)    | |
-|  +------+------------------+-------+------------------+--------------+ |
-|         |                  |                          |                 |
-+---------+------------------+------ -------------------+-----------------+
-          |                  |                          |
-          | Tauri IPC        | Tauri Events             | Tauri IPC
-          |                  |                          |
-+---------+------------------+-------------- -----------+-----------------+
-|                         Rust Backend (Tauri 2.x)                        |
-|  +------------------+  +------------------+  +----------------------+   |
-|  | calendar_commands|  | scheduling_cmds  |  | manifest_commands    |   |
-|  | (OAuth, sync)    |  | (generate, apply)|  | (briefing, context)  |   |
-|  +--------+---------+  +--------+---------+  +-----------+----------+   |
-|           |                     |                        |              |
-|  +--------+---------+  +-------+--------+  +-------------+----------+  |
-|  | plugins/calendar |  | scheduling/    |  | ai/gateway             |  |
-|  | (Google/Outlook   |  | time_blocks   |  | (provider dispatch)    |  |
-|  |  API calls)       |  | assignment    |  +------------------------+  |
-|  +--------+---------+  | types         |                               |
-|           |            +-------+--------+                               |
-|           |                    |                                        |
-|  +--------+--------------------+--------------------------------------+ |
-|  |                    SQLite (rusqlite)                                | |
-|  |  calendar_accounts | calendar_events | scheduled_blocks            | |
-|  |  work_hours        | tasks (due_date, estimated_minutes)           | |
-|  +--------------------------------------------------------------------+ |
-+-------------------------------------------------------------------------+
-          |
-          | stdio (separate process)
-          |
-+---------+----------------------------+
-|        MCP Server Sidecar            |
-|  better-sqlite3 reads element.db     |
-|  project-tools | task-tools          |
-|  phase-tools   | write-tools         |
-|  orchestration-tools                 |
-|  + calendar-tools (NEW)              |
-+--------------------------------------+
++----------------------------------------------------------------------+
+| AppLayout                                                            |
++----------+-------------------------------------------+---------------+
+|          |  ResizablePanelGroup (vertical)           |               |
+|          |  +-------------------------------------+  |               |
+|  Sidebar |  | CenterPanel                         |  | AgentPanel   |
+|  (280px) |  |  HubView: 3-col ResizableGroup      |  |  (w-80)     |
+|          |  |   Goals | Briefing+Chat | Cal        |  |  border-l   |
+|          |  +-------------------------------------+  |               |
+|          |  | ResizableHandle (drawer tabs)        |  |               |
+|          |  +-------------------------------------+  |               |
+|          |  | OutputDrawer                         |  |               |
+|          |  |  terminal | logs | history           |  |               |
+|          |  +-------------------------------------+  |               |
++----------+-------------------------------------------+---------------+
 ```
 
-### Component Responsibilities
+### Target Layout
 
-| Component | Responsibility | Current State |
-|-----------|----------------|---------------|
-| `calendar_commands.rs` | OAuth flows, sync orchestration, event queries | Exists, full OAuth + sync implemented |
-| `plugins/core/calendar.rs` | Google/Outlook API calls, token refresh, event parsing | Exists, ~600 lines, provider-specific logic |
-| `scheduling/time_blocks.rs` | Gap-finding: work hours - occupied = open blocks | Exists, well-tested, accepts `CalendarEvent[]` |
-| `scheduling/assignment.rs` | Greedy task-to-block allocation by score | Exists, well-tested, score = priority + due_date urgency |
-| `scheduling_commands.rs` | IPC: `generate_schedule`, `apply_schedule`, `get_work_hours` | Exists, **but line 97 passes empty `calendar_events` vec** |
-| `manifest_commands.rs` | Context manifest + AI briefing via streaming events | Exists, used by daily briefing |
-| `calendarSlice.ts` | Frontend calendar state (accounts, events, sync) | Exists, full CRUD |
-| `schedulingSlice.ts` | Frontend schedule state (generate, apply, work hours) | Exists |
-| `actionRegistry.ts` | Bot skill definitions for hub chat tool_use | Exists, 10 skills registered |
-| `CalendarPlaceholder.tsx` | Empty "Coming Soon" placeholder in hub right column | Exists, needs replacement |
-| `MCP server` | External tool access to element.db for AI agents | Exists, 17 tools, no calendar tools yet |
-| **Heartbeat (NEW)** | Periodic background deadline check | Does not exist |
-| **Daily planning skill (NEW)** | AI-driven "what should we work on?" conversation | Does not exist |
-| **Calendar MCP tools (NEW)** | Bot reads/writes meetings and work blocks via MCP | Does not exist |
-| **CalendarView (NEW)** | Real day/week view replacing placeholder | Does not exist |
+```
++----------------------------------------------------------------------+
+| AppLayout                                                            |
++----------+-----------------------------------------------------------+
+|          |  +-----------------------------------------------------+  |
+|  Sidebar |  | CenterPanel                                         |  |
+|  (280px) |  |  HubView: single center + slide-in overlays         |  |
+|          |  |  OR ProjectDetail: goal-first layout                 |  |
+|          |  +-----------------------------------------------------+  |
+|          |  | DrawerBar (click-to-toggle)                          |  |
+|          |  |  terminal | logs | history | Element AI              |  |
+|          |  +-----------------------------------------------------+  |
+|          |  | OutputDrawer (450px fixed when open)                 |  |
+|          |  |  (includes agent terminal as "Element AI" tab)       |  |
+|          |  +-----------------------------------------------------+  |
++----------+-----------------------------------------------------------+
+```
 
-## New Components vs Modified Components
+Key structural changes:
+1. **AgentPanel removed** from right-side flex column
+2. **HubView** loses ResizablePanelGroup, becomes single view with slide-in overlays
+3. **OutputDrawer** gains "Element AI" tab, replaces drag-to-resize with click-to-toggle
+4. **ProjectDetail** reordered to lead with goal/problem
+
+## Component Responsibilities
+
+| Component | Current Responsibility | v1.6 Change |
+|-----------|----------------------|-------------|
+| `AppLayout` | Sidebar + vertical split + AgentPanel right column | Remove AgentPanel from flex row, simplify drawer to click-toggle |
+| `HubView` | 3-column ResizablePanelGroup (Goals, Briefing, Calendar) | Single center view with slide-in panel overlays |
+| `HubCenterPanel` | BriefingPanel + HubChat stacked | Becomes the primary hub content (briefing + chat), no longer nested in column |
+| `GoalsTreePanel` | Left column content | Slide-in overlay from left, toggled by button |
+| `HubCalendar` | Right column content | Slide-in overlay from right, toggled by button |
+| `BriefingPanel` | Auto-generates on mount | On-demand generation with "Generate / Skip" button |
+| `OutputDrawer` | Terminal + logs + history tabs | Add "Element AI" tab, fixed 450px height |
+| `AgentPanel` | Right sidebar (w-80, border-l) | **Deleted** - content moves to drawer tab |
+| `AgentTerminalTab` | Tab inside AgentPanel | Moves into OutputDrawer as "Element AI" tab content |
+| `ProjectDetail` | Name/description/progress/phases layout | Goal-first: goal hero -> workspace entry -> phases |
+| `CenterPanel` | View router (hub/project/task/theme/workflow) | No change to routing, but ProjectDetail content restructured |
+
+## New vs Modified Components
 
 ### New Components to Build
 
-| Component | Layer | Purpose | Depends On |
-|-----------|-------|---------|------------|
-| `CalendarView.tsx` | Frontend | Day/week calendar showing meetings + work blocks | calendarSlice, schedulingSlice, working calendar sync |
-| `CalendarDayColumn.tsx` | Frontend | Single-day time column with event/block rendering | CalendarView |
-| `CalendarEventCard.tsx` | Frontend | Individual event/block visual representation | CalendarDayColumn |
-| `heartbeat.rs` | Rust backend | Periodic tokio timer that checks deadlines, calls LLM | ai/gateway, scheduling, manifest |
-| `heartbeat_commands.rs` | Rust backend | IPC to start/stop/configure heartbeat | heartbeat.rs |
-| `useHeartbeat.ts` | Frontend hook | Listen for heartbeat Tauri events, surface alerts | Tauri event listener |
-| `mcp-server/src/tools/calendar-tools.ts` | MCP sidecar | `list_calendar_events`, `create_work_block`, `move_work_block`, `get_available_slots` | element.db calendar_events + scheduled_blocks tables |
-| Daily planning skill entries | actionRegistry.ts | `get_todays_plan`, `suggest_schedule`, `set_due_date` | scheduling_commands, calendar data |
+| Component | Purpose | Depends On |
+|-----------|---------|------------|
+| `SlidePanel.tsx` | Generic slide-in overlay wrapper (left/right) | Nothing |
+| `HubToolbar.tsx` | Toggle buttons for Goals / Calendar overlays | `useWorkspaceStore.hubOverlays` |
+| `DrawerBar.tsx` | Click-to-toggle bar replacing ResizableHandle content | `useWorkspaceStore` (DrawerTab) |
+| `ProjectGoalHero.tsx` | Goal/problem statement hero section | Project data from `useStore` |
+| `ProjectWorkspaceEntry.tsx` | Consolidated directory + AI button row | Existing `OpenAiButton`, `DirectoryLink` |
 
 ### Existing Components to Modify
 
-| Component | Change | Why |
-|-----------|--------|-----|
-| `scheduling_commands.rs::generate_schedule` | Wire real `calendar_events` from DB instead of empty vec (line 94-97) | **Critical**: scheduling engine already supports calendar events but was never connected |
-| `manifest_commands.rs::generate_briefing` | Include today's calendar events + schedule blocks in context manifest | Daily planning needs the AI to see the user's day |
-| `models/manifest.rs::build_manifest_string` | Add calendar events section and scheduled blocks to manifest output | Feed calendar awareness into briefing |
-| `actionRegistry.ts` | Add scheduling/calendar skills: `get_todays_plan`, `suggest_schedule`, `set_due_date`, `block_time` | Bot needs to manipulate schedule via chat |
-| `HubChat.tsx` | No structural change needed -- ACTION dispatch already handles arbitrary skills | Just register new skills in action registry |
-| `CalendarPlaceholder.tsx` | Replace entirely with `CalendarView` | Placeholder was always temporary |
-| `HubView.tsx` | Swap `CalendarPlaceholder` import to `CalendarView` | One-line change |
-| `calendarSlice.ts` | Add `selectedDate`, `viewMode` (day/week), auto-refresh on sync events | Calendar view needs date navigation state |
-| `schedulingSlice.ts` | Expose `getScheduledBlocksForDate` query, listen for schedule-applied events | Calendar view needs to show work blocks alongside meetings |
-| `mcp-server/src/index.ts` | Register new calendar tools in ListTools + CallTool dispatch | MCP agents need calendar access |
-| `tasks` table | Ensure `due_date` column is used consistently (exists since migration 003) | Due date enforcement requires populated due_dates |
-| `lib.rs` | Register heartbeat commands, start heartbeat on app launch | Heartbeat lifecycle management |
+| Component | Change | Scope |
+|-----------|--------|-------|
+| `AppLayout.tsx` | Remove AgentPanel from flex row, remove ResizablePanel/Handle/usePanelRef, use DrawerBar + conditional fixed-height drawer | Major restructure |
+| `HubView.tsx` | Replace ResizablePanelGroup with single center + SlidePanel overlays | Full rewrite |
+| `HubCenterPanel.tsx` | Minor - remove ColumnRibbon wrapper, becomes primary content | Small |
+| `BriefingPanel.tsx` | Remove auto-generate useEffect, add Generate/Skip button | Medium |
+| `OutputDrawer.tsx` | Add "agent" tab rendering AgentActivityTab + AgentTerminalTab | Medium |
+| `ProjectDetail.tsx` | Restructure layout: GoalHero on top, then workspace entry, then phases | Full rewrite of render layout |
+| `AgentToggleButton.tsx` | Click opens drawer to "agent" tab instead of toggling AgentPanel | Small |
+| `useWorkspaceStore.ts` | Add `hubOverlays`, add "agent" to DrawerTab, remove `drawerHeight` and old hubLayout panel sizes | Medium |
+| `useAgentStore.ts` | Remove `panelOpen`, `togglePanel` | Small |
+| `uiSlice.ts` | Remove `agentStore.setState({ panelOpen: false })` from `navigateToHub` | One line |
+
+### Components to Delete
+
+| Component | Reason |
+|-----------|--------|
+| `AgentPanel.tsx` | Content moves to OutputDrawer "Element AI" tab |
+| `AgentPanelHeader.tsx` | No longer needed (or adapt minimally for drawer) |
+| `MinimizedColumn.tsx` | Hub no longer has collapsible columns |
 
 ## Architectural Patterns
 
-### Pattern 1: Tauri Event-Driven Streaming (Existing)
+### Pattern 1: Slide-In Overlay Panel
 
-**What:** Backend emits named events (`briefing-chunk`, `calendar-synced`, `schedule-applied`), frontend subscribes via `listen()`.
-**When to use:** For all heartbeat notifications, schedule updates, sync progress -- any async backend-to-frontend communication.
-**Trade-offs:** Simple and decoupled, but no built-in back-pressure or error retry.
+**What:** A panel that slides in from the edge of the hub view, overlaying the center content. Not a sibling in a ResizablePanelGroup -- a positioned overlay with a shadow edge.
 
-**Example (heartbeat will follow this pattern):**
-```rust
-// Rust: emit heartbeat alert
-app.emit("heartbeat-alert", HeartbeatAlert {
-    alert_type: "deadline_risk",
-    message: "Task X is due tomorrow with 4h estimated, only 2h available",
-    affected_task_ids: vec!["task-123"],
-    suggested_action: "Reschedule or reduce scope",
-}).ok();
-```
+**When to use:** Hub goals panel, hub calendar panel. Any content that is "opt-in" and should not consume permanent screen space.
+
+**Trade-offs:** Simpler than ResizablePanelGroup (no resize state to persist). Overlays don't reflow center content, so the center view stays stable. Downside: can't see overlay + center simultaneously at full width -- but the user asked for this trade-off explicitly.
+
+**Example:**
 ```typescript
-// Frontend: listen for heartbeat alerts
-listen<HeartbeatAlert>("heartbeat-alert", (e) => {
-  addNotification(e.payload);
-});
+// SlidePanel.tsx - reusable overlay wrapper
+interface SlidePanelProps {
+  open: boolean;
+  onClose: () => void;
+  side: "left" | "right";
+  width?: string;
+  children: React.ReactNode;
+}
+
+export function SlidePanel({ open, onClose, side, width = "380px", children }: SlidePanelProps) {
+  return (
+    <div
+      className={cn(
+        "absolute top-0 bottom-0 z-20 bg-background border-border shadow-lg",
+        "transition-transform duration-200",
+        side === "left" ? "left-0 border-r" : "right-0 border-l",
+        open
+          ? "translate-x-0"
+          : side === "left" ? "-translate-x-full" : "translate-x-full"
+      )}
+      style={{ width }}
+    >
+      {children}
+    </div>
+  );
+}
 ```
 
-### Pattern 2: Bot Skill via Action Registry (Existing)
-
-**What:** New bot capabilities are added by registering an `ActionDefinition` in `actionRegistry.ts` with a `tauriCommand` mapping. The hub chat LLM sees the tool definition and emits `ACTION:{"name":"...", "input":{...}}` blocks that get dispatched to Tauri IPC.
-**When to use:** For all new scheduling/calendar skills the bot needs.
-**Trade-offs:** Zero changes to HubChat.tsx for new skills. LLM quality depends on good tool descriptions.
-
-**New skills to register:**
+**Zustand integration:**
 ```typescript
-{
-  name: "get_todays_plan",
-  description: "Get the user's schedule for today including meetings and work blocks",
-  tauriCommand: "get_todays_plan",
-  destructive: false,
-},
-{
-  name: "set_due_date",
-  description: "Set or update the due date for a task",
-  tauriCommand: "set_task_due_date",
-  destructive: false,
-},
-{
-  name: "block_time",
-  description: "Create a work block for a task at a specific time slot",
-  tauriCommand: "create_work_block",
-  destructive: false,
-},
+// Add to useWorkspaceStore
+hubOverlays: { goals: boolean; calendar: boolean };
+toggleHubOverlay: (panel: "goals" | "calendar") => void;
 ```
 
-### Pattern 3: MCP Tool Registration (Existing)
+This replaces the current `hubLayout` with its `goalsPanelSize`, `centerPanelSize`, `calendarPanelSize`, `goalsCollapsed`, `calendarCollapsed`. Simpler state, fewer edge cases.
 
-**What:** The MCP sidecar exposes tools via `ListToolsRequestSchema` + `CallToolRequestSchema` handlers. It reads/writes element.db directly via better-sqlite3 (separate process from Tauri). Changes trigger file-based events that the Tauri watcher picks up.
-**When to use:** For calendar MCP tools that external AI agents (Claude Code, etc.) need.
-**Important:** MCP server has its own DB connection -- it writes directly to SQLite. The Tauri backend picks up changes via its file watcher polling. Calendar tools follow the same pattern as existing write-tools.
+### Pattern 2: Click-to-Toggle Drawer
+
+**What:** Replace the ResizableHandle + ResizablePanel drag mechanism with a fixed-height drawer that toggles on click. No drag resize.
+
+**When to use:** The bottom drawer. User wants "click to maximize/minimize", not drag to arbitrary heights.
+
+**Trade-offs:** Loses granular height control. Gains simplicity and predictability. 450px when open, 0 when closed. The drawer bar is always visible with tab buttons.
+
+**AppLayout transformation:**
+```typescript
+// BEFORE: ResizablePanelGroup with drag
+<ResizablePanelGroup direction="vertical">
+  <ResizablePanel defaultSize={...} minSize="30%">
+    <CenterPanel />
+  </ResizablePanel>
+  <ResizableHandle>...</ResizableHandle>
+  <ResizablePanel collapsible panelRef={drawerPanelRef}>
+    <OutputDrawer />
+  </ResizablePanel>
+</ResizablePanelGroup>
+
+// AFTER: Simple flex column with conditional render
+<div className="flex-1 flex flex-col overflow-hidden">
+  <div className="flex-1 min-h-0 overflow-hidden">
+    <CenterPanel />
+  </div>
+  <DrawerBar open={drawerOpen} activeTab={activeDrawerTab} onTabClick={handleTabClick} />
+  {drawerOpen && (
+    <div className="h-[450px] flex-shrink-0 overflow-hidden">
+      <OutputDrawer />
+    </div>
+  )}
+</div>
+```
+
+This eliminates: `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle`, `usePanelRef`, `drawerHeight` state, and the `useEffect` that syncs panel ref size to `drawerOpen`.
+
+### Pattern 3: Goal-First ProjectDetail
+
+**What:** Restructure ProjectDetail to lead with the project's goal/problem, then workspace entry, then phases. Currently leads with name input + tier badge.
+
+**Layout:**
+```
++------------------------------------------+
+| GOAL HERO                                |
+| "Build a desktop project manager that    |
+| orchestrates AI-driven work execution"   |
+| [Edit goal]                              |
++------------------------------------------+
+| WORKSPACE ENTRY                          |
+| [Open AI] [Directory: ~/projects/foo]    |
+| Progress: 80% (16/20)                    |
++------------------------------------------+
+| PHASES                                   |
+| > Phase 1: Foundation         12/12 done |
+| v Phase 2: Core Features      4/8        |
+|   [ ] Task A                             |
+|   [x] Task B                             |
++------------------------------------------+
+```
+
+**Data source for goal:** Use the existing `description` field but present it as "Goal" in the UI. No database migration needed. If distinct goal vs description semantics are needed later, add a column then.
 
 ## Data Flow
 
-### Calendar Sync Flow (Existing, needs fixing)
+### Hub View Data Flow (Target)
 
 ```
-User triggers "sync" (or background timer)
+[Sidebar click "Hub"]
     |
     v
-sync_calendar() / sync_all_calendars()  [calendar_commands.rs]
+useStore.navigateToHub() -> activeView = "hub"
     |
     v
-refresh_{google|outlook}_token()  [plugins/core/calendar.rs]
+CenterPanel renders HubView
     |
     v
-sync_{google|outlook}_calendar()  [plugins/core/calendar.rs]
+HubView renders:
+  1. HubToolbar (toggle buttons for Goals/Calendar)
+  2. HubCenterPanel (briefing + chat) -- always visible, full width
+  3. SlidePanel(side="left") -> GoalsTreePanel -- conditional overlay
+  4. SlidePanel(side="right") -> HubCalendar -- conditional overlay
     |
     v
-save_events() -> INSERT INTO calendar_events  [SQLite]
-    |
-    v
-app.emit("calendar-synced")  [Tauri event]
-    |
-    v
-Frontend calendarSlice re-fetches events
+Toggle buttons read/write: useWorkspaceStore.hubOverlays
 ```
 
-### Schedule Generation Flow (Existing, broken connection at step 3)
+### Agent Panel to Drawer Tab Migration
 
 ```
-1. User/bot requests schedule for date
-       |
-       v
-2. generate_schedule(date)  [scheduling_commands.rs]
-       |
-       v
-3. *** calendar_events = empty vec ***  <-- FIX: query calendar_events table
-       |
-       v
-4. find_open_blocks(work_hours, calendar_events)  [time_blocks.rs]
-       |
-       v
-5. assign_tasks_to_blocks(open_blocks, tasks)  [assignment.rs]
-       |
-       v
-6. Return Vec<ScheduleBlock> to frontend
+CURRENT:
+  AgentToggleButton click -> useAgentStore.togglePanel()
+  AppLayout reads agentPanelOpen -> renders <AgentPanel /> as right column
+  AgentPanel mounts -> useAgentLifecycle().startAgent() auto-starts
+
+TARGET:
+  AgentToggleButton click -> useWorkspaceStore.openDrawerToTab("agent")
+  OutputDrawer reads activeDrawerTab -> renders agent content when "agent"
+  Agent lifecycle: startAgent() runs at AppLayout level unconditionally
+  AgentTerminalTab renders inside OutputDrawer, display:none when tab != "agent"
 ```
 
-### Daily Planning Flow (NEW)
+**Critical lifecycle change:** Currently `AgentPanel` auto-starts the agent on mount via `useEffect(() => { startAgent(); }, [])`. When moved to a drawer tab, the agent terminal is lazily mounted.
+
+**Recommendation: Start agent unconditionally at AppLayout level.** The agent's value is autonomous background monitoring. It should start on app launch, not on tab click. The `useAgentQueue` hook already runs at AppLayout level and handles queue polling. Move `startAgent()` into a new `useAgentStartup()` hook called from AppLayout, or fold it into `useAgentQueue`'s init function.
+
+### Drawer Toggle Data Flow (Target)
 
 ```
-User opens Hub (or bot initiates)
+[User clicks tab in DrawerBar]
     |
     v
-AI briefing runs with enriched manifest (calendar + schedule context)
-    |
-    v
-Bot presents: "You have 3 meetings today (2h). 5h available. Here are your priorities..."
-    |
-    v
-User converses: "Let's work on X first, push Y to tomorrow"
-    |
-    v
-Bot dispatches ACTION:{"name":"block_time","input":{...}}
-    |
-    v
-schedule updated -> emit "schedule-applied" -> CalendarView refreshes
+handleTabClick(tab):
+  if drawerOpen && activeTab === tab -> toggleDrawer() (close)
+  if drawerOpen && activeTab !== tab -> setActiveDrawerTab(tab)
+  if !drawerOpen -> openDrawerToTab(tab)
 ```
 
-### Heartbeat Flow (NEW)
+This logic already exists in AppLayout's `handleTabClick`. The only change is removing the ResizablePanel machinery and rendering conditionally with fixed height.
+
+### State Changes Summary
 
 ```
-App startup
-    |
-    v
-init_heartbeat() spawns tokio::interval task (configurable: 15-60 min)
-    |
-    v
-Every tick:
-  1. Query tasks with due_dates in next 48h
-  2. Query today's scheduled_blocks vs estimated_minutes
-  3. Detect: overdue, at-risk (not enough time), unscheduled urgent
-  4. If alerts found:
-     a. Build short prompt with alerts
-     b. Call LLM (prefer Ollama local, fallback CLI) for natural-language summary
-     c. app.emit("heartbeat-alert", alert_payload)
-     d. Create notification in notifications table
-  5. If no alerts: silent (no event emitted)
+useWorkspaceStore changes:
+  REMOVE: drawerHeight (no longer variable -- fixed 450px)
+  REMOVE: hubLayout.goalsPanelSize, centerPanelSize, calendarPanelSize
+  REMOVE: hubLayout.goalsCollapsed, calendarCollapsed
+  ADD:    hubOverlays: { goals: boolean; calendar: boolean }
+  ADD:    toggleHubOverlay(panel: "goals" | "calendar")
+  MODIFY: DrawerTab type -> add "agent"
+  KEEP:   drawerOpen, activeDrawerTab, toggleDrawer, openDrawerToTab
+  KEEP:   projectStates, themeCollapseState (unchanged)
+
+useAgentStore changes:
+  REMOVE: panelOpen, togglePanel
+  KEEP:   status, entries, activeTab (activity/terminal within the drawer)
+  KEEP:   all entry management (addEntry, approveEntry, etc.)
+
+Persist partialize update:
+  REMOVE: drawerHeight from persisted state
+  MODIFY: hubLayout shape -> hubOverlays shape
 ```
-
-### Calendar MCP Tools Flow (NEW)
-
-```
-External AI agent (Claude Code via MCP)
-    |
-    v
-MCP tool call: list_calendar_events({date: "2026-04-02"})
-    |
-    v
-mcp-server reads calendar_events + scheduled_blocks from element.db
-    |
-    v
-Returns merged view: meetings (external) + work blocks (internal)
-    |
-    v
-Agent can then: create_work_block / move_work_block / get_available_slots
-    |
-    v
-Writes to scheduled_blocks table
-    |
-    v
-Tauri file watcher detects DB change -> re-emits schedule events
-```
-
-## Key Integration Points
-
-### 1. The Critical Fix: Wire Calendar Events to Scheduler
-
-**File:** `scheduling_commands.rs`, lines 94-97
-**Current:** `let calendar_events: Vec<CalendarEvent> = vec![];`
-**Fix:** Query `calendar_events` table for the given date, map to `scheduling::types::CalendarEvent`
-
-This is the single most important integration. The scheduling engine (`time_blocks.rs`, `assignment.rs`) already fully supports calendar events with buffer handling, merging, and gap detection. It was designed for this but never connected. The fix is approximately 15 lines of SQL query + mapping.
-
-### 2. Manifest Enrichment for Daily Planning
-
-The context manifest (`build_manifest_string`) currently aggregates project/task state. For daily planning, it needs to also include:
-- Today's calendar events (from `calendar_events` table)
-- Today's scheduled blocks (from `scheduled_blocks` table)  
-- Available time remaining
-- Tasks approaching due dates
-
-This enriched manifest feeds both the daily briefing and the hub chat system prompt.
-
-### 3. CalendarView Replacing Placeholder
-
-`HubView.tsx` already has a 3-column layout with the right column designated for calendar. The `CalendarPlaceholder` component is a simple swap target. The new `CalendarView` needs:
-- Day view (default) showing 24h timeline with events + work blocks
-- Week view toggle
-- Date navigation (prev/next day/week)
-- Pull data from both `calendarSlice` (meetings) and `schedulingSlice` (work blocks)
-- Visual distinction: meetings (external, read-only) vs work blocks (internal, draggable)
-
-### 4. Heartbeat as Background tokio Task
-
-Follow the same pattern as `init_scheduler()` in `engine/scheduler.rs`:
-- Spawn on app startup in `lib.rs`
-- Store handle in app state for lifecycle management
-- Use `tokio::time::interval` (not cron -- heartbeat is fixed-interval)
-- Configurable interval via settings (default: 30 min)
-- LLM call is optional/best-effort (degrade gracefully if no provider)
-
-### 5. Due Date Enforcement via Conversation
-
-Rather than forcing due dates through UI forms, the bot suggests them conversationally:
-- During daily planning: "This task has no due date. When do you need it done?"
-- During heartbeat alerts: "Task X has no due date but seems urgent based on priority"
-- New action: `set_due_date` in action registry -> `update_task` with `due_date` field
-
-This requires adding `due_date` to the `update_task` Tauri command's accepted parameters (currently supports title, description, priority but not due_date).
-
-## Suggested Build Order
-
-Build order is driven by dependency chains:
-
-### Phase 1: Calendar Sync Fix + Wire to Scheduler
-**Rationale:** Everything downstream depends on calendar data flowing. The OAuth infrastructure exists. The scheduling engine exists. The gap is literally one empty vec on line 97.
-
-1. Debug/fix Google OAuth token refresh (reported as "broken")
-2. Debug/fix Outlook OAuth token refresh  
-3. Wire `calendar_events` query into `generate_schedule`
-4. Add background auto-sync timer (tokio interval, every 15 min)
-5. Test: calendar events now appear in generated schedule
-
-### Phase 2: Calendar View UI
-**Rationale:** Users need to see their calendar before the AI can meaningfully plan against it.
-
-1. Build `CalendarView` component with day timeline
-2. Overlay meetings (from calendarSlice) + work blocks (from schedulingSlice)
-3. Date navigation + week view toggle
-4. Replace `CalendarPlaceholder` in HubView
-5. Wire drag-to-reschedule for work blocks (optional, nice-to-have)
-
-### Phase 3: Daily Planning Skill + Due Date Curation
-**Rationale:** With calendar working, the AI can now reason about the user's day.
-
-1. Enrich context manifest with calendar + schedule data
-2. Register new bot skills: `get_todays_plan`, `set_due_date`, `block_time`
-3. Add corresponding Tauri commands
-4. Update briefing prompt to present day-plan format
-5. Implement conversational due date suggestion logic
-
-### Phase 4: Calendar MCP Tools
-**Rationale:** External agents need calendar access. Building after the core works.
-
-1. Add `list_calendar_events` MCP tool
-2. Add `get_available_slots` MCP tool
-3. Add `create_work_block` / `move_work_block` MCP tools
-4. Test with Claude Code via MCP
-
-### Phase 5: Heartbeat + Schedule Negotiation
-**Rationale:** Heartbeat is a background enhancement. Needs working calendar + scheduling to be meaningful.
-
-1. Implement `heartbeat.rs` with tokio interval
-2. Deadline risk detection queries
-3. LLM summarization (Ollama preferred, CLI fallback)
-4. Heartbeat alert events + notification persistence
-5. Schedule negotiation: conversational rescheduling when conflicts detected
-6. Backlog exemption flag on tasks/phases
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Polling SQLite from MCP on Every Change
+### Anti-Pattern 1: Mounting Agent Terminal Conditionally
 
-**What people do:** Have the MCP server poll the DB to detect changes for real-time updates.
-**Why it's wrong:** SQLite has no built-in change notification across processes. Polling wastes CPU and adds latency.
-**Do this instead:** Use the existing file-based event queue pattern. When Tauri writes schedule changes, it also writes to the agent queue file. MCP tools are request-response (not streaming), so they just read current state on each call.
+**What people do:** Only render `<AgentTerminalTab />` when the drawer tab is active, unmounting/remounting on tab switch.
+**Why it's wrong:** xterm.js terminals lose their scroll buffer and PTY connection on unmount. The agent terminal would restart every time the user switches tabs.
+**Do this instead:** Use the existing `display: none` pattern from OutputDrawer. Render all tab contents simultaneously, toggle visibility with `style={{ display: activeDrawerTab === "agent" ? "block" : "none" }}`. This is already the pattern used for terminal/logs/history in the current OutputDrawer.
 
-### Anti-Pattern 2: Building a Custom Calendar Rendering Engine
+### Anti-Pattern 2: Storing Overlay State in Component useState
 
-**What people do:** Build pixel-precise calendar time grids from scratch.
-**Why it's wrong:** Calendar time layout is surprisingly complex (overlapping events, all-day events, timezone handling, DST).
-**Do this instead:** Keep it simple -- vertical time slots at 30-min intervals. Events are absolutely positioned by `top` (start time) and `height` (duration). No need for a library. The data model already stores HH:mm strings which map directly to pixel offsets.
+**What people do:** Track slide-in panel open/close in HubView's local state.
+**Why it's wrong:** State resets when navigating away from hub and back. User expectation: "I had goals open, I check a project, I come back to hub, goals should still be open."
+**Do this instead:** Store `hubOverlays` in `useWorkspaceStore` (persisted). Same pattern as `themeCollapseState` and the current `hubLayout`.
 
-### Anti-Pattern 3: Running Heartbeat LLM Calls on Main Thread
+### Anti-Pattern 3: Adding a Database Column for "Goal"
 
-**What people do:** Block the scheduler or main async runtime with LLM API calls.
-**Why it's wrong:** LLM calls can take 5-30 seconds. Blocking the main tokio runtime degrades the entire app.
-**Do this instead:** Spawn heartbeat LLM calls in a dedicated `tokio::spawn` with timeout. If the call fails or times out, log and skip -- heartbeat is best-effort.
+**What people do:** Add a `goal` column to the projects table for the goal-first UI.
+**Why it's wrong:** The `description` field already serves this purpose. Adding a separate field creates data duplication and migration overhead for a purely presentational change.
+**Do this instead:** Use `description` as the goal content, relabel as "Goal" in the UI. If distinct semantics emerge later, add the column then.
 
-### Anti-Pattern 4: Dual-Writing Schedule State
+### Anti-Pattern 4: Animating Drawer with CSS Height Transitions
 
-**What people do:** Keep schedule state in both frontend Zustand and backend SQLite, trying to sync them.
-**Why it's wrong:** Leads to stale state, race conditions, and UI showing data that doesn't match the DB.
-**Do this instead:** SQLite is the source of truth. Frontend always fetches after mutations. Use Tauri events (`schedule-applied`, `calendar-synced`) as invalidation signals to re-fetch, never as data carriers for state updates.
+**What people do:** `transition: height 200ms` on the drawer container.
+**Why it's wrong:** Height transitions on elements with xterm.js canvases cause layout thrash and terminal resize flickering. The terminal emits dozens of resize events during the animation.
+**Do this instead:** Instant toggle with `display: none` / fixed height. No animation. This is a tool app, not a marketing site.
 
-## Integration Boundaries
+## Build Order (Dependency-Driven)
 
-### Internal Boundaries
+```
+Phase 1: Drawer Consolidation (foundation)
+  DrawerBar.tsx (new) <- no deps
+  useWorkspaceStore.ts (modify DrawerTab) <- no deps
+  AppLayout.tsx (remove ResizablePanel, use DrawerBar) <- depends on DrawerBar
+  OutputDrawer.tsx (add "agent" tab) <- depends on DrawerTab type change
+  AgentToggleButton.tsx (open drawer tab) <- depends on DrawerTab type change
+  useAgentStore.ts (remove panelOpen) <- depends on AgentPanel deletion
+  AgentPanel.tsx (delete) <- depends on OutputDrawer having agent tab
+  uiSlice.ts (remove agentStore panelOpen ref) <- depends on store change
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Frontend <-> Rust backend | Tauri IPC (invoke) + Tauri events (emit/listen) | ~60+ existing commands, add ~5-8 new ones |
-| Rust backend <-> SQLite | rusqlite direct queries via `Arc<Mutex<Database>>` | Existing pattern, no changes needed |
-| MCP server <-> SQLite | better-sqlite3 separate connection | Read-write, same DB file, WAL mode handles concurrent access |
-| MCP server <-> Tauri | File-based event queue (agent_queue in DB) | MCP writes queue entries, Tauri polls and processes |
-| Heartbeat <-> AI gateway | `AiGateway::stream_completion` or CLI fallback | Same pattern as daily briefing |
+Phase 2: Hub Overhaul
+  SlidePanel.tsx (new) <- no deps
+  HubToolbar.tsx (new) <- depends on useWorkspaceStore.hubOverlays
+  useWorkspaceStore.ts (add hubOverlays) <- no deps
+  HubView.tsx (rewrite) <- depends on SlidePanel, HubToolbar, hubOverlays
+  MinimizedColumn.tsx (delete) <- depends on HubView rewrite
 
-### External Services
+Phase 3: Briefing Rework (can parallel Phase 2)
+  BriefingPanel.tsx (modify) <- no deps on phases 1-2
+  BriefingContent.tsx (styling improvements) <- no deps
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Google Calendar API | OAuth 2.0 + REST via reqwest | Exists, reported broken -- likely token refresh issue |
-| Microsoft Graph API | OAuth 2.0 + REST via reqwest | Exists, same suspected issue |
-| LLM providers | API calls via ai/gateway or CLI subprocess | Exists, model-agnostic |
-| Ollama (local) | HTTP to localhost:11434 | Preferred for heartbeat (no API key needed, fast, private) |
+Phase 4: Project Detail
+  ProjectGoalHero.tsx (new) <- no deps
+  ProjectWorkspaceEntry.tsx (new) <- no deps
+  ProjectDetail.tsx (rewrite) <- depends on new components
 
-## Database Schema Impact
-
-### Existing Tables Used (No Schema Changes)
-
-- `calendar_accounts` -- OAuth accounts, sync tokens
-- `calendar_events` -- Cached external events
-- `scheduled_blocks` -- Work blocks, meeting blocks, buffer blocks
-- `work_hours` -- Work day configuration
-- `tasks` -- Already has `due_date`, `estimated_minutes`, `scheduled_date` columns
-
-### New Migration Needed (012_heartbeat.sql)
-
-```sql
--- Heartbeat configuration (singleton)
-CREATE TABLE IF NOT EXISTS heartbeat_config (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    enabled INTEGER NOT NULL DEFAULT 1,
-    interval_minutes INTEGER NOT NULL DEFAULT 30,
-    lookahead_hours INTEGER NOT NULL DEFAULT 48,
-    prefer_local_llm INTEGER NOT NULL DEFAULT 1,
-    updated_at TEXT NOT NULL
-);
-
--- Heartbeat log (audit trail)
-CREATE TABLE IF NOT EXISTS heartbeat_log (
-    id TEXT PRIMARY KEY,
-    checked_at TEXT NOT NULL,
-    alerts_count INTEGER NOT NULL DEFAULT 0,
-    summary TEXT,
-    created_at TEXT NOT NULL
-);
+Phase 5: Bug Fixes + Polish
+  Calendar "Today" label fix
+  Deterministic overdue detection
+  Workflows section minimizable
 ```
 
-### Possible Addition to tasks Table
-
-Consider adding a `backlog_exempt` boolean column to mark tasks/phases that should be immune to due date enforcement. Alternatively, use a convention: tasks with `priority = 'low'` and `due_date IS NULL` under a phase named "Backlog" are exempt. Convention is simpler; column is more explicit. **Recommend:** Column, as conventions break.
-
-```sql
-ALTER TABLE tasks ADD COLUMN backlog_exempt INTEGER NOT NULL DEFAULT 0;
-```
+**Phase ordering rationale:**
+- Phase 1 first because removing the right AgentPanel column simplifies the entire AppLayout, making every subsequent change easier.
+- Phase 2 after drawer because the hub is the largest visual change and benefits from the simplified AppLayout (no right column to worry about).
+- Phase 3 can parallel phase 2 because BriefingPanel changes are self-contained.
+- Phase 4 after hub because the project detail is independent but having the overall structure stable reduces risk.
+- Phase 5 last because bug fixes are independent and lowest risk.
 
 ## Sources
 
-- Direct codebase analysis of `/Users/cuhnowts/projects/element/`
-- `scheduling_commands.rs` lines 94-97 confirming empty calendar_events vec
-- `time_blocks.rs` confirming CalendarEvent support in gap-finding algorithm
-- `assignment.rs` confirming score_task uses due_date urgency
-- `actionRegistry.ts` confirming bot skill registration pattern
-- `mcp-server/src/index.ts` confirming MCP tool registration pattern
-- `CalendarPlaceholder.tsx` confirming placeholder status
-- `engine/scheduler.rs` confirming tokio background task pattern
+- Direct codebase analysis of AppLayout.tsx, HubView.tsx, OutputDrawer.tsx, AgentPanel.tsx, AgentTerminalTab.tsx, useWorkspaceStore.ts, useAgentStore.ts, useAgentLifecycle.ts, useAgentQueue.ts, CenterPanel.tsx, ProjectDetail.tsx, HubCenterPanel.tsx, BriefingPanel.tsx, GoalsTreePanel.tsx, uiSlice.ts
+- User feedback in `project_ui_overhaul_v16.md` memory file
+- v1.6 Clarity milestone definition in PROJECT.md
 
 ---
-*Architecture research for: Element v1.5 Time Bounded*
-*Researched: 2026-04-02*
+*Architecture research for: Element v1.6 Clarity UI restructuring*
+*Researched: 2026-04-04*

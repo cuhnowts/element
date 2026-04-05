@@ -1,168 +1,170 @@
 # Project Research Summary
 
-**Project:** Element v1.5 — Time Bounded
-**Domain:** AI scheduling assistant with calendar-aware task management and proactive deadline monitoring
-**Researched:** 2026-04-02
+**Project:** Element v1.6 Clarity
+**Domain:** Desktop productivity app UI overhaul — layout restructuring, panel system redesign, briefing UX, drawer consolidation
+**Researched:** 2026-04-04
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element v1.5 extends an existing, well-structured Tauri 2.x/React 19 desktop app with scheduling features that most competitors handle poorly. The research is unusually favorable: the scheduling engine already exists and works correctly, the calendar sync infrastructure already exists, and the AI chat system already handles bot skills via action registry — the primary work is wiring these together and building the UI layer on top. The single most consequential line of code is `scheduling_commands.rs:97`, which passes an empty vec for calendar events, preventing the scheduler from knowing about meetings. Fixing that ~15-line gap unlocks the entire feature set.
+v1.6 Clarity is a focused UI restructuring milestone for an existing Tauri 2.x + React 19 + Zustand desktop app. The research confirms this is not a technology introduction problem — the existing stack handles everything needed. The single recommended addition is `tw-animate-css` for CSS-based slide-in panel transitions; no JS animation framework is warranted. The core design shift moves from a 3-column `ResizablePanelGroup` hub (where Goals, Briefing, and Calendar compete for horizontal space) to a single center view with opt-in slide-in overlay panels. This pattern is validated by Linear, Superhuman, and Notion, all of which use single-focus views with context on demand.
 
-The recommended architecture is opinionated: LLMs handle conversational presentation and rescheduling negotiation only; deterministic algorithms handle actual schedule generation. This is not a tradeoff — using an LLM for constraint-based scheduling is a known failure mode backed by published research. The existing greedy scheduler (`assign_tasks_to_blocks`) is already deadline-aware and priority-scored. The bot's job is to present its output conversationally and let users adjust, not to generate schedules from scratch.
+The recommended architecture has five distinct work streams ordered by dependency: (1) drawer consolidation and agent panel relocation, (2) hub layout overhaul with overlay panels, (3) briefing visual rework (parallelizable with hub overhaul), (4) goal-first project detail, and (5) bug fixes and polish. The ordering is driven by the fact that removing the right-side AgentPanel column from AppLayout simplifies every subsequent change — it should come first. The hub overhaul is the largest visual change and benefits from AppLayout being stabilized first.
 
-The dominant risk is calendar sync reliability before anything else ships. Three pre-existing bugs must be fixed in the first phase: the Outlook timezone parsing bug that makes events appear hours off for non-EST users, the missing 410 Gone handler that permanently breaks incremental sync when Google invalidates a sync token, and the OAuth testing-mode 7-day token expiry. None of these require new libraries — they are code corrections in existing files. The second risk is user trust: auto-rescheduling without confirmation is a verified trust destroyer (documented from Motion user research). Every schedule change must be presented as a suggestion the user explicitly accepts.
+The primary risks are all codebase-specific: Zustand selector instability (caused 3 crashes in prior milestones), xterm.js canvas destruction if the agent terminal is remounted rather than hidden via `display: none`, and localStorage hydration mismatches when the `hubLayout` state shape changes. These risks are well-understood with explicit prevention strategies. There are no research unknowns — this is a refactor of a known codebase with well-documented patterns, not a greenfield build.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The existing stack requires only one new frontend dependency (`date-fns@^4.1.0` for calendar grid date math) and one minor version bump (`@modelcontextprotocol/sdk` from `^1.28.0` to `^1.29.0`). All other features — Ollama heartbeat calls, background timer, schedule block reads — use existing Rust (`reqwest`, `tokio::time::interval`, `rusqlite`) and TypeScript (`better-sqlite3`, `@modelcontextprotocol/sdk`) dependencies already in the project. The calendar view should be built as a custom Tailwind CSS time grid (~200 lines TSX), not via `react-big-calendar` or `FullCalendar`, which fight shadcn/ui theming and have stale release cadences.
+The existing stack requires no major changes. `tw-animate-css` is the only new dependency — it is the official `tailwindcss-animate` replacement for Tailwind v4, used by shadcn/ui projects, providing `animate-in`, `animate-out`, `slide-in-from-right`, `slide-in-from-left`, `fade-in`, and `fade-out` utilities via pure CSS keyframes. Installation is one import line in `app.css`. All animation frameworks (Motion/Framer Motion, react-spring, vaul) are explicitly rejected as over-engineering for simple binary show/hide transitions in a desktop app.
+
+Existing shadcn/ui components — specifically `Sheet` (for slide-in panels), `Collapsible` (for drawer sections), and `Tabs` (for the drawer tab bar) — should be leveraged rather than building custom equivalents. They handle focus trapping, keyboard dismissal, and transitions out of the box. Before the hub overhaul phase, a brief spike should determine whether shadcn `Sheet` or a custom `SlidePanel` component better fits the hub overlay use case (Sheet's focus-trap behavior may conflict with hub chat input focus).
 
 **Core technologies:**
-- `tokio::time::interval` (existing): Background heartbeat timer — simpler and more precise than cron for fixed-interval work
-- `reqwest` (existing): Ollama local LLM HTTP calls — the Ollama API is two endpoints; no `ollama-rs` crate needed
-- `date-fns@^4.1.0` (new, only addition): Calendar grid date math — tree-shakeable, immutable, shares version with `react-day-picker` already installed
-- `better-sqlite3` (existing, MCP sidecar): Calendar MCP tools — SQL queries against `calendar_events` + `scheduled_blocks` tables
+- `react-resizable-panels ^4.7.3`: Retained for the vertical center/drawer split in AppLayout; removed from HubView's horizontal 3-column layout
+- `shadcn/ui Sheet`: Primary candidate to replace the custom horizontal ResizablePanelGroup for hub side panels — overlay pattern, not push layout
+- `Zustand ^5.0.11`: Extended with `hubOverlays: { goals: boolean; calendar: boolean }` and `"agent"` added to `DrawerTab` union type
+- `tw-animate-css ^1.x`: New — CSS slide-in/out animations for overlay panels
+- `Tailwind CSS ^4.2.1`: `transition-transform duration-200` on panel containers; `transition-discrete` for display toggling
 
 ### Expected Features
 
-**Must have (table stakes, v1.5 core):**
-- Calendar day view with time-grid showing meetings + work blocks side-by-side — the hub right column is currently a placeholder
-- Calendar sync reliability fix — events must flow before any downstream feature works
-- Daily planning bot skill — "here's what fits today" presented conversationally with user confirmation
-- Due date prominence in task UI + bot skill to set them conversationally
-- Backlog exemption flag — must ship alongside due date enforcement, not after
+**Must have (table stakes for v1.6):**
+- Single-view hub with no forced horizontal scroll — users expect focused center views
+- Hub slide-in overlay panels (Goals left, Calendar right) toggled from a toolbar
+- Briefing with visual hierarchy and scannable sections — markdown walls are not briefings
+- On-demand briefing generation (show cached on load, explicit generate button)
+- Drawer click-to-toggle — grip bar or chevron, not text button
+- AI panel as bottom drawer tab — consolidates the right sidebar, gives AI full screen width
+- Goal-first project detail — purpose/goal card above phases
+- Workspace entry consolidation — group AI button, directory link, session count
+- Calendar "Today" label bug fix
+- Deterministic overdue detection (`due_date < today AND status != complete`)
+- Workflows section minimizable
 
-**Should have (differentiators, v1.5 extended):**
-- Conversational schedule negotiation — "move the report to tomorrow" via hub chat, building on daily planning skill
-- Heartbeat deadline monitoring — periodic background check with deterministic risk math, LLM summary optional
-- AI-suggested due dates — bot proposes dates based on project scope and capacity during planning conversations
-- Week calendar view — extends day view once daily planning habit is established
-- Phase-level due dates — new column enabling heartbeat risk calculations at phase granularity
+**Should have (add in v1.6.x polish):**
+- Keyboard shortcuts: Cmd+J for drawer toggle, Cmd+B for goals panel
+- Drawer height memory per context (hub vs project)
+- Briefing section collapse/expand
 
-**Defer (v2+):**
-- Calendar write-back to Google/Outlook — two-way sync complexity; read-only is the right v1.5 constraint
-- Energy-level optimization — requires weeks of behavioral data; Morgen/Reclaim users find the learning period frustrating
-- Drag-to-reschedule on calendar — nice-to-have but not essential for the chat-first UX
+**Defer (v1.7+):**
+- Interactive briefing with entity links (click project/task mentions to navigate)
+- Briefing scheduling (configure auto-generate timing)
+- Hub quick-action cards (approve, reschedule, dismiss from briefing)
 
 ### Architecture Approach
 
-The app follows a clean 3-layer pattern: React frontend communicating via Tauri IPC/events to a Rust backend, with a separate MCP sidecar process sharing the same SQLite DB via WAL mode. All new features extend this pattern — new bot skills register in `actionRegistry.ts` and dispatch to new Tauri commands; the heartbeat is a `tokio::spawn` background task following the existing `init_scheduler()` pattern; the calendar view replaces `CalendarPlaceholder.tsx` pulling from existing Zustand slices; and calendar MCP tools are new handlers in `mcp-server/src/index.ts` reading existing tables. SQLite is the single source of truth; Zustand stores are caches invalidated by Tauri events, never used as data carriers for mutations.
+The structural change removes the right-side AgentPanel flex column from AppLayout entirely, replaces the hub's horizontal `ResizablePanelGroup` with a single center view and `SlidePanel` overlay components, replaces the vertical `ResizablePanel` drawer with a fixed-height click-to-toggle `DrawerBar`, and consolidates agent UI into the `OutputDrawer` as an "Element AI" tab. Five new components are needed (`SlidePanel`, `HubToolbar`, `DrawerBar`, `ProjectGoalHero`, `ProjectWorkspaceEntry`). Three existing components are deleted (`AgentPanel`, `AgentPanelHeader`, `MinimizedColumn`). The agent lifecycle (`useAgentQueue`) stays at AppLayout level independent of UI visibility — this is the critical architectural decision.
 
 **Major components:**
-1. `CalendarView.tsx` (new) — day/week time-grid pulling from `calendarSlice` (meetings) + `schedulingSlice` (work blocks), replaces `CalendarPlaceholder.tsx`
-2. `heartbeat.rs` (new) — `tokio::spawn` interval task for deadline risk detection, Ollama LLM summary, Tauri event emission
-3. `mcp-server/src/tools/calendar-tools.ts` (new) — `list_calendar_events`, `get_available_slots`, `create_work_block`, `move_work_block` via `better-sqlite3`
-4. `scheduling_commands.rs::generate_schedule` (modify) — wire real `calendar_events` DB query replacing empty vec at line 97
-5. `actionRegistry.ts` (modify) — add `get_todays_plan`, `set_due_date`, `block_time` skills for hub chat dispatch
+1. `SlidePanel.tsx` (new) — reusable overlay wrapper using `transform: translateX()` animation only; no layout reflow
+2. `DrawerBar.tsx` (new) — click-to-toggle tab bar replacing ResizableHandle; handles open/close/tab-switch logic
+3. `HubView.tsx` (rewrite) — single center with `SlidePanel` overlays; replaces 3-column `ResizablePanelGroup`
+4. `OutputDrawer.tsx` (modified) — adds "Element AI" tab rendering agent activity + terminal via `display: none` pattern
+5. `ProjectDetail.tsx` (layout rewrite) — `ProjectGoalHero` at top, then `ProjectWorkspaceEntry`, then phases
 
 ### Critical Pitfalls
 
-1. **Google OAuth 7-day token expiry in testing mode** — publish OAuth consent screen to Production status; implement `invalid_grant` detection with user-facing "reconnect" prompt; never silently lose calendar access
-2. **Outlook timezone bug already in production code** — add `Prefer: outlook.timezone="UTC"` header to all Microsoft Graph requests; remove the hardcoded `-05:` check in `calendar.rs:282-307` before calendar data is consumed by the scheduler
-3. **410 Gone sync token invalidation not handled** — on 410 response, clear stored sync token and automatically retry as full sync; this must be transparent to users
-4. **LLM cannot reliably generate schedules** — use the existing `assign_tasks_to_blocks` algorithm for scheduling; the LLM presents and narrates its output conversationally and processes user adjustment requests; never have the LLM generate a schedule from scratch
-5. **Auto-rescheduling destroys user trust** — every AI-suggested schedule change must be presented as a proposal with explicit accept/reject; never auto-apply; this pattern must be established in the daily planning skill phase before schedule negotiation is built
+1. **Zustand selector reference instability** — New selectors returning `?? []`, `.filter()`, or object spreads create unstable references that cause `Maximum update depth exceeded` crashes. Prevention: use module-level `const EMPTY = []` fallbacks, select primitives individually, audit every new selector before use. This project has 3 prior crashes from this exact pattern.
+
+2. **xterm.js terminal canvas destruction on remount** — If the agent terminal is rendered conditionally (`activeDrawerTab === "agent"`) rather than via `display: none`, the canvas is destroyed on tab switch and cannot be recovered. Prevention: render all drawer tab contents simultaneously, use `display: none` for inactive tabs — exactly the existing pattern in `OutputDrawer`.
+
+3. **Hub layout localStorage hydration mismatch** — The persisted `element-workspace` key contains the old `hubLayout` shape (3-panel sizes). Changing to `hubOverlays` without a migration causes a broken layout on first load after update. Prevention: add a schema version field and run a migration on load; replace the entire `HubView` at once, not incrementally.
+
+4. **Agent lifecycle breakage during panel relocation** — `AgentPanel` currently auto-starts the agent on mount. Moving it to a conditional drawer tab means the agent only starts when the user opens the AI tab. Prevention: extract `startAgent()` into `AppLayout` or `useAgentQueue` init; drawer tab renders only UI, not lifecycle.
+
+5. **Slide-in animation layout thrash** — Animating `width`, `margin`, or `left/right` on slide-in panels causes layout recalculation and content reflow, disrupting streaming text and resetting scroll positions. Prevention: animate only `transform: translateX()` (GPU-composited, no layout recalc); never animate layout properties.
 
 ## Implications for Roadmap
 
-Based on research, the dependency graph is clear: calendar sync correctness is a hard prerequisite for everything; the calendar UI can be built in parallel once data flows; the daily planning skill is the headline feature that depends on both; heartbeat and schedule negotiation extend the planning loop once it works.
+Based on dependency analysis and pitfall mapping, five phases are recommended:
 
-### Phase 1: Calendar Sync Foundation
+### Phase 1: Drawer Consolidation
+**Rationale:** Removing the right AgentPanel column from AppLayout simplifies the entire layout tree. Every subsequent change is easier with a cleaner AppLayout. The agent lifecycle separation must be designed before the UI moves, not retrofitted. Store changes (new `DrawerTab` type, remove `drawerHeight`, `panelOpen`) are foundational to all later work.
+**Delivers:** AI panel in drawer tab, click-to-toggle drawer bar, AppLayout without right sidebar, agent lifecycle independent of panel visibility
+**Addresses:** Drawer click-to-toggle, AI panel consolidation (P1 features)
+**Avoids:** Agent lifecycle breakage (Pitfall 4), Zustand selector instability during store refactor (Pitfall 1), drawer state corruption on project switch
 
-**Rationale:** Three pre-existing bugs prevent any calendar-aware feature from working. All downstream features depend on reliable calendar data in `calendar_events` table. The scheduling engine already supports calendar events — it just isn't connected. This phase unblocks everything.
-**Delivers:** Working Google + Outlook OAuth, events flowing into SQLite, scheduler using real meeting data, background 15-min auto-sync
-**Addresses:** Calendar sync reliability (table stakes), wired scheduler (tech debt fix)
-**Avoids:** Outlook timezone bug (Pitfall 2), Google 410 handling (Pitfall 4), OAuth 7-day expiry (Pitfall 1), empty calendar events vec (Pitfall 3)
+### Phase 2: Hub Layout Overhaul
+**Rationale:** With AppLayout stabilized, the hub is the largest visual change. Must be done as a complete replacement of `HubView`, not incrementally (incremental breaks `react-resizable-panels` percentage calculations). Slide-in panel infrastructure must be built before removing the 3-column layout.
+**Delivers:** Single center hub view, slide-in Goals and Calendar overlay panels, `HubToolbar` with toggle buttons, `SlidePanel` reusable component
+**Addresses:** Single-view hub, hub slide-in panels (P1 features)
+**Avoids:** Hub layout hydration mismatch (full replacement + localStorage migration), slide-in animation layout thrash (overlay not push), concurrent panel state mutations
 
-### Phase 2: Hub Calendar View
+### Phase 3: Briefing Visual Rework (parallel with Phase 2)
+**Rationale:** `BriefingPanel` is self-contained with no dependencies on the hub layout or drawer changes. Can be developed in parallel with Phase 2. Pure CSS/component change using existing `react-markdown` component overrides and structured prompt engineering.
+**Delivers:** Structured briefing sections (Summary, Deadlines, Blockers, Wins), card-based visual hierarchy, on-demand generation button, skeleton loader
+**Addresses:** Briefing restyle, on-demand briefing generation (P1 features)
+**Avoids:** Auto-streaming trigger during layout change, briefing prompt producing unstructured output
 
-**Rationale:** Users need to see their calendar before the AI can meaningfully plan against it. The right column of HubView already has a placeholder slot. This phase is high visual impact and validates that sync is working correctly by making data visible.
-**Delivers:** Day/week time-grid in hub showing meetings (external, read-only) + work blocks (internal, styled differently), date navigation
-**Uses:** `date-fns@^4.1.0` (only new dependency), existing `calendarSlice` + `schedulingSlice`
-**Implements:** `CalendarView.tsx`, `CalendarDayColumn.tsx`, `CalendarEventCard.tsx` replacing `CalendarPlaceholder.tsx`
-**Avoids:** Calendar rendering jank pitfall — virtualize events, render only visible viewport; visual distinction between meetings and work blocks
+### Phase 4: Goal-First Project Detail
+**Rationale:** Project detail is independent of hub and drawer changes. With the overall layout structure stable, this is lower risk. Goal-first redesign requires explicit validation that workspace entry points (directory link, Open AI button) are not buried — wireframe before coding.
+**Delivers:** `ProjectGoalHero` component above phases, `ProjectWorkspaceEntry` consolidating AI + directory + session count, cleaner project detail layout
+**Addresses:** Goal-first project detail, workspace entry consolidation (P1 features)
+**Avoids:** Losing workspace entry points — verify click count to terminal is <= current (2 clicks) before shipping
 
-### Phase 3: Daily Planning Skill + Due Date Curation
-
-**Rationale:** With calendar working and visible, the AI can reason about the user's day. This is the v1.5 headline feature. Due date enforcement must ship with backlog exemption in the same phase to avoid anxiety/nag patterns documented in pitfall research.
-**Delivers:** Bot skill that presents "here's what fits today" using greedy scheduler output, conversational due date setting, backlog exemption flag
-**Uses:** Enriched context manifest (calendar events + schedule blocks + available time), new `actionRegistry.ts` skills (`get_todays_plan`, `set_due_date`, `block_time`)
-**Implements:** Daily planning bot skill, `backlog_exempt` column on tasks, due date type distinction (hard vs. target)
-**Avoids:** LLM schedule generation failure (Pitfall 5) — algorithm generates, LLM presents; due date anxiety (Pitfall 8) — backlog exemption ships in same phase
-
-### Phase 4: Calendar MCP Tools
-
-**Rationale:** External agents (Claude Code via MCP) need calendar awareness. Building after core daily planning works ensures the data model is stable. MCP tools are read-heavy with a few controlled write operations.
-**Delivers:** `list_calendar_events`, `get_available_slots`, `create_work_block`, `move_work_block` tools registered in MCP sidecar
-**Implements:** `mcp-server/src/tools/calendar-tools.ts`, registration in `mcp-server/src/index.ts`
-**Avoids:** MCP write safety pitfall — all write operations require approval flow; only Element-managed events are modifiable, never real user meetings
-
-### Phase 5: Heartbeat + Schedule Negotiation
-
-**Rationale:** Background monitoring is a differentiator but meaningless without due dates populated and calendar events flowing. This phase adds proactive deadline risk detection and closes the conversational loop by letting users negotiate schedule changes. The suggest-never-auto-apply pattern must be locked from day 1.
-**Delivers:** Periodic background deadline risk detection, Ollama LLM summarization with CLI fallback, heartbeat alerts via Tauri events, conversational schedule negotiation ("move X to tomorrow"), undo support for accepted AI suggestions
-**Implements:** `heartbeat.rs`, `heartbeat_commands.rs`, `useHeartbeat.ts`, `012_heartbeat.sql` migration, schedule negotiation skills in action registry
-**Avoids:** Heartbeat resource drain (Pitfall 6) — system load gating, 30-min default interval, 1-3B model size cap, graceful Ollama degradation; auto-rescheduling trust loss (Pitfall 7) — suggest-only UI pattern
+### Phase 5: Bug Fixes and Polish
+**Rationale:** All three remaining items are independent of each other and the structural changes. Shipping them last minimizes interference with the larger changes. Lowest risk phase.
+**Delivers:** Calendar "Today" label fix (day and week view, timezone-safe), deterministic overdue detection, minimizable workflows section
+**Addresses:** Calendar Today fix, overdue detection, workflows collapsible (P1 features)
+**Avoids:** N/A — isolated, well-scoped changes with no shared dependencies
 
 ### Phase Ordering Rationale
 
-- Phase 1 before all others: three pre-existing bugs block every downstream feature; no calendar feature can be tested without them fixed
-- Phase 2 before Phase 3: users need to see their calendar to validate daily planning output; also provides immediate visual feedback that Phase 1 work is correct
-- Phase 3 before Phase 5: heartbeat is meaningless without due dates populated and daily planning established as a habit loop
-- Phase 4 after Phase 3: MCP tool data model should be stable before exposing to external agents; calendar schema won't change after Phase 3
-- Phase 5 last: heartbeat and negotiation are enhancements to a working core, not prerequisites
+- Drawer first: AppLayout simplification reduces surface area for every subsequent change; agent lifecycle must be separated before the UI moves
+- Hub second: largest risk area (most state changes, most component rewrites); benefits from clean AppLayout with no right column
+- Briefing can parallel hub: component-isolated with no shared state; allows Phase 2 and Phase 3 to ship together
+- Project detail fourth: benefits from overall stability; needs a design validation step (wireframe + click-count check) before coding
+- Bug fixes last: independent and low-risk; earlier phases should not be held for them
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1:** Google OAuth production verification flow, Microsoft Graph delta link expiration handling, pagination for `nextPageToken` — these are API-specific edge cases with limited documentation
-- **Phase 5:** Ollama model selection and system load gating APIs on macOS — Tauri system metrics access is not well-documented
+Phases with standard, well-documented patterns (research-phase not needed):
+- **Phase 1 (Drawer Consolidation):** All patterns established in the existing codebase (`display: none` for tabs, Zustand store extension). No novel integration.
+- **Phase 3 (Briefing Rework):** Pure CSS/component work using existing `react-markdown` component overrides. Standard pattern.
+- **Phase 5 (Bug Fixes):** Simple query logic and date comparison fixes. No research needed.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 2:** Custom Tailwind time-grid is a well-documented pattern; absolute positioning by time offset is straightforward
-- **Phase 3:** Action registry pattern is established and well-tested in the codebase; no new integration patterns needed
-- **Phase 4:** MCP tool registration follows existing `write-tools.ts` pattern exactly
+Phases needing a brief design spike before coding:
+- **Phase 2 (Hub Overhaul):** Spike shadcn `Sheet` vs. custom `SlidePanel` — verify Sheet's focus-trap behavior does not conflict with hub chat input. One hour to prototype before committing to the full rewrite.
+- **Phase 4 (Project Detail):** Wireframe the goal-first layout and verify click count to terminal before coding. User feedback validation point.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Based on direct codebase inspection + official docs; only one new npm dependency |
-| Features | HIGH | Competitor analysis + codebase confirmation that data models already support features |
-| Architecture | HIGH | Based on direct codebase analysis; integration patterns verified against existing code |
-| Pitfalls | HIGH | Pre-existing bugs confirmed in specific file:line references; API behavior verified against official docs |
+| Stack | HIGH | Only new dependency is `tw-animate-css`, a well-documented shadcn/ui standard. All other decisions are codebase analysis, not speculation. |
+| Features | HIGH | All features grounded in competitor analysis (Linear, Notion, Things, VS Code) and direct codebase inspection. Prioritization is opinionated and well-reasoned. |
+| Architecture | HIGH | Research based on direct codebase analysis. Current component structure is fully mapped. Build order is dependency-driven with explicit rationale. |
+| Pitfalls | HIGH | Most pitfalls drawn from project history (3 prior Zustand crashes, user feedback files) and known xterm.js constraints. Not hypothetical. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Google OAuth production mode verification:** Research confirms the 7-day testing-mode expiry, but the exact Google verification process for `calendar.readonly` scope (sensitive scope review timeline) is unclear. May affect Phase 1 timeline if Google's review takes weeks. Mitigation: implement `invalid_grant` recovery regardless, so testing-mode builds recover gracefully while awaiting production approval.
-- **Ollama system availability detection on macOS:** Research recommends checking CPU load before heartbeat LLM calls, but the Tauri API for system metrics (`sysinfo` crate availability, Process priority APIs) was not fully verified. Phase 5 planning should confirm the right Rust approach before implementation.
-- **`@modelcontextprotocol/sdk` v2 timeline:** Research notes v2 was anticipated Q1 2026 but v1.x is still current as of April 2026. If v2 ships during development, MCP sidecar may need updates. Low risk since v1.x will receive security fixes for 6+ months post-v2.
-- **Calendar event pagination:** The research flags that current `sync_google_calendar` does not paginate (`nextPageToken`). This only affects users with 300+ events in a 30-day window and is not a Phase 1 blocker, but should be addressed before shipping to general users.
+- **shadcn Sheet vs. custom SlidePanel:** ARCHITECTURE.md recommends shadcn `Sheet` (Radix Dialog-based); STACK.md notes both options. Before Phase 2 begins, spike both approaches and decide based on whether Sheet's focus-trap behavior conflicts with hub chat input focus management. Custom implementation gives more control; Sheet gives free keyboard/accessibility handling.
+- **Agent auto-start timing:** Moving `startAgent()` to AppLayout level changes when the agent starts — it will start on app launch rather than on panel open. Validate this does not cause unexpected resource usage or TTY allocation issues before committing to the pattern.
+- **Briefing prompt structure for sections:** The briefing rework depends on the LLM outputting structured sections (Summary, Deadlines, Blockers, Wins). The current prompt may not guarantee this structure. Prompt engineering for the new briefing format should be validated early in Phase 3 before the UI is built around it.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Element codebase direct analysis — `scheduling_commands.rs`, `calendar.rs`, `time_blocks.rs`, `assignment.rs`, `actionRegistry.ts`, `mcp-server/src/index.ts`
-- [Google Calendar API Sync Guide](https://developers.google.com/workspace/calendar/api/guides/sync) — incremental sync and 410 handling
-- [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2) — token lifecycle
-- [Microsoft Graph Throttling Limits](https://learn.microsoft.com/en-us/graph/throttling-limits) — rate limits
-- [Ollama API docs](https://github.com/ollama/ollama/blob/main/docs/api.md) — endpoint format
-- [tokio::time::interval docs](https://docs.rs/tokio/latest/tokio/time/fn.interval.html) — periodic timer pattern
-- [@modelcontextprotocol/sdk npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) — v1.29.0 current
+- Direct codebase analysis: `AppLayout.tsx`, `HubView.tsx`, `OutputDrawer.tsx`, `AgentPanel.tsx`, `BriefingPanel.tsx`, `ProjectDetail.tsx`, `useWorkspaceStore.ts`, `useAgentStore.ts`, `uiSlice.ts`, `package.json`
+- shadcn/ui Tailwind v4 migration guide — confirmed `tw-animate-css` as official replacement
+- tw-animate-css GitHub — verified CSS import approach
+- Tailwind CSS v4 transition docs — verified `transition-discrete` support
 
 ### Secondary (MEDIUM confidence)
-- [LLMs Can't Optimize Schedules (Timefold)](https://timefold.ai/blog/llms-cant-optimize-schedules-but-ai-can) — architectural decision to use deterministic scheduler
-- [Morgen AI Planning Assistants Review](https://www.morgen.so/blog-posts/best-ai-planning-assistants) — competitor feature analysis
-- [Motion](https://www.usemotion.com/), [Reclaim.ai](https://reclaim.ai/), [Trevor AI](https://www.trevorai.com/) — competitor UX patterns
-- [Google OAuth Testing Mode Token Expiry](https://nango.dev/blog/google-oauth-invalid-grant-token-has-been-expired-or-revoked) — 7-day expiry confirmation
+- Linear UI redesign blog — inverted L-shape navigation, single-focus views, reduction principles
+- PatternFly Drawer design guidelines — overlay vs inline drawers, splitter integration
+- VS Code custom layout docs — panel maximize/minimize toggle patterns
+- The Daily Briefing Dashboard (Medium) — narrative-first briefing, "buffer zone" concept
 
-### Tertiary (LOW confidence)
-- [Microsoft Graph All-Day Events Timezone Issue](https://learn.microsoft.com/en-us/answers/questions/5760696/microsoft-graph-all-day-events-return-incorrect-ut) — organizer timezone gap, needs validation during Phase 1
+### Tertiary (cited for context)
+- Project memory files: `feedback_zustand_selector_stability.md`, `project_ui_overhaul_v16.md`, `feedback_ux_seamless.md`
+- Google CC AI agent, DayStart AI briefing — briefing format inspiration
+- Notion peek pages, Things 3 features, Superhuman command palette — competitor UX patterns
 
 ---
-*Research completed: 2026-04-02*
+*Research completed: 2026-04-04*
 *Ready for roadmap: yes*
