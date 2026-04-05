@@ -281,6 +281,7 @@ pub fn run() {
             generate_schedule,
             apply_schedule,
             run_cli_tool,
+            write_agent_file,
             create_theme,
             list_themes,
             update_theme,

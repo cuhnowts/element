@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command as TokioCommand;
 
@@ -75,4 +75,28 @@ pub async fn run_cli_tool(
     );
 
     Ok(code)
+}
+
+/// Write a file inside the app data directory. Creates parent dirs as needed.
+/// `relative_path` is joined to the app data dir (e.g. "agent/mcp-config.json").
+/// Returns the absolute path written.
+#[tauri::command]
+pub fn write_agent_file(
+    relative_path: String,
+    contents: String,
+    app: AppHandle,
+) -> Result<String, String> {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let full_path = data_dir.join(&relative_path);
+
+    if let Some(parent) = full_path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    std::fs::write(&full_path, &contents).map_err(|e| e.to_string())?;
+
+    full_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "Path contains invalid UTF-8".to_string())
 }

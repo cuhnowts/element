@@ -1,26 +1,15 @@
 import { useCallback } from "react";
-import { appDataDir, resolveResource } from "@tauri-apps/api/path";
+import { resolveResource } from "@tauri-apps/api/path";
 import { invoke } from "@tauri-apps/api/core";
 
 export function useAgentMcp() {
-  const ensureDir = useCallback(async (dirPath: string) => {
-    // Use Tauri's invoke to create directory -- falls back silently if exists
-    await invoke("plugin:fs|mkdir", { path: dirPath, options: { recursive: true } }).catch(() => {
-      // Directory may already exist
-    });
-  }, []);
-
-  const writeFile = useCallback(async (filePath: string, content: string) => {
-    await invoke("plugin:fs|write_text_file", { path: filePath, contents: content });
+  /** Write a file relative to the app data directory. Returns the absolute path. */
+  const writeAgentFile = useCallback(async (relativePath: string, contents: string): Promise<string> => {
+    return invoke<string>("write_agent_file", { relativePath, contents });
   }, []);
 
   const generateMcpConfig = useCallback(
     async (dbPath: string): Promise<string> => {
-      const dataDir = await appDataDir();
-      const agentDir = `${dataDir}/agent`;
-
-      await ensureDir(agentDir);
-
       // Resolve the MCP server bundle path
       const mcpServerPath = await resolveResource(
         "mcp-server/dist/index.js"
@@ -36,18 +25,12 @@ export function useAgentMcp() {
         },
       };
 
-      const configPath = `${agentDir}/mcp-config.json`;
-      await writeFile(configPath, JSON.stringify(config, null, 2));
-      return configPath;
+      return writeAgentFile("agent/mcp-config.json", JSON.stringify(config, null, 2));
     },
-    [ensureDir, writeFile]
+    [writeAgentFile]
   );
 
   const generateSystemPrompt = useCallback(async (): Promise<string> => {
-    const dataDir = await appDataDir();
-    const agentDir = `${dataDir}/agent`;
-
-    await ensureDir(agentDir);
 
     const promptContent = `You are Element's central AI agent. You manage work across all projects.
 
@@ -93,10 +76,8 @@ You run in APPROVE-ONLY mode:
 - If you encounter an error, report it and wait for instructions
 - Be concise in activity log messages`;
 
-    const promptPath = `${agentDir}/AGENT.md`;
-    await writeFile(promptPath, promptContent);
-    return promptPath;
-  }, [ensureDir, writeFile]);
+    return writeAgentFile("agent/AGENT.md", promptContent);
+  }, [writeAgentFile]);
 
   return { generateMcpConfig, generateSystemPrompt };
 }
