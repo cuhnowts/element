@@ -92,7 +92,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Decimal phases (31.1, 31.2): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 31: Drawer Consolidation** - Click-to-toggle drawer with AI panel as bottom drawer tab, right sidebar removed
-- [ ] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout
+- [x] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout (completed 2026-04-05)
 - [ ] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections
 - [ ] **Phase 34: Goal-First Project Detail** - Goal hero card above phases with streamlined workspace entry
 - [ ] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows
@@ -224,7 +224,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
 | 31. Drawer Consolidation | v1.6 | 1/2 | In Progress|  |
-| 32. Hub Layout Overhaul | v1.6 | 1/2 | In Progress|  |
+| 32. Hub Layout Overhaul | v1.6 | 1/2 | Complete    | 2026-04-05 |
 | 33. Briefing Rework | v1.6 | 0/4 | Planned    |  |
 | 34. Goal-First Project Detail | v1.6 | 0/3 | Not started | - |
 | 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
@@ -235,7 +235,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/4 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
