@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Test Foundations
-status: planning
-stopped_at: Phase 40 context gathered
-last_updated: "2026-04-05T18:14:10.487Z"
-last_activity: 2026-04-05 -- Roadmap created for v1.7 Test Foundations
+status: Ready to plan
+stopped_at: Completed 37-02-PLAN.md
+last_updated: "2026-04-05T23:15:51.344Z"
 progress:
   total_phases: 13
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 11
+  completed_plans: 5
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 36 - Linting Foundation
+**Current focus:** Phase 37 — test-infrastructure-core-tests
 
 ## Current Position
 
-Phase: 36 (1 of 5 in v1.7) (Linting Foundation)
-Plan: 0 of 0 in current phase
-Status: Ready to plan
-Last activity: 2026-04-05 -- Roadmap created for v1.7 Test Foundations
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 37
+Plan: Not started
 
 ## Performance Metrics
 
@@ -64,6 +58,12 @@ Recent decisions affecting current work:
 - [v1.7 Roadmap]: Testing MCP server is separate sidecar from existing mcp-server/ (different concerns, different security model)
 - [v1.7 Roadmap]: No frontend component tests -- UI verified via screenshots + user feedback
 - [v1.7 Roadmap]: Linting must be clean before test gates, tests must exist before hooks enforce them
+- [Phase 36]: Used #[allow(dead_code)] with comments for Tauri macro-registered items rather than removing them
+- [Phase 36]: Fixed gateway.rs credential API argument mismatches from parallel agent changes (async-aware Mutex pattern)
+- [Phase 36]: Converted visual-only labels to spans, added semantic roles, scoped biome.json to TS/TSX
+- [Phase 37-01]: Added reportOnFailure: true to vitest coverage config for reliable downstream consumption
+- [Phase 36]: Used bash background processes for parallel TS+Rust checks in check:all script
+- [Phase 37]: Shared test fixture pattern: setup_test_db() in test_fixtures/mod.rs with raw Connection variant for non-Database consumers
 
 ### Pending Todos
 
@@ -77,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T18:14:10.484Z
-Stopped at: Phase 40 context gathered
-Resume file: .planning/phases/40-testing-mcp-server/40-CONTEXT.md
+Last session: 2026-04-05T23:13:04.681Z
+Stopped at: Completed 37-02-PLAN.md
+Resume file: None

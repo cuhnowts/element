@@ -103,7 +103,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Integer phases (36, 37, 38...): Planned milestone work
 - Decimal phases (36.1, 36.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts
+- [x] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts (completed 2026-04-05)
 - [ ] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines
 - [ ] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC
 - [ ] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts
@@ -123,8 +123,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **Plans**: 3 plans
 
 Plans:
-- [ ] 36-01-PLAN.md -- Biome v2 migration and TypeScript lint violations
-- [ ] 36-02-PLAN.md -- Clippy warnings, rustfmt, and await_holding_lock fix
+- [x] 36-01-PLAN.md -- Biome v2 migration and TypeScript lint violations
+- [x] 36-02-PLAN.md -- Clippy warnings, rustfmt, and await_holding_lock fix
 - [ ] 36-03-PLAN.md -- Unified check:all script
 
 ### Phase 37: Test Infrastructure & Core Tests
@@ -230,8 +230,8 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
-| 36. Linting Foundation | v1.7 | 0/3 | Planned    |  |
-| 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planning | - |
+| 36. Linting Foundation | v1.7 | 2/3 | Complete    | 2026-04-05 |
+| 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planned    |  |
 | 38. Error Logger | v1.7 | 0/2 | Planning | - |
 | 39. Claude Code Hooks | v1.7 | 0/1 | Planning | - |
 | 40. Testing MCP Server | v1.7 | 0/2 | Planning | - |
@@ -242,7 +242,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 0/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
