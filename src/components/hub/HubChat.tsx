@@ -12,7 +12,6 @@ import { ScheduleChangeCard } from "./ScheduleChangeCard";
 import { useHubChatStore } from "@/stores/useHubChatStore";
 import { useHubChatStream } from "@/hooks/useHubChatStream";
 import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Square, Bot, User } from "lucide-react";
@@ -462,19 +461,10 @@ export function HubChat() {
   const isInputDisabled = isStreaming || pendingAction !== null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div>
       {/* Chat messages area */}
-      <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
+      <div className="space-y-4" ref={scrollRef}>
         <div className="space-y-4">
-          {messages.length === 0 && !isStreaming && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Bot className="mb-2 h-8 w-8" />
-              <p className="text-sm">
-                What would you like to work on?
-              </p>
-            </div>
-          )}
-
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -557,7 +547,7 @@ export function HubChat() {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input area */}
       <div className="border-t p-4">
