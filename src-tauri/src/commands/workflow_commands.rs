@@ -4,9 +4,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::db::connection::Database;
 use crate::engine::executor::PipelineExecutor;
 use crate::models::execution::{StepResult, WorkflowRun};
-use crate::models::workflow::{
-    CreateWorkflowInput, StepDefinition, UpdateWorkflowInput, Workflow,
-};
+use crate::models::workflow::{CreateWorkflowInput, StepDefinition, UpdateWorkflowInput, Workflow};
 
 #[tauri::command]
 pub async fn create_workflow(

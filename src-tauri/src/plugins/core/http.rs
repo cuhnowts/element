@@ -90,12 +90,7 @@ impl HttpPlugin {
         let response_headers: HashMap<String, String> = response
             .headers()
             .iter()
-            .map(|(k, v)| {
-                (
-                    k.as_str().to_string(),
-                    v.to_str().unwrap_or("").to_string(),
-                )
-            })
+            .map(|(k, v)| (k.as_str().to_string(), v.to_str().unwrap_or("").to_string()))
             .collect();
 
         let body = response

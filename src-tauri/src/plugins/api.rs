@@ -5,6 +5,7 @@ use super::manifest::PluginError;
 
 /// Defines the capability surface that plugins can access.
 /// Each method maps to a declared capability in the plugin manifest.
+#[allow(dead_code)] // plugin API trait for future plugin system
 pub trait PluginApi: Send + Sync {
     /// Access a named credential (requires "credentials" capability)
     fn get_credential(&self, name: &str) -> Result<String, PluginError>;
@@ -22,6 +23,7 @@ pub trait PluginApi: Send + Sync {
     fn execute_shell(&self, command: &str, cwd: Option<&Path>) -> Result<ShellOutput, PluginError>;
 }
 
+#[allow(dead_code)] // plugin API types for future plugin system
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HttpRequest {
     pub method: String,
@@ -31,6 +33,7 @@ pub struct HttpRequest {
     pub timeout_ms: Option<u64>,
 }
 
+#[allow(dead_code)] // plugin API types for future plugin system
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HttpResponse {
     pub status: u16,
@@ -38,6 +41,7 @@ pub struct HttpResponse {
     pub body: String,
 }
 
+#[allow(dead_code)] // plugin API types for future plugin system
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ShellOutput {
     pub exit_code: i32,

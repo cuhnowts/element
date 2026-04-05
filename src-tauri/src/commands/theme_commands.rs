@@ -66,8 +66,7 @@ pub async fn reorder_themes(
     ordered_ids: Vec<String>,
 ) -> Result<(), String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-    db.reorder_themes(ordered_ids)
-        .map_err(|e| e.to_string())?;
+    db.reorder_themes(ordered_ids).map_err(|e| e.to_string())?;
     app.emit("themes-reordered", ())
         .map_err(|e| e.to_string())?;
     Ok(())
@@ -110,7 +109,6 @@ pub async fn assign_task_theme(
     let task = db
         .assign_task_theme(&task_id, theme_id.as_deref())
         .map_err(|e| e.to_string())?;
-    app.emit("task-updated", &task)
-        .map_err(|e| e.to_string())?;
+    app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     Ok(task)
 }

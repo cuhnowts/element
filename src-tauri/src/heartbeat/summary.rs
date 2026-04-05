@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
 
+use super::types::DeadlineRisk;
 use crate::ai::gateway::AiGateway;
 use crate::ai::ollama::OllamaProvider;
 use crate::ai::provider::AiProvider;
 use crate::ai::types::CompletionRequest;
 use crate::db::connection::Database;
-use super::types::DeadlineRisk;
 
 /// Build a deterministic (no LLM) summary of deadline risks.
 /// Each risk becomes a single line; lines are joined with newlines.
@@ -79,10 +79,7 @@ fn build_risk_prompt(risks: &[DeadlineRisk]) -> String {
 /// 4. Fall back to deterministic template
 ///
 /// Each step catches errors and falls through to the next.
-pub async fn generate_risk_summary(
-    risks: &[DeadlineRisk],
-    db: Arc<Mutex<Database>>,
-) -> String {
+pub async fn generate_risk_summary(risks: &[DeadlineRisk], db: Arc<Mutex<Database>>) -> String {
     if risks.is_empty() {
         return String::new();
     }
@@ -171,8 +168,8 @@ async fn try_provider(provider: &dyn AiProvider, prompt: &str) -> Option<String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
     use crate::heartbeat::types::TaskWithDueDate;
+    use chrono::NaiveDate;
 
     fn make_task(id: &str, title: &str, due: NaiveDate, est: Option<i32>) -> TaskWithDueDate {
         TaskWithDueDate {
@@ -188,7 +185,12 @@ mod tests {
 
     #[test]
     fn deterministic_summary_at_risk() {
-        let task = make_task("t1", "Write report", NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(), Some(240));
+        let task = make_task(
+            "t1",
+            "Write report",
+            NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(),
+            Some(240),
+        );
         let risks = vec![DeadlineRisk::AtRisk {
             task,
             needed_minutes: 240,
@@ -197,24 +199,40 @@ mod tests {
         }];
 
         let summary = build_deterministic_summary(&risks);
-        assert_eq!(summary, "Write report: 4h needed, 2h available, due in 2 days.");
+        assert_eq!(
+            summary,
+            "Write report: 4h needed, 2h available, due in 2 days."
+        );
     }
 
     #[test]
     fn deterministic_summary_no_estimate() {
-        let task = make_task("t1", "Review PR", NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(), None);
+        let task = make_task(
+            "t1",
+            "Review PR",
+            NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(),
+            None,
+        );
         let risks = vec![DeadlineRisk::NoEstimate {
             task,
             days_remaining: 3,
         }];
 
         let summary = build_deterministic_summary(&risks);
-        assert_eq!(summary, "Review PR: due in 3 days but has no time estimate.");
+        assert_eq!(
+            summary,
+            "Review PR: due in 3 days but has no time estimate."
+        );
     }
 
     #[test]
     fn deterministic_summary_overdue() {
-        let task = make_task("t1", "Deploy fix", NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(), Some(60));
+        let task = make_task(
+            "t1",
+            "Deploy fix",
+            NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(),
+            Some(60),
+        );
         let risks = vec![DeadlineRisk::Overdue { task }];
 
         let summary = build_deterministic_summary(&risks);
@@ -223,24 +241,42 @@ mod tests {
 
     #[test]
     fn deterministic_summary_singular_day() {
-        let task = make_task("t1", "Quick task", NaiveDate::from_ymd_opt(2026, 1, 6).unwrap(), None);
+        let task = make_task(
+            "t1",
+            "Quick task",
+            NaiveDate::from_ymd_opt(2026, 1, 6).unwrap(),
+            None,
+        );
         let risks = vec![DeadlineRisk::NoEstimate {
             task,
             days_remaining: 1,
         }];
 
         let summary = build_deterministic_summary(&risks);
-        assert_eq!(summary, "Quick task: due in 1 day but has no time estimate.");
+        assert_eq!(
+            summary,
+            "Quick task: due in 1 day but has no time estimate."
+        );
     }
 
     #[test]
     fn deterministic_summary_multiple_risks() {
         let risks = vec![
             DeadlineRisk::Overdue {
-                task: make_task("t1", "Deploy fix", NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(), Some(60)),
+                task: make_task(
+                    "t1",
+                    "Deploy fix",
+                    NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(),
+                    Some(60),
+                ),
             },
             DeadlineRisk::AtRisk {
-                task: make_task("t2", "Write report", NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(), Some(240)),
+                task: make_task(
+                    "t2",
+                    "Write report",
+                    NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(),
+                    Some(240),
+                ),
                 needed_minutes: 240,
                 available_minutes: 120,
                 days_remaining: 2,
@@ -252,13 +288,21 @@ mod tests {
         let lines: Vec<&str> = summary.lines().collect();
         assert_eq!(lines.len(), 2);
         assert_eq!(lines[0], "Deploy fix: overdue.");
-        assert_eq!(lines[1], "Write report: 4h needed, 2h available, due in 2 days.");
+        assert_eq!(
+            lines[1],
+            "Write report: 4h needed, 2h available, due in 2 days."
+        );
     }
 
     #[test]
     fn risk_prompt_contains_risk_data() {
         let risks = vec![DeadlineRisk::Overdue {
-            task: make_task("t1", "Deploy fix", NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(), Some(60)),
+            task: make_task(
+                "t1",
+                "Deploy fix",
+                NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(),
+                Some(60),
+            ),
         }];
 
         let prompt = build_risk_prompt(&risks);

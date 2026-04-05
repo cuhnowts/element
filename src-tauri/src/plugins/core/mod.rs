@@ -246,10 +246,7 @@ mod tests {
         register_core_plugins(&mut registry);
 
         let fs = registry.get("core-filesystem").unwrap();
-        assert!(fs
-            .manifest
-            .capabilities
-            .contains(&PluginCapability::FsRead));
+        assert!(fs.manifest.capabilities.contains(&PluginCapability::FsRead));
         assert!(fs
             .manifest
             .capabilities

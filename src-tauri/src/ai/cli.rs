@@ -23,14 +23,14 @@ impl CliProvider {
 
     /// Build the full prompt string from a system prompt and user message.
     fn build_prompt(system_prompt: &str, user_message: &str) -> String {
-        format!(
-            "<system>\n{}\n</system>\n\n{}",
-            system_prompt, user_message
-        )
+        format!("<system>\n{}\n</system>\n\n{}", system_prompt, user_message)
     }
 
     /// Build the full prompt string from a system prompt and chat messages.
-    fn build_chat_prompt(system_prompt: &str, messages: &[crate::ai::types::ChatMessage]) -> String {
+    fn build_chat_prompt(
+        system_prompt: &str,
+        messages: &[crate::ai::types::ChatMessage],
+    ) -> String {
         let mut prompt = format!("<system>\n{}\n</system>\n\n", system_prompt);
         for msg in messages {
             match msg.role.as_str() {
@@ -80,9 +80,12 @@ impl CliProvider {
         cmd.stdout(std::process::Stdio::piped());
         cmd.stderr(std::process::Stdio::piped());
 
-        let mut child = cmd
-            .spawn()
-            .map_err(|e| AiError::Parse(format!("Failed to spawn CLI tool '{}': {}", self.command, e)))?;
+        let mut child = cmd.spawn().map_err(|e| {
+            AiError::Parse(format!(
+                "Failed to spawn CLI tool '{}': {}",
+                self.command, e
+            ))
+        })?;
 
         let stdout = child
             .stdout
@@ -145,10 +148,7 @@ impl AiProvider for CliProvider {
         ProviderType::Ollama
     }
 
-    async fn complete(
-        &self,
-        request: CompletionRequest,
-    ) -> Result<CompletionResponse, AiError> {
+    async fn complete(&self, request: CompletionRequest) -> Result<CompletionResponse, AiError> {
         let prompt = Self::build_prompt(&request.system_prompt, &request.user_message);
         let (tx, mut _rx) = tokio::sync::mpsc::channel::<String>(32);
         // Drain receiver in background
@@ -182,11 +182,7 @@ impl AiProvider for CliProvider {
         if parts.is_empty() {
             return Ok(false);
         }
-        match TokioCommand::new(parts[0])
-            .arg("--version")
-            .output()
-            .await
-        {
+        match TokioCommand::new(parts[0]).arg("--version").output().await {
             Ok(output) => Ok(output.status.success()),
             Err(_) => Ok(false),
         }

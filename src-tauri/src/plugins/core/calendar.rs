@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::LazyLock;
+use tokio::sync::Mutex as AsyncMutex;
 
 use crate::credentials::keychain::SecretStore;
 use crate::db::connection::Database;
@@ -17,9 +18,10 @@ pub enum CalendarError {
     OAuthError(String),
     ApiError(String),
     DbError(String),
+    #[allow(dead_code)] // error variant for credential failures
     CredentialError(String),
-    SyncTokenExpired,         // Google 410 Gone -- sync token invalidated
-    TokenRevoked(String),     // invalid_grant -- permanent auth failure
+    SyncTokenExpired,     // Google 410 Gone -- sync token invalidated
+    TokenRevoked(String), // invalid_grant -- permanent auth failure
 }
 
 impl std::fmt::Display for CalendarError {
@@ -80,6 +82,7 @@ pub struct CalendarEvent {
     pub updated_at: String,
 }
 
+#[allow(dead_code)] // sync result type for calendar sync operations
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncResult {
@@ -116,6 +119,7 @@ pub fn compute_code_challenge(code_verifier: &str) -> String {
 }
 
 /// Build the Google OAuth authorization URL.
+#[allow(dead_code)] // called from calendar command handlers
 pub fn build_google_auth_url(redirect_port: u16, code_challenge: &str) -> String {
     format!(
         "https://accounts.google.com/o/oauth2/v2/auth?\
@@ -132,6 +136,7 @@ pub fn build_google_auth_url(redirect_port: u16, code_challenge: &str) -> String
 }
 
 /// Build the Microsoft OAuth authorization URL.
+#[allow(dead_code)] // called from calendar command handlers
 pub fn build_outlook_auth_url(redirect_port: u16, code_challenge: &str) -> String {
     format!(
         "https://login.microsoftonline.com/common/oauth2/v2/authorize?\
@@ -158,7 +163,11 @@ pub fn parse_google_events(json: &serde_json::Value, account_id: &str) -> Vec<Ca
         .iter()
         .filter_map(|item| {
             let id = item.get("id")?.as_str()?.to_string();
-            let status = item.get("status").and_then(|v| v.as_str()).unwrap_or("confirmed").to_string();
+            let status = item
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("confirmed")
+                .to_string();
 
             // Cancelled events from incremental sync only have id + status.
             // Return a minimal event so the caller can hard-delete it from DB.
@@ -197,15 +206,14 @@ pub fn parse_google_events(json: &serde_json::Value, account_id: &str) -> Vec<Ca
             let start_obj = item.get("start")?;
             let end_obj = item.get("end")?;
 
-            let (start_time, all_day) = if let Some(dt) =
-                start_obj.get("dateTime").and_then(|v| v.as_str())
-            {
-                (dt.to_string(), false)
-            } else if let Some(d) = start_obj.get("date").and_then(|v| v.as_str()) {
-                (format!("{}T00:00:00Z", d), true)
-            } else {
-                return None;
-            };
+            let (start_time, all_day) =
+                if let Some(dt) = start_obj.get("dateTime").and_then(|v| v.as_str()) {
+                    (dt.to_string(), false)
+                } else if let Some(d) = start_obj.get("date").and_then(|v| v.as_str()) {
+                    (format!("{}T00:00:00Z", d), true)
+                } else {
+                    return None;
+                };
 
             let end_time = if let Some(dt) = end_obj.get("dateTime").and_then(|v| v.as_str()) {
                 dt.to_string()
@@ -298,7 +306,10 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                 .map(|s| {
                     // With outlook.timezone="UTC", times come back without offset or with Z.
                     // Distinguish date-separator dashes (pos 4,7) from timezone offset dashes (pos > 10).
-                    if s.ends_with('Z') || s.contains('+') || s.rfind('-').map_or(false, |pos| pos > 10) {
+                    if s.ends_with('Z')
+                        || s.contains('+')
+                        || s.rfind('-').is_some_and(|pos| pos > 10)
+                    {
                         s.to_string()
                     } else {
                         format!("{}Z", s)
@@ -310,7 +321,10 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                 .and_then(|v| v.get("dateTime"))
                 .and_then(|v| v.as_str())
                 .map(|s| {
-                    if s.ends_with('Z') || s.contains('+') || s.rfind('-').map_or(false, |pos| pos > 10) {
+                    if s.ends_with('Z')
+                        || s.contains('+')
+                        || s.rfind('-').is_some_and(|pos| pos > 10)
+                    {
                         s.to_string()
                     } else {
                         format!("{}Z", s)
@@ -443,7 +457,10 @@ pub async fn sync_outlook_calendar(
     let resp = client
         .get(&url)
         .bearer_auth(access_token)
-        .header("Prefer", "outlook.timezone=\"UTC\", outlook.body-content-type=\"text\"")
+        .header(
+            "Prefer",
+            "outlook.timezone=\"UTC\", outlook.body-content-type=\"text\"",
+        )
         .send()
         .await?;
 
@@ -537,7 +554,10 @@ pub async fn refresh_outlook_token(
 
     if !resp.status().is_success() {
         let body = resp.text().await.unwrap_or_default();
-        if body.contains("invalid_grant") || body.contains("AADSTS700082") || body.contains("AADSTS50076") {
+        if body.contains("invalid_grant")
+            || body.contains("AADSTS700082")
+            || body.contains("AADSTS50076")
+        {
             return Err(CalendarError::TokenRevoked(body));
         }
         return Err(CalendarError::OAuthError(format!(
@@ -631,7 +651,8 @@ pub fn save_events(
 ) -> Result<usize, CalendarError> {
     let mut count = 0;
     for event in events {
-        let attendees_json = serde_json::to_string(&event.attendees).unwrap_or_else(|_| "[]".to_string());
+        let attendees_json =
+            serde_json::to_string(&event.attendees).unwrap_or_else(|_| "[]".to_string());
         conn.execute(
             "INSERT OR REPLACE INTO calendar_events (id, account_id, title, description, location, start_time, end_time, all_day, attendees, status, updated_at)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
@@ -671,8 +692,7 @@ pub fn list_events_for_range(
     let events = stmt
         .query_map(rusqlite::params![start, end], |row| {
             let attendees_str: String = row.get(8)?;
-            let attendees: Vec<String> =
-                serde_json::from_str(&attendees_str).unwrap_or_default();
+            let attendees: Vec<String> = serde_json::from_str(&attendees_str).unwrap_or_default();
             Ok(CalendarEvent {
                 id: row.get(0)?,
                 account_id: row.get(1)?,
@@ -739,12 +759,16 @@ pub fn delete_events_by_ids(
 // ─── CalendarPlugin (orchestrator) ────────────────────────────────────────────
 
 /// Token refresh mutex to prevent race conditions (Pitfall 3 from RESEARCH.md).
-static TOKEN_REFRESH_LOCK: Mutex<()> = Mutex::new(());
+/// Uses tokio::sync::Mutex (async-aware) to avoid blocking the runtime when held across .await.
+#[allow(dead_code)] // used by CalendarPlugin::sync_account
+static TOKEN_REFRESH_LOCK: LazyLock<AsyncMutex<()>> = LazyLock::new(|| AsyncMutex::new(()));
 
+#[allow(dead_code)] // calendar sync orchestrator
 pub struct CalendarPlugin;
 
 impl CalendarPlugin {
     /// Sync a single account: refresh token, fetch events, upsert to DB.
+    #[allow(dead_code)] // calendar sync entry point
     pub async fn sync_account(
         account: &CalendarAccount,
         db: &std::sync::Mutex<Database>,
@@ -757,11 +781,9 @@ impl CalendarPlugin {
             .get_secret(&account.credential_id)
             .map_err(CalendarError::CredentialError)?;
 
-        // Serialize token refresh through mutex (Pitfall 3)
+        // Serialize token refresh through async mutex (Pitfall 3)
         let (access_token, new_refresh) = {
-            let _lock = TOKEN_REFRESH_LOCK
-                .lock()
-                .map_err(|e| CalendarError::OAuthError(e.to_string()))?;
+            let _lock = TOKEN_REFRESH_LOCK.lock().await;
 
             match account.provider.as_str() {
                 "google" => refresh_google_token(&client, &refresh_token).await?,
@@ -799,12 +821,9 @@ impl CalendarPlugin {
                 events_result
             }
             "outlook" => {
-                let mut events_result = sync_outlook_calendar(
-                    &client,
-                    &access_token,
-                    account.sync_token.as_deref(),
-                )
-                .await?;
+                let mut events_result =
+                    sync_outlook_calendar(&client, &access_token, account.sync_token.as_deref())
+                        .await?;
                 for event in &mut events_result.0 {
                     event.account_id = account.id.clone();
                 }
@@ -814,7 +833,9 @@ impl CalendarPlugin {
         };
 
         // Save to DB
-        let db_lock = db.lock().map_err(|e| CalendarError::DbError(e.to_string()))?;
+        let db_lock = db
+            .lock()
+            .map_err(|e| CalendarError::DbError(e.to_string()))?;
         let count = save_events(db_lock.conn(), &events)?;
         let now = chrono::Utc::now().to_rfc3339();
         update_sync_token(db_lock.conn(), &account.id, next_token.as_deref(), &now)?;
@@ -919,7 +940,10 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
                             let _ = disable_calendar_account(db_lock.conn(), &account.id);
                         }
                         let _ = app_handle.emit("calendar-account-disabled", &account.id);
-                        eprintln!("Token revoked during refresh for {}: {} -- account disabled", account.email, msg);
+                        eprintln!(
+                            "Token revoked during refresh for {}: {} -- account disabled",
+                            account.email, msg
+                        );
                         continue;
                     }
                     Err(e) => {
@@ -934,13 +958,8 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
                         .try_state::<std::sync::Mutex<crate::credentials::CredentialManager>>()
                     {
                         if let Ok(mgr) = cred_mgr.lock() {
-                            let _ = mgr.update(
-                                &account.credential_id,
-                                None,
-                                None,
-                                None,
-                                Some(new_rt),
-                            );
+                            let _ =
+                                mgr.update(&account.credential_id, None, None, None, Some(new_rt));
                         }
                     }
                 }
@@ -957,12 +976,8 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
                         .await
                     }
                     "outlook" => {
-                        sync_outlook_calendar(
-                            &client,
-                            &access_token,
-                            account.sync_token.as_deref(),
-                        )
-                        .await
+                        sync_outlook_calendar(&client, &access_token, account.sync_token.as_deref())
+                            .await
                     }
                     _ => continue,
                 };
@@ -1381,8 +1396,8 @@ mod tests {
 
         save_events(&conn, &updated_events).unwrap();
 
-        let all = list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z")
-            .unwrap();
+        let all =
+            list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
         assert_eq!(all.len(), 1);
         assert_eq!(all[0].title, "Updated");
     }
@@ -1437,12 +1452,8 @@ mod tests {
         save_events(&conn, &events).unwrap();
 
         // Only today's events
-        let today = list_events_for_range(
-            &conn,
-            "2026-03-17T00:00:00Z",
-            "2026-03-17T23:59:59Z",
-        )
-        .unwrap();
+        let today =
+            list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-17T23:59:59Z").unwrap();
         assert_eq!(today.len(), 2);
         assert_eq!(today[0].title, "Morning");
         assert_eq!(today[1].title, "Afternoon");
@@ -1453,8 +1464,13 @@ mod tests {
         let conn = setup_test_db();
         let account = make_test_account(&conn);
 
-        update_sync_token(&conn, &account.id, Some("syncToken-abc"), "2026-03-17T10:00:00Z")
-            .unwrap();
+        update_sync_token(
+            &conn,
+            &account.id,
+            Some("syncToken-abc"),
+            "2026-03-17T10:00:00Z",
+        )
+        .unwrap();
 
         let accounts = list_calendar_accounts(&conn).unwrap();
         assert_eq!(accounts.len(), 1);
@@ -1499,12 +1515,8 @@ mod tests {
         save_events(&conn, &events).unwrap();
         delete_calendar_account(&conn, &account.id).unwrap();
 
-        let remaining = list_events_for_range(
-            &conn,
-            "2026-03-17T00:00:00Z",
-            "2026-03-18T00:00:00Z",
-        )
-        .unwrap();
+        let remaining =
+            list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
         assert!(remaining.is_empty());
     }
 
@@ -1635,7 +1647,11 @@ mod tests {
         assert_eq!(events.len(), 3);
 
         // No timezone info -> Z appended
-        assert!(events[0].start_time.ends_with('Z'), "Expected Z suffix, got: {}", events[0].start_time);
+        assert!(
+            events[0].start_time.ends_with('Z'),
+            "Expected Z suffix, got: {}",
+            events[0].start_time
+        );
         assert!(events[0].end_time.ends_with('Z'));
 
         // Already has Z -> unchanged
@@ -1703,7 +1719,8 @@ mod tests {
         assert_eq!(deleted, 1);
 
         // Verify only the second event remains
-        let remaining = list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
+        let remaining =
+            list_events_for_range(&conn, "2026-03-17T00:00:00Z", "2026-03-18T00:00:00Z").unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, "del-evt-2");
     }

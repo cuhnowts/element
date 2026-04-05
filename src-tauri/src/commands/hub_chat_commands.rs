@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
 
@@ -25,7 +25,9 @@ pub async fn hub_chat_send(
 
     let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        gateway.get_default_provider(&db).map_err(|e| e.to_string())?
+        gateway
+            .get_default_provider(&db)
+            .map_err(|e| e.to_string())?
     };
 
     let request = ChatRequest {
@@ -74,9 +76,7 @@ pub async fn hub_chat_send(
 }
 
 #[tauri::command]
-pub fn hub_chat_stop(
-    cancel_flag: State<'_, HubChatCancelFlag>,
-) -> Result<(), String> {
+pub fn hub_chat_stop(cancel_flag: State<'_, HubChatCancelFlag>) -> Result<(), String> {
     cancel_flag.0.store(true, Ordering::SeqCst);
     Ok(())
 }

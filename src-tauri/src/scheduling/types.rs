@@ -19,6 +19,7 @@ impl std::fmt::Display for BlockType {
 }
 
 impl BlockType {
+    #[allow(dead_code)] // DB deserialization helper
     pub fn from_db_str(s: &str) -> Result<Self, String> {
         match s {
             "work" => Ok(BlockType::Work),
@@ -55,12 +56,13 @@ pub struct ScheduleBlock {
     pub is_continuation: bool,
 }
 
+#[allow(dead_code)] // fields populated for scheduling algorithm input
 #[derive(Debug, Clone)]
 pub struct CalendarEvent {
     pub id: String,
     pub title: String,
-    pub start_time: String,  // HH:mm format
-    pub end_time: String,    // HH:mm format
+    pub start_time: String, // HH:mm format
+    pub end_time: String,   // HH:mm format
     pub account_color: Option<String>,
 }
 

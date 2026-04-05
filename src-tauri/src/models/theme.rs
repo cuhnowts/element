@@ -90,7 +90,11 @@ impl Database {
         )
     }
 
-    pub fn update_theme(&self, id: &str, input: UpdateThemeInput) -> Result<Theme, rusqlite::Error> {
+    pub fn update_theme(
+        &self,
+        id: &str,
+        input: UpdateThemeInput,
+    ) -> Result<Theme, rusqlite::Error> {
         let existing = self.get_theme(id)?;
         let now = chrono::Utc::now().to_rfc3339();
 
@@ -106,10 +110,8 @@ impl Database {
     }
 
     pub fn delete_theme(&self, id: &str) -> Result<(), rusqlite::Error> {
-        self.conn().execute(
-            "DELETE FROM themes WHERE id = ?1",
-            rusqlite::params![id],
-        )?;
+        self.conn()
+            .execute("DELETE FROM themes WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 

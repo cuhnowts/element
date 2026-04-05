@@ -98,12 +98,14 @@ impl DeadlineRisk {
 
     pub fn suggested_fix(&self) -> Option<String> {
         match self {
-            DeadlineRisk::Overdue { task } => {
-                Some(format!("Reschedule '{}' -- it was due {}", task.title, task.due_date))
-            }
-            DeadlineRisk::AtRisk { task, .. } => {
-                Some(format!("Move '{}' to free up time before {}", task.title, task.due_date))
-            }
+            DeadlineRisk::Overdue { task } => Some(format!(
+                "Reschedule '{}' -- it was due {}",
+                task.title, task.due_date
+            )),
+            DeadlineRisk::AtRisk { task, .. } => Some(format!(
+                "Move '{}' to free up time before {}",
+                task.title, task.due_date
+            )),
             DeadlineRisk::NoEstimate { task, .. } => {
                 Some(format!("Add a time estimate to '{}'", task.title))
             }

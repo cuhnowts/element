@@ -125,8 +125,7 @@ pub async fn disable_plugin(
     name: String,
 ) -> Result<(), String> {
     let host = state.lock().map_err(|e| e.to_string())?;
-    host.set_enabled(&name, false)
-        .map_err(|e| e.to_string())?;
+    host.set_enabled(&name, false).map_err(|e| e.to_string())?;
     app.emit("plugin-updated", &name)
         .map_err(|e| e.to_string())?;
     Ok(())
@@ -215,7 +214,9 @@ mod tests {
         let input = serde_json::json!({
             "command": "echo test_output"
         });
-        let result = execute_step("shell-command".to_string(), input).await.unwrap();
+        let result = execute_step("shell-command".to_string(), input)
+            .await
+            .unwrap();
         assert_eq!(result["exit_code"], 0);
         assert!(result["stdout"].as_str().unwrap().contains("test_output"));
     }
@@ -225,7 +226,9 @@ mod tests {
         let input = serde_json::json!({});
         let result = execute_step("unknown-type".to_string(), input).await;
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Unknown step type: unknown-type"));
+        assert!(result
+            .unwrap_err()
+            .contains("Unknown step type: unknown-type"));
     }
 
     #[test]

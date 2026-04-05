@@ -141,6 +141,7 @@ pub enum AiError {
     Api { status: u16, message: String },
     #[error("Parse error: {0}")]
     Parse(String),
+    #[allow(dead_code)] // error variant for future use
     #[error("No provider configured")]
     NoProvider,
     #[error("Provider not found: {0}")]

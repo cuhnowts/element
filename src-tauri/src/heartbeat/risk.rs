@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use chrono::NaiveDate;
-use crate::scheduling::types::{CalendarEvent, WorkHoursConfig};
-use crate::scheduling::time_blocks::find_open_blocks;
 use super::types::{DeadlineRisk, TaskWithDueDate};
+use crate::scheduling::time_blocks::find_open_blocks;
+use crate::scheduling::types::{CalendarEvent, WorkHoursConfig};
+use chrono::NaiveDate;
+use std::collections::HashMap;
 
 /// Calculate available capacity for each workday in the given date range.
 /// Returns a vec of (date, capacity_minutes) tuples for workdays only.
@@ -111,7 +111,13 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
 
-    fn make_task(id: &str, title: &str, due: NaiveDate, est: Option<i32>, is_backlog: bool) -> TaskWithDueDate {
+    fn make_task(
+        id: &str,
+        title: &str,
+        due: NaiveDate,
+        est: Option<i32>,
+        is_backlog: bool,
+    ) -> TaskWithDueDate {
         TaskWithDueDate {
             id: id.to_string(),
             title: title.to_string(),
@@ -127,7 +133,13 @@ mod tests {
         WorkHoursConfig {
             start_time: "09:00".to_string(),
             end_time: "17:00".to_string(),
-            work_days: vec!["mon".into(), "tue".into(), "wed".into(), "thu".into(), "fri".into()],
+            work_days: vec![
+                "mon".into(),
+                "tue".into(),
+                "wed".into(),
+                "thu".into(),
+                "fri".into(),
+            ],
             buffer_minutes: 0,
             min_block_minutes: 15,
         }
@@ -162,7 +174,12 @@ mod tests {
         let risks = assess_deadline_risks(&tasks, &daily_cap, today);
         assert_eq!(risks.len(), 1);
         match &risks[0] {
-            DeadlineRisk::AtRisk { needed_minutes, available_minutes, days_remaining, .. } => {
+            DeadlineRisk::AtRisk {
+                needed_minutes,
+                available_minutes,
+                days_remaining,
+                ..
+            } => {
                 assert_eq!(*needed_minutes, 240);
                 assert_eq!(*available_minutes, 200); // 4 days * 50min
                 assert_eq!(*days_remaining, 3);
@@ -213,7 +230,10 @@ mod tests {
         let risks = assess_deadline_risks(&tasks, &daily_cap, today);
         assert_eq!(risks.len(), 1);
         match &risks[0] {
-            DeadlineRisk::NoEstimate { task, days_remaining } => {
+            DeadlineRisk::NoEstimate {
+                task,
+                days_remaining,
+            } => {
                 assert_eq!(task.id, "t1");
                 assert_eq!(*days_remaining, 2);
             }
@@ -226,8 +246,8 @@ mod tests {
         let today = NaiveDate::from_ymd_opt(2026, 1, 5).unwrap();
         let due = NaiveDate::from_ymd_opt(2026, 1, 6).unwrap();
         let tasks = vec![
-            make_task("t1", "Backlog item", due, Some(480), true),  // is_backlog=true
-            make_task("t2", "Real task", due, Some(480), false),    // is_backlog=false
+            make_task("t1", "Backlog item", due, Some(480), true), // is_backlog=true
+            make_task("t2", "Real task", due, Some(480), false),   // is_backlog=false
         ];
         let daily_cap = vec![(today, 60), (due, 60)]; // Only 2h total for 8h task
 
@@ -241,9 +261,27 @@ mod tests {
     fn risks_sorted_by_severity_then_days() {
         let today = NaiveDate::from_ymd_opt(2026, 1, 5).unwrap();
         let tasks = vec![
-            make_task("t1", "Info risk", NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), None, false), // 7 days, Info
-            make_task("t2", "Overdue", NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(), Some(60), false), // overdue, Critical
-            make_task("t3", "Warning risk", NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(), None, false), // 2 days, Warning
+            make_task(
+                "t1",
+                "Info risk",
+                NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(),
+                None,
+                false,
+            ), // 7 days, Info
+            make_task(
+                "t2",
+                "Overdue",
+                NaiveDate::from_ymd_opt(2026, 1, 4).unwrap(),
+                Some(60),
+                false,
+            ), // overdue, Critical
+            make_task(
+                "t3",
+                "Warning risk",
+                NaiveDate::from_ymd_opt(2026, 1, 7).unwrap(),
+                None,
+                false,
+            ), // 2 days, Warning
         ];
         let daily_cap = vec![];
 

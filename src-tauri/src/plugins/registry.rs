@@ -13,6 +13,7 @@ pub enum PluginStatus {
     Loading,
 }
 
+#[allow(dead_code)] // fields populated during plugin loading
 #[derive(Debug, Clone)]
 pub struct LoadedPlugin {
     pub manifest: PluginManifest,
@@ -45,12 +46,7 @@ impl PluginRegistry {
         self.plugins.values().collect()
     }
 
-    pub fn set_status(
-        &mut self,
-        name: &str,
-        status: PluginStatus,
-        error: Option<String>,
-    ) -> bool {
+    pub fn set_status(&mut self, name: &str, status: PluginStatus, error: Option<String>) -> bool {
         if let Some(plugin) = self.plugins.get_mut(name) {
             plugin.status = status;
             plugin.error_message = error;

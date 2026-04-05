@@ -156,10 +156,8 @@ impl Database {
     }
 
     pub fn delete_project(&self, id: &str) -> Result<(), rusqlite::Error> {
-        self.conn().execute(
-            "DELETE FROM projects WHERE id = ?1",
-            rusqlite::params![id],
-        )?;
+        self.conn()
+            .execute("DELETE FROM projects WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 
@@ -280,17 +278,11 @@ mod tests {
         assert!(project.directory_path.is_none());
 
         let linked = db.link_directory(&project.id, "/tmp/test").unwrap();
-        assert_eq!(
-            linked.directory_path,
-            Some("/tmp/test".to_string())
-        );
+        assert_eq!(linked.directory_path, Some("/tmp/test".to_string()));
 
         // Verify round-trip
         let fetched = db.get_project(&project.id).unwrap();
-        assert_eq!(
-            fetched.directory_path,
-            Some("/tmp/test".to_string())
-        );
+        assert_eq!(fetched.directory_path, Some("/tmp/test".to_string()));
     }
 
     #[test]
@@ -378,9 +370,7 @@ mod tests {
             .unwrap();
 
         // Set tier to medium
-        let updated = db
-            .set_planning_tier(&project.id, Some("medium"))
-            .unwrap();
+        let updated = db.set_planning_tier(&project.id, Some("medium")).unwrap();
         assert_eq!(updated.planning_tier, Some("medium".to_string()));
 
         // Clear tier back to None
@@ -399,7 +389,9 @@ mod tests {
             .unwrap();
         assert_eq!(project.goal, "");
 
-        let updated = db.update_project_goal(&project.id, "Ship v2 by Q3").unwrap();
+        let updated = db
+            .update_project_goal(&project.id, "Ship v2 by Q3")
+            .unwrap();
         assert_eq!(updated.goal, "Ship v2 by Q3");
 
         // Verify update_project does NOT clear goal

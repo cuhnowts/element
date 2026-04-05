@@ -88,8 +88,8 @@ pub fn load_plugin_manifest(plugin_dir: &Path) -> Result<PluginManifest, PluginE
     }
     let content = std::fs::read_to_string(&manifest_path)
         .map_err(|e| PluginError::LoadError(e.to_string()))?;
-    let manifest: PluginManifest = serde_json::from_str(&content)
-        .map_err(|e| PluginError::InvalidManifest(e.to_string()))?;
+    let manifest: PluginManifest =
+        serde_json::from_str(&content).map_err(|e| PluginError::InvalidManifest(e.to_string()))?;
 
     // Validate required fields
     if manifest.name.is_empty() {

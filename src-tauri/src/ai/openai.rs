@@ -139,10 +139,7 @@ impl AiProvider for OpenAiProvider {
 
         Ok(CompletionResponse {
             content,
-            model: json["model"]
-                .as_str()
-                .unwrap_or(&self.model)
-                .to_string(),
+            model: json["model"].as_str().unwrap_or(&self.model).to_string(),
             usage: TokenUsage {
                 input_tokens,
                 output_tokens,
@@ -236,10 +233,8 @@ impl AiProvider for OpenAiProvider {
                                 let _ = event_sender.send(tool_event.to_string()).await;
                             }
                             tool_call_id = id.to_string();
-                            tool_call_name = tc["function"]["name"]
-                                .as_str()
-                                .unwrap_or("")
-                                .to_string();
+                            tool_call_name =
+                                tc["function"]["name"].as_str().unwrap_or("").to_string();
                             tool_call_args.clear();
                             in_tool_call = true;
                         }
@@ -252,30 +247,30 @@ impl AiProvider for OpenAiProvider {
                 }
 
                 // Finalize on finish_reason "tool_calls" or "stop"
-                if finish_reason == Some("tool_calls") || finish_reason == Some("stop") {
-                    if in_tool_call && !tool_call_id.is_empty() {
-                        let input: Value =
-                            serde_json::from_str(&tool_call_args).unwrap_or(json!({}));
-                        let block = ToolUseBlock {
-                            id: tool_call_id.clone(),
-                            name: tool_call_name.clone(),
-                            input: input.clone(),
-                        };
-                        tool_use_blocks.push(block);
+                if (finish_reason == Some("tool_calls") || finish_reason == Some("stop"))
+                    && in_tool_call
+                    && !tool_call_id.is_empty()
+                {
+                    let input: Value = serde_json::from_str(&tool_call_args).unwrap_or(json!({}));
+                    let block = ToolUseBlock {
+                        id: tool_call_id.clone(),
+                        name: tool_call_name.clone(),
+                        input: input.clone(),
+                    };
+                    tool_use_blocks.push(block);
 
-                        let tool_event = json!({
-                            "type": "tool_use",
-                            "id": tool_call_id,
-                            "name": tool_call_name,
-                            "input": input,
-                        });
-                        let _ = event_sender.send(tool_event.to_string()).await;
+                    let tool_event = json!({
+                        "type": "tool_use",
+                        "id": tool_call_id,
+                        "name": tool_call_name,
+                        "input": input,
+                    });
+                    let _ = event_sender.send(tool_event.to_string()).await;
 
-                        in_tool_call = false;
-                        tool_call_id.clear();
-                        tool_call_name.clear();
-                        tool_call_args.clear();
-                    }
+                    in_tool_call = false;
+                    tool_call_id.clear();
+                    tool_call_name.clear();
+                    tool_call_args.clear();
                 }
             }
         }

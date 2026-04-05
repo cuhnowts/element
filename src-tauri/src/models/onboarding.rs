@@ -29,6 +29,7 @@ pub struct PendingTask {
 }
 
 /// Input for batch creating phases and tasks (from review screen)
+#[allow(dead_code)] // deserialized from frontend JSON
 #[derive(Debug, Deserialize)]
 pub struct BatchPlanInput {
     pub phases: Vec<PendingPhaseInput>,
@@ -48,11 +49,7 @@ pub struct PendingTaskInput {
 }
 
 /// Generate skill file content for the CLI tool
-pub fn generate_skill_file_content(
-    project_name: &str,
-    scope: &str,
-    goals: &str,
-) -> String {
+pub fn generate_skill_file_content(project_name: &str, scope: &str, goals: &str) -> String {
     format!(
         r#"# Project Onboarding: {project_name}
 
@@ -92,6 +89,7 @@ IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
 }
 
 /// Data structures for project context file generation
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct ProjectContextData {
     pub project_name: String,
     pub project_description: String,
@@ -103,6 +101,7 @@ pub struct ProjectContextData {
     pub is_empty: bool,
 }
 
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct PhaseContextData {
     pub name: String,
     pub sort_order: i32,
@@ -111,6 +110,7 @@ pub struct PhaseContextData {
     pub total: usize,
 }
 
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct TaskContextData {
     pub title: String,
     pub status: String,
@@ -208,10 +208,16 @@ fn status_icon(status: &str) -> &'static str {
 fn format_phase_rollup(phase: &PhaseContextData, class: &PhaseClass) -> String {
     match class {
         PhaseClass::Completed => {
-            format!("- {} [{}/{} complete]\n", phase.name, phase.completed, phase.total)
+            format!(
+                "- {} [{}/{} complete]\n",
+                phase.name, phase.completed, phase.total
+            )
         }
         PhaseClass::Active => {
-            let mut out = format!("### {} [{}/{}]\n\n", phase.name, phase.completed, phase.total);
+            let mut out = format!(
+                "### {} [{}/{}]\n\n",
+                phase.name, phase.completed, phase.total
+            );
             for task in &phase.tasks {
                 out.push_str(&format!("- {} {}\n", status_icon(&task.status), task.title));
             }
@@ -307,7 +313,9 @@ fn build_header(data: &ProjectContextData, tier: &str, state: &ProjectState) -> 
     if *state != ProjectState::NoPlan {
         out.push_str(&format!(
             "**Progress:** {}/{} tasks complete across {} phases\n",
-            data.completed_tasks, data.total_tasks, data.phases.len()
+            data.completed_tasks,
+            data.total_tasks,
+            data.phases.len()
         ));
     }
 
@@ -380,8 +388,10 @@ fn build_work_section(data: &ProjectContextData, _state: &ProjectState) -> Strin
             if class == &PhaseClass::Active {
                 out.push_str(&format_phase_rollup(phase, &PhaseClass::Active));
             } else {
-                out.push_str(&format!("- {} [{}/{} complete]\n",
-                    phase.name, phase.completed, phase.total));
+                out.push_str(&format!(
+                    "- {} [{}/{} complete]\n",
+                    phase.name, phase.completed, phase.total
+                ));
             }
         }
     }
@@ -431,7 +441,11 @@ IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
 }
 
 /// Generate context file content for seeding into an AI CLI tool
-pub fn generate_context_file_content(data: &ProjectContextData, tier: &str, cli_tool: &str) -> String {
+pub fn generate_context_file_content(
+    data: &ProjectContextData,
+    tier: &str,
+    cli_tool: &str,
+) -> String {
     let state = detect_project_state(data);
     let mut out = String::new();
 
@@ -465,8 +479,8 @@ pub fn generate_context_file_content(data: &ProjectContextData, tier: &str, cli_
 /// - { "phases": [...] } → used as-is
 /// - { "tasks": [...] } → wrapped into a single unnamed phase for Quick tier
 pub fn parse_plan_output_file(content: &str) -> Result<PlanOutput, String> {
-    let mut output: PlanOutput = serde_json::from_str(content)
-        .map_err(|e| format!("Invalid plan output JSON: {}", e))?;
+    let mut output: PlanOutput =
+        serde_json::from_str(content).map_err(|e| format!("Invalid plan output JSON: {}", e))?;
 
     // Normalize flat tasks into a single unnamed phase (Quick tier format)
     if output.phases.is_empty() && !output.tasks.is_empty() {
@@ -491,11 +505,11 @@ mod tests {
         phases: Vec<PhaseContextData>,
         unassigned: Vec<TaskContextData>,
     ) -> ProjectContextData {
-        let total_tasks: usize = phases.iter().map(|p| p.total).sum::<usize>()
-            + unassigned.len();
+        let total_tasks: usize = phases.iter().map(|p| p.total).sum::<usize>() + unassigned.len();
         let completed_tasks: usize = phases.iter().map(|p| p.completed).sum::<usize>()
             + unassigned.iter().filter(|t| t.status == "complete").count();
-        let in_progress_tasks: usize = phases.iter()
+        let in_progress_tasks: usize = phases
+            .iter()
             .flat_map(|p| p.tasks.iter())
             .chain(unassigned.iter())
             .filter(|t| t.status == "in-progress")
@@ -520,11 +534,14 @@ mod tests {
         PhaseContextData {
             name: name.into(),
             sort_order: 0,
-            tasks: tasks.into_iter().map(|(title, status)| TaskContextData {
-                title: title.into(),
-                status: status.into(),
-                description: String::new(),
-            }).collect(),
+            tasks: tasks
+                .into_iter()
+                .map(|(title, status)| TaskContextData {
+                    title: title.into(),
+                    status: status.into(),
+                    description: String::new(),
+                })
+                .collect(),
             completed,
             total,
         }
@@ -562,33 +579,57 @@ mod tests {
 
     #[test]
     fn test_state_planned() {
-        let data = make_test_data("Test", "", vec![
-            make_phase("Phase 1", vec![("Task A", "pending"), ("Task B", "pending")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Test",
+            "",
+            vec![make_phase(
+                "Phase 1",
+                vec![("Task A", "pending"), ("Task B", "pending")],
+            )],
+            vec![],
+        );
         assert_eq!(detect_project_state(&data), ProjectState::Planned);
     }
 
     #[test]
     fn test_state_planned_blocked_only() {
-        let data = make_test_data("Test", "", vec![
-            make_phase("Phase 1", vec![("Task A", "blocked"), ("Task B", "pending")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Test",
+            "",
+            vec![make_phase(
+                "Phase 1",
+                vec![("Task A", "blocked"), ("Task B", "pending")],
+            )],
+            vec![],
+        );
         assert_eq!(detect_project_state(&data), ProjectState::Planned);
     }
 
     #[test]
     fn test_state_in_progress() {
-        let data = make_test_data("Test", "", vec![
-            make_phase("Phase 1", vec![("Task A", "complete"), ("Task B", "in-progress")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Test",
+            "",
+            vec![make_phase(
+                "Phase 1",
+                vec![("Task A", "complete"), ("Task B", "in-progress")],
+            )],
+            vec![],
+        );
         assert_eq!(detect_project_state(&data), ProjectState::InProgress);
     }
 
     #[test]
     fn test_state_complete() {
-        let data = make_test_data("Test", "", vec![
-            make_phase("Phase 1", vec![("Task A", "complete"), ("Task B", "complete")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Test",
+            "",
+            vec![make_phase(
+                "Phase 1",
+                vec![("Task A", "complete"), ("Task B", "complete")],
+            )],
+            vec![],
+        );
         assert_eq!(detect_project_state(&data), ProjectState::Complete);
     }
 
@@ -626,7 +667,9 @@ mod tests {
 
     #[test]
     fn test_instructions_planned_medium() {
-        assert!(get_instructions(&ProjectState::Planned, "medium").contains("first incomplete phase"));
+        assert!(
+            get_instructions(&ProjectState::Planned, "medium").contains("first incomplete phase")
+        );
     }
 
     #[test]
@@ -693,7 +736,14 @@ mod tests {
             make_phase("Later", vec![("T1", "pending")]),
         ];
         let classes = classify_phases(&phases);
-        assert_eq!(classes, vec![PhaseClass::Completed, PhaseClass::Active, PhaseClass::Future]);
+        assert_eq!(
+            classes,
+            vec![
+                PhaseClass::Completed,
+                PhaseClass::Active,
+                PhaseClass::Future
+            ]
+        );
     }
 
     // === Token Budget Tests (CTX-02) ===
@@ -710,14 +760,24 @@ mod tests {
         for i in 0..12 {
             phases.push(make_phase(
                 &format!("Completed Phase {}", i + 1),
-                (0..5).map(|j| (Box::leak(format!("Task {}", j).into_boxed_str()) as &str, "complete")).collect(),
+                (0..5)
+                    .map(|j| {
+                        (
+                            Box::leak(format!("Task {}", j).into_boxed_str()) as &str,
+                            "complete",
+                        )
+                    })
+                    .collect(),
             ));
         }
         phases.push(make_phase(
             "Active Phase",
             vec![("Current Task", "in-progress"), ("Next Task", "pending")],
         ));
-        phases.push(make_phase("Future Phase 1", vec![("F1", "pending"), ("F2", "pending")]));
+        phases.push(make_phase(
+            "Future Phase 1",
+            vec![("F1", "pending"), ("F2", "pending")],
+        ));
         phases.push(make_phase("Future Phase 2", vec![("F3", "pending")]));
 
         let data = make_test_data("Big Project", "A large project", phases, vec![]);
@@ -742,7 +802,10 @@ mod tests {
             let tasks: Vec<(&str, &str)> = (0..10)
                 .map(|j| {
                     (
-                        Box::leak(format!("Very Long Task Name Number {} in Phase {}", j, i).into_boxed_str()) as &str,
+                        Box::leak(
+                            format!("Very Long Task Name Number {} in Phase {}", j, i)
+                                .into_boxed_str(),
+                        ) as &str,
                         if i < 15 { "complete" } else { "pending" },
                     )
                 })
@@ -755,7 +818,10 @@ mod tests {
         // Make one phase active
         phases[16] = make_phase(
             "The Active Phase",
-            vec![("Active Task 1", "in-progress"), ("Active Task 2", "pending")],
+            vec![
+                ("Active Task 1", "in-progress"),
+                ("Active Task 2", "pending"),
+            ],
         );
 
         let data = make_test_data("Huge Project", "Description", phases, vec![]);
@@ -796,10 +862,18 @@ mod tests {
 
     #[test]
     fn test_content_in_progress_medium() {
-        let data = make_test_data("Active Project", "Working on it", vec![
-            make_phase("Setup", vec![("Init", "complete"), ("Config", "complete")]),
-            make_phase("Core", vec![("Build API", "in-progress"), ("Build UI", "pending")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Active Project",
+            "Working on it",
+            vec![
+                make_phase("Setup", vec![("Init", "complete"), ("Config", "complete")]),
+                make_phase(
+                    "Core",
+                    vec![("Build API", "in-progress"), ("Build UI", "pending")],
+                ),
+            ],
+            vec![],
+        );
 
         let output = generate_context_file_content(&data, "medium", "claude");
 
@@ -811,9 +885,15 @@ mod tests {
 
     #[test]
     fn test_content_complete() {
-        let data = make_test_data("Done Project", "", vec![
-            make_phase("Only Phase", vec![("Task 1", "complete"), ("Task 2", "complete")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Done Project",
+            "",
+            vec![make_phase(
+                "Only Phase",
+                vec![("Task 1", "complete"), ("Task 2", "complete")],
+            )],
+            vec![],
+        );
 
         let output = generate_context_file_content(&data, "quick", "claude");
 
@@ -839,18 +919,24 @@ mod tests {
 
     #[test]
     fn test_output_contract_not_rendered_in_progress() {
-        let data = make_test_data("Project", "", vec![
-            make_phase("P1", vec![("T1", "in-progress")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Project",
+            "",
+            vec![make_phase("P1", vec![("T1", "in-progress")])],
+            vec![],
+        );
         let output = generate_context_file_content(&data, "quick", "claude");
         assert!(!output.contains("## Output Contract"));
     }
 
     #[test]
     fn test_output_contract_not_rendered_planned() {
-        let data = make_test_data("Project", "", vec![
-            make_phase("P1", vec![("T1", "pending")]),
-        ], vec![]);
+        let data = make_test_data(
+            "Project",
+            "",
+            vec![make_phase("P1", vec![("T1", "pending")])],
+            vec![],
+        );
         let output = generate_context_file_content(&data, "quick", "claude");
         assert!(!output.contains("## Output Contract"));
     }
@@ -961,7 +1047,10 @@ mod tests {
     #[test]
     fn test_skill_section_contains_about_element() {
         let output = build_skill_section("claude", "quick");
-        assert!(output.contains("## About Element"), "Missing '## About Element' heading");
+        assert!(
+            output.contains("## About Element"),
+            "Missing '## About Element' heading"
+        );
     }
 
     #[test]
@@ -978,7 +1067,10 @@ mod tests {
         let output = build_skill_section("claude", "quick");
         assert!(output.contains("Your Role"), "Missing 'Your Role'");
         assert!(output.contains("Element"), "Missing 'Element'");
-        assert!(output.contains("context has been seeded"), "Missing 'context has been seeded'");
+        assert!(
+            output.contains("context has been seeded"),
+            "Missing 'context has been seeded'"
+        );
     }
 
     #[test]
@@ -994,7 +1086,10 @@ mod tests {
         let output_full = build_skill_section("claude", "full");
         assert!(output_full.contains("GSD"), "Missing 'GSD' for full tier");
         let output_quick = build_skill_section("claude", "quick");
-        assert!(output_quick.contains("Quick"), "Missing 'Quick' for quick tier");
+        assert!(
+            output_quick.contains("Quick"),
+            "Missing 'Quick' for quick tier"
+        );
     }
 
     #[test]
@@ -1006,17 +1101,28 @@ mod tests {
         let quick_normalized = quick.replace("Quick", "TIER");
         let medium_normalized = medium.replace("Medium", "TIER");
         let full_normalized = full.replace("GSD", "TIER");
-        assert_eq!(quick_normalized, medium_normalized, "quick vs medium differ beyond tier name");
-        assert_eq!(medium_normalized, full_normalized, "medium vs full differ beyond tier name");
+        assert_eq!(
+            quick_normalized, medium_normalized,
+            "quick vs medium differ beyond tier name"
+        );
+        assert_eq!(
+            medium_normalized, full_normalized,
+            "medium vs full differ beyond tier name"
+        );
     }
 
     #[test]
     fn test_skill_section_ordering() {
         let data = make_test_data("ProjectName", "desc", vec![], vec![]);
         let output = generate_context_file_content(&data, "quick", "claude");
-        let about_pos = output.find("## About Element").expect("Missing ## About Element");
+        let about_pos = output
+            .find("## About Element")
+            .expect("Missing ## About Element");
         let header_pos = output.find("# ProjectName").expect("Missing # ProjectName");
-        assert!(about_pos < header_pos, "## About Element must come before # ProjectName");
+        assert!(
+            about_pos < header_pos,
+            "## About Element must come before # ProjectName"
+        );
     }
 
     #[test]
@@ -1027,32 +1133,51 @@ mod tests {
         assert!(out_noplan.contains("## About Element"), "Missing in NoPlan");
 
         // Planned
-        let data_planned = make_test_data("P", "", vec![
-            make_phase("Ph1", vec![("T1", "pending")]),
-        ], vec![]);
+        let data_planned = make_test_data(
+            "P",
+            "",
+            vec![make_phase("Ph1", vec![("T1", "pending")])],
+            vec![],
+        );
         let out_planned = generate_context_file_content(&data_planned, "quick", "claude");
-        assert!(out_planned.contains("## About Element"), "Missing in Planned");
+        assert!(
+            out_planned.contains("## About Element"),
+            "Missing in Planned"
+        );
 
         // InProgress
-        let data_ip = make_test_data("P", "", vec![
-            make_phase("Ph1", vec![("T1", "in-progress")]),
-        ], vec![]);
+        let data_ip = make_test_data(
+            "P",
+            "",
+            vec![make_phase("Ph1", vec![("T1", "in-progress")])],
+            vec![],
+        );
         let out_ip = generate_context_file_content(&data_ip, "medium", "claude");
         assert!(out_ip.contains("## About Element"), "Missing in InProgress");
 
         // Complete
-        let data_complete = make_test_data("P", "", vec![
-            make_phase("Ph1", vec![("T1", "complete")]),
-        ], vec![]);
+        let data_complete = make_test_data(
+            "P",
+            "",
+            vec![make_phase("Ph1", vec![("T1", "complete")])],
+            vec![],
+        );
         let out_complete = generate_context_file_content(&data_complete, "full", "claude");
-        assert!(out_complete.contains("## About Element"), "Missing in Complete");
+        assert!(
+            out_complete.contains("## About Element"),
+            "Missing in Complete"
+        );
     }
 
     #[test]
     fn test_skill_section_token_budget() {
         let output = build_skill_section("claude", "quick");
         let tokens = estimate_tokens(&output);
-        assert!(tokens <= 500, "Skill section exceeds 500 token budget: {} tokens", tokens);
+        assert!(
+            tokens <= 500,
+            "Skill section exceeds 500 token budget: {} tokens",
+            tokens
+        );
     }
 
     #[test]
@@ -1068,17 +1193,20 @@ mod tests {
                     )
                 })
                 .collect();
-            phases.push(make_phase(
-                &format!("Phase {} Long Name", i + 1),
-                tasks,
-            ));
+            phases.push(make_phase(&format!("Phase {} Long Name", i + 1), tasks));
         }
         phases[16] = make_phase("Active", vec![("Active Task", "in-progress")]);
         let data = make_test_data("Big", "desc", phases, vec![]);
         let output = generate_context_file_content(&data, "medium", "claude");
-        assert!(output.contains("## About Element"), "Skill section collapsed for large project");
+        assert!(
+            output.contains("## About Element"),
+            "Skill section collapsed for large project"
+        );
         // Check full content is there
-        assert!(output.contains("Your Role"), "Role section collapsed for large project");
+        assert!(
+            output.contains("Your Role"),
+            "Role section collapsed for large project"
+        );
     }
 
     #[test]

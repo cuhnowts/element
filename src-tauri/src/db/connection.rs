@@ -32,6 +32,7 @@ impl Database {
 
     /// Open a new connection to the same database file as an existing Database.
     /// Used for spawned async tasks that need their own connection.
+    #[allow(dead_code)] // reserved for future async task isolation
     pub fn clone_connection(
         existing: &std::sync::Mutex<Database>,
     ) -> Result<Database, Box<dyn std::error::Error>> {

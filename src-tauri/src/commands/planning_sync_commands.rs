@@ -1,6 +1,6 @@
 use std::path::PathBuf;
-use std::sync::Mutex as StdMutex;
 use std::sync::Arc;
+use std::sync::Mutex as StdMutex;
 
 use tauri::{AppHandle, Emitter, State};
 
@@ -43,10 +43,7 @@ pub async fn sync_planning_roadmap(
     let new_hash = compute_content_hash(&content);
 
     {
-        let last_hash = watcher_state
-            .last_hash
-            .lock()
-            .map_err(|e| e.to_string())?;
+        let last_hash = watcher_state.last_hash.lock().map_err(|e| e.to_string())?;
         if let Some(ref existing_hash) = *last_hash {
             if *existing_hash == new_hash {
                 // Content unchanged, skip sync silently (D-08)
@@ -74,10 +71,7 @@ pub async fn sync_planning_roadmap(
 
     // Update last hash after successful sync
     {
-        let mut last_hash = watcher_state
-            .last_hash
-            .lock()
-            .map_err(|e| e.to_string())?;
+        let mut last_hash = watcher_state.last_hash.lock().map_err(|e| e.to_string())?;
         *last_hash = Some(new_hash);
     }
 
@@ -101,7 +95,6 @@ pub async fn start_planning_watcher(
     project_id: String,
     directory_path: String,
 ) -> Result<(), String> {
-    use notify::Watcher;
     use notify_debouncer_mini::new_debouncer;
     use std::time::Duration;
 
@@ -120,10 +113,7 @@ pub async fn start_planning_watcher(
     if roadmap_path.exists() {
         if let Ok(content) = std::fs::read_to_string(&roadmap_path) {
             let hash = compute_content_hash(&content);
-            let mut last_hash = watcher_state
-                .last_hash
-                .lock()
-                .map_err(|e| e.to_string())?;
+            let mut last_hash = watcher_state.last_hash.lock().map_err(|e| e.to_string())?;
             *last_hash = Some(hash);
         }
     }
@@ -132,11 +122,9 @@ pub async fn start_planning_watcher(
         Duration::from_millis(500),
         move |events: Result<Vec<notify_debouncer_mini::DebouncedEvent>, notify::Error>| {
             if let Ok(events) = events {
-                let roadmap_changed = events.iter().any(|e| {
-                    e.path
-                        .file_name()
-                        == Some(std::ffi::OsStr::new("ROADMAP.md"))
-                });
+                let roadmap_changed = events
+                    .iter()
+                    .any(|e| e.path.file_name() == Some(std::ffi::OsStr::new("ROADMAP.md")));
                 if roadmap_changed {
                     // Emit event for frontend to trigger sync (Pitfall 4: don't block notify thread)
                     let _ = app_handle.emit("planning-file-changed", &pid);
@@ -170,10 +158,7 @@ pub async fn stop_planning_watcher(
         *state = None; // Drop the debouncer, stops watching
     }
     {
-        let mut last_hash = watcher_state
-            .last_hash
-            .lock()
-            .map_err(|e| e.to_string())?;
+        let mut last_hash = watcher_state.last_hash.lock().map_err(|e| e.to_string())?;
         *last_hash = None; // Clear hash for fresh start on next project
     }
     Ok(())

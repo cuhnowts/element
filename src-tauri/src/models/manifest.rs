@@ -83,7 +83,11 @@ pub fn build_manifest_string(db: &Database) -> Result<String, String> {
             let phase_tasks = tasks_by_phase.get(&phase.id);
             let total = phase_tasks.map(|t| t.len()).unwrap_or(0);
             let completed = phase_tasks
-                .map(|t| t.iter().filter(|tk| tk.status == TaskStatus::Complete).count())
+                .map(|t| {
+                    t.iter()
+                        .filter(|tk| tk.status == TaskStatus::Complete)
+                        .count()
+                })
                 .unwrap_or(0);
             manifest.push_str(&format!(
                 "- Phase {}: {} ({}/{} tasks complete)\n",
@@ -272,9 +276,7 @@ mod tests {
             let p = db
                 .create_project(CreateProjectInput {
                     name: format!("Project With A Long Name Number {}", i),
-                    description: Some(
-                        "A fairly detailed description to inflate size".to_string(),
-                    ),
+                    description: Some("A fairly detailed description to inflate size".to_string()),
                 })
                 .unwrap();
             use crate::models::phase::CreatePhaseInput;

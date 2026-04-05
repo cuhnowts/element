@@ -34,13 +34,10 @@ pub async fn execute_http(
         request = request.json(json_body);
     }
 
-    let response = tokio::time::timeout(
-        std::time::Duration::from_millis(timeout),
-        request.send(),
-    )
-    .await
-    .map_err(|_| EngineError::Timeout(timeout))?
-    .map_err(|e| EngineError::HttpError(e.to_string()))?;
+    let response = tokio::time::timeout(std::time::Duration::from_millis(timeout), request.send())
+        .await
+        .map_err(|_| EngineError::Timeout(timeout))?
+        .map_err(|e| EngineError::HttpError(e.to_string()))?;
 
     let status = response.status().as_u16();
     let body_text = response

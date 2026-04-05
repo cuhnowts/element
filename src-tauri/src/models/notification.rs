@@ -93,10 +93,8 @@ impl Database {
     }
 
     pub fn mark_all_notifications_read(&self) -> Result<(), rusqlite::Error> {
-        self.conn().execute(
-            "UPDATE notifications SET read = 1 WHERE read = 0",
-            [],
-        )?;
+        self.conn()
+            .execute("UPDATE notifications SET read = 1 WHERE read = 0", [])?;
         Ok(())
     }
 

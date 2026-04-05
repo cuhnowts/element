@@ -92,6 +92,7 @@ impl PipelineExecutor {
         }
     }
 
+    #[allow(dead_code)] // workflow execution engine, invoked via scheduler
     pub async fn execute(
         &mut self,
         workflow: &Workflow,
@@ -99,7 +100,8 @@ impl PipelineExecutor {
         db: &Arc<Mutex<Database>>,
         trigger_type: &str,
     ) -> Result<String, EngineError> {
-        self.execute_with_run(workflow, app, db, trigger_type, None).await
+        self.execute_with_run(workflow, app, db, trigger_type, None)
+            .await
     }
 
     pub async fn execute_with_run(
@@ -158,14 +160,8 @@ impl PipelineExecutor {
                 let db_lock = db
                     .lock()
                     .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?;
-                let _ = db_lock.update_step_result(
-                    &step_result.id,
-                    "running",
-                    None,
-                    None,
-                    None,
-                    None,
-                );
+                let _ =
+                    db_lock.update_step_result(&step_result.id, "running", None, None, None, None);
             }
 
             let started = Instant::now();
@@ -196,7 +192,7 @@ impl PipelineExecutor {
                     ..
                 } => {
                     let resolved_url = self.resolve_templates(url);
-                    http::execute_http(&method, &resolved_url, headers, body, *timeout_ms).await
+                    http::execute_http(method, &resolved_url, headers, body, *timeout_ms).await
                 }
                 StepDefinition::Manual {
                     name, description, ..
@@ -294,11 +290,7 @@ impl PipelineExecutor {
                             Some(&error_msg),
                             Some(duration_ms),
                         );
-                        let _ = db_lock.complete_workflow_run(
-                            &run_id,
-                            "failed",
-                            Some(&error_msg),
-                        );
+                        let _ = db_lock.complete_workflow_run(&run_id, "failed", Some(&error_msg));
                     }
 
                     // Emit step failed
@@ -358,10 +350,7 @@ impl PipelineExecutor {
                             content_type: "text/plain".to_string(),
                             metadata: DocumentMeta {
                                 step_name: result.step_name.clone(),
-                                timestamp: result
-                                    .completed_at
-                                    .clone()
-                                    .unwrap_or_default(),
+                                timestamp: result.completed_at.clone().unwrap_or_default(),
                                 exit_code: None,
                                 status_code: None,
                             },
@@ -405,14 +394,8 @@ impl PipelineExecutor {
                 let db_lock = db
                     .lock()
                     .map_err(|e| EngineError::ExecutionFailed(e.to_string()))?;
-                let _ = db_lock.update_step_result(
-                    &step_result.id,
-                    "running",
-                    None,
-                    None,
-                    None,
-                    None,
-                );
+                let _ =
+                    db_lock.update_step_result(&step_result.id, "running", None, None, None, None);
             }
 
             let started = Instant::now();
@@ -442,7 +425,7 @@ impl PipelineExecutor {
                     ..
                 } => {
                     let resolved_url = self.resolve_templates(url);
-                    http::execute_http(&method, &resolved_url, headers, body, *timeout_ms).await
+                    http::execute_http(method, &resolved_url, headers, body, *timeout_ms).await
                 }
                 StepDefinition::Manual { name, description } => {
                     let manual_progress = StepProgress {
@@ -469,11 +452,8 @@ impl PipelineExecutor {
                             Some("Manual step - awaiting user action"),
                             None,
                         );
-                        let _ = db_lock.complete_workflow_run(
-                            run_id,
-                            "paused",
-                            Some("Manual step"),
-                        );
+                        let _ =
+                            db_lock.complete_workflow_run(run_id, "paused", Some("Manual step"));
                     }
                     return Ok(());
                 }
@@ -535,11 +515,7 @@ impl PipelineExecutor {
                             Some(&error_msg),
                             Some(duration_ms),
                         );
-                        let _ = db_lock.complete_workflow_run(
-                            run_id,
-                            "failed",
-                            Some(&error_msg),
-                        );
+                        let _ = db_lock.complete_workflow_run(run_id, "failed", Some(&error_msg));
                     }
 
                     let failed_progress = StepProgress {

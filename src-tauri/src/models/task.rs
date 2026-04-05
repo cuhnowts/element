@@ -142,9 +142,9 @@ pub fn row_to_task(row: &rusqlite::Row) -> Result<Task, rusqlite::Error> {
         description: row.get(4)?,
         context: row.get(5)?,
         status: TaskStatus::from_db_str(&status_str)
-            .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+            .map_err(rusqlite::Error::InvalidParameterName)?,
         priority: TaskPriority::from_db_str(&priority_str)
-            .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+            .map_err(rusqlite::Error::InvalidParameterName)?,
         external_path: row.get(8)?,
         due_date: row.get(9)?,
         scheduled_date: row.get(10)?,
@@ -235,14 +235,14 @@ impl Database {
         );
         let mut stmt = self.conn().prepare(&query)?;
 
-        let tasks = stmt.query_map(rusqlite::params![project_id], |row| row_to_task(row))?;
+        let tasks = stmt.query_map(rusqlite::params![project_id], row_to_task)?;
         tasks.collect()
     }
 
     pub fn get_task(&self, id: &str) -> Result<Task, rusqlite::Error> {
         let query = format!("SELECT {} FROM tasks WHERE id = ?1", TASK_COLUMNS);
         self.conn()
-            .query_row(&query, rusqlite::params![id], |row| row_to_task(row))
+            .query_row(&query, rusqlite::params![id], row_to_task)
     }
 
     pub fn update_task(&self, id: &str, input: UpdateTaskInput) -> Result<Task, rusqlite::Error> {
@@ -338,7 +338,7 @@ impl Database {
             TASK_COLUMNS
         );
         let mut stmt = self.conn().prepare(&query)?;
-        let tasks = stmt.query_map([], |row| row_to_task(row))?;
+        let tasks = stmt.query_map([], row_to_task)?;
         tasks.collect()
     }
 
@@ -348,7 +348,7 @@ impl Database {
             TASK_COLUMNS
         );
         let mut stmt = self.conn().prepare(&query)?;
-        let tasks = stmt.query_map(rusqlite::params![theme_id], |row| row_to_task(row))?;
+        let tasks = stmt.query_map(rusqlite::params![theme_id], row_to_task)?;
         tasks.collect()
     }
 }

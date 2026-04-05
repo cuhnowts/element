@@ -4,9 +4,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::db::connection::Database;
 use crate::models::manifest::ManifestRebuildTrigger;
 use crate::models::tag::Tag;
-use crate::models::task::{
-    CreateTaskInput, Task, TaskPriority, TaskStatus, UpdateTaskInput,
-};
+use crate::models::task::{CreateTaskInput, Task, TaskPriority, TaskStatus, UpdateTaskInput};
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -16,6 +14,7 @@ pub struct TaskWithTags {
     pub tags: Vec<Tag>,
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn create_task(
     app: AppHandle,
@@ -54,8 +53,7 @@ pub async fn create_task(
         phase_id,
     };
     let task = db.create_task(input).map_err(|e| e.to_string())?;
-    app.emit("task-created", &task)
-        .map_err(|e| e.to_string())?;
+    app.emit("task-created", &task).map_err(|e| e.to_string())?;
     let _ = rebuild_trigger.0.try_send(());
     Ok(task)
 }
@@ -76,12 +74,11 @@ pub async fn get_task(
 ) -> Result<TaskWithTags, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
     let task = db.get_task(&task_id).map_err(|e| e.to_string())?;
-    let tags = db
-        .get_tags_for_task(&task_id)
-        .map_err(|e| e.to_string())?;
+    let tags = db.get_tags_for_task(&task_id).map_err(|e| e.to_string())?;
     Ok(TaskWithTags { task, tags })
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn update_task(
     app: AppHandle,
@@ -115,11 +112,8 @@ pub async fn update_task(
         estimated_minutes,
         phase_id,
     };
-    let task = db
-        .update_task(&task_id, input)
-        .map_err(|e| e.to_string())?;
-    app.emit("task-updated", &task)
-        .map_err(|e| e.to_string())?;
+    let task = db.update_task(&task_id, input).map_err(|e| e.to_string())?;
+    app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     Ok(task)
 }
 
@@ -132,13 +126,11 @@ pub async fn update_task_status(
     status: String,
 ) -> Result<Task, String> {
     let db = state.lock().map_err(|e| e.to_string())?;
-    let parsed_status =
-        TaskStatus::from_db_str(&status).map_err(|e| e.to_string())?;
+    let parsed_status = TaskStatus::from_db_str(&status).map_err(|e| e.to_string())?;
     let task = db
         .update_task_status(&task_id, parsed_status)
         .map_err(|e| e.to_string())?;
-    app.emit("task-updated", &task)
-        .map_err(|e| e.to_string())?;
+    app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     let _ = rebuild_trigger.0.try_send(());
     Ok(task)
 }
@@ -229,9 +221,13 @@ pub async fn search_tasks(
     );
     let mut stmt = db.conn().prepare(&sql).map_err(|e| e.to_string())?;
     let tasks = stmt
-        .query_map(rusqlite::params![pattern], |row| crate::models::task::row_to_task(row))
+        .query_map(rusqlite::params![pattern], |row| {
+            crate::models::task::row_to_task(row)
+        })
         .map_err(|e| e.to_string())?;
-    tasks.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    tasks
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

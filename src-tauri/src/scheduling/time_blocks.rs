@@ -1,5 +1,5 @@
-use chrono::NaiveTime;
 use crate::scheduling::types::{CalendarEvent, WorkHoursConfig};
+use chrono::NaiveTime;
 
 #[derive(Debug, Clone)]
 pub struct OpenBlock {
@@ -113,7 +113,13 @@ mod tests {
         WorkHoursConfig {
             start_time: "09:00".to_string(),
             end_time: "17:00".to_string(),
-            work_days: vec!["mon".into(), "tue".into(), "wed".into(), "thu".into(), "fri".into()],
+            work_days: vec![
+                "mon".into(),
+                "tue".into(),
+                "wed".into(),
+                "thu".into(),
+                "fri".into(),
+            ],
             buffer_minutes: 10,
             min_block_minutes: 30,
         }
