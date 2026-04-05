@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::LazyLock;
+use tokio::sync::Mutex as AsyncMutex;
 
 use crate::credentials::keychain::SecretStore;
 use crate::db::connection::Database;
@@ -758,8 +759,9 @@ pub fn delete_events_by_ids(
 // ─── CalendarPlugin (orchestrator) ────────────────────────────────────────────
 
 /// Token refresh mutex to prevent race conditions (Pitfall 3 from RESEARCH.md).
+/// Uses tokio::sync::Mutex (async-aware) to avoid blocking the runtime when held across .await.
 #[allow(dead_code)] // used by CalendarPlugin::sync_account
-static TOKEN_REFRESH_LOCK: Mutex<()> = Mutex::new(());
+static TOKEN_REFRESH_LOCK: LazyLock<AsyncMutex<()>> = LazyLock::new(|| AsyncMutex::new(()));
 
 #[allow(dead_code)] // calendar sync orchestrator
 pub struct CalendarPlugin;
@@ -779,11 +781,9 @@ impl CalendarPlugin {
             .get_secret(&account.credential_id)
             .map_err(CalendarError::CredentialError)?;
 
-        // Serialize token refresh through mutex (Pitfall 3)
+        // Serialize token refresh through async mutex (Pitfall 3)
         let (access_token, new_refresh) = {
-            let _lock = TOKEN_REFRESH_LOCK
-                .lock()
-                .map_err(|e| CalendarError::OAuthError(e.to_string()))?;
+            let _lock = TOKEN_REFRESH_LOCK.lock().await;
 
             match account.provider.as_str() {
                 "google" => refresh_google_token(&client, &refresh_token).await?,
