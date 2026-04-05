@@ -143,7 +143,13 @@ Plans:
   2. Generated briefing displays distinct sections (summary, deadlines, blockers, wins) with clear hierarchy
   3. Each briefing section renders as a visually distinct card -- not a single markdown block
   4. Briefing and hub chat share one interface with shared conversation context
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 33-01-PLAN.md -- Scoring engine (Rust) and TypeScript briefing types
+- [ ] 33-02-PLAN.md -- Briefing command JSON output, store and stream hook update
+- [ ] 33-03-PLAN.md -- HubCenterPanel rewrite, card components, ActionChipBar
+
 **UI hint**: yes
 
 ### Phase 34: Goal-First Project Detail
