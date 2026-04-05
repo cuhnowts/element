@@ -121,7 +121,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   3. User can toggle a Calendar panel that slides in from the right via a toolbar button
   4. User can toggle a Briefing panel from the toolbar (or briefing is accessible inline in the center view)
   5. Slide-in panels animate smoothly using CSS transforms with no layout jank or content reflow
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 32-01-PLAN.md -- Store toggle state, SlideOverPanel component, HubToolbar with Calendar/Goals buttons
+- [ ] 32-02-PLAN.md -- CommandHub center view, DayPulse, ActionButtons, JumpToTop, HubView rewrite
+
 **UI hint**: yes
 
 ### Phase 33: Briefing Rework
@@ -202,7 +207,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
 | 31. Drawer Consolidation | v1.6 | 0/0 | Not started | - |
-| 32. Hub Layout Overhaul | v1.6 | 0/0 | Not started | - |
+| 32. Hub Layout Overhaul | v1.6 | 0/2 | Not started | - |
 | 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
 | 34. Goal-First Project Detail | v1.6 | 0/0 | Not started | - |
 | 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
