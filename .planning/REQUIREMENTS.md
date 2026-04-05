@@ -1,11 +1,46 @@
 # Requirements: Element
 
-**Defined:** 2026-04-03
-**Core Value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
+**Defined:** 2026-04-04
+**Core Value:** The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## v1.5 Requirements
+## v1.6 Requirements
 
-Requirements for v1.5 Time Bounded milestone. Each maps to roadmap phases.
+Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
+
+### Hub Layout
+
+- [ ] **HUB-01**: User sees a single full-width center view when opening the hub (no horizontal scroll)
+- [ ] **HUB-02**: User can toggle a goals slide-in panel from the hub toolbar
+- [ ] **HUB-03**: User can toggle a calendar slide-in panel from the hub toolbar
+- [ ] **HUB-04**: User can toggle a briefing slide-in panel from the hub toolbar
+- [ ] **HUB-05**: Slide-in panels animate smoothly using CSS transforms (no layout jank)
+
+### Briefing
+
+- [ ] **BRIEF-01**: User sees a "Generate Briefing" button instead of auto-generated briefing on hub load
+- [ ] **BRIEF-02**: Generated briefing displays structured sections (summary, deadlines, blockers, wins)
+- [ ] **BRIEF-03**: Briefing sections render as visually distinct cards with clear hierarchy
+- [ ] **BRIEF-04**: Briefing and hub chat are consolidated into one interface with shared context
+
+### Project Detail
+
+- [ ] **PROJ-01**: User sees the project goal prominently displayed as a hero card above phases
+- [ ] **PROJ-02**: User can set and edit the project goal directly in the project detail UI
+- [ ] **PROJ-03**: Project detail provides a streamlined workspace entry (goal → directory + AI terminal → work)
+
+### Drawer
+
+- [ ] **DRAW-01**: User can click to toggle the bottom drawer between fully collapsed and expanded (~450px)
+- [ ] **DRAW-02**: Agent panel is accessible as an "Element AI" tab in the bottom drawer
+- [ ] **DRAW-03**: Right sidebar agent panel is removed from the app layout
+
+### Bug Fixes
+
+- [ ] **FIX-01**: Calendar week view shows "Today" label only on the actual current day
+- [ ] **FIX-02**: Overdue tasks are detected deterministically (due_date < today and not complete) without LLM
+- [ ] **FIX-03**: Workflows section can be fully minimized when not in use
+
+## v1.5 Requirements (Complete)
 
 ### Calendar Sync
 
@@ -54,18 +89,13 @@ Deferred to future releases. Tracked but not in current roadmap.
 ### Calendar Enhancements
 
 - **CAL-10**: Push events back to Google/Outlook (write to external calendar)
-- **CAL-11**: Recurring event pattern handling in calendar view
+- **CAL-11**: Microsoft Graph as alternative calendar source (no OAuth needed)
 
-### Hub Enhancements
+### Intelligence
 
-- **HUB-10**: Urgency scoring algorithm (AI-driven priority beyond due dates)
-- **HUB-11**: Email signal ingestion into daily briefing
-- **HUB-12**: Chat history persistence across app restart (SQLite)
-
-### Agent Enhancements
-
-- **AGENT-10**: Agent learns user patterns and preferences over time (memory system)
-- **AGENT-11**: Agent can orchestrate across external tools (GitHub, Jira, Slack) via plugins
+- **INT-01**: Hub urgency scoring — AI-driven priority scoring for tasks and projects
+- **INT-02**: Hub email signal ingestion — email context fed into daily briefing
+- **INT-03**: Memory system — full context model that learns user preferences, habits, and patterns
 
 ### Platform
 
@@ -78,10 +108,14 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Full autonomous rescheduling without confirmation | Users must approve schedule changes -- auto-apply causes anxiety (Motion's #1 complaint) |
-| LLM-generated schedules | LLM narrates algorithm output, does not generate schedules -- unreliable for time math |
-| External calendar write-back | Read-only for v1.5 -- write-back deferred to avoid sync conflicts |
-| Mobile push notifications | Desktop-only app, OS notifications sufficient |
+| Drag-to-resize drawer | Click toggle is sufficient; drag adds complexity without value |
+| Animation framework (framer-motion) | CSS transforms + tw-animate-css sufficient; 40KB+ overhead not justified |
+| Full autonomous rescheduling without confirmation | Users must approve schedule changes |
+| LLM-generated schedules | LLM narrates algorithm output, does not generate schedules |
+| Full node-graph visual editor | Structured list covers 90% of use cases at 20% cost |
+| Mobile app | Desktop-first, mobile notifications via existing channels |
+| Real-time collaboration | Personal work OS, single-user focus |
+| Built-in calendar/email clients | Ingest signals via plugins, don't replicate source apps |
 
 ## Traceability
 
@@ -89,34 +123,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | Phase 26 | Complete |
-| CAL-02 | Phase 26 | Complete |
-| CAL-03 | Phase 26 | Complete |
-| CAL-04 | Phase 26 | Complete |
-| VIEW-01 | Phase 27 | Complete |
-| VIEW-02 | Phase 27 | Complete |
-| VIEW-03 | Phase 27 | Complete |
-| VIEW-04 | Phase 27 | Complete |
-| DUE-01 | Phase 28 | Complete |
-| DUE-02 | Phase 28 | Complete |
-| DUE-03 | Phase 28 | Complete |
-| PLAN-01 | Phase 28 | Complete |
-| PLAN-02 | Phase 28 | Complete |
-| PLAN-03 | Phase 28 | Complete |
-| PLAN-04 | Phase 28 | Complete |
-| MCP-01 | Phase 29 | Complete |
-| MCP-02 | Phase 29 | Complete |
-| MCP-03 | Phase 29 | Complete |
-| BEAT-01 | Phase 30 | Complete |
-| BEAT-02 | Phase 30 | Complete |
-| BEAT-03 | Phase 30 | Complete |
-| BEAT-04 | Phase 30 | Complete |
+| HUB-01 | — | Pending |
+| HUB-02 | — | Pending |
+| HUB-03 | — | Pending |
+| HUB-04 | — | Pending |
+| HUB-05 | — | Pending |
+| BRIEF-01 | — | Pending |
+| BRIEF-02 | — | Pending |
+| BRIEF-03 | — | Pending |
+| BRIEF-04 | — | Pending |
+| PROJ-01 | — | Pending |
+| PROJ-02 | — | Pending |
+| PROJ-03 | — | Pending |
+| DRAW-01 | — | Pending |
+| DRAW-02 | — | Pending |
+| DRAW-03 | — | Pending |
+| FIX-01 | — | Pending |
+| FIX-02 | — | Pending |
+| FIX-03 | — | Pending |
 
 **Coverage:**
-- v1.5 requirements: 22 total
-- Mapped to phases: 22
-- Unmapped: 0
+- v1.6 requirements: 18 total
+- Mapped to phases: 0
+- Unmapped: 18 ⚠️
 
 ---
-*Requirements defined: 2026-04-03*
-*Last updated: 2026-04-02 after roadmap creation*
+*Requirements defined: 2026-04-04*
+*Last updated: 2026-04-04 after initial definition*
