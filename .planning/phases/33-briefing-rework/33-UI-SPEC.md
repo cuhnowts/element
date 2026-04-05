@@ -50,11 +50,11 @@ Exceptions: none
 | Body | 14px | 400 (regular) | 1.5 |
 | Label | 14px | 400 (regular) | 1.4 |
 | Heading | 24px | 600 (semibold) | 1.2 |
-| Card Title | 16px | 500 (medium) | 1.4 |
+| Card Title | 16px | 600 (semibold) | 1.4 |
 
 Body is the default for card content text, blocker descriptions, deadline items, and win items. Label is used for muted metadata (timestamps, tag labels) -- distinguished by `--color-muted-foreground`, not weight. Heading is the greeting line only. Card Title is used for project card names and the summary card heading.
 
-Source: existing `body { font-size: 14px; line-height: 1.5 }` in app.css. Heading matches `BriefingGreeting` at `text-2xl font-semibold`. Card Title matches existing `CardTitle` at `text-base font-medium`.
+Source: existing `body { font-size: 14px; line-height: 1.5 }` in app.css. Heading matches `BriefingGreeting` at `text-2xl font-semibold`. Card Title matches existing `CardTitle` at `text-base font-semibold`.
 
 ---
 
@@ -214,7 +214,7 @@ Components required for this phase, mapped to requirements and decisions.
 | "Run Daily Briefing" | `Sparkles` icon. Wired: triggers briefing generation. |
 | "Organize Calendar" | `Calendar` icon. Placeholder: disabled appearance with tooltip "Coming soon". |
 | "Organize Goals" | `Target` icon. Placeholder: disabled appearance with tooltip "Coming soon". |
-| Active state (streaming) | "Run Daily Briefing" switches to `variant="secondary"` with a `Loader2` spinner icon replacing `Sparkles`. Label changes to "Generating...". Button disabled during stream. |
+| Active state (streaming) | "Run Daily Briefing" switches to `variant="secondary"` with a `Loader2` spinner icon replacing `Sparkles`. Label changes to "Generating briefing...". Button disabled during stream. |
 
 ---
 
@@ -224,7 +224,7 @@ Components required for this phase, mapped to requirements and decisions.
 
 1. Hub loads: user sees greeting + contextual summary + action chips. No briefing auto-fire.
 2. User clicks "Run Daily Briefing" chip.
-3. Chip enters active/streaming state (spinner, "Generating...", disabled).
+3. Chip enters active/streaming state (spinner, "Generating briefing...", disabled).
 4. Backend builds manifest, runs scoring engine, sends scored data to LLM.
 5. LLM streams structured JSON. Frontend parses and renders cards incrementally:
    - Summary card appears first.
@@ -299,7 +299,7 @@ The scoring engine in Rust produces the ranked data and tags. The LLM receives t
 | Placeholder chip: Calendar | "Organize Calendar" |
 | Placeholder chip: Goals | "Organize Goals" |
 | Placeholder chip tooltip | "Coming soon" |
-| Streaming CTA label | "Generating..." |
+| Streaming CTA label | "Generating briefing..." |
 | Summary card heading | "Today's Overview" |
 | Blocker section heading | "Blockers" |
 | Deadline section heading | "Deadlines" |
