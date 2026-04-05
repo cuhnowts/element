@@ -30,6 +30,7 @@ import { AgentPanel } from "@/components/agent/AgentPanel";
 import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAgentQueue } from "@/hooks/useAgentQueue";
+import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
 import { useNotificationEvents } from "@/hooks/useNotificationEvents";
 
 export function AppLayout() {
@@ -37,6 +38,12 @@ export function AppLayout() {
   useTerminalCleanup();
   useAgentQueue();
   useNotificationEvents();
+  const { startAgent } = useAgentLifecycle();
+
+  useEffect(() => {
+    startAgent();
+  }, [startAgent]);
+
   const settingsOpen = useStore((s) => s.settingsOpen);
   // agentPanelOpen removed (D-14) -- AgentPanel always visible until Plan 02 removes it
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);

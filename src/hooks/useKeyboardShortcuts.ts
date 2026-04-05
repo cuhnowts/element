@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useAgentStore } from "@/stores/useAgentStore";
 
 export function useKeyboardShortcuts() {
   const toggleCommandPalette = useStore((s) => s.toggleCommandPalette);
@@ -22,7 +21,7 @@ export function useKeyboardShortcuts() {
   const openTerminal = useWorkspaceStore((s) => s.openTerminal);
   const workspaceSelectTask = useWorkspaceStore((s) => s.selectTask);
   const workspaceSelectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
-  const toggleAgentPanel = useAgentStore((s) => s.togglePanel);
+  const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -50,10 +49,15 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Cmd+Shift+A: toggle agent panel
+      // Cmd+Shift+A: toggle Element AI drawer tab (per D-08)
       if (meta && e.shiftKey && e.key === "A") {
         e.preventDefault();
-        toggleAgentPanel();
+        const ws = useWorkspaceStore.getState();
+        if (ws.drawerOpen && ws.activeDrawerTab === "elementai") {
+          toggleDrawer();
+        } else {
+          openDrawerToTab("elementai");
+        }
         return;
       }
 
@@ -142,6 +146,6 @@ export function useKeyboardShortcuts() {
     openTerminal,
     workspaceSelectTask,
     workspaceSelectedTaskId,
-    toggleAgentPanel,
+    openDrawerToTab,
   ]);
 }
