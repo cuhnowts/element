@@ -215,16 +215,8 @@ pub fn sync_roadmap_to_db(
 #[cfg(test)]
 mod tests {
     use crate::db::connection::Database;
-    use crate::db::migrations;
     use crate::models::project::CreateProjectInput;
-    use rusqlite::Connection;
-
-    fn setup_test_db() -> Database {
-        let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
-        migrations::run_migrations(&conn).unwrap();
-        Database::from_connection(conn)
-    }
+    use crate::test_fixtures::setup_test_db;
 
     fn create_test_project(db: &Database) -> String {
         let project = db

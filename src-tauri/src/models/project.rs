@@ -174,15 +174,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::migrations;
-    use rusqlite::Connection;
-
-    fn setup_test_db() -> Database {
-        let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
-        migrations::run_migrations(&conn).unwrap();
-        Database::from_connection(conn)
-    }
+    use crate::test_fixtures::setup_test_db;
 
     #[test]
     fn test_create_project() {

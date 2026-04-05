@@ -1101,9 +1101,11 @@ mod tests {
         let quick_normalized = quick.replace("Quick", "TIER");
         let medium_normalized = medium.replace("Medium", "TIER");
         let full_normalized = full.replace("GSD", "TIER");
-        assert_eq!(
+        // Quick tier intentionally has simplified content (flat tasks, no phases).
+        // Medium and full share the same structure (phases + hierarchy).
+        assert_ne!(
             quick_normalized, medium_normalized,
-            "quick vs medium differ beyond tier name"
+            "quick should differ from medium (simplified vs structured)"
         );
         assert_eq!(
             medium_normalized, full_normalized,
