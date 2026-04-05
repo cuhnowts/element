@@ -17,7 +17,7 @@
     "dialog:default",
     "pty:default",
     "notification:default",
-    "fs:default",
-    "fs:scope-appdata-recursive"
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-appdata-write-recursive"
   ]
 }
