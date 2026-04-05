@@ -258,3 +258,12 @@ Plans:
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 999.7: Onboarding Installation Wizard (BACKLOG)
+
+**Goal:** First-run setup flow that makes the app feel like a consumer product, not a config form. Steps: (1) User profile creation, (2) Add 2-3 projects/deliverables they're working on, (3) Configure AI tool (CLI setting), (4) AI-assisted goal structuring for each project — fast 2-3 min exercise once AI is set up, (5) Calendar linking (Google/Outlook OAuth), (6) Timeline walkthrough — add deadlines to projects. App is "locked" until onboarding completes, then fully unlocked with briefings enabled.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
