@@ -12,7 +12,7 @@ Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
 - [x] **HUB-01**: User sees a single full-width center view when opening the hub (no horizontal scroll)
 - [x] **HUB-02**: User can toggle a goals slide-in panel from the hub toolbar
 - [x] **HUB-03**: User can toggle a calendar slide-in panel from the hub toolbar
-- [x] **HUB-04**: User can toggle a briefing slide-in panel from the hub toolbar
+- [x] **HUB-04**: User can trigger a daily briefing from the hub center view (D-09: action button, not toolbar toggle)
 - [x] **HUB-05**: Slide-in panels animate smoothly using CSS transforms (no layout jank)
 
 ### Briefing
