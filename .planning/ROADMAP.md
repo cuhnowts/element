@@ -151,7 +151,11 @@ Plans:
   1. A `console.error()` call in the frontend results in an entry appearing in `.element/errors.log` via Tauri IPC
   2. An error inside the logging path itself does not freeze the app or cause infinite recursion (re-entrancy guard works)
   3. Error writes are buffered (not per-call IPC) and do not cause observable UI lag during rapid error sequences
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 38-01-PLAN.md -- TypeScript error logger module with TDD (interceptor, re-entrancy guard, buffer)
+- [ ] 38-02-PLAN.md -- Rust backend command, registration, and main.tsx wiring
 
 ### Phase 39: Claude Code Hooks
 **Goal**: Claude Code automatically enforces code quality -- commits are blocked on lint/test failures, edited files get auto-formatted, and related tests run on save
@@ -221,7 +225,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
 | 36. Linting Foundation | v1.7 | 0/3 | Planning | - |
 | 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planning | - |
-| 38. Error Logger | v1.7 | 0/0 | Not started | - |
+| 38. Error Logger | v1.7 | 0/2 | Planning | - |
 | 39. Claude Code Hooks | v1.7 | 0/0 | Not started | - |
 | 40. Testing MCP Server | v1.7 | 0/0 | Not started | - |
 
