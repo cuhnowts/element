@@ -1,181 +1,268 @@
 # Feature Research
 
-**Domain:** Desktop productivity app UI overhaul -- hub dashboards, goal-first project views, briefing UX, drawer/panel patterns
-**Researched:** 2026-04-04
+**Domain:** Code quality infrastructure for Tauri 2.x + React 19 + Rust desktop app
+**Researched:** 2026-04-05
 **Confidence:** HIGH
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist in a modern desktop productivity app. Missing these makes the product feel unpolished or broken.
+Features that any serious codebase quality setup must have. Missing these means the infrastructure is incomplete.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Single-view hub with no forced horizontal scroll | Linear, Notion, Things all use a single center column as the primary view. 3-column horizontal layouts feel like spreadsheets, not command centers. Users expect a focused center with optional peripherals. | MEDIUM | Current HubView uses `ResizablePanelGroup` with 3 mandatory columns (goals, briefing, calendar). Replace with single center view. Goals/calendar become opt-in slide-in overlay panels. |
-| Click-to-toggle drawer minimize/maximize | VS Code, every IDE, and most desktop apps with bottom panels use a single click to toggle between minimized (header-only bar) and expanded states. Current "Hide Output"/"Show Output" text button is functional but not spatial. | LOW | Replace text toggle with a chevron or grip bar. Click header bar = toggle. Drag handle = resize. Two distinct interactions. Existing `toggleDrawer` and `drawerOpen` in workspace store already support this. |
-| Keyboard shortcut for drawer toggle | VS Code uses Ctrl+\`, Superhuman makes everything keyboard-accessible. Power users expect panel toggles to have shortcuts. | LOW | Wire to existing Tauri hotkey system. Cmd+J (VS Code convention for bottom panel) is the natural choice. |
-| Scannable briefing with visual hierarchy | Google CC, DayStart, BriefingAM all present AI summaries with clear sections, bold headings, and visual separation. A wall of markdown text is not a briefing -- it is a blog post. | MEDIUM | Current `BriefingContent` renders raw markdown from LLM output. Needs structured sections: top-line summary (1-2 sentences), then categorized blocks (deadlines, blockers, progress). Think newspaper front page, not essay. |
-| On-demand briefing generation | Users expect to control when expensive AI operations run. Auto-generating on every hub load (current 30-min stale check in `BriefingPanel` useEffect) feels wasteful and slow on first open. | LOW | Change from auto-generate to show-last-cached on load, with prominent "Generate Briefing" button. Keep cache. Remove the auto-trigger in the useEffect. Existing `requestBriefing` store action supports this. |
-| Project detail shows goal/purpose prominently | Things 3 leads with the project purpose. Linear shows project description at top. Users opening a project need to immediately see WHY this project exists, not just its task list. | LOW | Current ProjectDetail shows: name > AI button + directory > progress bar > description textarea > metadata > phases. Elevate description/goal to a styled hero statement below the name. Pull from `.planning/PROJECT.md` core value if available. |
-| Drawer tab for AI panel | Consolidating AI from right sidebar into bottom drawer is expected -- VS Code puts all auxiliary panels in the bottom/side panel system. Having a separate right sidebar for AI feels inconsistent when terminal is already in the drawer. | MEDIUM | Add "AI" tab to `DrawerHeader` tabs (currently: Terminal, Logs, History). Move agent panel content into drawer. Remove right sidebar. Existing `OutputDrawer` tab-switching infrastructure handles this cleanly. |
-| Smooth slide-in animation for panels | Notion peek pages, Linear detail overlays, and macOS system panels all animate in/out. Abrupt show/hide feels broken in 2026. | LOW | Use CSS transitions (transform + opacity) on slide-in panels. 200-250ms ease-out. Tailwind `transition-transform duration-200` on the panel container. |
+#### A. TypeScript/React Linting
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| ESLint flat config (`eslint.config.mjs`) | ESLint 9+ requires flat config; `.eslintrc` is deprecated. Every modern TS project uses it. | LOW | None -- greenfield, no legacy config to migrate |
+| `typescript-eslint` recommended rules | Type-aware linting catches real bugs (unused vars, implicit any, unsafe returns). Standard for any TS project. | LOW | ESLint flat config |
+| React plugin (`eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`) | Hooks rules prevent subtle bugs (stale closures, missing deps). React Refresh rules prevent HMR breakage. | LOW | ESLint flat config |
+| Prettier for formatting | Eliminates formatting debates. Standard in JS/TS ecosystem. Separate from ESLint (linting != formatting). | LOW | None |
+| `eslint-config-prettier` | Disables ESLint formatting rules that conflict with Prettier. Required when using both. | LOW | ESLint + Prettier |
+
+#### B. Rust Linting
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| `cargo clippy` with warnings-as-errors | Clippy is Rust's standard linter. Every Rust project runs it. `-- -D warnings` in CI. | LOW | None -- clippy ships with rustup |
+| `rustfmt.toml` config | `cargo fmt` is the Rust formatting standard. Config file locks style preferences. | LOW | None -- rustfmt ships with rustup |
+| Clippy lint group configuration | Set `#![warn(clippy::pedantic)]` or per-crate `clippy.toml` for stricter catches. Tauri's own repo uses pedantic. | LOW | None |
+
+#### C. TypeScript Testing (Vitest)
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| Vitest config with Tauri IPC mocking | Vitest already installed (v4.1.0). Need `vitest.config.ts` with `@tauri-apps/api/mocks` for `mockIPC`. ~45 todo stubs exist. | MEDIUM | Vitest (already in devDeps) |
+| Utility function tests (`src/lib/`) | `date-utils.ts`, `shellAllowlist.ts`, `actionRegistry.ts`, `utils.ts` -- pure functions, easy to test, high ROI. | LOW | Vitest config |
+| Store logic tests (`src/stores/`) | Zustand stores contain business logic (selectors, derived state). Testing prevents the selector stability bugs already documented in memory. | MEDIUM | Vitest config, mock Tauri commands |
+| Hook tests for non-UI hooks | `useAgentLifecycle`, `useAgentQueue`, `useAgentMcp` -- stateful logic that doesn't need DOM rendering. | MEDIUM | Vitest config, mock Tauri commands |
+
+#### D. Rust Testing (cargo test)
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| Model unit tests | `src/models/` structs with serialization, validation logic. Pure Rust, no Tauri dependency. Easiest entry point. | LOW | None |
+| Database layer tests | `src/db/` SQL migrations, queries. Needs in-memory SQLite fixture. `test_fixtures/` already exists with `mod.rs`. | MEDIUM | In-memory SQLite test harness |
+| Command handler tests | `src/commands/` -- 22 command modules. Use Tauri's `tauri::test::mock_builder()` to test without webview runtime. | HIGH | Tauri mock runtime, DB fixtures |
+| Engine/scheduler tests | `src/engine/`, `src/scheduling/`, `src/heartbeat/` -- core business logic. Testable in isolation if DB is mocked. | MEDIUM | DB fixtures |
+
+#### E. Error Logger
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| `console.error` interceptor | Patches `console.error` to capture frontend errors. Standard pattern: save original, wrap, call original + side effect. | LOW | None |
+| Log file writer via Tauri command | Write intercepted errors to a known file path (e.g., `$APP_LOG_DIR/frontend-errors.log`). Tauri command or `tauri-plugin-log`. | LOW | Tauri IPC or plugin |
+| Structured error format | Timestamp + error message + stack trace + component context. Machine-readable so Claude Code can parse it. | LOW | Interceptor |
+| Log rotation / size cap | Prevent unbounded log growth. Simple approach: truncate on app start or cap at 1MB. | LOW | Log file writer |
+
+#### F. Claude Code Hooks
+
+| Feature | Why Expected | Complexity | Dependencies |
+|---------|--------------|------------|--------------|
+| Pre-commit lint gate | `PreToolUse` hook on `Bash` with `if: "Bash(git commit*)"`. Runs `eslint --max-warnings 0` + `cargo clippy` on changed files. Exit 2 to block on failure. | MEDIUM | ESLint + clippy configured first |
+| Pre-commit test gate | Same hook runs `vitest run --reporter=json` + `cargo test` for changed modules. Block commit if tests fail. | MEDIUM | Test suites configured first |
+| PostToolUse auto-format | `PostToolUse` hook on `Edit|Write` runs Prettier on edited `.ts/.tsx` files. Documented pattern in Claude Code docs. | LOW | Prettier configured |
+| Post-compact context re-injection | `SessionStart` hook with `compact` matcher echoes project conventions (test patterns, lint rules, file structure). Prevents context loss. | LOW | None |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set Element apart from Linear, Notion, and Things. Not required, but create the "this feels different" reaction.
+Features that go beyond standard quality infrastructure. These make Element's development uniquely productive.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Goal-first project detail with .planning integration | No competitor shows the project's goal, current milestone, and AI-generated roadmap as the first thing you see. Linear shows issues. Notion shows databases. Things shows tasks. Element can show the WHY before the WHAT -- pulling live data from `.planning/PROJECT.md` and `ROADMAP.md`. | MEDIUM | Parse `Core Value`, `Current Milestone`, and active requirements from PROJECT.md. Display as a styled card above phases. Already have `.planning/` sync infrastructure from v1.2 (`syncPlanningRoadmap`, file watcher). |
-| Briefing as narrative command center | Google CC and DayStart prove AI briefings work but they are separate apps. Element embeds the briefing directly into the hub with contextual structure -- the daily briefing dashboard article calls this the "buffer zone" pattern: sorted priorities, clear blockers, drafted next-actions. The key insight: "lead with narrative, not data." | MEDIUM | Restyle the briefing output to use structured prompt engineering (instruct LLM to output sections: Summary, Deadlines, Blockers, Wins). Render each section as a visually distinct card. No entity linking yet -- that comes later. |
-| Hub slide-in panels (goals tree, calendar) as overlays | Instead of fixed columns that compete for space, goals and calendar slide in from left/right as overlay panels. User sees full-width center by default, pulls in context panels when needed. Notion's side peek proves this pattern works. | MEDIUM | Implement as fixed-position overlays with subtle backdrop dim. Toggle via icon buttons in hub header bar. Store open/closed state in `useWorkspaceStore.hubLayout`. Replace current `ResizablePanelGroup` approach entirely. |
-| Drawer grip bar with resize memory | VS Code remembers panel height. Most apps forget. Element should remember drawer height per-context (hub vs project) and restore it on view switch. The grip bar itself should be a visible drag handle. | LOW | Store `drawerHeight` in workspace store keyed by view type. Apply on mount. Use existing `react-resizable-panels` resize callbacks. |
-| Unified workspace entry on project detail | Instead of separate "Open AI" button + "Directory Link" + terminal sessions scattered across the view, present a single "Workspace" card that shows: linked directory, terminal status (N active sessions), and AI action button. One coherent block. | LOW | Group existing `OpenAiButton`, `DirectoryLink`, and `useTerminalSessionStore` session count into a styled card component. No new backend work. Pure layout consolidation. |
+| Feature | Value Proposition | Complexity | Dependencies |
+|---------|-------------------|------------|--------------|
+| **Testing MCP server** | Generic MCP server exposing test lifecycle tools (discover, run, read results, generate stubs, coverage gaps). Claude Code becomes a test-writing agent -- it can autonomously find untested code, generate stubs, run them, and iterate. No existing MCP server does this well for mixed Rust+TS stacks. | HIGH | Vitest + cargo test configured; MCP server sidecar pattern already built (10 tools exist) |
+| **Test-on-save hook** | `PostToolUse` hook on `Edit|Write` runs only related tests (not full suite). Needs test file discovery logic mapping source -> test. Gives Claude instant feedback on every edit. | MEDIUM | Test suites configured; file-to-test mapping |
+| **Error log MCP tool** | Expose `read_frontend_errors` as an MCP tool so Claude Code can check for runtime errors without being told. Closes the frontend observability gap without component tests. | LOW | Error logger + existing MCP server |
+| **Coverage gap detector** | MCP tool that compares source files against test files, identifies modules with zero coverage. Suggests what to test next. Not just line coverage -- structural coverage (which modules/functions lack any tests). | MEDIUM | Test discovery, file system analysis |
+| **Test stub generator** | MCP tool that reads a source file and generates Vitest/cargo test skeletons with `it.todo()` or `#[test]` stubs. Bootstraps test files from function signatures. | MEDIUM | AST-level understanding or pattern matching |
+| **Agent-based Stop hook for test verification** | `type: "agent"` hook on `Stop` event that spawns a subagent to verify tests pass before Claude declares work done. Catches "it compiles but doesn't work" failures. | LOW | Test suites configured; Claude Code agent hooks |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems in Element's context.
-
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Multi-column resizable hub (keep current layout) | "Let me customize my layout" -- power user appeal. | 3 equal columns force content into narrow widths, create horizontal scroll on smaller screens, and make the briefing unreadable. Linear and Superhuman prove single-focus views with opt-in detail win. ResizablePanelGroup drag handles add friction. | Single center view with slide-in overlay panels. Full width by default, pull in context when needed. |
-| Auto-playing briefing animation/streaming | "Show the AI thinking in real-time" -- feels futuristic. | Streaming text is distracting when you want to scan. User wants the answer, not the process. Streaming is fine for chat; briefings should appear complete and scannable. | Generate in background, show skeleton loader, reveal complete briefing. Keep streaming for hub chat only. |
-| Drag-to-rearrange hub sections | "Let me put calendar above briefing." | Adds DnD complexity for minimal value. Hub sections have a natural hierarchy (greeting > briefing > chat). Rearranging breaks designed flow and creates layout bugs. | Fixed section order with show/hide toggles for optional sections. |
-| Full-page project overview with tabs | "Give me a Notion-style page with sub-pages." | Projects in Element are workspaces, not documents. A tabbed overview (Overview / Tasks / Files / Terminal) adds navigation layers. The current scroll-down approach is simpler. | Keep single scrollable project detail. Add goal card at top, phases below. Workspace stays in drawer. |
-| Right sidebar for AI agent (keep current) | "I want AI visible while working on tasks." | Right sidebar competes for horizontal space. On a typical 1440px laptop: sidebar + center + left nav = cramped center. Bottom drawer gives AI the full screen width. | AI panel as bottom drawer tab. Full-width AI conversations. Toggle with Cmd+J. |
-| Notion-style peek/overlay for everything | "Let me peek into any item without navigating." | Over-engineering for v1.6. Peek modals for tasks/phases add complexity without clear value when the task detail sidebar already exists. | Keep task detail in existing right panel. Use slide-in overlays only for hub panels (goals, calendar). |
+| **Frontend component tests (RTL)** | "Full test coverage" instinct. RTL is already in devDeps. | Component tests are brittle for a rapidly evolving UI (200+ files, frequent layout changes). Break on every redesign. Screenshots + feedback loop gives same confidence for UI correctness. Pure logic tests (hooks, stores, utils) catch the bugs that matter. | Test hooks/stores/utils with Vitest. Verify UI via screenshots + manual feedback. |
+| **E2E tests (WebDriver/Playwright)** | "Test the whole app end-to-end." | Enormous setup cost for a desktop app (tauri-driver + WebDriver + browser automation). Fragile. Slow. Single developer -- time is better spent on unit/integration tests. | Cargo test for Rust commands (mock runtime), Vitest for TS logic, manual UAT for flows. |
+| **Pre-commit hooks via Husky/lint-staged** | Standard in web projects. | Claude Code hooks replace this for the primary developer. Husky adds Node.js git hook complexity. No team to enforce for. If contributors join later, add it then. | Claude Code `PreToolUse` hook on git commit. |
+| **Istanbul/c8 line coverage targets** | "80% coverage or fail." | Coverage percentage is a vanity metric. Chasing numbers leads to tests that assert `true === true`. Structural coverage (which modules have zero tests) is more actionable. | Coverage gap detector MCP tool that identifies untested modules, not percentages. |
+| **Snapshot testing** | Quick way to detect UI changes. | Snapshot tests create noise -- every intentional UI change requires snapshot updates. For a single developer iterating fast, they slow down more than they help. | Screenshot-based UI review (already in workflow). |
+| **Type-checked ESLint rules (`recommendedTypeChecked`)** | Catches more bugs via type info. | Requires `parserOptions.project` pointing to tsconfig. Significantly slower lint runs (spawns TS compiler). For 170K LOC, adds 10-30s to lint. Start with `recommended`, upgrade later if needed. | Start with `tseslint.configs.recommended` (no type checking). Add type-checked rules in a future milestone if lint speed is acceptable. |
 
 ## Feature Dependencies
 
 ```
-[Hub single-view layout]
-    |
-    +--requires--> [Slide-in panel infrastructure]
-    |                  |
-    |                  +--requires--> [Panel open/closed state in hubLayout store]
-    |
-    +--enhances--> [Briefing restyle]
-                       |
-                       +--enhances--> [Interactive briefing with entity links] (v1.7+)
+[ESLint flat config]
+    |--- required by ---> [Pre-commit lint gate hook]
+    |--- required by ---> [PostToolUse auto-format hook]
 
-[Drawer click-to-toggle]
-    |
-    +--requires--> [Drawer minimize state]  (exists: drawerOpen in workspaceStore)
-    |
-    +--enhances--> [AI panel in drawer]
-                       |
-                       +--requires--> [Move agent panel from right sidebar to drawer tab]
+[Prettier config]
+    |--- required by ---> [PostToolUse auto-format hook]
+    |--- required by ---> [Pre-commit lint gate hook]
 
-[Goal-first project detail]
-    |
-    +--requires--> [.planning/PROJECT.md parsing]  (exists: planning sync from v1.2)
-    |
-    +--independent--> [Workspace entry consolidation]
+[clippy + rustfmt config]
+    |--- required by ---> [Pre-commit lint gate hook]
 
-[Briefing restyle]
-    +--independent--> [On-demand generation toggle]
+[Vitest config + mocking]
+    |--- required by ---> [TS utility tests]
+    |--- required by ---> [Store/hook tests]
+    |--- required by ---> [Pre-commit test gate hook]
+    |--- required by ---> [Testing MCP server (TS side)]
 
-[Calendar "Today" fix]  -- independent, pure bug fix
-[Deterministic overdue detection]  -- independent, query logic change
-[Workflows minimizable]  -- independent, collapsible section
+[cargo test harness + DB fixtures]
+    |--- required by ---> [Rust model tests]
+    |--- required by ---> [Rust command tests]
+    |--- required by ---> [Pre-commit test gate hook]
+    |--- required by ---> [Testing MCP server (Rust side)]
+
+[console.error interceptor + log file]
+    |--- required by ---> [Error log MCP tool]
+
+[Testing MCP server]
+    |--- required by ---> [Coverage gap detector]
+    |--- required by ---> [Test stub generator]
+    |--- enhances ------> [Test-on-save hook]
+
+[Existing MCP server sidecar (10 tools)]
+    |--- pattern for ---> [Testing MCP server]
+    |--- pattern for ---> [Error log MCP tool]
 ```
 
 ### Dependency Notes
 
-- **Hub single-view requires slide-in panel infrastructure first:** Removing the 3-column `ResizablePanelGroup` without an alternative for goals/calendar would lose functionality. Build slide-in panels before or simultaneously with layout change.
-- **AI panel in drawer requires drawer tab addition:** The `DrawerHeader` tab system is already built (Terminal, Logs, History). Adding "AI" tab is straightforward. Moving agent panel content is the real work -- extracting it from the right sidebar component.
-- **Goal-first project detail reuses existing .planning/ sync:** The `syncPlanningRoadmap` and file watcher from v1.2 already pull PROJECT.md data. This feature needs a display component, not new backend work.
-- **Briefing restyle is independent of hub layout:** Can be done before or after the hub layout change. The briefing component (`BriefingPanel`) is self-contained.
-- **Bug fixes are fully independent:** Calendar "Today" label, overdue detection, and workflows collapsible can ship in any phase without dependencies.
+- **Linting before hooks:** ESLint/Prettier/clippy must be configured and passing before hooks can gate on them. Otherwise hooks block every commit.
+- **Tests before hooks:** Same logic -- test suites must exist and pass before pre-commit test gates make sense.
+- **Error logger before MCP tool:** The interceptor must write to a known path before an MCP tool can read it.
+- **Testing MCP server is the capstone:** It depends on both test frameworks being configured and working. Build it last.
+- **Existing MCP sidecar is the template:** Element already has a working MCP server with 10 tools over stdio. The testing MCP server follows the same pattern -- this is a known architecture, not a research problem.
 
 ## MVP Definition
 
-### Ship in v1.6 (Core Clarity Goals)
+### Phase 1: Linting Infrastructure (Launch First)
 
-- [ ] **Hub single-view layout** -- replace 3-column `ResizablePanelGroup` with center-focused view
-- [ ] **Hub slide-in panels** -- goals tree and calendar as overlay panels toggled by header icons
-- [ ] **Briefing restyle** -- structured sections with visual hierarchy, not raw markdown wall
-- [ ] **On-demand briefing** -- cached display on load, explicit generate button, no auto-trigger
-- [ ] **Drawer click-to-toggle** -- grip bar or chevron, click header = toggle, visual minimize state
-- [ ] **AI panel in drawer** -- move from right sidebar to bottom drawer tab
-- [ ] **Goal-first project detail** -- goal/purpose card at top of project view
-- [ ] **Workspace entry consolidation** -- group AI button, directory link, session indicator
-- [ ] **Calendar "Today" label fix** -- bug fix, only show on actual today
-- [ ] **Deterministic overdue detection** -- `due_date < today AND status != complete`, not LLM
-- [ ] **Workflows section minimizable** -- collapsible when not in use
+- [ ] ESLint flat config with `typescript-eslint` recommended + React hooks/refresh plugins
+- [ ] Prettier config (`.prettierrc`) + `eslint-config-prettier`
+- [ ] `rustfmt.toml` + `cargo fmt --check` passing
+- [ ] `cargo clippy -- -D warnings` passing
+- [ ] Fix all existing lint violations (likely significant for 170K LOC greenfield lint)
 
-### Add After Validation (v1.6.x)
+### Phase 2: Test Infrastructure + Core Tests
 
-- [ ] **Keyboard shortcuts for panel toggles** -- Cmd+J for drawer, Cmd+B for goals panel
-- [ ] **Drawer height memory per context** -- store and restore drawer height for hub vs project views
-- [ ] **Briefing section collapse/expand** -- let users collapse individual briefing sections
+- [ ] `vitest.config.ts` with Tauri IPC mocking setup
+- [ ] Implement ~15 high-value TS utility tests (`date-utils`, `shellAllowlist`, `actionRegistry`, `utils`)
+- [ ] In-memory SQLite test harness for Rust
+- [ ] Implement Rust model unit tests (pure logic, no Tauri dependency)
+- [ ] Implement Rust DB layer tests (SQL correctness verification)
 
-### Future Consideration (v1.7+)
+### Phase 3: Error Logger + Claude Code Hooks
 
-- [ ] **Interactive briefing with entity links** -- click project/task mentions to navigate
-- [ ] **Briefing scheduling** -- configure when briefing auto-generates (morning, on-demand, custom)
-- [ ] **Hub quick-action cards** -- actionable cards in briefing (approve, reschedule, dismiss)
-- [ ] **Project detail peek panels** -- side-peek for files/terminal from project detail
+- [ ] `console.error` interceptor writing to `frontend-errors.log`
+- [ ] PostToolUse auto-format hook (Prettier on Edit/Write)
+- [ ] Pre-commit lint + test gate hook
+- [ ] Post-compact context re-injection hook
+
+### Phase 4: Testing MCP Server (Capstone)
+
+- [ ] MCP server with `discover_tests` tool (find test files, map to source)
+- [ ] `run_tests` tool (execute vitest/cargo test, return structured JSON results)
+- [ ] `read_test_results` tool (parse last run results)
+- [ ] `generate_test_stubs` tool (create skeleton test files from source)
+- [ ] `check_coverage_gaps` tool (identify untested modules)
+- [ ] Error log MCP tool (`read_frontend_errors`)
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Hub single-view layout | HIGH | MEDIUM | P1 |
-| Slide-in panels (goals, calendar) | HIGH | MEDIUM | P1 |
-| Briefing restyle (visual hierarchy) | HIGH | MEDIUM | P1 |
-| On-demand briefing generation | MEDIUM | LOW | P1 |
-| Drawer click-to-toggle | MEDIUM | LOW | P1 |
-| AI panel in drawer | HIGH | MEDIUM | P1 |
-| Goal-first project detail | HIGH | LOW | P1 |
-| Workspace entry consolidation | MEDIUM | LOW | P1 |
-| Calendar "Today" label fix | MEDIUM | LOW | P1 |
-| Deterministic overdue detection | HIGH | LOW | P1 |
-| Workflows minimizable | LOW | LOW | P1 |
-| Keyboard shortcuts for panels | MEDIUM | LOW | P2 |
-| Drawer height memory | LOW | LOW | P2 |
-| Briefing section collapse | LOW | LOW | P2 |
-| Interactive briefing links | HIGH | HIGH | P3 |
+| ESLint + Prettier setup | HIGH | LOW | P1 |
+| clippy + rustfmt setup | HIGH | LOW | P1 |
+| Vitest config + utility tests | HIGH | LOW | P1 |
+| Rust model/DB unit tests | HIGH | MEDIUM | P1 |
+| console.error interceptor | HIGH | LOW | P1 |
+| Pre-commit lint/test hook | HIGH | MEDIUM | P1 |
+| PostToolUse auto-format hook | MEDIUM | LOW | P1 |
+| Testing MCP server (discover + run + read) | HIGH | HIGH | P2 |
+| Coverage gap detector MCP tool | MEDIUM | MEDIUM | P2 |
+| Test stub generator MCP tool | MEDIUM | MEDIUM | P2 |
+| Error log MCP tool | MEDIUM | LOW | P2 |
+| Test-on-save hook | MEDIUM | MEDIUM | P2 |
+| Agent-based Stop hook (test verification) | LOW | LOW | P3 |
+| Post-compact context hook | LOW | LOW | P3 |
+| Rust command handler tests (mock runtime) | MEDIUM | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for v1.6 -- directly serves "Clarity" milestone goal
-- P2: Should have, add in polish phase or v1.6.x patch
-- P3: Nice to have, defer to future milestone
+- P1: Must have -- core infrastructure that everything else depends on
+- P2: Should have -- the differentiators that make Claude Code autonomous
+- P3: Nice to have -- refinements after core infrastructure works
 
-## Competitor Feature Analysis
+## Testing MCP Server: Tool Design
 
-| Feature | Linear | Notion | Things 3 | Superhuman | Element v1.6 |
-|---------|--------|--------|-----------|------------|--------------|
-| Dashboard layout | Single list/board view, inverted L-shape nav. No multi-column dashboard. | Flexible database views, custom dashboards. Complexity is the point. | Single "Today" list with calendar events integrated at top. | Single inbox view, zero chrome, nothing competes for attention. | **Single center view with opt-in slide-in overlay panels.** Full width by default, context on demand. |
-| Goal/project overview | Project description + status header. Functional, not prominent. | Page with properties, endlessly flexible but unstructured. | Project pie-chart progress icon, goal text in project description. | N/A (email client). | **Goal card from .planning with milestone, core value, progress.** The WHY before the WHAT. |
-| Daily summary/briefing | No native briefing. | No native briefing. | "Today" view with due items -- list, not narrative. | AI summaries per email thread, not a daily briefing. | **AI-generated narrative briefing with structured sections** -- summary, deadlines, blockers, wins. |
-| Panel/detail overlays | Side panel for issue meta-properties. Minimal. | Side peek, center peek, full page -- 3 modes with toggle. | Inline expansion in list, no overlays. | Split view (list + detail), keyboard-driven. | **Slide-in overlay panels for goals/calendar.** Single mode, simple toggle. |
-| Bottom drawer/panel | N/A (web app, no terminal). | N/A (web app). | N/A (task app). | N/A (email client). | **Terminal + logs + AI in resizable bottom drawer** with grip bar, click-to-toggle, height memory. |
-| Keyboard-first UX | Full keyboard nav, Cmd+K. | Partial (Cmd+K, some shortcuts). | Keyboard shortcuts for core actions. | Everything keyboard-driven, Cmd+K universal palette. | **Keyboard shortcuts for panel toggles + existing hotkeys.** Cmd+J for drawer. |
+The testing MCP server is the highest-complexity, highest-value differentiator. Here is the tool breakdown based on research of existing MCP test runners and Element's specific needs.
 
-**Element's unique position:** The combination of AI briefing + goal-first projects + embedded terminal workspace does not exist in any competitor. Linear is for teams. Notion is for documents. Things is for personal tasks. Superhuman is for email. Element is for personal project orchestration with AI -- the gap is real and none of these competitors are moving toward it.
+### Tools
+
+| Tool | Input | Output | Rationale |
+|------|-------|--------|-----------|
+| `discover_tests` | `{ framework?: "vitest" \| "cargo", path?: string }` | JSON array of test files with their source file mappings | Claude needs to know what tests exist before deciding what to write |
+| `run_tests` | `{ framework: "vitest" \| "cargo", filter?: string, file?: string }` | Structured JSON: pass/fail counts, failed test names + error messages, duration | Raw terminal output is unusable. Structured results let Claude act on failures. |
+| `read_test_results` | `{ framework?: "vitest" \| "cargo" }` | Last run results from JSON reporter output files | Avoids re-running tests just to read previous results |
+| `generate_test_stubs` | `{ source_file: string }` | Generated test file content with `it.todo()` / `#[test]` skeletons | Bootstraps test files. Pattern-match on exports/pub fns. |
+| `check_coverage_gaps` | `{ framework?: "vitest" \| "cargo" }` | List of source files with no corresponding test file, or with zero test cases | Structural coverage -- not line coverage. "This module has no tests at all." |
+| `suggest_tests` | `{ file: string }` | Suggested test cases based on function signatures and complexity | Higher-level than stubs -- suggests what scenarios to test |
+
+### Design Decisions
+
+- **Separate from existing MCP server:** The existing server has 10 tools for app entity management. Testing tools are a different concern. Separate server binary, same sidecar pattern.
+- **Framework-agnostic interface:** Tools accept `framework` parameter. Internally dispatch to vitest or cargo. Could add more frameworks later.
+- **JSON reporters:** Vitest supports `--reporter=json` natively. Cargo test with `--format json` (unstable) or parse stdout. Write results to known paths for `read_test_results`.
+- **No coverage percentage enforcement:** Coverage gaps tool reports untested modules, not percentages. "These 12 files have no tests" is more actionable than "you're at 34%."
+
+## Claude Code Hooks: Configuration Reference
+
+Based on official Claude Code documentation, hooks go in `.claude/settings.json` for project-level (committed to repo) or `~/.claude/settings.json` for user-level (all projects).
+
+### Key Hook Events for This Milestone
+
+| Event | Matcher | Use Case | Exit Behavior |
+|-------|---------|----------|---------------|
+| `PreToolUse` | `Bash` with `if: "Bash(git commit*)"` | Pre-commit lint + test gate | Exit 0 = allow, Exit 2 = block with stderr reason |
+| `PostToolUse` | `Edit\|Write` | Auto-format with Prettier, run related tests | Exit 0 = proceed (action already happened) |
+| `SessionStart` | `compact` | Re-inject project conventions after context compaction | Stdout text added to Claude's context |
+| `Stop` | (none) | Agent-based test verification before declaring done | `type: "agent"` with `ok: true/false` response |
+
+### Hook Input Format
+
+Hooks receive JSON on stdin with `session_id`, `cwd`, `hook_event_name`, `tool_name`, and `tool_input`. For `PreToolUse` on Bash, `tool_input.command` contains the shell command. Use `jq` to parse.
+
+### Blocking Pattern
+
+```bash
+#!/bin/bash
+INPUT=$(cat)
+COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command')
+
+if echo "$COMMAND" | grep -q "^git commit"; then
+  # Run lint checks
+  npx eslint --max-warnings 0 . 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Lint check failed. Fix errors before committing." >&2
+    exit 2  # Block the commit
+  fi
+fi
+exit 0
+```
 
 ## Sources
 
-- [Linear UI redesign (Part II)](https://linear.app/now/how-we-redesigned-the-linear-ui) -- inverted L-shape navigation, panel alignment, reduction principles
-- [Linear dashboard best practices](https://linear.app/now/dashboards-best-practices) -- dashboard layout guidance
-- [Notion peek pages guide](https://www.sparxno.com/blog/peek-pages-notion) -- side peek, center peek, full page modes
-- [Notion sidebar UI breakdown](https://medium.com/@quickmasum/ui-breakdown-of-notions-sidebar-2121364ec78d) -- sidebar navigation patterns
-- [Things 3 features](https://culturedcode.com/things/features/) -- Today view, project progress pie charts
-- [Superhuman command palette](https://blog.superhuman.com/how-to-build-a-remarkable-command-palette/) -- keyboard-first UX philosophy
-- [PatternFly Drawer design guidelines](https://www.patternfly.org/components/drawer/design-guidelines/) -- overlay vs inline drawers, primary-detail patterns, splitter integration
-- [VS Code custom layout docs](https://code.visualstudio.com/docs/configure/custom-layout) -- panel maximize/minimize toggle patterns
-- [The Daily Briefing Dashboard (Dominique Dias)](https://medium.com/@dormenique/the-daily-briefing-dashboard-you-need-a-command-center-8b200459db60) -- narrative-first briefing, "buffer zone" concept, input station pattern
-- [Google CC AI agent](https://blog.google/technology/google-labs/cc-ai-agent/) -- "Your Day Ahead" morning briefing as synthesized summary
-- [DayStart AI briefing](https://apps.apple.com/us/app/daystart-ai-morning-briefing/id6751055528) -- 3-minute structured morning briefing format
-- [Linear design trend (LogRocket)](https://blog.logrocket.com/ux-design/linear-design/) -- minimalist SaaS aesthetic, content-first layout
-- Element codebase: `src/components/center/HubView.tsx` (current 3-column ResizablePanelGroup)
-- Element codebase: `src/components/center/ProjectDetail.tsx` (current project detail layout)
-- Element codebase: `src/components/layout/OutputDrawer.tsx` (current drawer with tab system)
-- Element codebase: `src/components/output/DrawerHeader.tsx` (current toggle and tab UI)
-- Element codebase: `src/components/hub/BriefingPanel.tsx` (current auto-generate briefing)
+- [Claude Code Hooks Guide](https://code.claude.com/docs/en/hooks-guide) -- hook event types, configuration format, pre-commit/post-edit patterns (HIGH confidence)
+- [Tauri 2 Testing Docs](https://v2.tauri.app/develop/tests/) -- mock runtime, cargo test patterns (HIGH confidence)
+- [ESLint Flat Config](https://eslint.org/docs/latest/use/configure/configuration-files) -- eslint.config.mjs format (HIGH confidence)
+- [typescript-eslint Getting Started](https://typescript-eslint.io/getting-started/) -- recommended config setup (HIGH confidence)
+- [Tauri Plugin Log](https://v2.tauri.app/plugin/logging/) -- frontend logging to file (HIGH confidence)
+- [Test Runner MCP Server](https://mcpmarket.com/server/test-runner) -- existing MCP test runner patterns, tool design reference (MEDIUM confidence)
+- [Vitest 4 Blog](https://vitest.dev/blog/vitest-4) -- current Vitest capabilities (HIGH confidence)
+- [Clippy and Fmt Guide](https://fios-quest.com/idiomatic-rust-in-simple-steps/language-basics/clippy-and-fmt.html) -- Rust lint best practices (HIGH confidence)
+- [Steve Kinney Hook Examples](https://stevekinney.com/courses/ai-development/claude-code-hook-examples) -- practical hook patterns (MEDIUM confidence)
 
 ---
-*Feature research for: Element v1.6 Clarity -- hub, project, briefing, drawer UI overhaul*
-*Researched: 2026-04-04*
+*Feature research for: Code quality infrastructure (linting, testing, error logging, hooks, testing MCP)*
+*Researched: 2026-04-05*
