@@ -10,3 +10,4 @@ pub mod task;
 pub mod theme;
 pub mod notification;
 pub mod workflow;
+pub mod scoring;

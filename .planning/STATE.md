@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Clarity
 status: planning
-stopped_at: Phase 31 plans verified (2 plans, 2 waves)
-last_updated: "2026-04-05T03:28:08.093Z"
-last_activity: 2026-04-04 -- v1.6 Clarity roadmap created
+stopped_at: Completed 33-01-PLAN.md
+last_updated: "2026-04-05T12:05:15.000Z"
+last_activity: 2026-04-05 -- Completed 33-01 scoring engine and briefing types
 progress:
   total_phases: 12
   completed_phases: 0
-  total_plans: 11
-  completed_plans: 0
-  percent: 0
+  total_plans: 12
+  completed_plans: 1
+  percent: 8
 ---
 
 # Project State
@@ -64,6 +64,8 @@ Recent decisions affecting current work:
 - [Research]: tw-animate-css only new dependency; no JS animation framework warranted
 - [Research]: Zustand selector stability is top pitfall -- use module-level EMPTY constants
 - [Research]: Agent lifecycle must separate from panel visibility before UI relocation
+- [Phase 33-01]: compute_scores_for_date pattern for deterministic testing of date-dependent scoring logic
+- [Phase 33-01]: ProjectTag uses kebab-case serde for direct alignment with TypeScript BriefingTag union
 
 ### Pending Todos
 
