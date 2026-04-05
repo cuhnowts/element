@@ -120,7 +120,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   2. Running `cargo clippy -- -D warnings` passes with zero warnings, including the `await_holding_lock` concurrency bug in calendar.rs fixed
   3. Running `cargo fmt --check` passes with consistent formatting across all Rust source files
   4. A single `npm run check:all` script runs both TS and Rust lint/format checks and reports pass/fail
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 36-01-PLAN.md -- Biome v2 migration and TypeScript lint violations
+- [ ] 36-02-PLAN.md -- Clippy warnings, rustfmt, and await_holding_lock fix
+- [ ] 36-03-PLAN.md -- Unified check:all script
 
 ### Phase 37: Test Infrastructure & Core Tests
 **Goal**: Both TypeScript and Rust test suites run reliably with coverage reporting, establishing the baseline that hooks and MCP tools will enforce
@@ -209,7 +214,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
-| 36. Linting Foundation | v1.7 | 0/0 | Not started | - |
+| 36. Linting Foundation | v1.7 | 0/3 | Planning | - |
 | 37. Test Infrastructure & Core Tests | v1.7 | 0/0 | Not started | - |
 | 38. Error Logger | v1.7 | 0/0 | Not started | - |
 | 39. Claude Code Hooks | v1.7 | 0/0 | Not started | - |
