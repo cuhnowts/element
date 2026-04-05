@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { format } from "date-fns";
 import { useStore } from "@/stores";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,7 +94,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   const { nowPixelOffset, isVisible: nowIsVisible } =
     useNowLine(gridStartMinutes);
 
-  const isToday = dateStr === new Date().toISOString().split("T")[0];
+  const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
 
   // Positioned events
   const positionedEvents = useMemo(
@@ -214,7 +215,9 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   if (events.length === 0 && allDayEvents.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-2 p-4 text-center">
-        <h3 className="text-base font-semibold">No events today</h3>
+        <h3 className="text-base font-semibold">
+          {isToday ? "No events today" : "No events"}
+        </h3>
         <p className="text-sm text-muted-foreground max-w-xs">
           Your calendar is clear. Connect a calendar account in Settings to see
           your meetings here.

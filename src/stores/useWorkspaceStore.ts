@@ -42,6 +42,10 @@ interface WorkspaceState {
   setThemeExpanded: (themeId: string, expanded: boolean) => void;
   isThemeExpanded: (themeId: string) => boolean;
 
+  // Workflow collapse state (persisted)
+  workflowsCollapsed: boolean;
+  toggleWorkflows: () => void;
+
   // Hub layout state (persisted)
   hubLayout: HubLayout;
   setHubLayout: (partial: Partial<HubLayout>) => void;
@@ -112,6 +116,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         return state === undefined ? true : state;
       },
 
+      // Workflow collapse state (persisted) -- default collapsed per D-09
+      workflowsCollapsed: true,
+      toggleWorkflows: () => set((s) => ({ workflowsCollapsed: !s.workflowsCollapsed })),
+
       // Per-project workspace state (session-only)
       projectStates: {},
       getProjectState: (projectId: string): ProjectWorkspaceState => {
@@ -179,6 +187,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         calendarVisible: state.calendarVisible,
         themeCollapseState: state.themeCollapseState,
         hubLayout: state.hubLayout,
+        workflowsCollapsed: state.workflowsCollapsed,
         // Do NOT persist selectedTaskId -- task may not exist on next launch
         // Do NOT persist activeDrawerTab or hasAutoOpenedTerminal -- session-only state
         // Do NOT persist projectStates -- session-only (D-14)
