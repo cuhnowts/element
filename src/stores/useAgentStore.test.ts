@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { useAgentStore } from "./useAgentStore";
 
 const INITIAL_STATE = {
-  panelOpen: false,
   activeTab: "activity" as const,
   status: "starting" as const,
   restartCount: 0,
+  agentCommand: null as string | null,
+  agentArgs: null as string[] | null,
   entries: [],
 };
 
@@ -16,19 +17,22 @@ describe("useAgentStore", () => {
 
   it("initializes with correct defaults", () => {
     const state = useAgentStore.getState();
-    expect(state.panelOpen).toBe(false);
     expect(state.activeTab).toBe("activity");
     expect(state.status).toBe("starting");
     expect(state.restartCount).toBe(0);
+    expect(state.agentCommand).toBe(null);
+    expect(state.agentArgs).toBe(null);
     expect(state.entries).toEqual([]);
   });
 
-  it("togglePanel flips panelOpen from false to true and back", () => {
-    expect(useAgentStore.getState().panelOpen).toBe(false);
-    useAgentStore.getState().togglePanel();
-    expect(useAgentStore.getState().panelOpen).toBe(true);
-    useAgentStore.getState().togglePanel();
-    expect(useAgentStore.getState().panelOpen).toBe(false);
+  it("setAgentCommand stores command string", () => {
+    useAgentStore.getState().setAgentCommand("claude");
+    expect(useAgentStore.getState().agentCommand).toBe("claude");
+  });
+
+  it("setAgentArgs stores args array", () => {
+    useAgentStore.getState().setAgentArgs(["--mcp-config", "/path/to/config"]);
+    expect(useAgentStore.getState().agentArgs).toEqual(["--mcp-config", "/path/to/config"]);
   });
 
   it("setActiveTab changes activeTab to terminal", () => {

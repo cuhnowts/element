@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type DrawerTab = "logs" | "history" | "runs" | "terminal";
+export type DrawerTab = "elementai" | "logs" | "history" | "runs" | "terminal";
 
 export interface HubLayout {
   goalsPanelSize: number;

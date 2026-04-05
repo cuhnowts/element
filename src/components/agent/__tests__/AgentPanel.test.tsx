@@ -12,8 +12,6 @@ vi.mock("@/hooks/useAgentLifecycle", () => ({
   useAgentLifecycle: () => ({
     startAgent: mockStartAgent,
     restartAgent: mockRestartAgent,
-    agentCommand: null,
-    agentArgs: [],
   }),
 }));
 
@@ -36,7 +34,6 @@ describe("AgentPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAgentStore.setState({
-      panelOpen: true,
       activeTab: "activity",
       status: "running",
       restartCount: 0,

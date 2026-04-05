@@ -10,6 +10,8 @@ const {
   mockSetStatus,
   mockIncrementRestart,
   mockResetRestartCount,
+  mockSetAgentCommand,
+  mockSetAgentArgs,
   mockAppDataDir,
   mockResolveResource,
 } = vi.hoisted(() => ({
@@ -19,6 +21,8 @@ const {
   mockSetStatus: vi.fn(),
   mockIncrementRestart: vi.fn(),
   mockResetRestartCount: vi.fn(),
+  mockSetAgentCommand: vi.fn(),
+  mockSetAgentArgs: vi.fn(),
   mockAppDataDir: vi.fn(),
   mockResolveResource: vi.fn(),
 }));
@@ -46,6 +50,10 @@ vi.mock("@/stores/useAgentStore", () => ({
         setStatus: mockSetStatus,
         incrementRestart: mockIncrementRestart,
         resetRestartCount: mockResetRestartCount,
+        setAgentCommand: mockSetAgentCommand,
+        setAgentArgs: mockSetAgentArgs,
+        agentCommand: null,
+        agentArgs: null,
       }),
     {
       getState: () => ({
@@ -54,6 +62,10 @@ vi.mock("@/stores/useAgentStore", () => ({
         setStatus: mockSetStatus,
         incrementRestart: mockIncrementRestart,
         resetRestartCount: mockResetRestartCount,
+        setAgentCommand: mockSetAgentCommand,
+        setAgentArgs: mockSetAgentArgs,
+        agentCommand: null,
+        agentArgs: null,
       }),
     }
   ),
@@ -130,9 +142,10 @@ describe("useAgentLifecycle", () => {
 
     expect(mockSetStatus).toHaveBeenCalledWith("running");
     expect(mockResetRestartCount).toHaveBeenCalled();
-    expect(result.current.agentCommand).toBe("claude");
-    expect(result.current.agentArgs).toBeDefined();
-    expect(result.current.agentArgs!.length).toBeGreaterThan(0);
+    expect(mockSetAgentCommand).toHaveBeenCalledWith("claude");
+    expect(mockSetAgentArgs).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.stringContaining("--mcp-config")])
+    );
   });
 
   it("sets status to idle on exit code 0", async () => {

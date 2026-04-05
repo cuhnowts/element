@@ -1,13 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import { useTerminal } from "@/hooks/useTerminal";
 import { useAgentStore } from "@/stores/useAgentStore";
-import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
 import { homeDir } from "@tauri-apps/api/path";
 
 export function AgentTerminalTab() {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeTab = useAgentStore((s) => s.activeTab);
-  const { agentCommand, agentArgs } = useAgentLifecycle();
+  const agentCommand = useAgentStore((s) => s.agentCommand);
+  const agentArgs = useAgentStore((s) => s.agentArgs);
   const [cwd, setCwd] = useState<string | null>(null);
 
   useEffect(() => {

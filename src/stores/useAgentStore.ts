@@ -2,13 +2,14 @@ import { create } from "zustand";
 import type { AgentActivityEntry, AgentState, AgentStatus } from "@/types/agent";
 
 export const useAgentStore = create<AgentState>()((set, get) => ({
-  // Panel
-  panelOpen: false,
+  // Panel -- panelOpen REMOVED per D-14
   activeTab: "activity" as const,
 
   // Agent lifecycle
   status: "starting" as AgentStatus,
   restartCount: 0,
+  agentCommand: null as string | null,
+  agentArgs: null as string[] | null,
 
   // Activity
   entries: [] as AgentActivityEntry[],
@@ -19,12 +20,13 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
       (e) => e.type === "approval_request" && e.approvalStatus === "pending"
     ).length,
 
-  // Actions
-  togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
-
+  // Actions -- togglePanel REMOVED per D-14
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   setStatus: (status) => set({ status }),
+
+  setAgentCommand: (cmd) => set({ agentCommand: cmd }),
+  setAgentArgs: (args) => set({ agentArgs: args }),
 
   addEntry: (entry) =>
     set((s) => ({

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useAgentStore } from "@/stores/useAgentStore";
 import { useAgentMcp } from "@/hooks/useAgentMcp";
 import { api } from "@/lib/tauri";
@@ -12,11 +12,11 @@ export function useAgentLifecycle() {
   const setStatus = useAgentStore((s) => s.setStatus);
   const incrementRestart = useAgentStore((s) => s.incrementRestart);
   const resetRestartCount = useAgentStore((s) => s.resetRestartCount);
+  const setAgentCommand = useAgentStore((s) => s.setAgentCommand);
+  const setAgentArgs = useAgentStore((s) => s.setAgentArgs);
 
   const { generateMcpConfig, generateSystemPrompt } = useAgentMcp();
 
-  const [agentCommand, setAgentCommand] = useState<string | null>(null);
-  const [agentArgs, setAgentArgs] = useState<string[] | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startAgent = useCallback(async () => {
@@ -72,7 +72,7 @@ export function useAgentLifecycle() {
     // 8. Set running and reset restart count
     setStatus("running");
     resetRestartCount();
-  }, [setStatus, resetRestartCount, generateMcpConfig, generateSystemPrompt]);
+  }, [setStatus, resetRestartCount, setAgentCommand, setAgentArgs, generateMcpConfig, generateSystemPrompt]);
 
   const handleAgentExit = useCallback(
     (exitCode: number) => {
@@ -124,7 +124,5 @@ export function useAgentLifecycle() {
     startAgent,
     restartAgent,
     handleAgentExit,
-    agentCommand,
-    agentArgs,
   };
 }

@@ -29,7 +29,6 @@ import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
 import { AgentPanel } from "@/components/agent/AgentPanel";
 import { AgentToggleButton } from "@/components/agent/AgentToggleButton";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { useAgentStore } from "@/stores/useAgentStore";
 import { useAgentQueue } from "@/hooks/useAgentQueue";
 import { useNotificationEvents } from "@/hooks/useNotificationEvents";
 
@@ -39,7 +38,7 @@ export function AppLayout() {
   useAgentQueue();
   useNotificationEvents();
   const settingsOpen = useStore((s) => s.settingsOpen);
-  const agentPanelOpen = useAgentStore((s) => s.panelOpen);
+  // agentPanelOpen removed (D-14) -- AgentPanel always visible until Plan 02 removes it
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
@@ -184,7 +183,7 @@ export function AppLayout() {
               </ResizablePanel>
             </ResizablePanelGroup>
             </div>
-            {agentPanelOpen && <AgentPanel />}
+            <AgentPanel />
           </div>
         )}
       </div>

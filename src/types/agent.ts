@@ -23,13 +23,14 @@ export interface AgentActivityEntry {
 }
 
 export interface AgentState {
-  // Panel
-  panelOpen: boolean;
+  // Panel -- panelOpen REMOVED per D-14
   activeTab: "activity" | "terminal";
 
   // Agent lifecycle
   status: AgentStatus;
   restartCount: number;
+  agentCommand: string | null;
+  agentArgs: string[] | null;
 
   // Activity
   entries: AgentActivityEntry[];
@@ -37,10 +38,11 @@ export interface AgentState {
   // Computed
   pendingApprovalCount: () => number;
 
-  // Actions
-  togglePanel: () => void;
+  // Actions -- togglePanel REMOVED per D-14
   setActiveTab: (tab: "activity" | "terminal") => void;
   setStatus: (status: AgentStatus) => void;
+  setAgentCommand: (cmd: string | null) => void;
+  setAgentArgs: (args: string[] | null) => void;
   addEntry: (entry: Omit<AgentActivityEntry, "id" | "timestamp"> & { id?: string }) => void;
   approveEntry: (entryId: string) => void;
   rejectEntry: (entryId: string) => void;

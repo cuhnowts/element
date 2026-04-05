@@ -3,11 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useAgentStore } from "@/stores/useAgentStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function AgentToggleButton() {
-  const togglePanel = useAgentStore((s) => s.togglePanel);
+  // togglePanel removed (D-14) -- now opens drawer to elementai tab
+  const toggleDrawer = useWorkspaceStore((s) => s.toggleDrawer);
+  const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
+  const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
+  const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const pendingApprovalCount = useAgentStore((s) => s.pendingApprovalCount);
   const count = pendingApprovalCount();
+
+  const handleClick = () => {
+    if (drawerOpen && activeDrawerTab === "elementai") {
+      toggleDrawer();
+    } else {
+      openDrawerToTab("elementai");
+    }
+  };
 
   return (
     <Tooltip>
@@ -17,7 +30,7 @@ export function AgentToggleButton() {
             variant="ghost"
             size="sm"
             className="relative size-7 p-0"
-            onClick={togglePanel}
+            onClick={handleClick}
           />
         }
       >
