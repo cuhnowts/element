@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Clarity
 status: Ready to plan
-stopped_at: Completed 33-02-PLAN.md
-last_updated: "2026-04-05T12:19:11.760Z"
+stopped_at: Completed 34-01-PLAN.md
+last_updated: "2026-04-05T12:39:19.945Z"
 progress:
   total_phases: 12
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 6
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 33 — briefing-rework
+**Current focus:** Phase 35 — bug-fixes-polish
 
 ## Current Position
 
-Phase: 33
+Phase: 999.4
 Plan: Not started
 
 ## Performance Metrics
@@ -67,6 +67,10 @@ Recent decisions affecting current work:
 - [Phase 33-01]: compute_scores_for_date pattern for deterministic testing of date-dependent scoring logic
 - [Phase 33-01]: ProjectTag uses kebab-case serde for direct alignment with TypeScript BriefingTag union
 - [Phase 33-02]: Used CompletionResponse.content for full response instead of channel accumulation
+- [Phase 34]: Test-first stubs follow existing ProjectDetail.test.tsx mock patterns for Tauri API and store mocks
+- [Phase 35]: FIX-02 audit: all overdue paths are deterministic (date-utils isOverdue, inline parseISO) -- no code changes needed
+- [Phase 35]: Workflows default collapsed per D-09 to reduce sidebar clutter
+- [Phase 34]: Separate update_project_goal command instead of extending update_project -- prevents goal from being silently cleared by name/description saves
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T12:19:07.973Z
-Stopped at: Completed 33-02-PLAN.md
+Last session: 2026-04-05T12:38:57.644Z
+Stopped at: Completed 34-01-PLAN.md
 Resume file: None

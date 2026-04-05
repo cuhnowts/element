@@ -95,7 +95,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout (completed 2026-04-05)
 - [ ] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections
 - [ ] **Phase 34: Goal-First Project Detail** - Goal hero card above phases with streamlined workspace entry
-- [ ] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows
+- [x] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows (completed 2026-04-05)
 
 ## Phase Details
 
@@ -226,8 +226,8 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 31. Drawer Consolidation | v1.6 | 1/2 | In Progress|  |
 | 32. Hub Layout Overhaul | v1.6 | 1/2 | Complete    | 2026-04-05 |
 | 33. Briefing Rework | v1.6 | 2/4 | In Progress|  |
-| 34. Goal-First Project Detail | v1.6 | 0/3 | Not started | - |
-| 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
+| 34. Goal-First Project Detail | v1.6 | 0/3 | Planned    |  |
+| 35. Bug Fixes & Polish | v1.6 | 0/1 | Complete    | 2026-04-05 |
 
 ## Backlog
 
@@ -235,7 +235,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/4 plans executed
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
