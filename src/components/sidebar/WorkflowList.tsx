@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useStore } from "@/stores";
-import { Plus } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function WorkflowList() {
   const workflows = useWorkflowStore((s) => s.workflows);
@@ -13,6 +15,9 @@ export function WorkflowList() {
   const fetchWorkflows = useWorkflowStore((s) => s.fetchWorkflows);
   const selectWorkflow = useWorkflowStore((s) => s.selectWorkflow);
   const createWorkflow = useWorkflowStore((s) => s.createWorkflow);
+
+  const workflowsCollapsed = useWorkspaceStore((s) => s.workflowsCollapsed);
+  const toggleWorkflows = useWorkspaceStore((s) => s.toggleWorkflows);
 
   useEffect(() => {
     fetchWorkflows();
@@ -25,47 +30,54 @@ export function WorkflowList() {
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2">
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
-          Workflows
-        </span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={handleCreate}
-          aria-label="Create workflow"
-        >
-          <Plus className="h-3 w-3" />
-        </Button>
+    <Collapsible open={!workflowsCollapsed} onOpenChange={() => toggleWorkflows()}>
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between px-4 py-2">
+          <CollapsibleTrigger className="flex items-center gap-1 cursor-pointer" aria-label="Toggle workflows section">
+            {workflowsCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
+            <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+              Workflows
+            </span>
+          </CollapsibleTrigger>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={handleCreate}
+            aria-label="Create workflow"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
+        <CollapsibleContent>
+          <ScrollArea className="flex-1">
+            {workflows.length === 0 ? (
+              <EmptyState
+                heading="No workflows"
+                body="Create a workflow or convert a task to get started."
+              />
+            ) : (
+              workflows.map((wf) => (
+                <button
+                  key={wf.id}
+                  type="button"
+                  onClick={() => {
+                    selectWorkflow(wf.id);
+                    useStore.getState().setActiveView('workflow');
+                  }}
+                  className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
+                    selectedWorkflowId === wf.id ? "bg-accent/10" : ""
+                  }`}
+                >
+                  <span className="flex-1 truncate">{wf.name}</span>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {wf.steps.length}
+                  </Badge>
+                </button>
+              ))
+            )}
+          </ScrollArea>
+        </CollapsibleContent>
       </div>
-      <ScrollArea className="flex-1">
-        {workflows.length === 0 ? (
-          <EmptyState
-            heading="No workflows"
-            body="Create a workflow or convert a task to get started."
-          />
-        ) : (
-          workflows.map((wf) => (
-            <button
-              key={wf.id}
-              type="button"
-              onClick={() => {
-                selectWorkflow(wf.id);
-                useStore.getState().setActiveView('workflow');
-              }}
-              className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                selectedWorkflowId === wf.id ? "bg-accent/10" : ""
-              }`}
-            >
-              <span className="flex-1 truncate">{wf.name}</span>
-              <Badge variant="outline" className="text-xs shrink-0">
-                {wf.steps.length}
-              </Badge>
-            </button>
-          ))
-        )}
-      </ScrollArea>
-    </div>
+    </Collapsible>
   );
 }
