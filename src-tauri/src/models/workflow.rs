@@ -197,6 +197,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(dead_code)] // query method for workflow-task association
     pub fn get_workflow_by_task_id(
         &self,
         task_id: &str,

@@ -4,6 +4,7 @@ use crate::ai::types::{
 use async_trait::async_trait;
 
 #[async_trait]
+#[allow(dead_code)] // trait API methods used via dynamic dispatch
 pub trait AiProvider: Send + Sync {
     fn name(&self) -> &str;
     fn provider_type(&self) -> ProviderType;

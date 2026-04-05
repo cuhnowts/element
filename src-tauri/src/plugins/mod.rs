@@ -121,7 +121,6 @@ impl PluginHost {
     }
 
     pub fn start_watching(&mut self) -> Result<(), notify::Error> {
-        use notify::Watcher;
         use notify_debouncer_mini::new_debouncer;
         use std::time::Duration;
 

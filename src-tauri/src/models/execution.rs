@@ -97,6 +97,7 @@ pub struct StepResult {
 }
 
 impl Database {
+    #[allow(dead_code)] // execution tracking for workflow runs
     pub fn create_execution_record(
         &self,
         task_id: &str,
@@ -134,7 +135,7 @@ impl Database {
                     id: row.get(0)?,
                     task_id: row.get(1)?,
                     status: StepStatus::from_db_str(&status_str)
-                        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+                        .map_err(rusqlite::Error::InvalidParameterName)?,
                     started_at: row.get(3)?,
                     completed_at: row.get(4)?,
                     steps: vec![],
@@ -166,7 +167,7 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 status: StepStatus::from_db_str(&status_str)
-                    .map_err(|e| rusqlite::Error::InvalidParameterName(e))?,
+                    .map_err(rusqlite::Error::InvalidParameterName)?,
                 duration: row.get(3)?,
                 order: row.get(4)?,
             })
@@ -256,6 +257,7 @@ impl Database {
         runs.collect()
     }
 
+    #[allow(dead_code)] // used in tests and workflow run queries
     pub fn get_workflow_run(&self, run_id: &str) -> Result<WorkflowRun, rusqlite::Error> {
         self.conn().query_row(
             "SELECT id, workflow_id, trigger_type, status, started_at, completed_at, error_message FROM workflow_runs WHERE id = ?1",

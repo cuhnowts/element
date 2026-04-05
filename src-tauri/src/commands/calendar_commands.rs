@@ -1,5 +1,5 @@
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 
 use crate::credentials::CredentialManager;
 use crate::db::connection::Database;
@@ -81,9 +81,7 @@ pub async fn sync_calendar_for_account(app: &AppHandle, account_id: &str) -> Res
     if let Some(ref new_rt) = new_refresh {
         let cred_mgr_state = app.state::<Mutex<CredentialManager>>();
         let cred_mgr = cred_mgr_state.lock().map_err(|e| e.to_string())?;
-        cred_mgr
-            .update(&account.credential_id, None, None, None, Some(new_rt))
-            .map_err(|e| e)?;
+        cred_mgr.update(&account.credential_id, None, None, None, Some(new_rt))?;
     }
 
     // Sync events
@@ -329,14 +327,12 @@ pub async fn connect_google_calendar(
 
     // Store refresh token in credential vault
     let cred_mgr = cred_state.lock().map_err(|e| e.to_string())?;
-    let credential = cred_mgr
-        .create(
-            &format!("google-calendar-{}", &email),
-            "oauth_token",
-            refresh_token,
-            "Google Calendar OAuth refresh token",
-        )
-        .map_err(|e| e)?;
+    let credential = cred_mgr.create(
+        &format!("google-calendar-{}", &email),
+        "oauth_token",
+        refresh_token,
+        "Google Calendar OAuth refresh token",
+    )?;
     drop(cred_mgr);
 
     // Determine next color_index
@@ -511,14 +507,12 @@ pub async fn connect_outlook_calendar(
 
     // Store refresh token
     let cred_mgr = cred_state.lock().map_err(|e| e.to_string())?;
-    let credential = cred_mgr
-        .create(
-            &format!("outlook-calendar-{}", &email),
-            "oauth_token",
-            refresh_token,
-            "Outlook Calendar OAuth refresh token",
-        )
-        .map_err(|e| e)?;
+    let credential = cred_mgr.create(
+        &format!("outlook-calendar-{}", &email),
+        "oauth_token",
+        refresh_token,
+        "Outlook Calendar OAuth refresh token",
+    )?;
     drop(cred_mgr);
 
     let db = state.lock().map_err(|e| e.to_string())?;
@@ -567,8 +561,8 @@ pub async fn connect_outlook_calendar(
 #[tauri::command]
 pub async fn sync_calendar(
     app: AppHandle,
-    state: State<'_, Arc<Mutex<Database>>>,
-    cred_state: State<'_, Mutex<CredentialManager>>,
+    _state: State<'_, Arc<Mutex<Database>>>,
+    _cred_state: State<'_, Mutex<CredentialManager>>,
     account_id: String,
 ) -> Result<(), String> {
     // Delegate to shared helper that handles runtime client IDs
@@ -717,7 +711,7 @@ pub async fn disconnect_calendar(
 
     {
         let cred_mgr = cred_state.lock().map_err(|e| e.to_string())?;
-        cred_mgr.delete(&credential_id).map_err(|e| e)?;
+        cred_mgr.delete(&credential_id)?;
     }
 
     let db = state.lock().map_err(|e| e.to_string())?;

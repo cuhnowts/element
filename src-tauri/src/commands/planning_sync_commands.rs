@@ -95,7 +95,6 @@ pub async fn start_planning_watcher(
     project_id: String,
     directory_path: String,
 ) -> Result<(), String> {
-    use notify::Watcher;
     use notify_debouncer_mini::new_debouncer;
     use std::time::Duration;
 

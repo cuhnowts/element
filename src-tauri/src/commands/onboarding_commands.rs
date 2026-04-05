@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Mutex as StdMutex;
 
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 
 use crate::db::connection::Database;
 
@@ -42,7 +42,6 @@ pub async fn start_plan_watcher(
     watcher_state: State<'_, PlanWatcherState>,
     project_dir: String,
 ) -> Result<(), String> {
-    use notify::Watcher;
     use notify_debouncer_mini::new_debouncer;
     use std::time::Duration;
 

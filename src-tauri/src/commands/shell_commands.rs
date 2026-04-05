@@ -47,7 +47,7 @@ const MULTI_WORD_PREFIXES: &[&str] = &["git", "npm", "yarn", "pnpm", "cargo", "d
 
 /// Extract the base command (first word, or first two words for multi-word commands).
 fn parse_base_command(command: &str) -> String {
-    let parts: Vec<&str> = command.trim().split_whitespace().collect();
+    let parts: Vec<&str> = command.split_whitespace().collect();
     if parts.is_empty() {
         return String::new();
     }

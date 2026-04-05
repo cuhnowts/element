@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use crate::ai::gateway::AiGateway;
 use crate::ai::types::CompletionRequest;
 use crate::db::connection::Database;
-use crate::models::manifest::{build_manifest_string, ManifestRebuildTrigger, ManifestState};
+use crate::models::manifest::{build_manifest_string, ManifestState};
 use crate::models::scoring::{compute_scores, ScoringResult};
 
 /// Build (or rebuild) the context manifest and cache it.
@@ -179,14 +179,13 @@ pub async fn generate_context_summary(
 /// Strip common JSON wrappers (```json ... ```) from LLM output.
 fn strip_json_fences(raw: &str) -> &str {
     let trimmed = raw.trim();
-    if trimmed.starts_with("```json") {
-        let after_fence = &trimmed[7..]; // skip ```json
+    if let Some(after_fence) = trimmed.strip_prefix("```json") {
+        // skip ```json
         if let Some(end) = after_fence.rfind("```") {
             return after_fence[..end].trim();
         }
     }
-    if trimmed.starts_with("```") {
-        let after_fence = &trimmed[3..];
+    if let Some(after_fence) = trimmed.strip_prefix("```") {
         if let Some(end) = after_fence.rfind("```") {
             return after_fence[..end].trim();
         }

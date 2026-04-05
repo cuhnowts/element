@@ -29,6 +29,7 @@ pub struct PendingTask {
 }
 
 /// Input for batch creating phases and tasks (from review screen)
+#[allow(dead_code)] // deserialized from frontend JSON
 #[derive(Debug, Deserialize)]
 pub struct BatchPlanInput {
     pub phases: Vec<PendingPhaseInput>,
@@ -88,6 +89,7 @@ IMPORTANT: The output file MUST be valid JSON matching this schema exactly.
 }
 
 /// Data structures for project context file generation
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct ProjectContextData {
     pub project_name: String,
     pub project_description: String,
@@ -99,6 +101,7 @@ pub struct ProjectContextData {
     pub is_empty: bool,
 }
 
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct PhaseContextData {
     pub name: String,
     pub sort_order: i32,
@@ -107,6 +110,7 @@ pub struct PhaseContextData {
     pub total: usize,
 }
 
+#[allow(dead_code)] // fields populated for context file rendering
 pub struct TaskContextData {
     pub title: String,
     pub status: String,

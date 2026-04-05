@@ -17,6 +17,7 @@ pub enum CalendarError {
     OAuthError(String),
     ApiError(String),
     DbError(String),
+    #[allow(dead_code)] // error variant for credential failures
     CredentialError(String),
     SyncTokenExpired,     // Google 410 Gone -- sync token invalidated
     TokenRevoked(String), // invalid_grant -- permanent auth failure
@@ -80,6 +81,7 @@ pub struct CalendarEvent {
     pub updated_at: String,
 }
 
+#[allow(dead_code)] // sync result type for calendar sync operations
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncResult {
@@ -116,6 +118,7 @@ pub fn compute_code_challenge(code_verifier: &str) -> String {
 }
 
 /// Build the Google OAuth authorization URL.
+#[allow(dead_code)] // called from calendar command handlers
 pub fn build_google_auth_url(redirect_port: u16, code_challenge: &str) -> String {
     format!(
         "https://accounts.google.com/o/oauth2/v2/auth?\
@@ -132,6 +135,7 @@ pub fn build_google_auth_url(redirect_port: u16, code_challenge: &str) -> String
 }
 
 /// Build the Microsoft OAuth authorization URL.
+#[allow(dead_code)] // called from calendar command handlers
 pub fn build_outlook_auth_url(redirect_port: u16, code_challenge: &str) -> String {
     format!(
         "https://login.microsoftonline.com/common/oauth2/v2/authorize?\
@@ -303,7 +307,7 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                     // Distinguish date-separator dashes (pos 4,7) from timezone offset dashes (pos > 10).
                     if s.ends_with('Z')
                         || s.contains('+')
-                        || s.rfind('-').map_or(false, |pos| pos > 10)
+                        || s.rfind('-').is_some_and(|pos| pos > 10)
                     {
                         s.to_string()
                     } else {
@@ -318,7 +322,7 @@ pub fn parse_outlook_events(json: &serde_json::Value, account_id: &str) -> Vec<C
                 .map(|s| {
                     if s.ends_with('Z')
                         || s.contains('+')
-                        || s.rfind('-').map_or(false, |pos| pos > 10)
+                        || s.rfind('-').is_some_and(|pos| pos > 10)
                     {
                         s.to_string()
                     } else {
@@ -754,12 +758,15 @@ pub fn delete_events_by_ids(
 // ─── CalendarPlugin (orchestrator) ────────────────────────────────────────────
 
 /// Token refresh mutex to prevent race conditions (Pitfall 3 from RESEARCH.md).
+#[allow(dead_code)] // used by CalendarPlugin::sync_account
 static TOKEN_REFRESH_LOCK: Mutex<()> = Mutex::new(());
 
+#[allow(dead_code)] // calendar sync orchestrator
 pub struct CalendarPlugin;
 
 impl CalendarPlugin {
     /// Sync a single account: refresh token, fetch events, upsert to DB.
+    #[allow(dead_code)] // calendar sync entry point
     pub async fn sync_account(
         account: &CalendarAccount,
         db: &std::sync::Mutex<Database>,

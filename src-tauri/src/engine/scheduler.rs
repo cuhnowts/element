@@ -188,6 +188,7 @@ async fn scheduled_run(
 }
 
 /// Register a single new schedule job (called when user creates/updates a schedule).
+#[allow(dead_code)] // invoked dynamically when schedules are created
 pub async fn add_schedule_job(
     sched: &JobScheduler,
     app: AppHandle,

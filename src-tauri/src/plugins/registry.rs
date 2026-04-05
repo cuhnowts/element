@@ -13,6 +13,7 @@ pub enum PluginStatus {
     Loading,
 }
 
+#[allow(dead_code)] // fields populated during plugin loading
 #[derive(Debug, Clone)]
 pub struct LoadedPlugin {
     pub manifest: PluginManifest,

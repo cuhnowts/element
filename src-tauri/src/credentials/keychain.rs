@@ -41,11 +41,13 @@ impl SecretStore for KeychainStore {
 }
 
 /// In-memory secret store for testing (no real keychain access).
+#[allow(dead_code)] // used in test builds
 pub struct InMemoryStore {
     secrets: Mutex<HashMap<String, String>>,
 }
 
 impl InMemoryStore {
+    #[allow(dead_code)] // used in test builds
     pub fn new() -> Self {
         Self {
             secrets: Mutex::new(HashMap::new()),

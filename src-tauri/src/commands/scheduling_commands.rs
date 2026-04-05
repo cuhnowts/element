@@ -434,7 +434,7 @@ pub async fn create_work_block(
     }
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
-    let block_title = title.unwrap_or_else(|| "Work Block".to_string());
+    let _block_title = title.unwrap_or_else(|| "Work Block".to_string());
     db.conn()
         .execute(
             "INSERT INTO scheduled_blocks (id, schedule_date, task_id, block_type, start_time, end_time, is_confirmed, created_at)

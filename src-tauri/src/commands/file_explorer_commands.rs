@@ -44,7 +44,7 @@ pub fn list_directory_impl(dir_path: &str, show_hidden: bool) -> Result<Vec<File
             // Stop if we hit a directory without .git (we've left the repo)
             if current
                 .as_ref()
-                .map_or(true, |c| !c.join(".git").exists() && c.parent().is_none())
+                .is_none_or(|c| !c.join(".git").exists() && c.parent().is_none())
             {
                 // keep going -- gitignore can be nested
             }

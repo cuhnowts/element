@@ -75,6 +75,7 @@ impl Database {
         tags.collect()
     }
 
+    #[allow(dead_code)] // CRUD method for tag management
     pub fn delete_tag(&self, id: &str) -> Result<(), rusqlite::Error> {
         self.conn()
             .execute("DELETE FROM tags WHERE id = ?1", rusqlite::params![id])?;

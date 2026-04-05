@@ -92,6 +92,7 @@ impl PipelineExecutor {
         }
     }
 
+    #[allow(dead_code)] // workflow execution engine, invoked via scheduler
     pub async fn execute(
         &mut self,
         workflow: &Workflow,
@@ -191,7 +192,7 @@ impl PipelineExecutor {
                     ..
                 } => {
                     let resolved_url = self.resolve_templates(url);
-                    http::execute_http(&method, &resolved_url, headers, body, *timeout_ms).await
+                    http::execute_http(method, &resolved_url, headers, body, *timeout_ms).await
                 }
                 StepDefinition::Manual {
                     name, description, ..
@@ -424,7 +425,7 @@ impl PipelineExecutor {
                     ..
                 } => {
                     let resolved_url = self.resolve_templates(url);
-                    http::execute_http(&method, &resolved_url, headers, body, *timeout_ms).await
+                    http::execute_http(method, &resolved_url, headers, body, *timeout_ms).await
                 }
                 StepDefinition::Manual { name, description } => {
                     let manual_progress = StepProgress {

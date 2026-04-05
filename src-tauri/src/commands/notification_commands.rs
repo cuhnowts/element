@@ -3,6 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::db::connection::Database;
 use crate::models::notification::{CreateNotificationInput, Notification};
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn create_notification(
     app: AppHandle,

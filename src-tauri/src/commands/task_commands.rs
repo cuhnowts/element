@@ -14,6 +14,7 @@ pub struct TaskWithTags {
     pub tags: Vec<Tag>,
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn create_task(
     app: AppHandle,
@@ -77,6 +78,7 @@ pub async fn get_task(
     Ok(TaskWithTags { task, tags })
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub async fn update_task(
     app: AppHandle,

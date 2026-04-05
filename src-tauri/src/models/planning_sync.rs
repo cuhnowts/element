@@ -6,6 +6,7 @@ use sha2::{Digest, Sha256};
 use crate::db::connection::Database;
 
 /// A parsed phase from ROADMAP.md
+#[allow(dead_code)] // fields populated during ROADMAP.md parsing
 #[derive(Debug, Clone)]
 pub struct ParsedPhase {
     pub number: String,
