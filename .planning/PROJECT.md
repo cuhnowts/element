@@ -43,6 +43,8 @@ v1.5 delivered: Google Calendar OAuth sync with .env-based credentials, Outlook-
 
 v1.6 Phase 32 complete: Hub layout overhaul — single full-width center view (CommandHub) replacing 3-column ResizablePanelGroup, slide-over overlay panels for Calendar (left) and Goals (right) with CSS transform animations, HubToolbar with toggle buttons, action buttons (Run Daily Briefing, Organize Calendar, Organize Goals), DayPulse placeholder, and JumpToTop with IntersectionObserver.
 
+v1.6 Phase 35 complete: Bug fixes & polish — calendar "Today" highlight uses local timezone (date-fns format) instead of UTC, overdue detection confirmed deterministic across all rendering paths, workflows sidebar section collapsible with persisted state.
+
 ## Requirements
 
 ### Validated
@@ -81,6 +83,10 @@ v1.6 Phase 32 complete: Hub layout overhaul — single full-width center view (C
 - ✓ Central context manifest: auto-generated project status for orchestrator consumption — v1.4
 - ✓ CLI AI provider: fallback to configured CLI tool when no API keys available — v1.4
 
+- ✓ Calendar "Today" label: timezone-safe local date detection — v1.6
+- ✓ Overdue detection: deterministic date comparison across all rendering paths — v1.6
+- ✓ Workflows section: collapsible with persisted state — v1.6
+
 - ✓ Calendar sync: Google OAuth with token refresh, 410 recovery, background auto-sync — v1.5
 - ✓ Calendar MCP tools: 5 tools for reading events, managing work blocks — v1.5
 - ✓ Hub calendar view: day/week time grid with Outlook-style event blocks — v1.5
@@ -95,9 +101,6 @@ v1.6 Phase 32 complete: Hub layout overhaul — single full-width center view (C
 - [ ] Project detail: goal-first layout aligned with .planning markdowns, streamlined workspace entry
 - [ ] Briefing: on-demand generation with visual styling for scannability
 - [ ] Drawer: click-to-toggle minimize/maximize, AI panel consolidated into bottom drawer
-- [ ] Calendar: fix "Today" label showing on every day in week view
-- [ ] Overdue detection: deterministic query-based (due_date < today, not complete), not LLM
-- [ ] Workflows section: fully minimizable when not in use
 
 ### Future
 
@@ -196,4 +199,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after Phase 32 hub-layout-overhaul complete*
+*Last updated: 2026-04-05 after Phase 35 bug-fixes-polish complete*
