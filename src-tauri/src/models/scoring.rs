@@ -288,17 +288,9 @@ fn format_deadline_item(title: &str, due_date: NaiveDate, today: NaiveDate) -> S
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::migrations;
     use crate::models::project::CreateProjectInput;
     use crate::models::task::CreateTaskInput;
-    use rusqlite::Connection;
-
-    fn setup_test_db() -> Database {
-        let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
-        migrations::run_migrations(&conn).unwrap();
-        Database::from_connection(conn)
-    }
+    use crate::test_fixtures::setup_test_db;
 
     fn today() -> NaiveDate {
         NaiveDate::from_ymd_opt(2026, 4, 5).unwrap()

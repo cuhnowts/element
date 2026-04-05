@@ -1046,15 +1046,7 @@ pub fn start_background_sync(app_handle: tauri::AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::connection::Database;
-    use crate::db::migrations;
-
-    fn setup_test_db() -> rusqlite::Connection {
-        let conn = rusqlite::Connection::open_in_memory().unwrap();
-        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
-        migrations::run_migrations(&conn).unwrap();
-        conn
-    }
+    use crate::test_fixtures::setup_test_db_raw as setup_test_db;
 
     fn make_test_account(conn: &rusqlite::Connection) -> CalendarAccount {
         // Insert a credential first (FK requirement)
