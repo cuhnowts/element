@@ -1,8 +1,8 @@
 import { useEffect } from "react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskStore } from "@/stores/useTaskStore";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { TaskListItem } from "./TaskListItem";
 
 export function TaskList() {
@@ -32,9 +32,7 @@ export function TaskList() {
             body="Create a task to get started, or check back when workflows are scheduled."
           />
         ) : (
-          todaysTasks.map((task) => (
-            <TaskListItem key={task.id} task={task} />
-          ))
+          todaysTasks.map((task) => <TaskListItem key={task.id} task={task} />)
         )}
       </ScrollArea>
     </div>

@@ -31,7 +31,7 @@ export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set
       selectedThemeId: themeId,
       selectedProjectId: null,
       selectedTaskId: null,
-      activeView: themeId ? 'theme' as const : 'hub' as const,
+      activeView: themeId ? ("theme" as const) : ("hub" as const),
     });
     useWorkspaceStore.getState().selectTask(null);
   },
@@ -65,9 +65,7 @@ export const createThemeSlice: StateCreator<AppStore, [], [], ThemeSlice> = (set
     set((s) => ({
       themes: s.themes.filter((t) => t.id !== id),
       // Nullify theme references in projects and tasks
-      projects: s.projects.map((p) =>
-        p.themeId === id ? { ...p, themeId: null } : p
-      ),
+      projects: s.projects.map((p) => (p.themeId === id ? { ...p, themeId: null } : p)),
     }));
     // Reload to get fresh data after backend cascade
     get().loadProjects();

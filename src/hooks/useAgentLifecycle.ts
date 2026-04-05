@@ -1,9 +1,9 @@
+import { appDataDir } from "@tauri-apps/api/path";
 import { useCallback, useRef } from "react";
-import { useAgentStore } from "@/stores/useAgentStore";
+import { toast } from "sonner";
 import { useAgentMcp } from "@/hooks/useAgentMcp";
 import { api } from "@/lib/tauri";
-import { appDataDir } from "@tauri-apps/api/path";
-import { toast } from "sonner";
+import { useAgentStore } from "@/stores/useAgentStore";
 
 const BACKOFF_MS = [2000, 4000, 8000]; // D-04: 2s, 4s, 8s
 const MAX_RETRIES = 3;
@@ -77,7 +77,14 @@ export function useAgentLifecycle() {
       setStatus("stopped");
       toast(`Agent failed to start: ${err instanceof Error ? err.message : String(err)}`);
     }
-  }, [setStatus, resetRestartCount, setAgentCommand, setAgentArgs, generateMcpConfig, generateSystemPrompt]);
+  }, [
+    setStatus,
+    resetRestartCount,
+    setAgentCommand,
+    setAgentArgs,
+    generateMcpConfig,
+    generateSystemPrompt,
+  ]);
 
   const handleAgentExit = useCallback(
     (exitCode: number) => {
@@ -95,9 +102,7 @@ export function useAgentLifecycle() {
 
       if (restartCount >= MAX_RETRIES) {
         setStatus("stopped");
-        toast(
-          "Agent failed to start after 3 attempts. Click Restart to try again."
-        );
+        toast("Agent failed to start after 3 attempts. Click Restart to try again.");
         return;
       }
 
@@ -106,7 +111,7 @@ export function useAgentLifecycle() {
       const delay = BACKOFF_MS[restartCount] ?? BACKOFF_MS[BACKOFF_MS.length - 1];
       restartTimerRef.current = setTimeout(startAgent, delay);
     },
-    [setStatus, incrementRestart, startAgent]
+    [setStatus, incrementRestart, startAgent],
   );
 
   const restartAgent = useCallback(async () => {

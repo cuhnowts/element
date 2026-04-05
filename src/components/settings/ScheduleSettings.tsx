@@ -1,5 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
-import { Switch } from "@/components/ui/switch";
+import { useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/stores";
 import type { WorkHoursConfig } from "@/types/scheduling";
 
@@ -99,16 +99,15 @@ export function ScheduleSettings() {
       <div>
         <h2 className="text-lg font-semibold">Work Hours</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Set your working hours to help Element find open time blocks for
-          focused work.
+          Set your working hours to help Element find open time blocks for focused work.
         </p>
       </div>
 
       {/* Work days */}
       <div className="space-y-3">
-        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Work Days
-        </label>
+        </span>
         <div className="flex flex-wrap gap-4">
           {DAYS.map((day) => (
             <div key={day.key} className="flex items-center gap-2">
@@ -124,9 +123,9 @@ export function ScheduleSettings() {
 
       {/* Start time */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Start time
-        </label>
+        </span>
         <Select value={config.startTime} onValueChange={setStartTime}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -143,9 +142,9 @@ export function ScheduleSettings() {
 
       {/* End time */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           End time
-        </label>
+        </span>
         <Select value={config.endTime} onValueChange={setEndTime}>
           <SelectTrigger className="w-32">
             <SelectValue />
@@ -162,9 +161,9 @@ export function ScheduleSettings() {
 
       {/* Buffer time */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Buffer between meetings and work blocks
-        </label>
+        </span>
         <p className="text-xs text-muted-foreground">
           Minutes of breathing room between meetings and work blocks
         </p>
@@ -181,9 +180,9 @@ export function ScheduleSettings() {
 
       {/* Minimum block size */}
       <div className="space-y-1.5">
-        <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Minimum useful block size
-        </label>
+        </span>
         <Input
           type="number"
           min={15}

@@ -1,53 +1,44 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { AiProvider, CreateProviderInput, ModelInfo } from "../types/ai";
+import type { BatchCreateResult, PlanOutput } from "../types/onboarding";
+import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
 import type {
-  Task,
-  TaskWithTags,
-  Project,
-  Tag,
-  CreateTaskInput,
-  UpdateTaskInput,
-  TaskStatus,
-  PluginInfo,
-  Credential,
   CalendarAccount,
   CalendarEvent,
-  Theme,
-  Phase,
+  CreateTaskInput,
+  Credential,
   FileEntry,
   Notification,
+  Phase,
+  PluginInfo,
+  Project,
+  Tag,
+  Task,
+  TaskStatus,
+  TaskWithTags,
+  Theme,
+  UpdateTaskInput,
 } from "./types";
-import type {
-  AiProvider,
-  CreateProviderInput,
-  ModelInfo,
-} from "../types/ai";
-import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
-import type { PlanOutput, BatchCreateResult } from "../types/onboarding";
 
 export const api = {
   // Projects
   createProject: (name: string, description?: string) =>
     invoke<Project>("create_project", { name, description }),
   listProjects: () => invoke<Project[]>("list_projects"),
-  getProject: (projectId: string) =>
-    invoke<Project>("get_project", { projectId }),
+  getProject: (projectId: string) => invoke<Project>("get_project", { projectId }),
   updateProject: (projectId: string, name: string, description: string) =>
     invoke<Project>("update_project", { projectId, name, description }),
   updateProjectGoal: (projectId: string, goal: string) =>
     invoke<Project>("update_project_goal", { projectId, goal }),
-  deleteProject: (projectId: string) =>
-    invoke<void>("delete_project", { projectId }),
+  deleteProject: (projectId: string) => invoke<void>("delete_project", { projectId }),
 
   // Themes
-  createTheme: (name: string, color: string) =>
-    invoke<Theme>("create_theme", { name, color }),
+  createTheme: (name: string, color: string) => invoke<Theme>("create_theme", { name, color }),
   listThemes: () => invoke<Theme[]>("list_themes"),
   updateTheme: (themeId: string, name: string | undefined, color: string | undefined) =>
     invoke<Theme>("update_theme", { themeId, name, color }),
-  deleteTheme: (themeId: string) =>
-    invoke<void>("delete_theme", { themeId }),
-  reorderThemes: (orderedIds: string[]) =>
-    invoke<void>("reorder_themes", { orderedIds }),
+  deleteTheme: (themeId: string) => invoke<void>("delete_theme", { themeId }),
+  reorderThemes: (orderedIds: string[]) => invoke<void>("reorder_themes", { orderedIds }),
   getThemeItemCounts: (themeId: string) =>
     invoke<[number, number]>("get_theme_item_counts", { themeId }),
   assignProjectTheme: (projectId: string, themeId: string | null) =>
@@ -58,12 +49,9 @@ export const api = {
   // Phases
   createPhase: (projectId: string, name: string) =>
     invoke<Phase>("create_phase", { projectId, name }),
-  listPhases: (projectId: string) =>
-    invoke<Phase[]>("list_phases", { projectId }),
-  updatePhase: (phaseId: string, name: string) =>
-    invoke<Phase>("update_phase", { phaseId, name }),
-  deletePhase: (phaseId: string) =>
-    invoke<void>("delete_phase", { phaseId }),
+  listPhases: (projectId: string) => invoke<Phase[]>("list_phases", { projectId }),
+  updatePhase: (phaseId: string, name: string) => invoke<Phase>("update_phase", { phaseId, name }),
+  deletePhase: (phaseId: string) => invoke<void>("delete_phase", { phaseId }),
   reorderPhases: (projectId: string, orderedIds: string[]) =>
     invoke<void>("reorder_phases", { projectId, orderedIds }),
   linkProjectDirectory: (projectId: string, directoryPath: string) =>
@@ -74,24 +62,18 @@ export const api = {
     invoke<Task>("set_task_phase", { taskId, phaseId }),
 
   // Standalone tasks
-  listStandaloneTasks: () =>
-    invoke<Task[]>("list_standalone_tasks"),
-  listTasksByTheme: (themeId: string) =>
-    invoke<Task[]>("list_tasks_by_theme", { themeId }),
+  listStandaloneTasks: () => invoke<Task[]>("list_standalone_tasks"),
+  listTasksByTheme: (themeId: string) => invoke<Task[]>("list_tasks_by_theme", { themeId }),
 
   // Tasks
-  createTask: (input: CreateTaskInput) =>
-    invoke<Task>("create_task", { ...input }),
-  listTasks: (projectId: string) =>
-    invoke<Task[]>("list_tasks", { projectId }),
-  getTask: (taskId: string) =>
-    invoke<TaskWithTags>("get_task", { taskId }),
+  createTask: (input: CreateTaskInput) => invoke<Task>("create_task", { ...input }),
+  listTasks: (projectId: string) => invoke<Task[]>("list_tasks", { projectId }),
+  getTask: (taskId: string) => invoke<TaskWithTags>("get_task", { taskId }),
   updateTask: (taskId: string, input: UpdateTaskInput) =>
     invoke<Task>("update_task", { taskId, ...input }),
   updateTaskStatus: (taskId: string, status: TaskStatus) =>
     invoke<Task>("update_task_status", { taskId, status }),
-  deleteTask: (taskId: string) =>
-    invoke<void>("delete_task", { taskId }),
+  deleteTask: (taskId: string) => invoke<void>("delete_task", { taskId }),
 
   // Tags
   addTagToTask: (taskId: string, tagName: string) =>
@@ -111,20 +93,14 @@ export const api = {
 
   // Credentials
   listCredentials: () => invoke<Credential[]>("list_credentials"),
-  createCredential: (
-    name: string,
-    credentialType: string,
-    value: string,
-    notes?: string,
-  ) =>
+  createCredential: (name: string, credentialType: string, value: string, notes?: string) =>
     invoke<Credential>("create_credential", {
       name,
       credentialType,
       value,
       notes,
     }),
-  getCredentialSecret: (id: string) =>
-    invoke<string>("get_credential_secret", { id }),
+  getCredentialSecret: (id: string) => invoke<string>("get_credential_secret", { id }),
   updateCredential: (
     id: string,
     name?: string,
@@ -139,22 +115,16 @@ export const api = {
       notes,
       value,
     }),
-  deleteCredential: (id: string) =>
-    invoke<void>("delete_credential", { id }),
+  deleteCredential: (id: string) => invoke<void>("delete_credential", { id }),
 
   // Calendar
-  listCalendarAccounts: () =>
-    invoke<CalendarAccount[]>("list_calendar_accounts"),
-  connectGoogleCalendar: () =>
-    invoke<CalendarAccount>("connect_google_calendar"),
-  connectOutlookCalendar: () =>
-    invoke<CalendarAccount>("connect_outlook_calendar"),
-  syncCalendar: (accountId: string) =>
-    invoke<void>("sync_calendar", { accountId }),
+  listCalendarAccounts: () => invoke<CalendarAccount[]>("list_calendar_accounts"),
+  connectGoogleCalendar: () => invoke<CalendarAccount>("connect_google_calendar"),
+  connectOutlookCalendar: () => invoke<CalendarAccount>("connect_outlook_calendar"),
+  syncCalendar: (accountId: string) => invoke<void>("sync_calendar", { accountId }),
   syncAllCalendars: () => invoke<void>("sync_all_calendars"),
   syncAllIfStale: () => invoke<string>("sync_all_if_stale"),
-  disconnectCalendar: (accountId: string) =>
-    invoke<void>("disconnect_calendar", { accountId }),
+  disconnectCalendar: (accountId: string) => invoke<void>("disconnect_calendar", { accountId }),
   listCalendarEvents: (start: string, end: string) =>
     invoke<CalendarEvent[]>("list_calendar_events", { start, end }),
 
@@ -162,37 +132,26 @@ export const api = {
   getWorkHours: () => invoke<WorkHoursConfig | null>("get_work_hours"),
   saveWorkHours: (config: WorkHoursConfig) =>
     invoke<WorkHoursConfig>("save_work_hours", { config }),
-  generateSchedule: (date: string) =>
-    invoke<ScheduleBlock[]>("generate_schedule", { date }),
-  applySchedule: (blocks: ScheduleBlock[]) =>
-    invoke<void>("apply_schedule", { blocks }),
+  generateSchedule: (date: string) => invoke<ScheduleBlock[]>("generate_schedule", { date }),
+  applySchedule: (blocks: ScheduleBlock[]) => invoke<void>("apply_schedule", { blocks }),
 
   // AI Providers
   listAiProviders: () => invoke<AiProvider[]>("list_ai_providers"),
   addAiProvider: (input: CreateProviderInput) =>
     invoke<AiProvider>("add_ai_provider", { ...input }),
-  removeAiProvider: (id: string) =>
-    invoke<void>("remove_ai_provider", { id }),
-  setDefaultProvider: (id: string) =>
-    invoke<void>("set_default_provider", { id }),
-  testProviderConnection: (id: string) =>
-    invoke<boolean>("test_provider_connection", { id }),
-  listProviderModels: (id: string) =>
-    invoke<ModelInfo[]>("list_provider_models", { id }),
-  aiAssistTask: (taskId: string) =>
-    invoke<void>("ai_assist_task", { taskId }),
+  removeAiProvider: (id: string) => invoke<void>("remove_ai_provider", { id }),
+  setDefaultProvider: (id: string) => invoke<void>("set_default_provider", { id }),
+  testProviderConnection: (id: string) => invoke<boolean>("test_provider_connection", { id }),
+  listProviderModels: (id: string) => invoke<ModelInfo[]>("list_provider_models", { id }),
+  aiAssistTask: (taskId: string) => invoke<void>("ai_assist_task", { taskId }),
 
   // File Explorer
   listDirectory: (dirPath: string, showHidden: boolean) =>
     invoke<FileEntry[]>("list_directory", { dirPath, showHidden }),
-  openFileInEditor: (filePath: string) =>
-    invoke<void>("open_file_in_editor", { filePath }),
-  revealInFileManager: (path: string) =>
-    invoke<void>("reveal_in_file_manager", { path }),
-  startFileWatcher: (dirPath: string) =>
-    invoke<void>("start_file_watcher", { dirPath }),
-  stopFileWatcher: () =>
-    invoke<void>("stop_file_watcher"),
+  openFileInEditor: (filePath: string) => invoke<void>("open_file_in_editor", { filePath }),
+  revealInFileManager: (path: string) => invoke<void>("reveal_in_file_manager", { path }),
+  startFileWatcher: (dirPath: string) => invoke<void>("start_file_watcher", { dirPath }),
+  stopFileWatcher: () => invoke<void>("stop_file_watcher"),
 
   // CLI
   runCliTool: (command: string, args: string[], workingDir?: string) =>
@@ -203,45 +162,58 @@ export const api = {
     invoke<string>("generate_skill_file", { projectDir, projectName, scope, goals }),
   generateContextFile: (projectId: string, tierOverride?: string, descriptionOverride?: string) =>
     invoke<string>("generate_context_file", { projectId, tierOverride, descriptionOverride }),
-  startPlanWatcher: (projectDir: string) =>
-    invoke<void>("start_plan_watcher", { projectDir }),
-  stopPlanWatcher: () =>
-    invoke<void>("stop_plan_watcher"),
-  parsePlanOutput: (projectDir: string) =>
-    invoke<PlanOutput>("parse_plan_output", { projectDir }),
-  batchCreatePlan: (projectId: string, phases: { name: string; tasks: { title: string; description?: string }[] }[]) =>
-    invoke<BatchCreateResult>("batch_create_plan", { projectId, phases }),
+  startPlanWatcher: (projectDir: string) => invoke<void>("start_plan_watcher", { projectDir }),
+  stopPlanWatcher: () => invoke<void>("stop_plan_watcher"),
+  parsePlanOutput: (projectDir: string) => invoke<PlanOutput>("parse_plan_output", { projectDir }),
+  batchCreatePlan: (
+    projectId: string,
+    phases: { name: string; tasks: { title: string; description?: string }[] }[],
+  ) => invoke<BatchCreateResult>("batch_create_plan", { projectId, phases }),
   batchCreateTasks: (projectId: string, tasks: { title: string; description?: string }[]) =>
     invoke<BatchCreateResult>("batch_create_tasks", { projectId, tasks }),
 
   // App Settings
-  getAppSetting: (key: string) =>
-    invoke<string | null>("get_app_setting", { key }),
-  setAppSetting: (key: string, value: string) =>
-    invoke<void>("set_app_setting", { key, value }),
+  getAppSetting: (key: string) => invoke<string | null>("get_app_setting", { key }),
+  setAppSetting: (key: string, value: string) => invoke<void>("set_app_setting", { key, value }),
 
   // CLI Validation
-  validateCliTool: (command: string) =>
-    invoke<boolean>("validate_cli_tool", { command }),
+  validateCliTool: (command: string) => invoke<boolean>("validate_cli_tool", { command }),
 
   // Planning Tier
   setPlanningTier: (projectId: string, tier: string | null) =>
     invoke<Project>("set_planning_tier", { projectId, tier }),
 
   // Notifications
-  createNotification: (title: string, body: string, priority: string, category?: string, projectId?: string, actionUrl?: string) =>
-    invoke<Notification>("create_notification", { title, body, priority, category, projectId, actionUrl }),
+  createNotification: (
+    title: string,
+    body: string,
+    priority: string,
+    category?: string,
+    projectId?: string,
+    actionUrl?: string,
+  ) =>
+    invoke<Notification>("create_notification", {
+      title,
+      body,
+      priority,
+      category,
+      projectId,
+      actionUrl,
+    }),
   listNotifications: () => invoke<Notification[]>("list_notifications"),
-  markNotificationRead: (notificationId: string) => invoke<void>("mark_notification_read", { notificationId }),
+  markNotificationRead: (notificationId: string) =>
+    invoke<void>("mark_notification_read", { notificationId }),
   markAllNotificationsRead: () => invoke<void>("mark_all_notifications_read"),
   clearAllNotifications: () => invoke<void>("clear_all_notifications"),
   getUnreadCount: () => invoke<number>("get_unread_count"),
 
   // Planning Sync
   syncPlanningRoadmap: (projectId: string, directoryPath: string) =>
-    invoke<{ phaseCount: number; taskCount: number }>("sync_planning_roadmap", { projectId, directoryPath }),
+    invoke<{ phaseCount: number; taskCount: number }>("sync_planning_roadmap", {
+      projectId,
+      directoryPath,
+    }),
   startPlanningWatcher: (projectId: string, directoryPath: string) =>
     invoke<void>("start_planning_watcher", { projectId, directoryPath }),
-  stopPlanningWatcher: () =>
-    invoke<void>("stop_planning_watcher"),
+  stopPlanningWatcher: () => invoke<void>("stop_planning_watcher"),
 };

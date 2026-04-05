@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
-import { PromoteButton } from "./PromoteButton";
-import type { TaskDetail } from "@/types/task";
 import { StatusDot } from "@/components/shared/StatusDot";
+import { Badge } from "@/components/ui/badge";
+import type { TaskDetail } from "@/types/task";
+import { PromoteButton } from "./PromoteButton";
 
 const STATUS_BADGE_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   pending: "outline",
@@ -23,9 +23,7 @@ export function TaskHeader({ task }: TaskHeaderProps) {
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <PromoteButton taskId={task.id} variant="button" />
-        <Badge variant={STATUS_BADGE_VARIANT[task.status] ?? "outline"}>
-          {task.status}
-        </Badge>
+        <Badge variant={STATUS_BADGE_VARIANT[task.status] ?? "outline"}>{task.status}</Badge>
         <Badge variant="outline" className="capitalize">
           {task.priority}
         </Badge>

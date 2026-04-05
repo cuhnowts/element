@@ -35,14 +35,8 @@ export function DailyPlanTaskRow({
       <span className="text-xs text-muted-foreground shrink-0">
         {startTime} - {endTime}
       </span>
-      <span className="text-xs text-muted-foreground capitalize shrink-0">
-        {priority}
-      </span>
-      {projectName && (
-        <span className="text-xs text-muted-foreground shrink-0">
-          {projectName}
-        </span>
-      )}
+      <span className="text-xs text-muted-foreground capitalize shrink-0">{priority}</span>
+      {projectName && <span className="text-xs text-muted-foreground shrink-0">{projectName}</span>}
     </div>
   );
 }

@@ -1,8 +1,4 @@
-export type ProviderType =
-  | "anthropic"
-  | "openai"
-  | "ollama"
-  | "openai_compatible";
+export type ProviderType = "anthropic" | "openai" | "ollama" | "openai_compatible";
 
 export interface AiProvider {
   id: string;

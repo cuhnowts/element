@@ -25,12 +25,7 @@ export interface CalendarSlice {
   setHubViewMode: (mode: "day" | "week") => void;
 }
 
-export const createCalendarSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  CalendarSlice
-> = (set, get) => ({
+export const createCalendarSlice: StateCreator<AppStore, [], [], CalendarSlice> = (set, get) => ({
   calendarAccounts: [],
   calendarEvents: [],
   calendarSyncing: false,
@@ -106,9 +101,7 @@ export const createCalendarSlice: StateCreator<
       await api.disconnectCalendar(accountId);
       set((s) => ({
         calendarAccounts: s.calendarAccounts.filter((a) => a.id !== accountId),
-        calendarEvents: s.calendarEvents.filter(
-          (e) => e.accountId !== accountId,
-        ),
+        calendarEvents: s.calendarEvents.filter((e) => e.accountId !== accountId),
         calendarError: null,
       }));
     } catch (e) {

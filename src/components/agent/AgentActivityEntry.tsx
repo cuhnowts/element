@@ -1,11 +1,5 @@
-import {
-  Play,
-  CheckCircle2,
-  MessageSquare,
-  AlertCircle,
-  XCircle,
-} from "lucide-react";
-import type { AgentActivityEntry as EntryType, AgentEntryType } from "@/types/agent";
+import { AlertCircle, CheckCircle2, MessageSquare, Play, XCircle } from "lucide-react";
+import type { AgentEntryType, AgentActivityEntry as EntryType } from "@/types/agent";
 
 const iconMap: Record<AgentEntryType, React.ElementType> = {
   execution_start: Play,

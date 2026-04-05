@@ -1,11 +1,5 @@
-import { describe, it, expect } from "vitest";
-import {
-  ACTION_REGISTRY,
-  ActionDefinition,
-  getToolDefinitions,
-  getAction,
-  isDestructive,
-} from "./actionRegistry";
+import { describe, expect, it } from "vitest";
+import { ACTION_REGISTRY, getAction, getToolDefinitions, isDestructive } from "./actionRegistry";
 
 describe("actionRegistry", () => {
   describe("ACTION_REGISTRY", () => {
@@ -45,9 +39,7 @@ describe("actionRegistry", () => {
     });
 
     it("all delete_* actions have destructive: true (per D-12)", () => {
-      const deleteActions = ACTION_REGISTRY.filter((a) =>
-        a.name.startsWith("delete_")
-      );
+      const deleteActions = ACTION_REGISTRY.filter((a) => a.name.startsWith("delete_"));
       expect(deleteActions.length).toBeGreaterThan(0);
       for (const action of deleteActions) {
         expect(action.destructive).toBe(true);
@@ -73,8 +65,8 @@ describe("actionRegistry", () => {
     it('getAction("create_task") returns the create_task definition', () => {
       const action = getAction("create_task");
       expect(action).toBeDefined();
-      expect(action!.name).toBe("create_task");
-      expect(action!.tauriCommand).toBe("create_task");
+      expect(action?.name).toBe("create_task");
+      expect(action?.tauriCommand).toBe("create_task");
     });
 
     it('getAction("nonexistent") returns undefined', () => {

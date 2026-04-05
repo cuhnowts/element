@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
-import { useTaskStore } from "@/stores/useTaskStore";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { Button } from "@/components/ui/button";
 import { useNotificationEvents } from "@/hooks/useNotificationEvents";
+import { useTaskStore } from "@/stores/useTaskStore";
+import { type DrawerTab, useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 interface DrawerHeaderProps {
   activeTab: DrawerTab;
@@ -19,9 +19,7 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
 
   const tabClass = (tab: DrawerTab) =>
     `text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
-      activeTab === tab
-        ? "text-foreground bg-muted"
-        : "text-muted-foreground hover:text-foreground"
+      activeTab === tab ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground"
     }`;
 
   return (
@@ -34,11 +32,7 @@ export function DrawerHeader({ activeTab, onTabChange }: DrawerHeaderProps) {
         >
           Terminal
         </button>
-        <button
-          type="button"
-          onClick={() => onTabChange("logs")}
-          className={tabClass("logs")}
-        >
+        <button type="button" onClick={() => onTabChange("logs")} className={tabClass("logs")}>
           Logs
         </button>
         <button

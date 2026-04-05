@@ -1,22 +1,22 @@
-import { useStore } from "@/stores";
-import { useTaskStore } from "@/stores/useTaskStore";
-import { useWorkflowStore } from "@/stores/useWorkflowStore";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
-import { LogViewer } from "@/components/output/LogViewer";
+import { open } from "@tauri-apps/plugin-dialog";
+import { ArrowLeft } from "lucide-react";
+import { AgentActivityTab } from "@/components/agent/AgentActivityTab";
+import { AgentPanelHeader } from "@/components/agent/AgentPanelHeader";
+import { AgentTerminalTab } from "@/components/agent/AgentTerminalTab";
 import { ExecutionHistory } from "@/components/output/ExecutionHistory";
-import { RunHistoryList } from "@/components/output/RunHistoryList";
+import { LogViewer } from "@/components/output/LogViewer";
 import { RunHistoryDetail } from "@/components/output/RunHistoryDetail";
-import { TerminalPane } from "@/components/output/TerminalPane";
+import { RunHistoryList } from "@/components/output/RunHistoryList";
 import { SessionTabBar } from "@/components/output/SessionTabBar";
 import { TerminalEmptyState } from "@/components/output/TerminalEmptyState";
-import { AgentPanelHeader } from "@/components/agent/AgentPanelHeader";
-import { AgentActivityTab } from "@/components/agent/AgentActivityTab";
-import { AgentTerminalTab } from "@/components/agent/AgentTerminalTab";
-import { useAgentStore } from "@/stores/useAgentStore";
+import { TerminalPane } from "@/components/output/TerminalPane";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { useStore } from "@/stores";
+import { useAgentStore } from "@/stores/useAgentStore";
+import { useTaskStore } from "@/stores/useTaskStore";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
+import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 const EMPTY_SESSIONS: import("@/stores/useTerminalSessionStore").TerminalSession[] = [];
 
@@ -47,10 +47,10 @@ export function OutputDrawer() {
   const hasWorkflow = selectedWorkflowId !== null;
 
   const sessions = useTerminalSessionStore(
-    (s) => s.sessions[selectedProjectId ?? ""] ?? EMPTY_SESSIONS
+    (s) => s.sessions[selectedProjectId ?? ""] ?? EMPTY_SESSIONS,
   );
   const activeSessionId = useTerminalSessionStore(
-    (s) => s.activeSessionId[selectedProjectId ?? ""] ?? null
+    (s) => s.activeSessionId[selectedProjectId ?? ""] ?? null,
   );
 
   const handleLinkDirectory = async () => {
@@ -68,7 +68,10 @@ export function OutputDrawer() {
   return (
     <div className="flex flex-col h-full bg-card">
       <div className="flex-1 overflow-hidden relative">
-        <div style={{ display: activeDrawerTab === "elementai" ? "block" : "none" }} className="h-full">
+        <div
+          style={{ display: activeDrawerTab === "elementai" ? "block" : "none" }}
+          className="h-full"
+        >
           <div className="flex flex-col h-full">
             <AgentPanelHeader />
             <div className="flex-1 overflow-hidden">
@@ -79,7 +82,10 @@ export function OutputDrawer() {
         <div style={{ display: activeDrawerTab === "logs" ? "block" : "none" }} className="h-full">
           <LogViewer entries={executionLogs} />
         </div>
-        <div style={{ display: activeDrawerTab === "history" ? "block" : "none" }} className="h-full">
+        <div
+          style={{ display: activeDrawerTab === "history" ? "block" : "none" }}
+          className="h-full"
+        >
           <ExecutionHistory
             records={executionHistory}
             onSelectExecution={(executionId: string) => {
@@ -112,7 +118,10 @@ export function OutputDrawer() {
             />
           ) : null}
         </div>
-        <div style={{ display: activeDrawerTab === "terminal" ? "block" : "none" }} className="h-full">
+        <div
+          style={{ display: activeDrawerTab === "terminal" ? "block" : "none" }}
+          className="h-full"
+        >
           {directoryPath && selectedProjectId ? (
             <div className="h-full flex flex-col">
               <SessionTabBar
@@ -120,25 +129,16 @@ export function OutputDrawer() {
                 sessions={sessions}
                 activeSessionId={activeSessionId}
                 onSwitch={(sessionId) =>
-                  useTerminalSessionStore
-                    .getState()
-                    .switchSession(selectedProjectId, sessionId)
+                  useTerminalSessionStore.getState().switchSession(selectedProjectId, sessionId)
                 }
                 onClose={(sessionId) =>
-                  useTerminalSessionStore
-                    .getState()
-                    .closeSession(selectedProjectId, sessionId)
+                  useTerminalSessionStore.getState().closeSession(selectedProjectId, sessionId)
                 }
                 onCreate={() => {
-                  const nextNum =
-                    sessions.filter((s) => s.type === "shell").length + 1;
+                  const nextNum = sessions.filter((s) => s.type === "shell").length + 1;
                   useTerminalSessionStore
                     .getState()
-                    .createSession(
-                      selectedProjectId,
-                      `Shell ${nextNum}`,
-                      "shell"
-                    );
+                    .createSession(selectedProjectId, `Shell ${nextNum}`, "shell");
                 }}
               />
               <div className="flex-1 overflow-hidden">

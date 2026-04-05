@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useStore } from "@/stores";
 import { CalendarScheduleOverlay } from "./CalendarScheduleOverlay";
@@ -29,19 +29,8 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
 
   // Fetch events for the visible month range
   const fetchMonthEvents = useCallback(() => {
-    const start = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
-      1,
-    );
-    const end = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-    );
+    const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0, 23, 59, 59);
     fetchCalendarEvents(start.toISOString(), end.toISOString());
   }, [currentMonth, fetchCalendarEvents]);
 
@@ -89,7 +78,7 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
         map.set(dateKey, new Set());
       }
       const colorIndex = accountColors.get(event.accountId) ?? 0;
-      map.get(dateKey)!.add(colorIndex);
+      map.get(dateKey)?.add(colorIndex);
     }
 
     return map;
@@ -113,7 +102,7 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
-      map.get(dateKey)!.push({
+      map.get(dateKey)?.push({
         title: event.title,
         startTime: event.startTime,
         endTime: event.endTime,
@@ -135,7 +124,9 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
         className="w-full"
         components={{
           DayButton: ({ day, ...props }) => {
-            const dateKey = day.isoDate ?? `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`;
+            const dateKey =
+              day.isoDate ??
+              `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`;
             const dots = eventDotsByDate.get(dateKey);
             const events = eventDetailsByDate.get(dateKey);
 
@@ -161,14 +152,12 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
 
             return (
               <div className="relative flex flex-col items-center">
-                <button
-                  {...props}
-                  title={tooltipContent || undefined}
-                />
+                <button {...props} title={tooltipContent || undefined} />
                 {dotColors.length > 0 && (
                   <div className="absolute -bottom-0.5 flex gap-0.5">
                     {dotColors.map((color, i) => (
                       <span
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
                         key={i}
                         className="size-1 rounded-full"
                         style={{ backgroundColor: color }}

@@ -1,4 +1,4 @@
-import { Plus, Minus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MinimizedColumnProps {
@@ -12,7 +12,7 @@ export function MinimizedColumn({ label, side, onExpand }: MinimizedColumnProps)
     <div
       className={cn(
         "flex flex-col items-center py-2 gap-1.5 w-8 h-full bg-card shrink-0",
-        side === "left" ? "border-r border-border" : "border-l border-border"
+        side === "left" ? "border-r border-border" : "border-l border-border",
       )}
     >
       <button

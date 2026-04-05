@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface OverflowIndicatorProps {
   count: number;
@@ -6,11 +6,7 @@ interface OverflowIndicatorProps {
   onClick: () => void;
 }
 
-export function OverflowIndicator({
-  count,
-  direction,
-  onClick,
-}: OverflowIndicatorProps) {
+export function OverflowIndicator({ count, direction, onClick }: OverflowIndicatorProps) {
   if (count === 0) return null;
 
   const Icon = direction === "earlier" ? ChevronUp : ChevronDown;

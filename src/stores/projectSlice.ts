@@ -2,8 +2,8 @@ import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
 import type { Project } from "../lib/types";
 import type { AppStore } from "./index";
-import { useWorkspaceStore } from "./useWorkspaceStore";
 import { useTerminalSessionStore } from "./useTerminalSessionStore";
+import { useWorkspaceStore } from "./useWorkspaceStore";
 
 export interface ProjectSlice {
   projects: Project[];
@@ -16,12 +16,7 @@ export interface ProjectSlice {
   linkDirectory: (projectId: string, directoryPath: string) => Promise<void>;
 }
 
-export const createProjectSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  ProjectSlice
-> = (set, _get) => ({
+export const createProjectSlice: StateCreator<AppStore, [], [], ProjectSlice> = (set, _get) => ({
   projects: [],
   selectedProjectId: null,
   projectsLoading: false,
@@ -41,8 +36,7 @@ export const createProjectSlice: StateCreator<
     await api.deleteProject(projectId);
     set((s) => ({
       projects: s.projects.filter((p) => p.id !== projectId),
-      selectedProjectId:
-        s.selectedProjectId === projectId ? null : s.selectedProjectId,
+      selectedProjectId: s.selectedProjectId === projectId ? null : s.selectedProjectId,
     }));
   },
   selectProject: (projectId) => {
@@ -50,7 +44,7 @@ export const createProjectSlice: StateCreator<
       selectedProjectId: projectId,
       selectedTaskId: null,
       selectedThemeId: null,
-      activeView: projectId ? 'project' as const : 'hub' as const,
+      activeView: projectId ? ("project" as const) : ("hub" as const),
     });
     useWorkspaceStore.getState().selectTask(null);
   },

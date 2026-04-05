@@ -1,14 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  assignOverlapColumns,
+  eventHeight,
   normalizeToMinutes,
   timeToPixelOffset,
-  eventHeight,
-  assignOverlapColumns,
 } from "./calendarLayout";
 import type { MergedEvent } from "./calendarTypes";
-import { SLOT_HEIGHT, MINUTES_PER_SLOT, EVENT_MIN_HEIGHT, MAX_OVERLAP_COLUMNS } from "./calendarTypes";
+import { EVENT_MIN_HEIGHT, MAX_OVERLAP_COLUMNS, SLOT_HEIGHT } from "./calendarTypes";
 
-function makeEvent(overrides: Partial<MergedEvent> & { startMinutes: number; endMinutes: number }): MergedEvent {
+function makeEvent(
+  overrides: Partial<MergedEvent> & { startMinutes: number; endMinutes: number },
+): MergedEvent {
   return {
     id: overrides.id ?? "evt-1",
     type: overrides.type ?? "meeting",
@@ -113,8 +115,11 @@ describe("assignOverlapColumns", () => {
     expect(result).toHaveLength(3);
     // A and B overlap -> 2 cols; B and C overlap -> they share a group
     // All 3 are in the same connected group
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const aResult = result.find((r) => r.event.id === "a")!;
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const bResult = result.find((r) => r.event.id === "b")!;
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const cResult = result.find((r) => r.event.id === "c")!;
     // A is col 0, B is col 1, C can reuse col 0 (since A ends before C starts)
     expect(aResult.column).toBe(0);

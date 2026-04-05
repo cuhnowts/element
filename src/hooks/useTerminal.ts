@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
+import { Terminal } from "@xterm/xterm";
+import { useEffect, useRef, useState } from "react";
 import { spawn } from "tauri-pty";
 import "@xterm/xterm/css/xterm.css";
 
@@ -9,7 +9,7 @@ export function useTerminal(
   containerRef: React.RefObject<HTMLDivElement | null>,
   cwd: string | null,
   isVisible: boolean,
-  initialCommand?: { command: string; args: string[] } | null
+  initialCommand?: { command: string; args: string[] } | null,
 ): {
   isReady: boolean;
   error: string | null;
@@ -101,7 +101,7 @@ export function useTerminal(
         setTimeout(() => {
           if (!commandSent) {
             commandSent = true;
-            pty.write(pendingCommand + "\r");
+            pty.write(`${pendingCommand}\r`);
           }
         }, 500);
       }

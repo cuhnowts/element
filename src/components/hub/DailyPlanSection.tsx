@@ -27,14 +27,8 @@ function parseMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function DailyPlanSection({
-  blocks,
-  isLoading,
-  overflowIndex,
-}: DailyPlanSectionProps) {
-  const workBlocks = blocks.filter(
-    (b) => b.blockType === "work" && b.taskTitle,
-  );
+export function DailyPlanSection({ blocks, isLoading, overflowIndex }: DailyPlanSectionProps) {
+  const workBlocks = blocks.filter((b) => b.blockType === "work" && b.taskTitle);
 
   return (
     <div>
@@ -52,38 +46,32 @@ export function DailyPlanSection({
         <div className="mt-4">
           <p className="text-sm font-semibold">No tasks scheduled</p>
           <p className="text-xs text-muted-foreground">
-            Your day is open. Add due dates to tasks or ask the bot to plan your
-            day.
+            Your day is open. Add due dates to tasks or ask the bot to plan your day.
           </p>
         </div>
       )}
 
       {!isLoading && workBlocks.length > 0 && (
-        <div role="list" className="mt-4 space-y-4">
+        <ul className="mt-4 space-y-4 list-none p-0 m-0">
           {workBlocks.map((block, idx) => {
-            const duration =
-              parseMinutes(block.endTime) - parseMinutes(block.startTime);
+            const duration = parseMinutes(block.endTime) - parseMinutes(block.startTime);
             const isFaded = overflowIndex !== null && idx >= overflowIndex;
 
             return (
-              <div key={block.id}>
-                {overflowIndex !== null && idx === overflowIndex && (
-                  <OutOfTimeDivider />
-                )}
-                <div role="listitem">
-                  <DailyPlanTaskRow
-                    taskTitle={block.taskTitle!}
-                    startTime={block.startTime}
-                    endTime={block.endTime}
-                    durationMinutes={duration}
-                    priority={block.taskPriority ?? "medium"}
-                    faded={isFaded}
-                  />
-                </div>
-              </div>
+              <li key={block.id} className="list-none">
+                {overflowIndex !== null && idx === overflowIndex && <OutOfTimeDivider />}
+                <DailyPlanTaskRow
+                  taskTitle={block.taskTitle ?? "Untitled"}
+                  startTime={block.startTime}
+                  endTime={block.endTime}
+                  durationMinutes={duration}
+                  priority={block.taskPriority ?? "medium"}
+                  faded={isFaded}
+                />
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

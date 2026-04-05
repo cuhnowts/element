@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
 import cronstrue from "cronstrue";
+import { useEffect, useMemo, useState } from "react";
 import { getNextRunTimes } from "@/lib/tauri-commands";
 
 interface CronPreviewProps {
@@ -70,9 +70,7 @@ export function CronPreview({ cronExpression }: CronPreviewProps) {
 
   return (
     <div className="space-y-2">
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="text-sm text-muted-foreground">{description}</p>}
       <div className="text-xs text-muted-foreground">
         <p className="font-medium mb-1">Next runs:</p>
         {loading ? (

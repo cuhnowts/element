@@ -1,9 +1,8 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusDot } from "@/components/shared/StatusDot";
 import { Badge } from "@/components/ui/badge";
-import type { WorkflowRun } from "@/types/execution";
-import type { StepStatus } from "@/types/execution";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { StepStatus, WorkflowRun } from "@/types/execution";
 
 interface RunHistoryListProps {
   runs: WorkflowRun[];
@@ -58,17 +57,10 @@ function formatDuration(startedAt: string, completedAt?: string): string {
   }
 }
 
-export function RunHistoryList({
-  runs,
-  selectedRunId,
-  onSelectRun,
-}: RunHistoryListProps) {
+export function RunHistoryList({ runs, selectedRunId, onSelectRun }: RunHistoryListProps) {
   if (runs.length === 0) {
     return (
-      <EmptyState
-        heading="No runs yet"
-        body="Run this workflow to see execution history here."
-      />
+      <EmptyState heading="No runs yet" body="Run this workflow to see execution history here." />
     );
   }
 
@@ -101,9 +93,7 @@ export function RunHistoryList({
             <div className="mt-1 text-xs text-muted-foreground">
               {STATUS_LABELS[run.status] ?? run.status}
               {run.errorMessage && (
-                <span className="text-destructive ml-2">
-                  {run.errorMessage}
-                </span>
+                <span className="text-destructive ml-2">{run.errorMessage}</span>
               )}
             </div>
           </button>

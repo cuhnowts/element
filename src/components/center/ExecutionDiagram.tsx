@@ -1,5 +1,5 @@
-import type { Step } from "@/types/execution";
 import { EmptyState } from "@/components/shared/EmptyState";
+import type { Step } from "@/types/execution";
 import { StepItem } from "./StepItem";
 
 interface ExecutionDiagramProps {

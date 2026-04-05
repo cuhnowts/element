@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useStore } from "@/stores";
-import { ProviderCard } from "./ProviderCard";
-import { AddProviderDialog } from "./AddProviderDialog";
 import { api } from "@/lib/tauri";
-import { toast } from "sonner";
+import { useStore } from "@/stores";
+import { AddProviderDialog } from "./AddProviderDialog";
+import { ProviderCard } from "./ProviderCard";
 import { ShellAllowlistSettings } from "./ShellAllowlistSettings";
 
 export function AiSettings() {
@@ -127,12 +127,10 @@ export function AiSettings() {
 
       {providers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <h3 className="mb-2 text-base font-medium">
-            No AI providers configured
-          </h3>
+          <h3 className="mb-2 text-base font-medium">No AI providers configured</h3>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Add an AI provider to enable smart task scaffolding. Element works
-            fully without AI -- this is an optional enhancement.
+            Add an AI provider to enable smart task scaffolding. Element works fully without AI --
+            this is an optional enhancement.
           </p>
         </div>
       ) : (

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { getTimeGroup } from "../TodayView";
+import { describe, expect, it } from "vitest";
 import type { Task } from "@/lib/types";
+import { getTimeGroup } from "../TodayView";
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {

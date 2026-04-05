@@ -1,11 +1,11 @@
+import { addDays, endOfWeek, startOfWeek } from "date-fns";
 import { useEffect, useRef } from "react";
-import { startOfWeek, endOfWeek, addDays } from "date-fns";
-import { useStore } from "@/stores";
 import { api } from "@/lib/tauri";
-import { CalendarHeader } from "./CalendarHeader";
-import { CalendarDayGrid } from "./CalendarDayGrid";
-import { CalendarWeekGrid } from "./CalendarWeekGrid";
+import { useStore } from "@/stores";
 import { AllDayBanner } from "./AllDayBanner";
+import { CalendarDayGrid } from "./CalendarDayGrid";
+import { CalendarHeader } from "./CalendarHeader";
+import { CalendarWeekGrid } from "./CalendarWeekGrid";
 import { useCalendarEvents } from "./useCalendarEvents";
 
 export function HubCalendar() {
@@ -15,7 +15,7 @@ export function HubCalendar() {
   const { allDayEvents } = useCalendarEvents(hubSelectedDate);
   const hasSynced = useRef(false);
 
-  const weekStart = startOfWeek(new Date(hubSelectedDate + "T00:00:00"), {
+  const weekStart = startOfWeek(new Date(`${hubSelectedDate}T00:00:00`), {
     weekStartsOn: 1,
   });
   const weekStartStr = weekStart.toISOString().split("T")[0];
@@ -34,13 +34,15 @@ export function HubCalendar() {
     let end: string;
     if (hubViewMode === "day") {
       start = hubSelectedDate;
-      end = addDays(new Date(hubSelectedDate + "T00:00:00"), 1).toISOString().split("T")[0];
+      end = addDays(new Date(`${hubSelectedDate}T00:00:00`), 1)
+        .toISOString()
+        .split("T")[0];
     } else {
       start = weekStartStr;
       end = endOfWeek(weekStart, { weekStartsOn: 1 }).toISOString().split("T")[0];
     }
     fetchCalendarEvents(start, end);
-  }, [hubSelectedDate, hubViewMode, weekStartStr]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hubSelectedDate, hubViewMode, weekStartStr, fetchCalendarEvents, weekStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col h-full">

@@ -50,12 +50,10 @@ export interface FileExplorerSlice {
   clearFileTree: () => void;
 }
 
-export const createFileExplorerSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  FileExplorerSlice
-> = (set, get) => ({
+export const createFileExplorerSlice: StateCreator<AppStore, [], [], FileExplorerSlice> = (
+  set,
+  get,
+) => ({
   fileTree: {},
   expandedPaths: loadPersistedExpanded(),
   selectedFilePath: null,

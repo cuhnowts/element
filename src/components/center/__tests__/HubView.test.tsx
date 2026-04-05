@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { act } from "react";
-import { HubView } from "../HubView";
+import { describe, expect, it, vi } from "vitest";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { HubView } from "../HubView";
 
 // Mock Tauri invoke to prevent runtime errors
 vi.mock("@tauri-apps/api/core", () => ({

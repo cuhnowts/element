@@ -2,8 +2,8 @@ import type { MergedEvent } from "./calendarTypes";
 import {
   ALLDAY_BANNER_HEIGHT,
   CALENDAR_COLORS,
-  WORK_BLOCK_COLOR,
   EVENT_BORDER_RADIUS,
+  WORK_BLOCK_COLOR,
 } from "./calendarTypes";
 
 interface AllDayBannerProps {
@@ -17,9 +17,7 @@ export function AllDayBanner({ events }: AllDayBannerProps) {
     <div className="bg-card border-b px-2 py-1 flex flex-col gap-1">
       {events.map((event, idx) => {
         const isMeeting = event.type === "meeting";
-        const color = isMeeting
-          ? CALENDAR_COLORS[idx % CALENDAR_COLORS.length]
-          : WORK_BLOCK_COLOR;
+        const color = isMeeting ? CALENDAR_COLORS[idx % CALENDAR_COLORS.length] : WORK_BLOCK_COLOR;
 
         return (
           <div

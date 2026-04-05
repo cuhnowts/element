@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { GripVertical, Circle, CheckCircle2, Clock, Ban, ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, Ban, CheckCircle2, Circle, Clock, GripVertical } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import type { Task, TaskStatus, Phase } from "@/lib/types";
+import type { Phase, Task, TaskStatus } from "@/lib/types";
 
 interface TaskRowProps {
   task: Task;
@@ -36,8 +36,9 @@ export function TaskRow({
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({ id: `task:${task.id}` });
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `task:${task.id}`,
+  });
 
   const style = transform
     ? {
@@ -59,9 +60,7 @@ export function TaskRow({
   }, [showMoveMenu]);
 
   const moveOptions = [
-    ...(task.phaseId !== null
-      ? [{ id: null as string | null, name: "Unassigned" }]
-      : []),
+    ...(task.phaseId !== null ? [{ id: null as string | null, name: "Unassigned" }] : []),
     ...phases
       .filter((p) => p.id !== task.phaseId)
       .map((p) => ({ id: p.id as string | null, name: p.name })),
@@ -73,11 +72,7 @@ export function TaskRow({
       style={style}
       className="group flex items-center gap-2 py-1 pl-10 pr-2 w-full text-sm hover:bg-card rounded-md transition-colors relative"
     >
-      <div
-        className="cursor-grab touch-none flex-shrink-0"
-        {...attributes}
-        {...listeners}
-      >
+      <div className="cursor-grab touch-none flex-shrink-0" {...attributes} {...listeners}>
         <GripVertical className="size-3 text-muted-foreground/50" />
       </div>
       <button
@@ -92,16 +87,10 @@ export function TaskRow({
       >
         <StatusIcon status={task.status} />
       </button>
-      <button
-        type="button"
-        onClick={() => onSelectTask(task.id)}
-        className="flex-1 text-left"
-      >
+      <button type="button" onClick={() => onSelectTask(task.id)} className="flex-1 text-left">
         <span
           className={`flex items-center gap-2 ${
-            task.status === "complete"
-              ? "line-through text-muted-foreground"
-              : ""
+            task.status === "complete" ? "line-through text-muted-foreground" : ""
           }`}
         >
           {task.title}
@@ -130,9 +119,7 @@ export function TaskRow({
 
           {showMoveMenu && (
             <div className="absolute right-0 top-6 z-50 min-w-36 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10">
-              <div className="px-1.5 py-1 text-xs text-muted-foreground">
-                Move to
-              </div>
+              <div className="px-1.5 py-1 text-xs text-muted-foreground">Move to</div>
               {moveOptions.map((opt) => (
                 <button
                   key={opt.id ?? "unassigned"}

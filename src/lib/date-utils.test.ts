@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { isOverdue, isDueSoon, isBacklogPhase } from "./date-utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { isBacklogPhase, isDueSoon, isOverdue } from "./date-utils";
 
 describe("date-utils", () => {
   beforeEach(() => {

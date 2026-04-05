@@ -8,11 +8,7 @@ interface BriefingRefreshButtonProps {
   onClick: () => void;
 }
 
-export function BriefingRefreshButton({
-  disabled,
-  spinning,
-  onClick,
-}: BriefingRefreshButtonProps) {
+export function BriefingRefreshButton({ disabled, spinning, onClick }: BriefingRefreshButtonProps) {
   return (
     <Button
       variant="ghost"

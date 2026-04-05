@@ -20,9 +20,7 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">
-          Operation
-        </label>
+        <span className="text-xs font-semibold tracking-wide">Operation</span>
         <Select
           value={config.operation}
           onValueChange={(val: string | null) => {
@@ -30,8 +28,7 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
               onChange({
                 ...config,
                 operation: val as FsStepConfigType["operation"],
-                content:
-                  val === "write" ? config.content ?? "" : undefined,
+                content: val === "write" ? (config.content ?? "") : undefined,
               });
             }
           }}
@@ -48,7 +45,7 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">Path</label>
+        <span className="text-xs font-semibold tracking-wide">Path</span>
         <div className="relative">
           <FolderOpen className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -62,16 +59,12 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
 
       {config.operation === "write" && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold tracking-wide">
-            Content
-          </label>
+          <span className="text-xs font-semibold tracking-wide">Content</span>
           <Textarea
             className="font-mono"
             placeholder="File contents..."
             value={config.content ?? ""}
-            onChange={(e) =>
-              onChange({ ...config, content: e.target.value || undefined })
-            }
+            onChange={(e) => onChange({ ...config, content: e.target.value || undefined })}
           />
         </div>
       )}

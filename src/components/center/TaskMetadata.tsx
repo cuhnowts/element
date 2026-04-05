@@ -1,5 +1,5 @@
-import type { TaskDetail } from "@/types/task";
 import { AgentChip } from "@/components/shared/AgentChip";
+import type { TaskDetail } from "@/types/task";
 
 interface TaskMetadataProps {
   task: TaskDetail;
@@ -23,7 +23,9 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
           </span>
           <div className="flex flex-wrap gap-1">
             {task.tags.map((tag) => (
-              <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">{tag}</span>
+              <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">
+                {tag}
+              </span>
             ))}
           </div>
         </div>
@@ -48,9 +50,15 @@ export function TaskMetadata({ task }: TaskMetadataProps) {
             Assigned
           </span>
           <div className="flex flex-wrap gap-1">
-            {task.agents.map((a) => <AgentChip key={a} label={a} type="agent" />)}
-            {task.skills.map((s) => <AgentChip key={s} label={s} type="skill" />)}
-            {task.tools.map((t) => <AgentChip key={t} label={t} type="tool" />)}
+            {task.agents.map((a) => (
+              <AgentChip key={a} label={a} type="agent" />
+            ))}
+            {task.skills.map((s) => (
+              <AgentChip key={s} label={s} type="skill" />
+            ))}
+            {task.tools.map((t) => (
+              <AgentChip key={t} label={t} type="tool" />
+            ))}
           </div>
         </div>
       )}

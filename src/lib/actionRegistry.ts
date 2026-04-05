@@ -88,8 +88,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "update_task_status",
-    description:
-      "Change a task's status (todo, in_progress, done, or cancelled).",
+    description: "Change a task's status (todo, in_progress, done, or cancelled).",
     inputSchema: {
       type: "object",
       properties: {
@@ -151,8 +150,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "create_theme",
-    description:
-      "Create a new theme (top-level category) with a name and color.",
+    description: "Create a new theme (top-level category) with a name and color.",
     inputSchema: {
       type: "object",
       properties: {
@@ -166,8 +164,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "create_file",
-    description:
-      "Create a new file in a project's linked directory with the given content.",
+    description: "Create a new file in a project's linked directory with the given content.",
     inputSchema: {
       type: "object",
       properties: {
@@ -205,8 +202,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "execute_shell",
-    description:
-      "Execute a shell command from the allowlist (git, npm, ls, etc.).",
+    description: "Execute a shell command from the allowlist (git, npm, ls, etc.).",
     inputSchema: {
       type: "object",
       properties: {
@@ -254,8 +250,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "create_work_block",
-    description:
-      "Block time on the calendar for focused work. Can optionally link to a task.",
+    description: "Block time on the calendar for focused work. Can optionally link to a task.",
     inputSchema: {
       type: "object",
       properties: {
@@ -275,8 +270,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "move_work_block",
-    description:
-      "Move an existing work block to a new time. Requires user approval.",
+    description: "Move an existing work block to a new time. Requires user approval.",
     inputSchema: {
       type: "object",
       properties: {
@@ -291,8 +285,7 @@ export const ACTION_REGISTRY: ActionDefinition[] = [
   },
   {
     name: "delete_work_block",
-    description:
-      "Remove a work block from the calendar. Requires user approval.",
+    description: "Remove a work block from the calendar. Requires user approval.",
     inputSchema: {
       type: "object",
       properties: {

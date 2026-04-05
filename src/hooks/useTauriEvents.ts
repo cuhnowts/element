@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useEffect } from "react";
 import { toast } from "sonner";
-import { useStore } from "../stores";
+import { api } from "@/lib/tauri";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { api } from "@/lib/tauri";
+import { useStore } from "../stores";
 
 export function useTauriEvents() {
   const selectedProjectId = useStore((s) => s.selectedProjectId);
@@ -85,7 +85,19 @@ export function useTauriEvents() {
     ]);
 
     return () => {
-      listeners.then((fns) => fns.forEach((fn) => fn()));
+      listeners.then((fns) => {
+        for (const fn of fns) fn();
+      });
     };
-  }, [selectedProjectId, loadProjects, loadTasks, loadPhases, openCreateProjectDialog, fetchTodaysTasks, fetchExecutionLogs, workspaceSelectedTaskId, refreshChangedDirectories]);
+  }, [
+    selectedProjectId,
+    loadProjects,
+    loadTasks,
+    loadPhases,
+    openCreateProjectDialog,
+    fetchTodaysTasks,
+    fetchExecutionLogs,
+    workspaceSelectedTaskId,
+    refreshChangedDirectories,
+  ]);
 }

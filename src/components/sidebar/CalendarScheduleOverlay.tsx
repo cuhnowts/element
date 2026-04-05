@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,12 +62,9 @@ export function CalendarScheduleOverlay() {
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-6 text-center">
-          <p className="text-sm font-medium text-foreground">
-            No schedule for today
-          </p>
+          <p className="text-sm font-medium text-foreground">No schedule for today</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Connect a calendar and add some tasks to generate a smart schedule
-            for your day.
+            Connect a calendar and add some tasks to generate a smart schedule for your day.
           </p>
         </div>
       </div>
@@ -97,11 +94,7 @@ export function CalendarScheduleOverlay() {
         ))}
       </div>
       {hasUnconfirmed && (
-        <Button
-          variant="default"
-          className="mt-2 w-full"
-          onClick={handleApply}
-        >
+        <Button variant="default" className="mt-2 w-full" onClick={handleApply}>
           Apply Schedule
         </Button>
       )}

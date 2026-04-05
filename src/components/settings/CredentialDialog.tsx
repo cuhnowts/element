@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -17,9 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useStore } from "@/stores";
+import { Textarea } from "@/components/ui/textarea";
 import type { Credential, CredentialType } from "@/lib/types";
-import { toast } from "sonner";
+import { useStore } from "@/stores";
 
 interface CredentialDialogProps {
   open: boolean;
@@ -34,19 +34,14 @@ const credentialTypeOptions: { value: CredentialType; label: string }[] = [
   { value: "oauth_token", label: "OAuth Token" },
 ];
 
-export function CredentialDialog({
-  open,
-  onOpenChange,
-  credential,
-}: CredentialDialogProps) {
+export function CredentialDialog({ open, onOpenChange, credential }: CredentialDialogProps) {
   const createCredential = useStore((s) => s.createCredential);
   const updateCredential = useStore((s) => s.updateCredential);
 
   const isEdit = !!credential;
 
   const [name, setName] = useState("");
-  const [credentialType, setCredentialType] =
-    useState<CredentialType>("api_key");
+  const [credentialType, setCredentialType] = useState<CredentialType>("api_key");
   const [value, setValue] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -89,7 +84,7 @@ export function CredentialDialog({
         });
       }
       onOpenChange(false);
-    } catch (e) {
+    } catch (_e) {
       toast.error(
         "Couldn't save credential. The system keychain may be locked. Unlock it and try again.",
       );
@@ -102,9 +97,7 @@ export function CredentialDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Edit Credential" : "Add Credential"}
-          </DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Credential" : "Add Credential"}</DialogTitle>
           <DialogDescription>
             {isEdit
               ? "Update the credential details below."
@@ -113,9 +106,9 @@ export function CredentialDialog({
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Name
-            </label>
+            </span>
             <Input
               placeholder="e.g. OpenAI API Key"
               value={name}
@@ -124,9 +117,9 @@ export function CredentialDialog({
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Type
-            </label>
+            </span>
             <Select
               value={credentialType}
               onValueChange={(val: string | null) => {
@@ -146,9 +139,9 @@ export function CredentialDialog({
             </Select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Value
-            </label>
+            </span>
             <Input
               type="password"
               placeholder={isEdit ? "(leave blank to keep current)" : "Secret value"}
@@ -157,9 +150,9 @@ export function CredentialDialog({
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Notes
-            </label>
+            </span>
             <Textarea
               placeholder="Optional notes about this credential"
               value={notes}

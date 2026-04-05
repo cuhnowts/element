@@ -1,8 +1,8 @@
-import { create } from "zustand";
 import { listen } from "@tauri-apps/api/event";
-import type { Workflow, StepDefinition, Schedule } from "@/types/workflow";
-import type { WorkflowRun, WorkflowStepResult, StepProgress } from "@/types/execution";
+import { create } from "zustand";
 import * as commands from "@/lib/tauri-commands";
+import type { StepProgress, WorkflowRun, WorkflowStepResult } from "@/types/execution";
+import type { Schedule, StepDefinition, Workflow } from "@/types/workflow";
 
 interface WorkflowState {
   // Data

@@ -16,9 +16,8 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
 
   // Computed
   pendingApprovalCount: () =>
-    get().entries.filter(
-      (e) => e.type === "approval_request" && e.approvalStatus === "pending"
-    ).length,
+    get().entries.filter((e) => e.type === "approval_request" && e.approvalStatus === "pending")
+      .length,
 
   // Actions -- togglePanel REMOVED per D-14
   setActiveTab: (tab) => set({ activeTab: tab }),
@@ -41,7 +40,7 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
       entries: s.entries.map((e) =>
         e.id === entryId && e.approvalStatus === "pending"
           ? { ...e, approvalStatus: "approved" as const }
-          : e
+          : e,
       ),
     })),
 
@@ -50,7 +49,7 @@ export const useAgentStore = create<AgentState>()((set, get) => ({
       entries: s.entries.map((e) =>
         e.id === entryId && e.approvalStatus === "pending"
           ? { ...e, approvalStatus: "rejected" as const }
-          : e
+          : e,
       ),
     })),
 

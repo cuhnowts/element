@@ -1,15 +1,14 @@
-import { useStore } from "@/stores";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api } from "@/lib/tauri";
 import type { Task, TaskStatus } from "@/lib/types";
+import { useStore } from "@/stores";
 
 export function ChoresSection() {
   const standaloneTasks = useStore((s) => s.standaloneTasks);
   const loadStandaloneTasks = useStore((s) => s.loadStandaloneTasks);
 
   const handleToggle = async (task: Task) => {
-    const newStatus: TaskStatus =
-      task.status === "complete" ? "pending" : "complete";
+    const newStatus: TaskStatus = task.status === "complete" ? "pending" : "complete";
     await api.updateTaskStatus(task.id, newStatus);
     await loadStandaloneTasks();
   };
@@ -29,13 +28,11 @@ export function ChoresSection() {
 
   return (
     <div>
-      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Chores
-      </h3>
+      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Chores</h3>
       <p className="text-xs text-muted-foreground mt-1 mb-2">To-Do's</p>
       <div className="space-y-1">
         {standaloneTasks.map((task) => (
-          <label
+          <span
             key={task.id}
             className="flex items-center gap-2 px-2 py-1 rounded-sm hover:bg-secondary cursor-pointer"
           >
@@ -53,7 +50,7 @@ export function ChoresSection() {
             >
               {task.title}
             </span>
-          </label>
+          </span>
         ))}
       </div>
     </div>

@@ -13,9 +13,7 @@ export function BriefingGreeting({ summary }: BriefingGreetingProps) {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-primary">{getGreeting()}</h1>
-      {summary && (
-        <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
-      )}
+      {summary && <p className="mt-1 text-sm text-muted-foreground">{summary}</p>}
     </div>
   );
 }

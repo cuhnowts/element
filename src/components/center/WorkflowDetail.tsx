@@ -1,23 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
-import { useWorkflowStore } from "@/stores/useWorkflowStore";
-import { useStore } from "@/stores";
-import { WorkflowBuilder } from "./WorkflowBuilder";
-import { ExecutionDiagram } from "./ExecutionDiagram";
-import { CronScheduler } from "./CronScheduler";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Loader2, Play, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Play, Trash2, Loader2, ArrowLeft } from "lucide-react";
-import type { StepDefinition } from "@/types/workflow";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useStore } from "@/stores";
+import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import type { Step } from "@/types/execution";
+import type { StepDefinition } from "@/types/workflow";
+import { CronScheduler } from "./CronScheduler";
+import { ExecutionDiagram } from "./ExecutionDiagram";
+import { WorkflowBuilder } from "./WorkflowBuilder";
 
 export function WorkflowDetail() {
   const workflow = useWorkflowStore((s) => s.selectedWorkflow);
@@ -99,7 +99,12 @@ export function WorkflowDetail() {
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <Button variant="ghost" size="sm" onClick={handleBack} className="text-muted-foreground -ml-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleBack}
+        className="text-muted-foreground -ml-2"
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back
       </Button>
@@ -113,10 +118,7 @@ export function WorkflowDetail() {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            onClick={handleRunNow}
-            disabled={isRunning}
-          >
+          <Button onClick={handleRunNow} disabled={isRunning}>
             {isRunning ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
@@ -172,13 +174,12 @@ export function WorkflowDetail() {
           <DialogHeader>
             <DialogTitle>Delete workflow</DialogTitle>
             <DialogDescription>
-              This will permanently delete this workflow and all its run history. This cannot be undone.
+              This will permanently delete this workflow and all its run history. This cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              Cancel
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button variant="destructive" onClick={handleDelete}>
               Delete
             </Button>

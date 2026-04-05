@@ -27,16 +27,12 @@ export function TerminalEmptyState({ hasProject, onLinkDirectory }: TerminalEmpt
     <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
       <TerminalIcon className="size-8 text-muted-foreground" />
       <div className="text-center space-y-2">
-        <p className="text-sm font-medium text-foreground">
-          Link a directory to enable terminal
-        </p>
+        <p className="text-sm font-medium text-foreground">Link a directory to enable terminal</p>
         <p className="text-sm text-muted-foreground">
           This project doesn't have a linked directory. Link one to open a terminal here.
         </p>
       </div>
-      {onLinkDirectory && (
-        <Button onClick={onLinkDirectory}>Link Directory</Button>
-      )}
+      {onLinkDirectory && <Button onClick={onLinkDirectory}>Link Directory</Button>}
     </div>
   );
 }

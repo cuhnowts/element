@@ -1,7 +1,7 @@
 import type { StateCreator } from "zustand";
-import type { AppStore } from "./index";
-import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
 import { api } from "../lib/tauri";
+import type { ScheduleBlock, WorkHoursConfig } from "../types/scheduling";
+import type { AppStore } from "./index";
 
 export interface SchedulingSlice {
   todaySchedule: ScheduleBlock[];
@@ -19,12 +19,10 @@ function todayISO(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-export const createSchedulingSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  SchedulingSlice
-> = (set, get) => ({
+export const createSchedulingSlice: StateCreator<AppStore, [], [], SchedulingSlice> = (
+  set,
+  get,
+) => ({
   todaySchedule: [],
   workHours: null,
   isScheduleLoading: false,

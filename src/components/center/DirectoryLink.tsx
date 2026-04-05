@@ -1,6 +1,6 @@
+import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { open } from "@tauri-apps/plugin-dialog";
 
 interface DirectoryLinkProps {
   directoryPath: string | null;
@@ -29,22 +29,12 @@ export function DirectoryLink({ directoryPath, onLink }: DirectoryLinkProps) {
           >
             {directoryPath}
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs h-6"
-            onClick={handleClick}
-          >
+          <Button variant="ghost" size="sm" className="text-xs h-6" onClick={handleClick}>
             Change
           </Button>
         </>
       ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs"
-          onClick={handleClick}
-        >
+        <Button variant="ghost" size="sm" className="text-xs" onClick={handleClick}>
           <FolderOpen className="size-3 mr-1" />
           Link Directory
         </Button>

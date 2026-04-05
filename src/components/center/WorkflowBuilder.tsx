@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Workflow, StepDefinition, ManualStepConfig } from "@/types/workflow";
+import { Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { StepEditor } from "@/components/center/StepEditor";
 import { StepInsertButton } from "@/components/center/StepInsertButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import type { ManualStepConfig, StepDefinition, Workflow } from "@/types/workflow";
 
 interface WorkflowBuilderProps {
   workflow: Workflow;
@@ -25,7 +25,7 @@ export function WorkflowBuilder({ workflow, onSave }: WorkflowBuilderProps) {
     setSteps(workflow.steps);
     setHasChanges(false);
     setExpandedIndex(null);
-  }, [workflow.id, workflow.updatedAt]);
+  }, [workflow.steps]);
 
   // Track changes
   useEffect(() => {
@@ -39,23 +39,16 @@ export function WorkflowBuilder({ workflow, onSave }: WorkflowBuilderProps) {
   const handleInsert = useCallback(
     (insertIndex: number) => {
       const newStep = createNewStep();
-      const updated = [
-        ...steps.slice(0, insertIndex),
-        newStep,
-        ...steps.slice(insertIndex),
-      ];
+      const updated = [...steps.slice(0, insertIndex), newStep, ...steps.slice(insertIndex)];
       setSteps(updated);
       setExpandedIndex(insertIndex);
     },
     [steps, createNewStep],
   );
 
-  const handleChange = useCallback(
-    (index: number, updatedStep: StepDefinition) => {
-      setSteps((prev) => prev.map((s, i) => (i === index ? updatedStep : s)));
-    },
-    [],
-  );
+  const handleChange = useCallback((index: number, updatedStep: StepDefinition) => {
+    setSteps((prev) => prev.map((s, i) => (i === index ? updatedStep : s)));
+  }, []);
 
   const handleDelete = useCallback(
     (index: number) => {
@@ -72,11 +65,7 @@ export function WorkflowBuilder({ workflow, onSave }: WorkflowBuilderProps) {
   const handleDuplicate = useCallback(
     (index: number) => {
       const duplicated = { ...steps[index], name: `${steps[index].name} (copy)` };
-      const updated = [
-        ...steps.slice(0, index + 1),
-        duplicated,
-        ...steps.slice(index + 1),
-      ];
+      const updated = [...steps.slice(0, index + 1), duplicated, ...steps.slice(index + 1)];
       setSteps(updated);
       setExpandedIndex(index + 1);
     },
@@ -152,14 +141,13 @@ export function WorkflowBuilder({ workflow, onSave }: WorkflowBuilderProps) {
       <StepInsertButton onClick={() => handleInsert(0)} />
 
       {steps.map((step, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
         <div key={`step-${index}`}>
           <StepEditor
             step={step}
             index={index}
             isExpanded={expandedIndex === index}
-            onToggle={() =>
-              setExpandedIndex(expandedIndex === index ? null : index)
-            }
+            onToggle={() => setExpandedIndex(expandedIndex === index ? null : index)}
             onChange={(updated) => handleChange(index, updated)}
             onDelete={() => handleDelete(index)}
             onDuplicate={() => handleDuplicate(index)}

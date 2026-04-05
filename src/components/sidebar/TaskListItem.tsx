@@ -1,16 +1,16 @@
-import type { Task } from "@/types/task";
+import { MoreHorizontal, Workflow } from "lucide-react";
 import { StatusDot } from "@/components/shared/StatusDot";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useWorkflowStore } from "@/stores/useWorkflowStore";
-import { useStore } from "@/stores";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Workflow } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useStore } from "@/stores";
+import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import type { Task } from "@/types/task";
 
 interface TaskListItemProps {
   task: Task;
@@ -26,7 +26,7 @@ export function TaskListItem({ task }: TaskListItemProps) {
   const handleConvertToWorkflow = async () => {
     const workflow = await promoteTask(task.id);
     selectWorkflow(workflow.id);
-    useStore.getState().setActiveView('workflow');
+    useStore.getState().setActiveView("workflow");
   };
 
   return (

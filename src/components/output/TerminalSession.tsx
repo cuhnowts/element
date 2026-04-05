@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useTerminal } from "@/hooks/useTerminal";
-import {
-  useTerminalSessionStore,
-  gracefulKillPty,
-} from "@/stores/useTerminalSessionStore";
+import { gracefulKillPty, useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
 
 interface TerminalSessionProps {
   sessionId: string;
@@ -21,12 +18,7 @@ export function TerminalSession({
   initialCommand,
 }: TerminalSessionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { error, ptyRef } = useTerminal(
-    containerRef,
-    cwd,
-    isVisible,
-    initialCommand
-  );
+  const { error, ptyRef } = useTerminal(containerRef, cwd, isVisible, initialCommand);
 
   // Detect PTY exit and mark session as exited, then auto-remove after 3s
   useEffect(() => {
@@ -60,7 +52,7 @@ export function TerminalSession({
         gracefulKillPty(ptyRef.current);
       }
     };
-  }, []);
+  }, [ptyRef.current]);
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -68,8 +60,7 @@ export function TerminalSession({
       {error && (
         <div className="text-sm text-destructive-foreground p-4">
           <p className="font-medium">
-            Terminal failed to start -- check that your shell is configured
-            correctly.
+            Terminal failed to start -- check that your shell is configured correctly.
           </p>
           <p className="text-muted-foreground mt-1">{error}</p>
         </div>

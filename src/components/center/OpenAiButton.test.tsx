@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Hoist mock functions so they're available to vi.mock factories
 const {
@@ -53,7 +53,7 @@ vi.mock("@/stores/useTerminalSessionStore", () => ({
         createSession: mockCreateSession,
         findAiSession: mockFindAiSession,
       }),
-    }
+    },
   ),
 }));
 
@@ -61,7 +61,7 @@ vi.mock("@/components/output/RefreshContextDialog", () => ({
   RefreshContextDialog: () => null,
 }));
 
-import { OpenAiButton, getAiButtonState } from "./OpenAiButton";
+import { getAiButtonState, OpenAiButton } from "./OpenAiButton";
 
 describe("getAiButtonState", () => {
   it("returns 'Link Directory' disabled with tooltip when no directory linked", () => {
@@ -178,7 +178,7 @@ describe("OpenAiButton", () => {
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("No AI tool configured")
+        expect.stringContaining("No AI tool configured"),
       );
     });
     expect(mockCreateSession).not.toHaveBeenCalled();
@@ -187,7 +187,7 @@ describe("OpenAiButton", () => {
   it("shows error toast when CLI tool not found on system", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>
-      Promise.resolve(key === "cli_command" ? "nonexistent" : null)
+      Promise.resolve(key === "cli_command" ? "nonexistent" : null),
     );
     mockValidateCliTool.mockResolvedValue(false);
 
@@ -197,7 +197,7 @@ describe("OpenAiButton", () => {
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("not found on your system")
+        expect.stringContaining("not found on your system"),
       );
     });
     expect(mockGenerateContextFile).not.toHaveBeenCalled();
@@ -206,9 +206,7 @@ describe("OpenAiButton", () => {
   it("validates CLI tool, generates context, and launches in terminal", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>
-      Promise.resolve(
-        key === "cli_command" ? "claude" : key === "cli_args" ? "--fast" : null
-      )
+      Promise.resolve(key === "cli_command" ? "claude" : key === "cli_args" ? "--fast" : null),
     );
     mockValidateCliTool.mockResolvedValue(true);
     mockGenerateContextFile.mockResolvedValue("/path/.element/context.md");
@@ -222,12 +220,10 @@ describe("OpenAiButton", () => {
       expect(mockValidateCliTool).toHaveBeenCalledWith("claude");
       expect(mockGenerateContextFile).toHaveBeenCalledWith("proj-1", "quick");
       expect(mockStartPlanWatcher).toHaveBeenCalledWith("/some/dir");
-      expect(mockCreateSession).toHaveBeenCalledWith(
-        "proj-1", "AI Planning", "ai", {
-          command: "claude",
-          args: ["--fast", "@/path/.element/context.md"],
-        }
-      );
+      expect(mockCreateSession).toHaveBeenCalledWith("proj-1", "AI Planning", "ai", {
+        command: "claude",
+        args: ["--fast", "@/path/.element/context.md"],
+      });
       expect(mockOpenTerminal).toHaveBeenCalled();
     });
   });
@@ -258,7 +254,7 @@ describe("OpenAiButton", () => {
   it("does not navigate away when startPlanWatcher fails and shows descriptive error", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>
-      Promise.resolve(key === "cli_command" ? "claude" : null)
+      Promise.resolve(key === "cli_command" ? "claude" : null),
     );
     mockValidateCliTool.mockResolvedValue(true);
     mockGenerateContextFile.mockResolvedValue("/path/.element/context.md");
@@ -270,7 +266,7 @@ describe("OpenAiButton", () => {
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith(
-        "Could not start plan watcher. Please try again."
+        "Could not start plan watcher. Please try again.",
       );
     });
     // The key assertion: launchTerminalCommand must NOT be called
@@ -281,7 +277,7 @@ describe("OpenAiButton", () => {
   it("shows error toast on generateContextFile failure", async () => {
     const user = userEvent.setup();
     mockGetAppSetting.mockImplementation((key: string) =>
-      Promise.resolve(key === "cli_command" ? "claude" : null)
+      Promise.resolve(key === "cli_command" ? "claude" : null),
     );
     mockValidateCliTool.mockResolvedValue(true);
     mockGenerateContextFile.mockRejectedValue(new Error("File write failed"));

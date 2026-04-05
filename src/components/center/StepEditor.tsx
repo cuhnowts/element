@@ -1,35 +1,35 @@
+import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { StepDefinition, StepType, ShellStepConfig, HttpStepConfig, ManualStepConfig } from "@/types/workflow";
-import { ShellEditor } from "@/components/center/ShellEditor";
 import { HttpStepForm } from "@/components/center/HttpStepForm";
+import { ShellEditor } from "@/components/center/ShellEditor";
 import { WorkflowExecutorPicker } from "@/components/center/WorkflowExecutorPicker";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
-  MoreHorizontal,
-  ArrowUp,
-  ArrowDown,
-  Copy,
-  Trash2,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type {
+  HttpStepConfig,
+  ManualStepConfig,
+  ShellStepConfig,
+  StepDefinition,
+  StepType,
+} from "@/types/workflow";
 
 interface StepEditorProps {
   step: StepDefinition;
@@ -56,7 +56,15 @@ function makeDefaultStep(type: StepType, name: string): StepDefinition {
     case "shell":
       return { type: "shell", name, command: "", workingDir: undefined, timeoutMs: undefined };
     case "http":
-      return { type: "http", name, method: "GET", url: "", headers: undefined, body: undefined, timeoutMs: undefined };
+      return {
+        type: "http",
+        name,
+        method: "GET",
+        url: "",
+        headers: undefined,
+        body: undefined,
+        timeoutMs: undefined,
+      };
     case "manual":
       return { type: "manual", name, description: "" };
   }
@@ -89,10 +97,11 @@ export function StepEditor({
   return (
     <div className="rounded-lg border border-border bg-card">
       {/* Collapsed header row */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive element with click handler */}
       <div
         className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={onToggle}
-        role="button"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -110,9 +119,7 @@ export function StepEditor({
         </Badge>
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" size="icon-xs" aria-label="Step options" />
-            }
+            render={<Button variant="ghost" size="icon-xs" aria-label="Step options" />}
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -131,10 +138,7 @@ export function StepEditor({
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-            >
+            <DropdownMenuItem variant="destructive" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Step
             </DropdownMenuItem>
@@ -147,9 +151,9 @@ export function StepEditor({
         <div className="px-3 pb-3 space-y-3 border-t border-border pt-3">
           {/* Step name */}
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Step Name
-            </label>
+            </span>
             <Input
               value={step.name}
               onChange={(e) => handleNameChange(e.target.value)}
@@ -159,9 +163,9 @@ export function StepEditor({
 
           {/* Type picker */}
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Step Type
-            </label>
+            </span>
             <WorkflowExecutorPicker value={step.type} onChange={handleTypeChange} />
           </div>
 
@@ -169,18 +173,18 @@ export function StepEditor({
           {step.type === "shell" && (
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Command
-                </label>
+                </span>
                 <ShellEditor
                   value={(step as ShellStepConfig).command}
                   onChange={(val) => onChange({ ...step, command: val } as ShellStepConfig)}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Working Directory
-                </label>
+                </span>
                 <Input
                   value={(step as ShellStepConfig).workingDir ?? ""}
                   onChange={(e) =>
@@ -193,9 +197,9 @@ export function StepEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Timeout (ms)
-                </label>
+                </span>
                 <Input
                   type="number"
                   value={(step as ShellStepConfig).timeoutMs ?? ""}
@@ -217,17 +221,15 @@ export function StepEditor({
               url={(step as HttpStepConfig).url}
               headers={(step as HttpStepConfig).headers ?? []}
               body={(step as HttpStepConfig).body}
-              onChange={(field, value) =>
-                onChange({ ...step, [field]: value } as HttpStepConfig)
-              }
+              onChange={(field, value) => onChange({ ...step, [field]: value } as HttpStepConfig)}
             />
           )}
 
           {step.type === "manual" && (
             <div className="space-y-1">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Description
-              </label>
+              </span>
               <Textarea
                 value={(step as ManualStepConfig).description}
                 onChange={(e) =>
@@ -251,9 +253,7 @@ export function StepEditor({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>
-              Cancel
-            </DialogClose>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button
               variant="destructive"
               onClick={() => {

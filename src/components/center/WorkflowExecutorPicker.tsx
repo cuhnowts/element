@@ -1,4 +1,4 @@
-import type { StepType } from "@/types/workflow";
+import { Globe, Hand, Terminal } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Terminal, Globe, Hand } from "lucide-react";
+import type { StepType } from "@/types/workflow";
 
 interface WorkflowExecutorPickerProps {
   value: StepType;

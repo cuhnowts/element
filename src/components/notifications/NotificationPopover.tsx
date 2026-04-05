@@ -1,6 +1,6 @@
 import { useStore } from "@/stores";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useHubChatStore } from "@/stores/useHubChatStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { NotificationItem } from "./NotificationItem";
 
 export function NotificationPopover() {
@@ -19,9 +19,7 @@ export function NotificationPopover() {
       // Find the notification that triggered this to get the body text
       const params = new URLSearchParams(actionUrl.split("?")[1]);
       const riskId = params.get("id");
-      const notif = notifications.find(
-        (n) => n.actionUrl === actionUrl,
-      );
+      const notif = notifications.find((n) => n.actionUrl === actionUrl);
       const riskContext = notif
         ? `[Risk context] ${notif.title}: ${notif.body}`
         : `[Risk context] Risk ID: ${riskId}`;
@@ -51,8 +49,7 @@ export function NotificationPopover() {
       <div className="flex flex-col items-center justify-center py-8 px-4">
         <p className="text-sm font-semibold">No notifications</p>
         <p className="text-sm text-muted-foreground text-center mt-1">
-          You're all caught up. Notifications from your projects will appear
-          here.
+          You're all caught up. Notifications from your projects will appear here.
         </p>
       </div>
     );

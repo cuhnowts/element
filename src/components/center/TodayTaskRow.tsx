@@ -1,6 +1,6 @@
-import type { Task } from "@/lib/types";
 import { StatusDot } from "@/components/shared/StatusDot";
 import { Badge } from "@/components/ui/badge";
+import type { Task } from "@/lib/types";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 interface TodayTaskRowProps {
@@ -11,11 +11,9 @@ interface TodayTaskRowProps {
 }
 
 function formatDueDate(dueDate: string): string {
-  const due = new Date(dueDate + "T00:00:00");
+  const due = new Date(`${dueDate}T00:00:00`);
   const now = new Date();
-  const diffDays = Math.round(
-    (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const diffDays = Math.round((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays >= 0 && diffDays < 7) {
     return `Due ${due.toLocaleDateString(undefined, { weekday: "short" })}`;
@@ -29,12 +27,7 @@ function isOverdue(task: Task): boolean {
   return task.dueDate < today;
 }
 
-export function TodayTaskRow({
-  task,
-  projectName,
-  isNextUp,
-  isOverdueSection,
-}: TodayTaskRowProps) {
+export function TodayTaskRow({ task, projectName, isNextUp, isOverdueSection }: TodayTaskRowProps) {
   const selectTask = useWorkspaceStore((s) => s.selectTask);
   const isComplete = task.status === "complete";
   const showOverdueBadge = isOverdue(task) && !isOverdueSection;
@@ -48,16 +41,10 @@ export function TodayTaskRow({
       } ${isNextUp ? "border-l-[3px] border-primary/60" : ""}`}
     >
       <StatusDot status={task.status} />
-      <span
-        className={`flex-1 truncate text-left text-sm ${
-          isComplete ? "line-through" : ""
-        }`}
-      >
+      <span className={`flex-1 truncate text-left text-sm ${isComplete ? "line-through" : ""}`}>
         {task.title}
       </span>
-      <span className="text-xs text-muted-foreground max-w-[120px] truncate">
-        {projectName}
-      </span>
+      <span className="text-xs text-muted-foreground max-w-[120px] truncate">{projectName}</span>
       {showOverdueBadge ? (
         <Badge variant="destructive">Overdue</Badge>
       ) : (

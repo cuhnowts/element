@@ -1,29 +1,24 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { ChevronRight, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useStore } from "@/stores";
-import { StandaloneTaskItem } from "./StandaloneTaskItem";
-import { MoveToThemeMenu } from "./MoveToThemeMenu";
 import type { Project, Task, Theme } from "@/lib/types";
+import { useStore } from "@/stores";
+import { MoveToThemeMenu } from "./MoveToThemeMenu";
+import { StandaloneTaskItem } from "./StandaloneTaskItem";
 
 interface UncategorizedSectionProps {
   projects: Project[];
   tasks: Task[];
 }
 
-export function UncategorizedSection({
-  projects,
-  tasks,
-}: UncategorizedSectionProps) {
+export function UncategorizedSection({ projects, tasks }: UncategorizedSectionProps) {
   const [expanded, setExpanded] = useState(true);
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
   const selectProject = useStore((s) => s.selectProject);
   const selectedProjectId = useStore((s) => s.selectedProjectId);
@@ -83,7 +78,9 @@ export function UncategorizedSection({
                 onSelect={() => handleSelectProject(project.id)}
                 themes={themes}
                 onMoveToTheme={(themeId) => assignProjectToTheme(project.id, themeId)}
-                onDelete={() => openDeleteConfirm({ type: "project", id: project.id, name: project.name })}
+                onDelete={() =>
+                  openDeleteConfirm({ type: "project", id: project.id, name: project.name })
+                }
               />
               {expandedProjects.has(project.id) && (
                 <div className="pl-6">
@@ -128,16 +125,8 @@ function UncategorizedProjectRow({
 
   return (
     <div className="flex items-center w-full">
-      <button
-        type="button"
-        className="flex-shrink-0 p-0.5"
-        onClick={onToggle}
-      >
-        {isExpanded ? (
-          <ChevronDown className="size-3.5" />
-        ) : (
-          <ChevronRight className="size-3.5" />
-        )}
+      <button type="button" className="flex-shrink-0 p-0.5" onClick={onToggle}>
+        {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
       </button>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger
@@ -161,15 +150,8 @@ function UncategorizedProjectRow({
           {project.name}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
-          <MoveToThemeMenu
-            themes={themes}
-            currentThemeId={null}
-            onSelect={onMoveToTheme}
-          />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={onDelete}
-          >
+          <MoveToThemeMenu themes={themes} currentThemeId={null} onSelect={onMoveToTheme} />
+          <DropdownMenuItem variant="destructive" onClick={onDelete}>
             Delete Project
           </DropdownMenuItem>
         </DropdownMenuContent>

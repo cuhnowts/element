@@ -36,14 +36,11 @@ export const useBriefingStore = create<BriefingState>()((set, get) => ({
     });
   },
 
-  setBriefingData: (data: BriefingJSON) =>
-    set({ briefingData: data, briefingStatus: "streaming" }),
+  setBriefingData: (data: BriefingJSON) => set({ briefingData: data, briefingStatus: "streaming" }),
 
-  completeBriefing: () =>
-    set({ briefingStatus: "complete", lastRefreshedAt: Date.now() }),
+  completeBriefing: () => set({ briefingStatus: "complete", lastRefreshedAt: Date.now() }),
 
-  failBriefing: (error: string) =>
-    set({ briefingStatus: "error", briefingError: error }),
+  failBriefing: (error: string) => set({ briefingStatus: "error", briefingError: error }),
 
   setContextSummary: (summary: string) => set({ contextSummary: summary }),
 }));

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
+import { useEffect } from "react";
 
 async function toggleQuickCapture() {
   const existing = await WebviewWindow.getByLabel("capture");

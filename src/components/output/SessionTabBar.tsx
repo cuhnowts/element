@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { SessionTab } from "@/components/output/SessionTab";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { TerminalSession } from "@/stores/useTerminalSessionStore";
 
 interface SessionTabBarProps {
@@ -34,20 +34,10 @@ export function SessionTabBar({
         ))}
       </div>
       <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={onCreate}
-            />
-          }
-        >
+        <TooltipTrigger render={<Button variant="ghost" size="icon-xs" onClick={onCreate} />}>
           <Plus className="size-3.5" />
         </TooltipTrigger>
-        <TooltipContent side="bottom">
-          New Session
-        </TooltipContent>
+        <TooltipContent side="bottom">New Session</TooltipContent>
       </Tooltip>
     </div>
   );

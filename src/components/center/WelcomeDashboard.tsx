@@ -1,8 +1,8 @@
+import { StatusDot } from "@/components/shared/StatusDot";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
 import { useTaskStore } from "@/stores/useTaskStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { StatusDot } from "@/components/shared/StatusDot";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -30,13 +30,11 @@ export function WelcomeDashboard() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full max-w-lg mx-auto text-center">
-      <h1 className="text-2xl font-semibold leading-tight mb-2">
-        {getGreeting()}
-      </h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Here's what's on your plate today.
-      </p>
-      <Button className="mb-8" onClick={handleNewTask} disabled={!selectedProjectId}>New Task</Button>
+      <h1 className="text-2xl font-semibold leading-tight mb-2">{getGreeting()}</h1>
+      <p className="text-sm text-muted-foreground mb-6">Here's what's on your plate today.</p>
+      <Button className="mb-8" onClick={handleNewTask} disabled={!selectedProjectId}>
+        New Task
+      </Button>
 
       {recentTasks.length > 0 && (
         <div className="w-full text-left">

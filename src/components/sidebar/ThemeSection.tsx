@@ -1,17 +1,13 @@
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Plus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import type { Project, Task, Theme } from "@/lib/types";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { ThemeHeader } from "./ThemeHeader";
-import { StandaloneTaskItem } from "./StandaloneTaskItem";
 import { MoveToThemeMenu } from "./MoveToThemeMenu";
 import { SessionIndicator } from "./SessionIndicator";
-import type { Theme, Project, Task } from "@/lib/types";
+import { StandaloneTaskItem } from "./StandaloneTaskItem";
+import { ThemeHeader } from "./ThemeHeader";
 
 interface ThemeSectionProps {
   theme: Theme;
@@ -26,9 +22,7 @@ export function ThemeSection({ theme, projects, tasks, onProjectCreated }: Theme
     const state = s.themeCollapseState[theme.id];
     return state === undefined ? true : state;
   });
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
 
   const selectProject = useStore((s) => s.selectProject);
   const selectedProjectId = useStore((s) => s.selectedProjectId);
@@ -92,7 +86,9 @@ export function ThemeSection({ theme, projects, tasks, onProjectCreated }: Theme
                 themes={themes}
                 currentThemeId={project.themeId}
                 onMoveToTheme={(themeId) => assignProjectToTheme(project.id, themeId)}
-                onDelete={() => openDeleteConfirm({ type: "project", id: project.id, name: project.name })}
+                onDelete={() =>
+                  openDeleteConfirm({ type: "project", id: project.id, name: project.name })
+                }
               />
               {expandedProjects.has(project.id) && (
                 <div className="ml-5 pl-4 -mt-0.5 border-l border-border/40">
@@ -147,11 +143,7 @@ function ProjectRow({
         onClick={onToggle}
         aria-label={isExpanded ? "Collapse project tasks" : "Expand project tasks"}
       >
-        {isExpanded ? (
-          <ChevronDown className="size-3.5" />
-        ) : (
-          <ChevronRight className="size-3.5" />
-        )}
+        {isExpanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
       </button>
       <button
         type="button"
@@ -174,10 +166,7 @@ function ProjectRow({
             currentThemeId={currentThemeId}
             onSelect={onMoveToTheme}
           />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={onDelete}
-          >
+          <DropdownMenuItem variant="destructive" onClick={onDelete}>
             Delete Project
           </DropdownMenuItem>
         </DropdownMenuContent>

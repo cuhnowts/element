@@ -1,7 +1,7 @@
-import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useTauriEvents } from "@/hooks/useTauriEvents";
+import { Toaster } from "@/components/ui/sonner";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useTauriEvents } from "@/hooks/useTauriEvents";
 
 function App() {
   useTauriEvents();

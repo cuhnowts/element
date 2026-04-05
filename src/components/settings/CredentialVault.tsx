@@ -1,27 +1,19 @@
+import { Check, Copy, Eye, EyeOff, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  KeyRound,
-  Eye,
-  EyeOff,
-  Copy,
-  Check,
-  Trash2,
-  Plus,
-} from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { useStore } from "@/stores";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Credential } from "@/lib/types";
+import { useStore } from "@/stores";
 import { CredentialDialog } from "./CredentialDialog";
 
 export function CredentialVault() {
@@ -35,9 +27,7 @@ export function CredentialVault() {
   const deleteCredentialAction = useStore((s) => s.deleteCredential);
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editCredential, setEditCredential] = useState<Credential | undefined>(
-    undefined,
-  );
+  const [editCredential, setEditCredential] = useState<Credential | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Credential | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -127,9 +117,7 @@ export function CredentialVault() {
                 <KeyRound className="size-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">
-                      {cred.name}
-                    </span>
+                    <span className="text-sm font-medium truncate">{cred.name}</span>
                     <Badge variant="secondary" className="text-xs">
                       {cred.credentialType.replace("_", " ")}
                     </Badge>
@@ -148,20 +136,10 @@ export function CredentialVault() {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={
-                      isRevealed ? "Hide credential" : "Reveal credential"
-                    }
-                    onClick={() =>
-                      isRevealed
-                        ? hideCredential()
-                        : revealCredential(cred.id)
-                    }
+                    aria-label={isRevealed ? "Hide credential" : "Reveal credential"}
+                    onClick={() => (isRevealed ? hideCredential() : revealCredential(cred.id))}
                   >
-                    {isRevealed ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
+                    {isRevealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
                   <Button
                     variant="ghost"
@@ -169,11 +147,7 @@ export function CredentialVault() {
                     aria-label="Copy credential to clipboard"
                     onClick={() => handleCopy(cred.id)}
                   >
-                    {isCopied ? (
-                      <Check className="size-4" />
-                    ) : (
-                      <Copy className="size-4" />
-                    )}
+                    {isCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
                   </Button>
                   <Button
                     variant="ghost"
@@ -208,8 +182,8 @@ export function CredentialVault() {
           <DialogHeader>
             <DialogTitle>Delete Credential</DialogTitle>
             <DialogDescription>
-              This will permanently remove &apos;{deleteTarget?.name}&apos; from
-              the vault. Plugins using this credential will stop working.
+              This will permanently remove &apos;{deleteTarget?.name}&apos; from the vault. Plugins
+              using this credential will stop working.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

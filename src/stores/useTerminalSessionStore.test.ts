@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { useTerminalSessionStore, gracefulKillPty } from "./useTerminalSessionStore";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { gracefulKillPty, useTerminalSessionStore } from "./useTerminalSessionStore";
 
 describe("useTerminalSessionStore", () => {
   beforeEach(() => {
@@ -41,20 +41,20 @@ describe("useTerminalSessionStore", () => {
 
     const aiSession = useTerminalSessionStore.getState().findAiSession("proj1");
     expect(aiSession).toBeDefined();
-    expect(aiSession!.type).toBe("ai");
-    expect(aiSession!.name).toBe("AI Session");
+    expect(aiSession?.type).toBe("ai");
+    expect(aiSession?.name).toBe("AI Session");
   });
 
   it("switchSession changes the active session", () => {
     const store = useTerminalSessionStore.getState();
-    const id1 = store.createSession("proj1", "Shell 1", "shell");
+    const _id1 = store.createSession("proj1", "Shell 1", "shell");
     const id2 = store.createSession("proj1", "Shell 2", "shell");
 
     useTerminalSessionStore.getState().switchSession("proj1", id2);
     const active = useTerminalSessionStore.getState().getActiveSession("proj1");
 
     expect(active).toBeDefined();
-    expect(active!.id).toBe(id2);
+    expect(active?.id).toBe(id2);
   });
 
   it("graceful kill sends SIGTERM then SIGKILL after timeout", async () => {
@@ -106,14 +106,14 @@ describe("useTerminalSessionStore", () => {
 
     const active = useTerminalSessionStore.getState().getActiveSession("proj1");
     expect(active).toBeDefined();
-    expect(active!.id).toBe(id);
+    expect(active?.id).toBe(id);
   });
 
   it("close active re-selects nearest remaining session", () => {
     const store = useTerminalSessionStore.getState();
     const id1 = store.createSession("proj1", "Shell 1", "shell");
     const id2 = store.createSession("proj1", "Shell 2", "shell");
-    const id3 = store.createSession("proj1", "Shell 3", "shell");
+    const _id3 = store.createSession("proj1", "Shell 3", "shell");
 
     // Make id2 active
     useTerminalSessionStore.getState().switchSession("proj1", id2);
@@ -126,7 +126,7 @@ describe("useTerminalSessionStore", () => {
 
     const active = useTerminalSessionStore.getState().getActiveSession("proj1");
     expect(active).toBeDefined();
-    expect(active!.id).toBe(id1);
+    expect(active?.id).toBe(id1);
   });
 
   it("getAllSessions returns flat array across all projects", () => {
@@ -176,7 +176,7 @@ describe("useTerminalSessionStore", () => {
     expect(killFn).toHaveBeenCalledWith("SIGTERM");
 
     // Simulate process exiting before timeout
-    exitCallback!({ exitCode: 0 });
+    exitCallback?.({ exitCode: 0 });
     await promise;
 
     // SIGKILL should NOT have been called

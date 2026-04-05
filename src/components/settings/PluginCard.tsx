@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores";
+import { Switch } from "@/components/ui/switch";
 import type { PluginInfo } from "@/lib/types";
+import { useStore } from "@/stores";
 
 interface PluginCardProps {
   plugin: PluginInfo;
@@ -39,9 +39,7 @@ export function PluginCard({ plugin }: PluginCardProps) {
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">
-              {plugin.displayName}
-            </span>
+            <span className="text-sm font-medium truncate">{plugin.displayName}</span>
             <Badge variant="secondary" className="text-xs">
               v{plugin.version}
             </Badge>
@@ -56,17 +54,12 @@ export function PluginCard({ plugin }: PluginCardProps) {
             )}
           </div>
         </div>
-        <Switch
-          checked={plugin.enabled}
-          onCheckedChange={handleToggle}
-        />
+        <Switch checked={plugin.enabled} onCheckedChange={handleToggle} />
       </div>
 
       {/* Description */}
       {plugin.description && (
-        <p className="mt-2 text-sm text-muted-foreground">
-          {plugin.description}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{plugin.description}</p>
       )}
 
       {/* Capability badges */}
@@ -84,8 +77,7 @@ export function PluginCard({ plugin }: PluginCardProps) {
       {plugin.status === "error" && errorExpanded && plugin.errorMessage && (
         <div className="mt-3 rounded-md bg-background p-3">
           <p className="text-xs font-mono text-destructive-foreground">
-            Plugin failed to load: {plugin.errorMessage}. Check the manifest
-            file and try reloading.
+            Plugin failed to load: {plugin.errorMessage}. Check the manifest file and try reloading.
           </p>
           <Button
             variant="outline"

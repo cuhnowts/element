@@ -22,10 +22,7 @@ function formatRelativeTime(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
-const priorityBadgeStyles: Record<
-  Notification["priority"],
-  string
-> = {
+const priorityBadgeStyles: Record<Notification["priority"], string> = {
   critical: "bg-destructive text-destructive-foreground",
   informational: "bg-[var(--chart-2,theme(colors.teal.600))] text-foreground",
   silent: "bg-muted text-muted-foreground",
@@ -37,11 +34,7 @@ const priorityLabels: Record<Notification["priority"], string> = {
   silent: "Silent",
 };
 
-export function NotificationItem({
-  notification,
-  onNavigate,
-  onMarkRead,
-}: NotificationItemProps) {
+export function NotificationItem({ notification, onNavigate, onMarkRead }: NotificationItemProps) {
   const isUnread = !notification.read;
 
   const handleClick = () => {
@@ -54,8 +47,9 @@ export function NotificationItem({
   };
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive element with click handler
     <div
-      role="button"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={(e) => {
@@ -80,9 +74,7 @@ export function NotificationItem({
       {/* Content */}
       <div className={`flex-1 min-w-0 ${!isUnread ? "opacity-70" : ""}`}>
         <p className="text-sm font-semibold truncate">{notification.title}</p>
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {notification.body}
-        </p>
+        <p className="text-sm text-muted-foreground line-clamp-2">{notification.body}</p>
       </div>
 
       {/* Timestamp */}

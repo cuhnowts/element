@@ -13,7 +13,9 @@ export interface NotificationSlice {
   clearAll: () => Promise<void>;
 }
 
-export const createNotificationSlice: StateCreator<AppStore, [], [], NotificationSlice> = (set) => ({
+export const createNotificationSlice: StateCreator<AppStore, [], [], NotificationSlice> = (
+  set,
+) => ({
   notifications: [],
   unreadCount: 0,
 
@@ -34,9 +36,7 @@ export const createNotificationSlice: StateCreator<AppStore, [], [], Notificatio
   markRead: async (id) => {
     await api.markNotificationRead(id);
     set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      ),
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
       unreadCount: Math.max(0, state.unreadCount - 1),
     }));
   },

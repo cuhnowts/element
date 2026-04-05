@@ -71,10 +71,7 @@ export function parseBaseCommand(command: string): string {
  * - Command contains shell metacharacters (injection prevention)
  * - Base command is not in the allowlist
  */
-export function isCommandAllowed(
-  command: string,
-  allowlist: string[]
-): boolean {
+export function isCommandAllowed(command: string, allowlist: string[]): boolean {
   const trimmed = command.trim();
 
   if (trimmed.length === 0) {

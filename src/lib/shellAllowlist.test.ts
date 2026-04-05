@@ -1,9 +1,5 @@
-import { describe, it, expect } from "vitest";
-import {
-  DEFAULT_ALLOWLIST,
-  isCommandAllowed,
-  parseBaseCommand,
-} from "./shellAllowlist";
+import { describe, expect, it } from "vitest";
+import { DEFAULT_ALLOWLIST, isCommandAllowed, parseBaseCommand } from "./shellAllowlist";
 
 describe("shellAllowlist", () => {
   describe("DEFAULT_ALLOWLIST", () => {
@@ -50,15 +46,11 @@ describe("shellAllowlist", () => {
     });
 
     it('allows "git status --short" (prefix match with args)', () => {
-      expect(isCommandAllowed("git status --short", DEFAULT_ALLOWLIST)).toBe(
-        true
-      );
+      expect(isCommandAllowed("git status --short", DEFAULT_ALLOWLIST)).toBe(true);
     });
 
     it('allows "git log --oneline"', () => {
-      expect(isCommandAllowed("git log --oneline", DEFAULT_ALLOWLIST)).toBe(
-        true
-      );
+      expect(isCommandAllowed("git log --oneline", DEFAULT_ALLOWLIST)).toBe(true);
     });
 
     it('rejects "rm -rf /"', () => {
@@ -71,34 +63,26 @@ describe("shellAllowlist", () => {
 
     // Injection prevention
     it('rejects "git status; rm -rf /" (semicolon injection)', () => {
-      expect(
-        isCommandAllowed("git status; rm -rf /", DEFAULT_ALLOWLIST)
-      ).toBe(false);
+      expect(isCommandAllowed("git status; rm -rf /", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
     it('rejects "git status && rm -rf /" (&& injection)', () => {
-      expect(
-        isCommandAllowed("git status && rm -rf /", DEFAULT_ALLOWLIST)
-      ).toBe(false);
+      expect(isCommandAllowed("git status && rm -rf /", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
     it('rejects "git status || rm -rf /" (|| injection)', () => {
-      expect(
-        isCommandAllowed("git status || rm -rf /", DEFAULT_ALLOWLIST)
-      ).toBe(false);
+      expect(isCommandAllowed("git status || rm -rf /", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
     it('rejects "git status | cat /etc/passwd" (pipe injection)', () => {
-      expect(
-        isCommandAllowed("git status | cat /etc/passwd", DEFAULT_ALLOWLIST)
-      ).toBe(false);
+      expect(isCommandAllowed("git status | cat /etc/passwd", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
     it('rejects "echo $(whoami)" ($() injection)', () => {
       expect(isCommandAllowed("echo $(whoami)", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
-    it("rejects \"echo `whoami`\" (backtick injection)", () => {
+    it('rejects "echo `whoami`" (backtick injection)', () => {
       expect(isCommandAllowed("echo `whoami`", DEFAULT_ALLOWLIST)).toBe(false);
     });
 
@@ -119,9 +103,7 @@ describe("shellAllowlist", () => {
     });
 
     it('allows "docker ps" with custom allowlist entry', () => {
-      expect(
-        isCommandAllowed("docker ps", [...DEFAULT_ALLOWLIST, "docker"])
-      ).toBe(true);
+      expect(isCommandAllowed("docker ps", [...DEFAULT_ALLOWLIST, "docker"])).toBe(true);
     });
   });
 

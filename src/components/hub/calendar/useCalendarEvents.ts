@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/stores";
-import type { MergedEvent } from "./calendarTypes";
 import { normalizeToMinutes } from "./calendarLayout";
+import type { MergedEvent } from "./calendarTypes";
 
 interface WorkBlock {
   id: string;
@@ -21,7 +21,7 @@ export function useCalendarEvents(dateStr: string): {
   isLoading: boolean;
 } {
   const calendarEvents = useStore((s) => s.calendarEvents);
-  const calendarAccounts = useStore((s) => s.calendarAccounts);
+  const _calendarAccounts = useStore((s) => s.calendarAccounts);
   const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([]);
 
   // Fetch work blocks for the selected date
@@ -72,5 +72,5 @@ export function useCalendarEvents(dateStr: string): {
     }
 
     return { events: merged, allDayEvents: allDay, isLoading: false };
-  }, [calendarEvents, calendarAccounts, workBlocks, dateStr]);
+  }, [calendarEvents, workBlocks, dateStr]);
 }

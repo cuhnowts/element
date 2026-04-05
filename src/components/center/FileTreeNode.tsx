@@ -1,22 +1,22 @@
 import {
-  ChevronRight,
   ChevronDown,
+  ChevronRight,
+  Copy,
+  ExternalLink,
+  File,
   Folder,
   FolderOpen,
-  File,
-  ExternalLink,
-  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useStore } from "@/stores";
-import type { FileEntry } from "@/lib/types";
 import {
   ContextMenu,
-  ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { FileEntry } from "@/lib/types";
+import { useStore } from "@/stores";
 
 interface FileTreeNodeProps {
   entry: FileEntry;
@@ -92,12 +92,7 @@ export function FileTreeNode({ entry, level, projectId }: FileTreeNodeProps) {
         {isExpanded &&
           !isLoading &&
           children.map((child) => (
-            <FileTreeNode
-              key={child.path}
-              entry={child}
-              level={level + 1}
-              projectId={projectId}
-            />
+            <FileTreeNode key={child.path} entry={child} level={level + 1} projectId={projectId} />
           ))}
       </>
     );

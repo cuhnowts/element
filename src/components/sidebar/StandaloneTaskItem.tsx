@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { Circle } from "lucide-react";
+import { useState } from "react";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { Task } from "@/lib/types";
 import { useStore } from "@/stores";
 import { MoveToThemeMenu } from "./MoveToThemeMenu";
-import type { Task } from "@/lib/types";
 
 interface StandaloneTaskItemProps {
   task: Task;
@@ -51,10 +51,7 @@ export function StandaloneTaskItem({ task }: StandaloneTaskItemProps) {
           currentThemeId={task.themeId}
           onSelect={(themeId) => assignTaskToTheme(task.id, themeId)}
         />
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => deleteTask(task.id)}
-        >
+        <DropdownMenuItem variant="destructive" onClick={() => deleteTask(task.id)}>
           Delete Task
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -1,37 +1,33 @@
-import { useState, useEffect } from "react";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { GripHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
+import { CenterPanel } from "@/components/layout/CenterPanel";
+import { OutputDrawer } from "@/components/layout/OutputDrawer";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { SettingsPage } from "@/components/settings/SettingsPage";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores";
-import { useWorkspaceStore, type DrawerTab } from "@/stores/useWorkspaceStore";
-import { useTaskStore } from "@/stores/useTaskStore";
-import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
-import { GripHorizontal } from "lucide-react";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { CenterPanel } from "@/components/layout/CenterPanel";
-import { OutputDrawer } from "@/components/layout/OutputDrawer";
-import { SettingsPage } from "@/components/settings/SettingsPage";
-import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { Badge } from "@/components/ui/badge";
-import { useAgentStore } from "@/stores/useAgentStore";
-import { useAgentQueue } from "@/hooks/useAgentQueue";
 import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
+import { useAgentQueue } from "@/hooks/useAgentQueue";
+import { useGlobalShortcut } from "@/hooks/useGlobalShortcut";
 import { useNotificationEvents } from "@/hooks/useNotificationEvents";
+import { useTerminalCleanup } from "@/hooks/useTerminalCleanup";
+import { useStore } from "@/stores";
+import { useAgentStore } from "@/stores/useAgentStore";
+import { useTaskStore } from "@/stores/useTaskStore";
+import { type DrawerTab, useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function AppLayout() {
   useGlobalShortcut();
@@ -73,7 +69,8 @@ export function AppLayout() {
 
   const handleBarClick = (e: React.MouseEvent) => {
     // Only collapse if clicking the bar background itself (not a tab button or other control)
-    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) return;
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a"))
+      return;
     if (drawerOpen) {
       toggleDrawer();
     }
@@ -154,15 +151,16 @@ export function AppLayout() {
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
             <ResizablePanelGroup direction="vertical" className="flex-1">
-              <ResizablePanel
-                defaultSize={drawerOpen ? 100 - drawerHeight : 100}
-                minSize={30}
-              >
+              <ResizablePanel defaultSize={drawerOpen ? 100 - drawerHeight : 100} minSize={30}>
                 <CenterPanel />
               </ResizablePanel>
 
               <ResizableHandle className="border-t border-border bg-card cursor-row-resize">
-                <div className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer" onClick={handleBarClick}>
+                {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive element with click handler */}
+                <div
+                  className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer"
+                  onClick={handleBarClick}
+                >
                   <div className="flex items-center gap-1">
                     <GripHorizontal className="size-3 text-muted-foreground mr-1 flex-shrink-0" />
                     {(["elementai", "terminal", "logs", "history"] as DrawerTab[]).map((tab) => (
@@ -172,7 +170,13 @@ export function AppLayout() {
                         onClick={() => handleTabClick(tab)}
                         className={`relative ${tabClass(tab)}`}
                       >
-                        {tab === "elementai" ? "Element AI" : tab === "terminal" ? "Terminal" : tab === "logs" ? "Logs" : "History"}
+                        {tab === "elementai"
+                          ? "Element AI"
+                          : tab === "terminal"
+                            ? "Terminal"
+                            : tab === "logs"
+                              ? "Logs"
+                              : "History"}
                         {tab === "elementai" && pendingApprovalCount() > 0 && (
                           <Badge
                             variant="destructive"

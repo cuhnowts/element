@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { act } from "react";
-import { HubToolbar } from "../HubToolbar";
+import { describe, expect, it } from "vitest";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { HubToolbar } from "../HubToolbar";
 
 describe("HubToolbar", () => {
   beforeEach(() => {

@@ -1,8 +1,8 @@
+import { AgentActivityEntry } from "@/components/agent/AgentActivityEntry";
+import { ApprovalRequest } from "@/components/agent/ApprovalRequest";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAgentStore } from "@/stores/useAgentStore";
-import { AgentActivityEntry } from "@/components/agent/AgentActivityEntry";
-import { ApprovalRequest } from "@/components/agent/ApprovalRequest";
 
 export function AgentActivityTab() {
   const entries = useAgentStore((s) => s.entries);

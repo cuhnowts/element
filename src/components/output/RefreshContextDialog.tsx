@@ -1,12 +1,12 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 interface RefreshContextDialogProps {
   open: boolean;
@@ -27,8 +27,8 @@ export function RefreshContextDialog({
         <DialogHeader>
           <DialogTitle>Refresh AI Context?</DialogTitle>
           <DialogDescription>
-            An AI session is already running for this project. Refreshing will
-            restart the session and lose all current context and memory.
+            An AI session is already running for this project. Refreshing will restart the session
+            and lose all current context and memory.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useId, type KeyboardEvent } from "react";
 import { CalendarClock } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { type KeyboardEvent, useEffect, useId, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 interface ScheduleChangeCardProps {
@@ -58,9 +58,7 @@ export function ScheduleChangeCard({
       onKeyDown={handleKeyDown}
       className="animate-in slide-in-from-bottom-2 fade-in duration-200 ease-out"
     >
-      <Card
-        className={`w-full transition-opacity ${isResolved ? "opacity-50" : ""}`}
-      >
+      <Card className={`w-full transition-opacity ${isResolved ? "opacity-50" : ""}`}>
         <div className="p-4 space-y-2">
           {/* Header */}
           <div className="flex items-center gap-2">
@@ -88,9 +86,7 @@ export function ScheduleChangeCard({
           </div>
 
           {/* Side effects */}
-          {sideEffect && (
-            <p className="text-xs text-muted-foreground">{sideEffect}</p>
-          )}
+          {sideEffect && <p className="text-xs text-muted-foreground">{sideEffect}</p>}
 
           <Separator />
 
@@ -104,12 +100,7 @@ export function ScheduleChangeCard({
               <Button variant="outline" size="sm" onClick={onDismiss}>
                 Dismiss Change
               </Button>
-              <Button
-                ref={confirmRef}
-                variant="default"
-                size="sm"
-                onClick={onConfirm}
-              >
+              <Button ref={confirmRef} variant="default" size="sm" onClick={onConfirm}>
                 Confirm Move
               </Button>
             </div>

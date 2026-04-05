@@ -13,19 +13,13 @@ function ResizablePanelGroup({
   return (
     <Group
       orientation={direction}
-      className={cn(
-        "flex h-full w-full",
-        direction === "vertical" && "flex-col",
-        className,
-      )}
+      className={cn("flex h-full w-full", direction === "vertical" && "flex-col", className)}
       {...props}
     />
   );
 }
 
-function ResizablePanel({
-  ...props
-}: React.ComponentProps<typeof Panel>) {
+function ResizablePanel({ ...props }: React.ComponentProps<typeof Panel>) {
   return <Panel {...props} />;
 }
 
@@ -59,4 +53,4 @@ function ResizableHandle({
   );
 }
 
-export { ResizablePanelGroup, ResizablePanel, ResizableHandle };
+export { ResizableHandle, ResizablePanel, ResizablePanelGroup };

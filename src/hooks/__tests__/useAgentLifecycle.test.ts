@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
 import { invoke } from "@tauri-apps/api/core";
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Hoist all mocks so they're available in vi.mock factories
 const {
@@ -67,7 +67,7 @@ vi.mock("@/stores/useAgentStore", () => ({
         agentCommand: null,
         agentArgs: null,
       }),
-    }
+    },
   ),
 }));
 
@@ -144,7 +144,7 @@ describe("useAgentLifecycle", () => {
     expect(mockResetRestartCount).toHaveBeenCalled();
     expect(mockSetAgentCommand).toHaveBeenCalledWith("claude");
     expect(mockSetAgentArgs).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.stringContaining("--mcp-config")])
+      expect.arrayContaining([expect.stringContaining("--mcp-config")]),
     );
   });
 
@@ -233,13 +233,13 @@ describe("useAgentMcp", () => {
     expect(configPath).toContain("mcp-config.json");
 
     // Find the invoke call that wrote the config file
-    const writeCall = vi.mocked(invoke).mock.calls.find(
-      (call) => call[0] === "plugin:fs|write_text_file"
-    );
+    const writeCall = vi
+      .mocked(invoke)
+      .mock.calls.find((call) => call[0] === "plugin:fs|write_text_file");
     expect(writeCall).toBeDefined();
 
     // Verify the written JSON content
-    const args = writeCall![1] as { path: string; contents: string };
+    const args = writeCall?.[1] as { path: string; contents: string };
     const config = JSON.parse(args.contents);
     expect(config.mcpServers).toBeDefined();
     expect(config.mcpServers.element).toBeDefined();

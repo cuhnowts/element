@@ -1,8 +1,8 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BriefingCardSection } from "./BriefingCardSection";
 import { AlertTriangle, Clock, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { BriefingProject, BriefingTag } from "@/types/briefing";
+import { BriefingCardSection } from "./BriefingCardSection";
 
 const TAG_VARIANTS: Record<
   BriefingTag,
@@ -20,15 +20,9 @@ interface BriefingProjectCardProps {
   onNavigate: (projectId: string) => void;
 }
 
-export function BriefingProjectCard({
-  project,
-  onNavigate,
-}: BriefingProjectCardProps) {
+export function BriefingProjectCard({ project, onNavigate }: BriefingProjectCardProps) {
   return (
-    <Card
-      className="hover:bg-muted/50 transition-colors"
-      aria-label={`${project.name} briefing`}
-    >
+    <Card className="hover:bg-muted/50 transition-colors" aria-label={`${project.name} briefing`}>
       <CardHeader
         className="cursor-pointer"
         onClick={() => project.projectId && onNavigate(project.projectId)}
@@ -39,11 +33,7 @@ export function BriefingProjectCard({
             {project.tags.map((tag) => {
               const style = TAG_VARIANTS[tag] ?? { variant: "outline" as const };
               return (
-                <Badge
-                  key={tag}
-                  variant={style.variant}
-                  className={style.className}
-                >
+                <Badge key={tag} variant={style.variant} className={style.className}>
                   {tag.replace(/-/g, " ")}
                 </Badge>
               );
@@ -69,11 +59,7 @@ export function BriefingProjectCard({
           />
         )}
         {project.wins?.length > 0 && (
-          <BriefingCardSection
-            title="Wins"
-            icon={Trophy}
-            items={project.wins}
-          />
+          <BriefingCardSection title="Wins" icon={Trophy} items={project.wins} />
         )}
       </CardContent>
     </Card>

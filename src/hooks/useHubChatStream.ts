@@ -1,12 +1,10 @@
-import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useEffect } from "react";
 import { useHubChatStore } from "@/stores/useHubChatStore";
 
 export function useHubChatStream() {
   const appendChunk = useHubChatStore((s) => s.appendChunk);
-  const finalizeAssistantMessage = useHubChatStore(
-    (s) => s.finalizeAssistantMessage,
-  );
+  const finalizeAssistantMessage = useHubChatStore((s) => s.finalizeAssistantMessage);
   const setError = useHubChatStore((s) => s.setError);
 
   useEffect(() => {

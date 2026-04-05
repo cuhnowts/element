@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from "react";
-import type { LogEntry as LogEntryType } from "@/types/execution";
+import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import type { LogEntry as LogEntryType } from "@/types/execution";
 import { LogEntry } from "./LogEntry";
 
 interface LogViewerProps {
@@ -15,7 +15,7 @@ export function LogViewer({ entries }: LogViewerProps) {
     if (isAtBottom && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [entries, isAtBottom]);
+  }, [isAtBottom]);
 
   const handleScroll = () => {
     const el = scrollRef.current;
@@ -35,12 +35,9 @@ export function LogViewer({ entries }: LogViewerProps) {
 
   return (
     <div className="relative h-full">
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="h-full overflow-auto"
-      >
+      <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-auto">
         {entries.map((entry, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
           <LogEntry key={i} entry={entry} />
         ))}
       </div>

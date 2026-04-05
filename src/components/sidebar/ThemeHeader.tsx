@@ -1,25 +1,18 @@
+import { ChevronDown, ChevronRight, FolderPlus, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import {
-  ChevronRight,
-  ChevronDown,
-  GripVertical,
-  FolderPlus,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores";
 import { api } from "@/lib/tauri";
+import type { Theme } from "@/lib/types";
+import { useStore } from "@/stores";
 import { CreateThemeDialog } from "./CreateThemeDialog";
 import { useDragHandle } from "./ThemeSidebar";
-import type { Theme } from "@/lib/types";
 
 interface ThemeHeaderProps {
   theme: Theme;
@@ -41,7 +34,7 @@ export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: Them
       const [projectCount, taskCount] = await api.getThemeItemCounts(theme.id);
       if (projectCount > 0 || taskCount > 0) {
         setDeleteMessage(
-          `Delete '${theme.name}'? ${projectCount} projects and ${taskCount} tasks will become uncategorized.`
+          `Delete '${theme.name}'? ${projectCount} projects and ${taskCount} tasks will become uncategorized.`,
         );
         setShowDeleteConfirm(true);
       } else {
@@ -75,11 +68,7 @@ export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: Them
           className="flex-shrink-0 p-0.5"
           aria-label={expanded ? "Collapse theme" : "Expand theme"}
         >
-          {expanded ? (
-            <ChevronDown className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
-          )}
+          {expanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
         </button>
         <button
           type="button"
@@ -122,11 +111,7 @@ export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: Them
         </div>
       </div>
 
-      <CreateThemeDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        editTheme={theme}
-      />
+      <CreateThemeDialog open={showEditDialog} onOpenChange={setShowEditDialog} editTheme={theme} />
 
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent>
@@ -135,10 +120,7 @@ export function ThemeHeader({ theme, expanded, onToggle, onCreateProject }: Them
           </DialogHeader>
           <p className="text-sm text-muted-foreground">{deleteMessage}</p>
           <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShowDeleteConfirm(false)}
-            >
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
               Keep Theme
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>

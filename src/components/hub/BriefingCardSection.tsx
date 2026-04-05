@@ -1,5 +1,5 @@
-import { useState, useId, type KeyboardEvent } from "react";
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { type KeyboardEvent, useId, useState } from "react";
 
 interface BriefingCardSectionProps {
   title: string;
@@ -28,9 +28,10 @@ export function BriefingCardSection({
 
   return (
     <div className="py-1">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useAriaPropsSupportedByRole: interactive element with click handler */}
       <div
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
         tabIndex={0}
-        role="button"
         aria-expanded={open}
         aria-controls={contentId}
         onClick={toggle}
@@ -47,6 +48,7 @@ export function BriefingCardSection({
       {open && (
         <ul id={contentId} className="mt-1 ml-9 space-y-0.5">
           {items.map((item, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
             <li key={i} className="text-sm text-muted-foreground">
               {item}
             </li>
