@@ -1,9 +1,9 @@
 import { useRef } from "react";
+import { ActionButtons } from "@/components/hub/ActionButtons";
 import { BriefingGreeting } from "@/components/hub/BriefingGreeting";
 import { DayPulse } from "@/components/hub/DayPulse";
-import { ActionButtons } from "@/components/hub/ActionButtons";
-import { JumpToTop } from "@/components/hub/JumpToTop";
 import { HubChat } from "@/components/hub/HubChat";
+import { JumpToTop } from "@/components/hub/JumpToTop";
 
 export function CommandHub() {
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import { FolderOpen, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores";
 import { api } from "@/lib/tauri";
+import { useStore } from "@/stores";
 import { PluginCard } from "./PluginCard";
 
 export function PluginList() {
@@ -32,14 +32,9 @@ export function PluginList() {
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <h3 className="text-lg font-semibold">No plugins installed</h3>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Drop a plugin folder into the plugins directory, or use the button
-          below to open it.
+          Drop a plugin folder into the plugins directory, or use the button below to open it.
         </p>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={() => api.openPluginsDirectory()}
-        >
+        <Button variant="outline" className="mt-4" onClick={() => api.openPluginsDirectory()}>
           <FolderOpen className="size-4" data-icon="inline-start" />
           Open Plugins Folder
         </Button>

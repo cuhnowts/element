@@ -1,21 +1,17 @@
 import { useCallback } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { useStore } from "@/stores";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { eventHeight, timeToPixelOffset } from "./calendarLayout";
 import type { PositionedEvent } from "./calendarTypes";
 import {
   CALENDAR_COLORS,
-  WORK_BLOCK_COLOR,
-  EVENT_MIN_HEIGHT,
   EVENT_BORDER_RADIUS,
+  EVENT_MIN_HEIGHT,
+  WORK_BLOCK_COLOR,
 } from "./calendarTypes";
-import { timeToPixelOffset, eventHeight } from "./calendarLayout";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useStore } from "@/stores";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 
 interface CalendarEventBlockProps {
   event: PositionedEvent;
@@ -49,10 +45,7 @@ export function CalendarEventBlock({
   const isWorkOrBuffer = event.type === "work" || event.type === "buffer";
 
   const top = timeToPixelOffset(event.startMinutes, gridStartMinutes);
-  const height = Math.max(
-    EVENT_MIN_HEIGHT,
-    eventHeight(event.startMinutes, event.endMinutes),
-  );
+  const height = Math.max(EVENT_MIN_HEIGHT, eventHeight(event.startMinutes, event.endMinutes));
   const left = `${(column / totalColumns) * 100}%`;
   const width = `${(1 / totalColumns) * 100}%`;
 
@@ -114,9 +107,7 @@ export function CalendarEventBlock({
       <span className="text-xs font-semibold truncate text-foreground leading-tight">
         {event.title}
       </span>
-      <span className="text-[11px] text-muted-foreground truncate">
-        {timeLabel}
-      </span>
+      <span className="text-[11px] text-muted-foreground truncate">{timeLabel}</span>
     </div>
   );
 
@@ -143,15 +134,9 @@ export function CalendarEventBlock({
         </PopoverTrigger>
         <PopoverContent side="right" align="start" sideOffset={8}>
           <div className="flex flex-col gap-2">
-            <h4 className="text-base font-semibold leading-tight">
-              {event.title}
-            </h4>
-            <span className="text-xs text-muted-foreground">
-              {popoverTimeLabel}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {event.location || "No location"}
-            </span>
+            <h4 className="text-base font-semibold leading-tight">{event.title}</h4>
+            <span className="text-xs text-muted-foreground">{popoverTimeLabel}</span>
+            <span className="text-xs text-muted-foreground">{event.location || "No location"}</span>
             <span className="text-xs text-muted-foreground">
               {event.attendees && event.attendees.length > 0
                 ? event.attendees.join(", ")

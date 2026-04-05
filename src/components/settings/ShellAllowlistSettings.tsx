@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/tauri";
-import { toast } from "sonner";
 
 const DEFAULT_COMMANDS = [
   "git",
@@ -56,10 +56,7 @@ export function ShellAllowlistSettings() {
   const handleAdd = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) return;
-    if (
-      customCommands.includes(trimmed) ||
-      DEFAULT_COMMANDS.includes(trimmed)
-    ) {
+    if (customCommands.includes(trimmed) || DEFAULT_COMMANDS.includes(trimmed)) {
       toast.info(`"${trimmed}" is already in the allowlist.`);
       setInputValue("");
       return;
@@ -88,16 +85,13 @@ export function ShellAllowlistSettings() {
       <div>
         <h2 className="text-base font-semibold">Shell Allowlist</h2>
         <p className="text-sm text-muted-foreground">
-          Commands the AI bot is allowed to run. Default safe commands are
-          always included.
+          Commands the AI bot is allowed to run. Default safe commands are always included.
         </p>
       </div>
 
       {/* Default commands */}
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Default commands (always available):
-        </p>
+        <p className="text-sm text-muted-foreground">Default commands (always available):</p>
         <div className="flex flex-wrap gap-2">
           {DEFAULT_COMMANDS.map((cmd) => (
             <Badge key={cmd} variant="secondary">
@@ -112,8 +106,8 @@ export function ShellAllowlistSettings() {
         <p className="text-sm text-muted-foreground">Custom commands:</p>
         {customCommands.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No custom commands added. Default commands (git, npm, ls, cat, etc.)
-            are always available.
+            No custom commands added. Default commands (git, npm, ls, cat, etc.) are always
+            available.
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">

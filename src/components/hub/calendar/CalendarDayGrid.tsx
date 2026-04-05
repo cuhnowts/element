@@ -1,22 +1,17 @@
-import { useState, useEffect, useRef, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { format } from "date-fns";
-import { useStore } from "@/stores";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { normalizeToMinutes, timeToPixelOffset, assignOverlapColumns } from "./calendarLayout";
-import {
-  SLOT_HEIGHT,
-  MINUTES_PER_SLOT,
-  TIME_GUTTER_WIDTH,
-  CALENDAR_COLORS,
-} from "./calendarTypes";
+import { useStore } from "@/stores";
+import { CalendarEventBlock } from "./CalendarEventBlock";
+import { assignOverlapColumns, normalizeToMinutes, timeToPixelOffset } from "./calendarLayout";
+import { CALENDAR_COLORS, MINUTES_PER_SLOT, SLOT_HEIGHT, TIME_GUTTER_WIDTH } from "./calendarTypes";
+import { NowLine } from "./NowLine";
+import { OverflowIndicator } from "./OverflowIndicator";
 import { useCalendarEvents } from "./useCalendarEvents";
 import { useNowLine } from "./useNowLine";
-import { NowLine } from "./NowLine";
-import { CalendarEventBlock } from "./CalendarEventBlock";
-import { OverflowIndicator } from "./OverflowIndicator";
 
 interface CalendarDayGridProps {
   dateStr: string;
@@ -61,13 +56,13 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
 
   // Fetch calendar events for this date
   useEffect(() => {
-    fetchCalendarEvents(dateStr + "T00:00:00", dateStr + "T23:59:59");
+    fetchCalendarEvents(`${dateStr}T00:00:00`, `${dateStr}T23:59:59`);
   }, [dateStr, fetchCalendarEvents]);
 
   // Listen for calendar-synced Tauri event
   useEffect(() => {
     const unlisten = listen("calendar-synced", () => {
-      fetchCalendarEvents(dateStr + "T00:00:00", dateStr + "T23:59:59");
+      fetchCalendarEvents(`${dateStr}T00:00:00`, `${dateStr}T23:59:59`);
     });
     return () => {
       unlisten.then((fn) => fn());
@@ -78,7 +73,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   useEffect(() => {
     hasScrolled.current = false;
     setExpandedRange(null);
-  }, [dateStr]);
+  }, []);
 
   // Compute grid range
   const gridStartMinutes = useMemo(() => {
@@ -91,16 +86,12 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
     return normalizeToMinutes(effectiveWorkHours.endTime);
   }, [effectiveWorkHours, expandedRange]);
 
-  const { nowPixelOffset, isVisible: nowIsVisible } =
-    useNowLine(gridStartMinutes);
+  const { nowPixelOffset, isVisible: nowIsVisible } = useNowLine(gridStartMinutes);
 
   const isToday = dateStr === format(new Date(), "yyyy-MM-dd");
 
   // Positioned events
-  const positionedEvents = useMemo(
-    () => assignOverlapColumns(events),
-    [events],
-  );
+  const positionedEvents = useMemo(() => assignOverlapColumns(events), [events]);
 
   // Build account color index map
   const accountColorMap = useMemo(() => {
@@ -163,9 +154,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   // Auto-scroll to now line on initial load for today
   useEffect(() => {
     if (isToday && nowIsVisible && !hasScrolled.current && scrollRef.current) {
-      const viewport = scrollRef.current.querySelector(
-        '[data-slot="scroll-area-viewport"]',
-      );
+      const viewport = scrollRef.current.querySelector('[data-slot="scroll-area-viewport"]');
       if (viewport) {
         const viewportHeight = viewport.clientHeight;
         viewport.scrollTo({
@@ -180,19 +169,14 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   if (calendarError) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-4 text-center">
-        <h3 className="text-base font-semibold">
-          Couldn't load your calendar
-        </h3>
+        <h3 className="text-base font-semibold">Couldn't load your calendar</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
-          Check your connection and try again, or reconnect your calendar
-          account in Settings.
+          Check your connection and try again, or reconnect your calendar account in Settings.
         </p>
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            fetchCalendarEvents(dateStr + "T00:00:00", dateStr + "T23:59:59")
-          }
+          onClick={() => fetchCalendarEvents(`${dateStr}T00:00:00`, `${dateStr}T23:59:59`)}
         >
           Try Again
         </Button>
@@ -215,12 +199,9 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
   if (events.length === 0 && allDayEvents.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-2 p-4 text-center">
-        <h3 className="text-base font-semibold">
-          {isToday ? "No events today" : "No events"}
-        </h3>
+        <h3 className="text-base font-semibold">{isToday ? "No events today" : "No events"}</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
-          Your calendar is clear. Connect a calendar account in Settings to see
-          your meetings here.
+          Your calendar is clear. Connect a calendar account in Settings to see your meetings here.
         </p>
       </div>
     );
@@ -233,9 +214,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
         <OverflowIndicator
           count={earlierCount}
           direction="earlier"
-          onClick={() =>
-            setExpandedRange({ start: 0, end: gridEndMinutes })
-          }
+          onClick={() => setExpandedRange({ start: 0, end: gridEndMinutes })}
         />
       )}
 
@@ -243,10 +222,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
       <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
         <div className="relative" style={{ height: gridHeight }}>
           {/* Time gutter */}
-          <div
-            className="absolute top-0 bottom-0"
-            style={{ width: TIME_GUTTER_WIDTH }}
-          >
+          <div className="absolute top-0 bottom-0" style={{ width: TIME_GUTTER_WIDTH }}>
             {hourLabels.map(({ hour, offset }) => (
               <div
                 key={hour}
@@ -276,27 +252,20 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
           ))}
 
           {/* Event area */}
-          <div
-            className="absolute top-0 bottom-0"
-            style={{ left: TIME_GUTTER_WIDTH, right: 0 }}
-          >
+          <div className="absolute top-0 bottom-0" style={{ left: TIME_GUTTER_WIDTH, right: 0 }}>
             {positionedEvents.map((pe) => (
               <CalendarEventBlock
                 key={pe.event.id}
                 event={pe}
                 gridStartMinutes={gridStartMinutes}
                 accountColorIndex={
-                  pe.event.accountId
-                    ? accountColorMap.get(pe.event.accountId) ?? 0
-                    : undefined
+                  pe.event.accountId ? (accountColorMap.get(pe.event.accountId) ?? 0) : undefined
                 }
               />
             ))}
 
             {/* Now line */}
-            {isToday && nowIsVisible && (
-              <NowLine pixelOffset={nowPixelOffset} />
-            )}
+            {isToday && nowIsVisible && <NowLine pixelOffset={nowPixelOffset} />}
           </div>
         </div>
       </ScrollArea>
@@ -306,9 +275,7 @@ export function CalendarDayGrid({ dateStr }: CalendarDayGridProps) {
         <OverflowIndicator
           count={laterCount}
           direction="later"
-          onClick={() =>
-            setExpandedRange({ start: gridStartMinutes, end: 24 * 60 })
-          }
+          onClick={() => setExpandedRange({ start: gridStartMinutes, end: 24 * 60 })}
         />
       )}
     </div>

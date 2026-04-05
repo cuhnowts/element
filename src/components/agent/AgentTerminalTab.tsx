@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect } from "react";
+import { homeDir } from "@tauri-apps/api/path";
+import { useEffect, useRef, useState } from "react";
 import { useTerminal } from "@/hooks/useTerminal";
 import { useAgentStore } from "@/stores/useAgentStore";
-import { homeDir } from "@tauri-apps/api/path";
 
 export function AgentTerminalTab() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -11,18 +11,15 @@ export function AgentTerminalTab() {
   const [cwd, setCwd] = useState<string | null>(null);
 
   useEffect(() => {
-    homeDir().then(setCwd).catch(() => setCwd("/tmp"));
+    homeDir()
+      .then(setCwd)
+      .catch(() => setCwd("/tmp"));
   }, []);
 
   const initialCommand =
     agentCommand != null ? { command: agentCommand, args: agentArgs ?? [] } : null;
 
-  const { isReady } = useTerminal(
-    containerRef,
-    cwd,
-    activeTab === "terminal",
-    initialCommand,
-  );
+  const { isReady } = useTerminal(containerRef, cwd, activeTab === "terminal", initialCommand);
 
   // Handle PTY exit through the onExit callback in useTerminal
   // The lifecycle hook manages restart logic via handleAgentExit

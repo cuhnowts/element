@@ -1,18 +1,13 @@
 import { Bot, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { api } from "@/lib/tauri";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
-import { useAgentStore } from "@/stores/useAgentStore";
-import { RefreshContextDialog } from "@/components/output/RefreshContextDialog";
 import { toast } from "sonner";
+import { RefreshContextDialog } from "@/components/output/RefreshContextDialog";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { api } from "@/lib/tauri";
+import { useAgentStore } from "@/stores/useAgentStore";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export interface AiButtonState {
   label: "Link Directory" | "Plan Project" | "Check Progress" | "Open AI";
@@ -28,7 +23,12 @@ export function getAiButtonState(project: {
   isExecuting: boolean;
 }): AiButtonState {
   if (!project.directoryPath) {
-    return { label: "Link Directory", disabled: true, tooltip: "Link a directory first", showSpinner: false };
+    return {
+      label: "Link Directory",
+      disabled: true,
+      tooltip: "Link a directory first",
+      showSpinner: false,
+    };
   }
   if (!project.planningTier && !project.hasContent) {
     return { label: "Plan Project", disabled: false, tooltip: undefined, showSpinner: false };
@@ -61,7 +61,9 @@ export function OpenAiButton({
 }: OpenAiButtonProps) {
   const [isLaunching, setIsLaunching] = useState(false);
   const [refreshDialogOpen, setRefreshDialogOpen] = useState(false);
-  const [pendingCommand, setPendingCommand] = useState<{ command: string; args: string[] } | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<{ command: string; args: string[] } | null>(
+    null,
+  );
   const openTerminal = useWorkspaceStore((s) => s.openTerminal);
 
   const buttonState = getAiButtonState({
@@ -157,9 +159,9 @@ export function OpenAiButton({
 
       // No existing AI session -- create one directly
       const sessionName = "AI Planning";
-      useTerminalSessionStore.getState().createSession(
-        projectId, sessionName, "ai", { command, args: fullArgs }
-      );
+      useTerminalSessionStore
+        .getState()
+        .createSession(projectId, sessionName, "ai", { command, args: fullArgs });
       openTerminal();
     } catch (e) {
       toast.error(`Failed to launch AI: ${e}`);
@@ -175,9 +177,7 @@ export function OpenAiButton({
       useTerminalSessionStore.getState().closeSession(projectId, existingAiSession.id);
     }
     const sessionName = "AI Planning";
-    useTerminalSessionStore.getState().createSession(
-      projectId, sessionName, "ai", pendingCommand
-    );
+    useTerminalSessionStore.getState().createSession(projectId, sessionName, "ai", pendingCommand);
     openTerminal();
     setPendingCommand(null);
     setRefreshDialogOpen(false);

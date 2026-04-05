@@ -23,20 +23,16 @@ export const useHubChatStore = create<HubChatState>()((set, get) => ({
       const maxMessages = MAX_TURNS * 2;
       return {
         messages:
-          updated.length > maxMessages
-            ? updated.slice(updated.length - maxMessages)
-            : updated,
+          updated.length > maxMessages ? updated.slice(updated.length - maxMessages) : updated,
         error: null,
         lastUserMessage: content,
       };
     });
   },
 
-  startStreaming: () =>
-    set({ isStreaming: true, streamingContent: "", error: null }),
+  startStreaming: () => set({ isStreaming: true, streamingContent: "", error: null }),
 
-  appendChunk: (chunk: string) =>
-    set((s) => ({ streamingContent: s.streamingContent + chunk })),
+  appendChunk: (chunk: string) => set((s) => ({ streamingContent: s.streamingContent + chunk })),
 
   finalizeAssistantMessage: () => {
     const { streamingContent, messages } = get();
@@ -54,9 +50,7 @@ export const useHubChatStore = create<HubChatState>()((set, get) => ({
     const maxMessages = MAX_TURNS * 2;
     set({
       messages:
-        updated.length > maxMessages
-          ? updated.slice(updated.length - maxMessages)
-          : updated,
+        updated.length > maxMessages ? updated.slice(updated.length - maxMessages) : updated,
       isStreaming: false,
       streamingContent: "",
     });

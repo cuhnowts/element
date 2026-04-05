@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { format } from "date-fns";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Calendar today detection", () => {
   beforeEach(() => {

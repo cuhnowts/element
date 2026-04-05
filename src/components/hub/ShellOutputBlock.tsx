@@ -1,10 +1,6 @@
-import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +32,7 @@ export function ShellOutputBlock({
 
   // Truncate long output
   const truncated = lineCount > MAX_VISIBLE_LINES;
-  const visibleOutput = truncated
-    ? outputLines.slice(0, MAX_VISIBLE_LINES).join("\n")
-    : stdout;
+  const visibleOutput = truncated ? outputLines.slice(0, MAX_VISIBLE_LINES).join("\n") : stdout;
 
   // Build combined output text
   let displayText = visibleOutput;
@@ -46,8 +40,7 @@ export function ShellOutputBlock({
     displayText += `\n... ${lineCount - MAX_VISIBLE_LINES} more lines`;
   }
   if (timedOut) {
-    const timeoutMsg =
-      "Command timed out after 30s. Output so far is shown below.";
+    const timeoutMsg = "Command timed out after 30s. Output so far is shown below.";
     displayText = stderr
       ? `${timeoutMsg}\n\n${stderr}\n\n${displayText}`
       : `${timeoutMsg}\n\n${displayText}`;
@@ -59,7 +52,7 @@ export function ShellOutputBlock({
     <div
       className={cn(
         "rounded-[--radius] border bg-secondary",
-        isError ? "border-destructive" : "border-border"
+        isError ? "border-destructive" : "border-border",
       )}
       aria-label={`Shell output for ${command}`}
     >
@@ -70,11 +63,7 @@ export function ShellOutputBlock({
             <RunningIndicator />
           ) : (
             <span className="text-muted-foreground">
-              {open ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
+              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </span>
           )}
         </CollapsibleTrigger>
@@ -96,9 +85,5 @@ export function ShellOutputBlock({
 }
 
 function RunningIndicator() {
-  return (
-    <span className="text-sm text-muted-foreground animate-pulse">
-      Running...
-    </span>
-  );
+  return <span className="text-sm text-muted-foreground animate-pulse">Running...</span>;
 }

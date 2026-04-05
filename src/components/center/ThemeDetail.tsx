@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useStore } from "@/stores";
 import { THEME_COLORS } from "@/lib/types";
+import { useStore } from "@/stores";
 
 export function ThemeDetail() {
   const selectedThemeId = useStore((s) => s.selectedThemeId);
@@ -19,7 +19,7 @@ export function ThemeDetail() {
       setName(theme.name);
       setColor(theme.color);
     }
-  }, [theme?.id, theme?.name, theme?.color]);
+  }, [theme?.id, theme?.name, theme?.color, theme]);
 
   if (!theme) return null;
 
@@ -43,15 +43,14 @@ export function ThemeDetail() {
           Theme
         </span>
         <div className="flex items-center gap-3">
-          <span
-            className="w-4 h-4 rounded-full flex-shrink-0"
-            style={{ backgroundColor: color }}
-          />
+          <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleNameBlur}
-            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
             className="text-2xl font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent"
             placeholder="Theme name"
           />

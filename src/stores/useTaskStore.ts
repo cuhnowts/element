@@ -1,7 +1,12 @@
 import { create } from "zustand";
-import type { Task, TaskDetail } from "@/types/task";
+import {
+  getExecutionHistory,
+  getExecutionLogs,
+  getTaskDetail,
+  getTodaysTasks,
+} from "@/lib/tauri-commands";
 import type { ExecutionRecord, LogEntry } from "@/types/execution";
-import { getTodaysTasks, getTaskDetail, getExecutionHistory, getExecutionLogs } from "@/lib/tauri-commands";
+import type { Task, TaskDetail } from "@/types/task";
 
 interface TaskState {
   todaysTasks: Task[];

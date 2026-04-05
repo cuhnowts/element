@@ -1,24 +1,24 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { useStore } from "@/stores";
+import { Textarea } from "@/components/ui/textarea";
+import { useAiStream } from "@/hooks/useAiStream";
 import { api } from "@/lib/tauri";
-import type { TaskStatus, TaskPriority } from "@/lib/types";
+import type { TaskPriority, TaskStatus } from "@/lib/types";
+import { useStore } from "@/stores";
 import { AiAssistButton } from "./AiAssistButton";
 import { AiSuggestionPanel } from "./AiSuggestionPanel";
 import { CliInvokePanel } from "./CliInvokePanel";
-import { useAiStream } from "@/hooks/useAiStream";
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "pending", label: "Pending" },
@@ -60,7 +60,13 @@ export function TaskDetail() {
       setDescription(selectedTask.description);
       setContext(selectedTask.context);
     }
-  }, [selectedTask?.id, selectedTask?.title, selectedTask?.description, selectedTask?.context]);
+  }, [
+    selectedTask?.id,
+    selectedTask?.title,
+    selectedTask?.description,
+    selectedTask?.context,
+    selectedTask,
+  ]);
 
   const handleTitleBlur = useCallback(async () => {
     if (!selectedTask || title === selectedTask.title) return;
@@ -165,10 +171,8 @@ export function TaskDetail() {
     if (!selectedTask || Object.keys(acceptedFields).length === 0) return;
 
     const update: Record<string, unknown> = {};
-    if (acceptedFields.description !== undefined)
-      update.description = acceptedFields.description;
-    if (acceptedFields.priority !== undefined)
-      update.priority = acceptedFields.priority;
+    if (acceptedFields.description !== undefined) update.description = acceptedFields.description;
+    if (acceptedFields.priority !== undefined) update.priority = acceptedFields.priority;
     if (acceptedFields.estimatedMinutes !== undefined)
       update.durationMinutes = acceptedFields.estimatedMinutes;
 

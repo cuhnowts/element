@@ -9,12 +9,7 @@ interface RetryButtonProps {
   onRetry: () => void;
 }
 
-export function RetryButton({
-  workflowId,
-  runId,
-  stepIndex,
-  onRetry,
-}: RetryButtonProps) {
+export function RetryButton({ workflowId, runId, stepIndex, onRetry }: RetryButtonProps) {
   const retryStep = useWorkflowStore((s) => s.retryStep);
 
   const handleRetry = async () => {
@@ -23,12 +18,7 @@ export function RetryButton({
   };
 
   return (
-    <Button
-      variant="destructive"
-      size="sm"
-      onClick={handleRetry}
-      aria-label="Retry step"
-    >
+    <Button variant="destructive" size="sm" onClick={handleRetry} aria-label="Retry step">
       <RotateCcw className="h-3 w-3 mr-1" />
       Retry Step
     </Button>

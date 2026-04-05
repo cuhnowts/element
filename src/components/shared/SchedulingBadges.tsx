@@ -1,7 +1,7 @@
-import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, Timer } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { isDueSoon, isOverdue } from "@/lib/date-utils";
 import { RecurrenceIndicator } from "./RecurrenceIndicator";
-import { isOverdue, isDueSoon } from "@/lib/date-utils";
 
 interface SchedulingBadgesProps {
   dueDate: string | null;
@@ -13,14 +13,17 @@ interface SchedulingBadgesProps {
 }
 
 function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
+  const date = new Date(`${dateStr}T00:00:00`);
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
   }).format(date);
 }
 
-function getUrgencyVariant(dueDate: string, isBacklog: boolean): "destructive" | "warning" | "outline" {
+function getUrgencyVariant(
+  dueDate: string,
+  isBacklog: boolean,
+): "destructive" | "warning" | "outline" {
   if (isBacklog) return "outline";
   if (isOverdue(dueDate)) return "destructive";
   if (isDueSoon(dueDate)) return "warning";
@@ -33,7 +36,7 @@ function getDueDateLabel(dueDate: string, isBacklog: boolean): string {
   if (isDueSoon(dueDate)) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate + "T00:00:00");
+    const due = new Date(`${dueDate}T00:00:00`);
     const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000);
     if (diffDays === 0) return "Due today";
     if (diffDays === 1) return "Due tomorrow";
@@ -42,17 +45,12 @@ function getDueDateLabel(dueDate: string, isBacklog: boolean): string {
   return formatDate(dueDate);
 }
 
-function formatScheduled(
-  scheduledDate: string | null,
-  scheduledTime: string | null,
-): string {
+function formatScheduled(scheduledDate: string | null, scheduledTime: string | null): string {
   const parts: string[] = [];
 
   if (scheduledDate) {
-    const date = new Date(scheduledDate + "T00:00:00");
-    parts.push(
-      new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date),
-    );
+    const date = new Date(`${scheduledDate}T00:00:00`);
+    parts.push(new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date));
   }
 
   if (scheduledTime) {

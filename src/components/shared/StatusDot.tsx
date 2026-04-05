@@ -1,5 +1,5 @@
-import type { TaskStatus } from "@/types/task";
 import type { StepStatus } from "@/types/execution";
+import type { TaskStatus } from "@/types/task";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-muted-foreground",

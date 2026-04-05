@@ -17,8 +17,7 @@ export function DurationChips({ value, onChange }: DurationChipsProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
 
-  const isCustomActive =
-    value !== null && !PRESETS.some((p) => p.value === value);
+  const isCustomActive = value !== null && !PRESETS.some((p) => p.value === value);
 
   const handlePresetClick = (preset: number) => {
     if (value === preset) {
@@ -40,7 +39,7 @@ export function DurationChips({ value, onChange }: DurationChipsProps) {
 
   const handleCustomSubmit = () => {
     const parsed = parseInt(customValue, 10);
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= 480) {
+    if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 480) {
       onChange(parsed);
     }
     setShowCustomInput(false);
@@ -87,7 +86,6 @@ export function DurationChips({ value, onChange }: DurationChipsProps) {
           }}
           onBlur={handleCustomSubmit}
           className="h-8 w-16 rounded-md border border-border bg-secondary px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          autoFocus
         />
       )}
     </div>

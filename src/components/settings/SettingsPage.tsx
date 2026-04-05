@@ -1,14 +1,14 @@
-import { useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
-import { SettingsNav } from "./SettingsNav";
-import { PluginList } from "./PluginList";
-import { CredentialVault } from "./CredentialVault";
-import { CalendarAccounts } from "./CalendarAccounts";
-import { ScheduleSettings } from "./ScheduleSettings";
 import { AiSettings } from "./AiSettings";
+import { CalendarAccounts } from "./CalendarAccounts";
+import { CredentialVault } from "./CredentialVault";
 import { HeartbeatSettings } from "./HeartbeatSettings";
+import { PluginList } from "./PluginList";
+import { ScheduleSettings } from "./ScheduleSettings";
+import { SettingsNav } from "./SettingsNav";
 
 const tabHeadings: Record<string, string> = {
   plugins: "Plugins",
@@ -74,18 +74,11 @@ export function SettingsPage() {
     <div className="flex h-full">
       <SettingsNav activeTab={settingsTab} onTabChange={handleTabChange} />
       <div className="flex-1 overflow-auto p-8">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-6"
-          onClick={closeSettings}
-        >
+        <Button variant="ghost" size="sm" className="mb-6" onClick={closeSettings}>
           <ArrowLeft className="size-4" data-icon="inline-start" />
           Back to Tasks
         </Button>
-        <h1 className="mb-6 text-lg font-semibold">
-          {tabHeadings[settingsTab]}
-        </h1>
+        <h1 className="mb-6 text-lg font-semibold">{tabHeadings[settingsTab]}</h1>
         {renderContent()}
       </div>
     </div>

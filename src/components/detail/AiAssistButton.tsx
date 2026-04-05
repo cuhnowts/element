@@ -24,9 +24,7 @@ export function AiAssistButton({ taskId }: AiAssistButtonProps) {
       onClick={() => requestAiAssist(taskId)}
       disabled={isGenerating}
     >
-      <Sparkles
-        className={`size-4 ${isGenerating ? "animate-spin" : ""}`}
-      />
+      <Sparkles className={`size-4 ${isGenerating ? "animate-spin" : ""}`} />
     </Button>
   );
 }

@@ -1,22 +1,22 @@
-import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { getToolDefinitions } from "@/lib/actionRegistry";
+import { Bot, Send, Square, User } from "lucide-react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  useActionDispatch,
-  type PendingAction,
   type DispatchResult,
+  type PendingAction,
+  useActionDispatch,
 } from "@/hooks/useActionDispatch";
+import { useHubChatStream } from "@/hooks/useHubChatStream";
+import { getToolDefinitions } from "@/lib/actionRegistry";
+import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
+import { useHubChatStore } from "@/stores/useHubChatStore";
 import { ActionConfirmCard } from "./ActionConfirmCard";
 import { ActionResultCard } from "./ActionResultCard";
 import { ScheduleChangeCard } from "./ScheduleChangeCard";
-import { useHubChatStore } from "@/stores/useHubChatStore";
-import { useHubChatStream } from "@/hooks/useHubChatStream";
-import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, Square, Bot, User } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 /** Parse a SCHEDULE_CHANGE JSON block from bot response */
 interface ScheduleChangeProposal {
@@ -180,7 +180,6 @@ When the user says they lost time (e.g., "I lost 2 hours", "meeting ran over"), 
 - reschedule_day: Regenerate today's schedule with adjusted parameters. Input: {"reason":"brief description of change"}. Returns an updated task list for the day.`;
 }
 
-
 export function HubChat() {
   useHubChatStream();
 
@@ -195,9 +194,7 @@ export function HubChat() {
   const [manifest, setManifest] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [actionResults, setActionResults] = useState<ActionResult[]>([]);
-  const [confirmResolved, setConfirmResolved] = useState<
-    "approved" | "rejected" | null
-  >(null);
+  const [confirmResolved, setConfirmResolved] = useState<"approved" | "rejected" | null>(null);
   const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeProposal[]>([]);
 
   // Fetch manifest on mount for system prompt context
@@ -207,8 +204,7 @@ export function HubChat() {
       .catch(() => setManifest(""));
   }, []);
 
-  const { dispatch, checkDestructive, createPendingAction } =
-    useActionDispatch();
+  const { dispatch, checkDestructive, createPendingAction } = useActionDispatch();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dispatchedActionsRef = useRef<Set<string>>(new Set());
@@ -219,7 +215,7 @@ export function HubChat() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, streamingContent, actionResults, pendingAction, scheduleChanges]);
+  }, []);
 
   // Detect SCHEDULE_CHANGE blocks in finalized assistant messages
   useEffect(() => {
@@ -287,14 +283,10 @@ export function HubChat() {
       useHubChatStore.setState({ appendChunk: originalAppendChunk });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleToolUse, originalAppendChunk]);
 
   const handleToolUse = useCallback(
-    async (toolUse: {
-      id: string;
-      name: string;
-      input: Record<string, unknown>;
-    }) => {
+    async (toolUse: { id: string; name: string; input: Record<string, unknown> }) => {
       // Dedup: prevent same action from dispatching multiple times
       const dedupeKey = `${toolUse.name}:${JSON.stringify(toolUse.input)}`;
       if (dispatchedActionsRef.current.has(dedupeKey)) return;
@@ -302,11 +294,7 @@ export function HubChat() {
 
       if (checkDestructive(toolUse.name)) {
         // Destructive: show confirmation card
-        const pending = createPendingAction(
-          toolUse.id,
-          toolUse.name,
-          toolUse.input,
-        );
+        const pending = createPendingAction(toolUse.id, toolUse.name, toolUse.input);
         setPendingAction(pending);
         setConfirmResolved(null);
       } else {
@@ -329,13 +317,10 @@ export function HubChat() {
         }
       }
     },
-    [checkDestructive, createPendingAction, dispatch],
+    [checkDestructive, createPendingAction, dispatch, sendToolResult],
   );
 
-  const sendToolResult = async (
-    _toolUseId: string,
-    result: DispatchResult,
-  ) => {
+  const sendToolResult = async (_toolUseId: string, result: DispatchResult) => {
     const allMessages = useHubChatStore.getState().messages;
     const chatMessages = allMessages.map((m) => ({
       role: m.role,
@@ -347,15 +332,18 @@ export function HubChat() {
     if (result.success && Array.isArray(result.data)) {
       const items = result.data as Record<string, unknown>[];
       if (items.length === 0) {
-        resultContent = "No results found.\n\nProceed with the next step. Output an ACTION block if needed.";
+        resultContent =
+          "No results found.\n\nProceed with the next step. Output an ACTION block if needed.";
       } else {
         // Format each item showing all its fields
-        const formatted = items.map((item) => {
-          const parts = Object.entries(item)
-            .filter(([, v]) => v != null && v !== "")
-            .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
-          return `- ${parts.join(", ")}`;
-        }).join("\n");
+        const formatted = items
+          .map((item) => {
+            const parts = Object.entries(item)
+              .filter(([, v]) => v != null && v !== "")
+              .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+            return `- ${parts.join(", ")}`;
+          })
+          .join("\n");
         resultContent = `Results:\n${formatted}\n\nUse the data above for your next action. Output an ACTION block.`;
       }
     } else if (result.success) {
@@ -381,10 +369,7 @@ export function HubChat() {
     if (!pendingAction) return;
     setConfirmResolved("approved");
 
-    const result = await dispatch(
-      pendingAction.actionName,
-      pendingAction.input,
-    );
+    const result = await dispatch(pendingAction.actionName, pendingAction.input);
     const actionResult: ActionResult = {
       id: pendingAction.toolUseId,
       success: result.success,
@@ -398,7 +383,7 @@ export function HubChat() {
     await sendToolResult(pendingAction.toolUseId, result);
     setPendingAction(null);
     setConfirmResolved(null);
-  }, [pendingAction, dispatch]);
+  }, [pendingAction, dispatch, sendToolResult]);
 
   const handleReject = useCallback(async () => {
     if (!pendingAction) return;
@@ -412,7 +397,7 @@ export function HubChat() {
 
     setPendingAction(null);
     setConfirmResolved(null);
-  }, [pendingAction]);
+  }, [pendingAction, sendToolResult]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -505,11 +490,7 @@ export function HubChat() {
 
           {/* Action results */}
           {actionResults.map((ar) => (
-            <ActionResultCard
-              key={ar.id}
-              success={ar.success}
-              message={ar.message}
-            />
+            <ActionResultCard key={ar.id} success={ar.success} message={ar.message} />
           ))}
 
           {/* Schedule change proposals */}

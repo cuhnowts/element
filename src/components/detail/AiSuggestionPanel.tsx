@@ -1,6 +1,6 @@
 import { Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/stores";
 import type { TaskScaffold } from "@/types/ai";
@@ -100,8 +100,8 @@ export function AiSuggestionPanel() {
     return (
       <div className="rounded-lg bg-destructive/10 p-4">
         <p className="mb-2 text-sm text-destructive">
-          AI couldn't generate suggestions. Check your provider connection in
-          Settings and try again.
+          AI couldn't generate suggestions. Check your provider connection in Settings and try
+          again.
         </p>
         <Button
           variant="outline"
@@ -132,9 +132,9 @@ export function AiSuggestionPanel() {
     return null;
   }
 
-  const fields = (
-    Object.keys(FIELD_LABELS) as (keyof TaskScaffold)[]
-  ).filter((field) => pendingSuggestions[field] !== undefined);
+  const fields = (Object.keys(FIELD_LABELS) as (keyof TaskScaffold)[]).filter(
+    (field) => pendingSuggestions[field] !== undefined,
+  );
 
   if (fields.length === 0) return null;
 

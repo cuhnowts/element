@@ -1,6 +1,7 @@
-import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { oneDark } from "@codemirror/theme-one-dark";
+import CodeMirror from "@uiw/react-codemirror";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Plus } from "lucide-react";
 
 interface HttpStepFormProps {
   method: string;
@@ -23,13 +23,7 @@ interface HttpStepFormProps {
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 const BODY_METHODS = ["POST", "PUT", "PATCH"];
 
-export function HttpStepForm({
-  method,
-  url,
-  headers,
-  body,
-  onChange,
-}: HttpStepFormProps) {
+export function HttpStepForm({ method, url, headers, body, onChange }: HttpStepFormProps) {
   const showBody = BODY_METHODS.includes(method);
 
   const handleAddHeader = () => {
@@ -41,17 +35,10 @@ export function HttpStepForm({
     onChange("headers", updated);
   };
 
-  const handleHeaderChange = (
-    index: number,
-    position: 0 | 1,
-    value: string,
-  ) => {
+  const handleHeaderChange = (index: number, position: 0 | 1, value: string) => {
     const updated = headers.map((h, i) =>
       i === index
-        ? ([
-            position === 0 ? value : h[0],
-            position === 1 ? value : h[1],
-          ] as [string, string])
+        ? ([position === 0 ? value : h[0], position === 1 ? value : h[1]] as [string, string])
         : h,
     );
     onChange("headers", updated);
@@ -61,10 +48,7 @@ export function HttpStepForm({
     <div className="space-y-4">
       {/* Method and URL */}
       <div className="flex gap-2">
-        <Select
-          value={method}
-          onValueChange={(val) => onChange("method", val)}
-        >
+        <Select value={method} onValueChange={(val) => onChange("method", val)}>
           <SelectTrigger className="w-28">
             <SelectValue />
           </SelectTrigger>

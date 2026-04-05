@@ -15,7 +15,7 @@ function formatTime(time: string): string {
 function durationMinutes(start: string, end: string): number {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
-  return (eh * 60 + em) - (sh * 60 + sm);
+  return eh * 60 + em - (sh * 60 + sm);
 }
 
 interface ScheduleBlockOverlayProps {
@@ -25,18 +25,12 @@ interface ScheduleBlockOverlayProps {
 export function ScheduleBlockOverlay({ block }: ScheduleBlockOverlayProps) {
   const minutes = durationMinutes(block.startTime, block.endTime);
   // 2px per minute, min 20px; buffer blocks min 4px
-  const height = block.blockType === "buffer"
-    ? Math.max(4, minutes * 2)
-    : Math.max(20, minutes * 2);
+  const height =
+    block.blockType === "buffer" ? Math.max(4, minutes * 2) : Math.max(20, minutes * 2);
 
   // Buffer blocks: thin muted separator
   if (block.blockType === "buffer") {
-    return (
-      <div
-        className="w-full rounded-sm bg-muted"
-        style={{ height: `${height}px` }}
-      />
-    );
+    return <div className="w-full rounded-sm bg-muted" style={{ height: `${height}px` }} />;
   }
 
   // Meeting blocks
@@ -50,12 +44,8 @@ export function ScheduleBlockOverlay({ block }: ScheduleBlockOverlayProps) {
           borderLeft: "3px solid oklch(0.6 0.118 184.714)",
         }}
       >
-        <span className="text-xs font-semibold text-foreground">
-          {formatTime(block.startTime)}
-        </span>
-        <span className="truncate text-sm text-foreground">
-          {block.eventTitle}
-        </span>
+        <span className="text-xs font-semibold text-foreground">{formatTime(block.startTime)}</span>
+        <span className="truncate text-sm text-foreground">{block.eventTitle}</span>
       </div>
     );
   }
@@ -82,14 +72,13 @@ export function ScheduleBlockOverlay({ block }: ScheduleBlockOverlayProps) {
           <span className="text-[10px]">(continued)</span>
         </div>
       )}
-      <span className="text-xs font-semibold text-foreground">
-        {formatTime(block.startTime)}
-      </span>
-      <span className="flex-1 truncate text-sm text-foreground">
-        {block.taskTitle}
-      </span>
+      <span className="text-xs font-semibold text-foreground">{formatTime(block.startTime)}</span>
+      <span className="flex-1 truncate text-sm text-foreground">{block.taskTitle}</span>
       {block.taskPriority && (
-        <Badge variant={PRIORITY_VARIANTS[block.taskPriority] ?? "outline"} className="ml-auto text-[10px]">
+        <Badge
+          variant={PRIORITY_VARIANTS[block.taskPriority] ?? "outline"}
+          className="ml-auto text-[10px]"
+        >
           {block.taskPriority}
         </Badge>
       )}

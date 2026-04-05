@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useBriefingStore } from "@/stores/useBriefingStore";
-import { useBriefingStream } from "@/hooks/useBriefingStream";
-import { BriefingGreeting } from "@/components/hub/BriefingGreeting";
-import { BriefingSkeleton } from "@/components/hub/BriefingSkeleton";
+import { useEffect, useState } from "react";
 import { BriefingContent } from "@/components/hub/BriefingContent";
+import { BriefingGreeting } from "@/components/hub/BriefingGreeting";
 import { BriefingRefreshButton } from "@/components/hub/BriefingRefreshButton";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { BriefingSkeleton } from "@/components/hub/BriefingSkeleton";
 import type { ScheduleBlock } from "@/components/hub/DailyPlanSection";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useBriefingStream } from "@/hooks/useBriefingStream";
+import { useBriefingStore } from "@/stores/useBriefingStore";
 
 function formatRelativeTime(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 60000);
@@ -49,7 +49,7 @@ export function BriefingPanel() {
       invoke("build_context_manifest").then(() => invoke("generate_briefing"));
       fetchSchedule();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchSchedule, lastRefreshedAt, requestBriefing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefresh = async () => {
     requestBriefing();
@@ -58,17 +58,15 @@ export function BriefingPanel() {
     fetchSchedule();
   };
 
-  const isActive =
-    briefingStatus === "loading" || briefingStatus === "streaming";
+  const isActive = briefingStatus === "loading" || briefingStatus === "streaming";
 
   let bodyContent: React.ReactNode;
   if (briefingStatus === "idle" || briefingStatus === "loading") {
     bodyContent = <BriefingSkeleton />;
-  } else if (
-    briefingStatus === "streaming" ||
-    briefingStatus === "complete"
-  ) {
-    bodyContent = <BriefingContent scheduleBlocks={scheduleBlocks} scheduleLoading={scheduleLoading} />;
+  } else if (briefingStatus === "streaming" || briefingStatus === "complete") {
+    bodyContent = (
+      <BriefingContent scheduleBlocks={scheduleBlocks} scheduleLoading={scheduleLoading} />
+    );
   } else {
     bodyContent = (
       <p className="text-sm text-muted-foreground">
@@ -79,10 +77,7 @@ export function BriefingPanel() {
   }
 
   return (
-    <div
-      className="h-full flex flex-col"
-      style={{ padding: "48px 24px 24px" }}
-    >
+    <div className="h-full flex flex-col" style={{ padding: "48px 24px 24px" }}>
       <BriefingGreeting />
       <div className="mt-8 flex-1 min-h-0 flex flex-col">
         <Card className="flex-1 min-h-0 flex flex-col">

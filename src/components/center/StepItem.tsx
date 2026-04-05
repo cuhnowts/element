@@ -1,8 +1,8 @@
-import type { Step } from "@/types/execution";
-import { StatusDot } from "@/components/shared/StatusDot";
+import { Check, Loader2, X } from "lucide-react";
 import { AgentChip } from "@/components/shared/AgentChip";
+import { StatusDot } from "@/components/shared/StatusDot";
+import type { Step } from "@/types/execution";
 import { RetryButton } from "./RetryButton";
-import { Loader2, Check, X } from "lucide-react";
 
 const STEP_BORDER_STYLES: Record<string, string> = {
   pending: "border-muted-foreground",
@@ -68,14 +68,10 @@ export function StepItem({
           <StatusDot status={step.status} />
           <span className="font-semibold">{step.name}</span>
           {step.duration && (
-            <span className="text-muted-foreground text-sm">
-              ({step.duration})
-            </span>
+            <span className="text-muted-foreground text-sm">({step.duration})</span>
           )}
         </div>
-        {(step.agents?.length ||
-          step.skills?.length ||
-          step.tools?.length) ? (
+        {step.agents?.length || step.skills?.length || step.tools?.length ? (
           <div className="flex gap-1 mt-1">
             {step.agents?.map((a) => (
               <AgentChip key={a} label={a} type="agent" />

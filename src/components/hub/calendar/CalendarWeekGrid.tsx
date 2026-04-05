@@ -1,20 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { parseISO, addDays, format } from "date-fns";
-import { useStore } from "@/stores";
+import { addDays, format, parseISO } from "date-fns";
+import { useEffect, useMemo, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { normalizeToMinutes, timeToPixelOffset, assignOverlapColumns } from "./calendarLayout";
-import {
-  SLOT_HEIGHT,
-  MINUTES_PER_SLOT,
-  TIME_GUTTER_WIDTH,
-  CALENDAR_COLORS,
-} from "./calendarTypes";
-import { useNowLine } from "./useNowLine";
-import { NowLine } from "./NowLine";
+import { useStore } from "@/stores";
 import { CalendarEventBlock } from "./CalendarEventBlock";
+import { assignOverlapColumns, normalizeToMinutes, timeToPixelOffset } from "./calendarLayout";
+import { CALENDAR_COLORS, MINUTES_PER_SLOT, SLOT_HEIGHT, TIME_GUTTER_WIDTH } from "./calendarTypes";
+import { NowLine } from "./NowLine";
+import { useNowLine } from "./useNowLine";
 
 const DEFAULT_WORK_DAYS = ["mon", "tue", "wed", "thu", "fri"];
 
@@ -64,25 +59,15 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
 
   // Fetch calendar events for the full week (Monday to Sunday)
   useEffect(() => {
-    const endDate = addDays(parseISO(weekStartDate), 6)
-      .toISOString()
-      .split("T")[0];
-    fetchCalendarEvents(
-      weekStartDate + "T00:00:00",
-      endDate + "T23:59:59",
-    );
+    const endDate = addDays(parseISO(weekStartDate), 6).toISOString().split("T")[0];
+    fetchCalendarEvents(`${weekStartDate}T00:00:00`, `${endDate}T23:59:59`);
   }, [weekStartDate, fetchCalendarEvents]);
 
   // Listen for calendar-synced Tauri event
   useEffect(() => {
     const unlisten = listen("calendar-synced", () => {
-      const endDate = addDays(parseISO(weekStartDate), 6)
-        .toISOString()
-        .split("T")[0];
-      fetchCalendarEvents(
-        weekStartDate + "T00:00:00",
-        endDate + "T23:59:59",
-      );
+      const endDate = addDays(parseISO(weekStartDate), 6).toISOString().split("T")[0];
+      fetchCalendarEvents(`${weekStartDate}T00:00:00`, `${endDate}T23:59:59`);
     });
     return () => {
       unlisten.then((fn) => fn());
@@ -92,7 +77,7 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
   // Reset scroll tracking when week changes
   useEffect(() => {
     hasScrolled.current = false;
-  }, [weekStartDate]);
+  }, []);
 
   // Compute visible day columns from workHours.workDays
   const visibleDays = useMemo(() => {
@@ -114,8 +99,7 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
     return normalizeToMinutes(workHours.endTime);
   }, [workHours]);
 
-  const { nowPixelOffset, isVisible: nowIsVisible } =
-    useNowLine(gridStartMinutes);
+  const { nowPixelOffset, isVisible: nowIsVisible } = useNowLine(gridStartMinutes);
 
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
@@ -221,9 +205,7 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
   // Auto-scroll to now line on initial load
   useEffect(() => {
     if (nowIsVisible && !hasScrolled.current && scrollRef.current) {
-      const viewport = scrollRef.current.querySelector(
-        '[data-slot="scroll-area-viewport"]',
-      );
+      const viewport = scrollRef.current.querySelector('[data-slot="scroll-area-viewport"]');
       if (viewport) {
         const viewportHeight = viewport.clientHeight;
         viewport.scrollTo({
@@ -249,24 +231,16 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
   if (calendarError) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 p-4 text-center">
-        <h3 className="text-base font-semibold">
-          Couldn't load your calendar
-        </h3>
+        <h3 className="text-base font-semibold">Couldn't load your calendar</h3>
         <p className="text-sm text-muted-foreground max-w-xs">
-          Check your connection and try again, or reconnect your calendar
-          account in Settings.
+          Check your connection and try again, or reconnect your calendar account in Settings.
         </p>
         <Button
           variant="outline"
           size="sm"
           onClick={() => {
-            const endDate = addDays(parseISO(weekStartDate), 6)
-              .toISOString()
-              .split("T")[0];
-            fetchCalendarEvents(
-              weekStartDate + "T00:00:00",
-              endDate + "T23:59:59",
-            );
+            const endDate = addDays(parseISO(weekStartDate), 6).toISOString().split("T")[0];
+            fetchCalendarEvents(`${weekStartDate}T00:00:00`, `${endDate}T23:59:59`);
           }}
         >
           Try Again
@@ -320,20 +294,12 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
               >
                 {/* Column header */}
                 <div className="flex items-center justify-center gap-1 py-1 border-b text-xs shrink-0">
-                  <span className="text-muted-foreground">
-                    {format(day, "EEE")}
-                  </span>
+                  <span className="text-muted-foreground">{format(day, "EEE")}</span>
                   <span
                     className={`size-6 flex items-center justify-center rounded-full font-semibold ${
-                      isToday
-                        ? "text-primary-foreground"
-                        : "text-foreground"
+                      isToday ? "text-primary-foreground" : "text-foreground"
                     }`}
-                    style={
-                      isToday
-                        ? { backgroundColor: "oklch(0.585 0.156 272)" }
-                        : undefined
-                    }
+                    style={isToday ? { backgroundColor: "oklch(0.585 0.156 272)" } : undefined}
                   >
                     {format(day, "d")}
                   </span>
@@ -368,16 +334,14 @@ export function CalendarWeekGrid({ weekStartDate }: CalendarWeekGridProps) {
                       gridStartMinutes={gridStartMinutes}
                       accountColorIndex={
                         pe.event.accountId
-                          ? accountColorMap.get(pe.event.accountId) ?? 0
+                          ? (accountColorMap.get(pe.event.accountId) ?? 0)
                           : undefined
                       }
                     />
                   ))}
 
                   {/* Now line - only in today's column */}
-                  {isToday && nowIsVisible && (
-                    <NowLine pixelOffset={nowPixelOffset} />
-                  )}
+                  {isToday && nowIsVisible && <NowLine pixelOffset={nowPixelOffset} />}
                 </div>
               </div>
             );

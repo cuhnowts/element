@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Terminal, Loader2 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Loader2, Terminal } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { useStore } from "@/stores";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/tauri";
-import type { CliOutput, CliComplete } from "@/types/cli";
+import { useStore } from "@/stores";
+import type { CliComplete, CliOutput } from "@/types/cli";
 
 interface CliInvokePanelProps {
   taskId: string;
@@ -32,15 +32,12 @@ export function CliInvokePanel({ taskId: _taskId }: CliInvokePanelProps) {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [output]);
+  }, []);
 
   // Listen for CLI events
   useEffect(() => {
     const unlistenOutput = listen<CliOutput>("cli-output", (event) => {
-      setOutput((prev) => [
-        ...prev,
-        { stream: event.payload.stream, line: event.payload.line },
-      ]);
+      setOutput((prev) => [...prev, { stream: event.payload.stream, line: event.payload.line }]);
     });
 
     const unlistenComplete = listen<CliComplete>("cli-complete", (event) => {
@@ -69,10 +66,7 @@ export function CliInvokePanel({ taskId: _taskId }: CliInvokePanelProps) {
     try {
       await api.runCliTool(command.trim(), args);
     } catch (err) {
-      setOutput((prev) => [
-        ...prev,
-        { stream: "stderr", line: `Error: ${err}` },
-      ]);
+      setOutput((prev) => [...prev, { stream: "stderr", line: `Error: ${err}` }]);
       setIsRunning(false);
     }
   }, [command, argsInput, isRunning]);
@@ -136,12 +130,7 @@ export function CliInvokePanel({ taskId: _taskId }: CliInvokePanelProps) {
                 "Run"
               )}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              disabled={output.length === 0}
-            >
+            <Button variant="ghost" size="sm" onClick={handleClear} disabled={output.length === 0}>
               Clear
             </Button>
           </div>
@@ -153,12 +142,7 @@ export function CliInvokePanel({ taskId: _taskId }: CliInvokePanelProps) {
                 className="font-mono text-xs bg-muted p-3 rounded-md max-h-[300px] overflow-y-auto whitespace-pre-wrap break-all"
               >
                 {output.map((line, i) => (
-                  <div
-                    key={i}
-                    className={
-                      line.stream === "stderr" ? "text-destructive" : ""
-                    }
-                  >
+                  <div key={i} className={line.stream === "stderr" ? "text-destructive" : ""}>
                     {line.line}
                   </div>
                 ))}

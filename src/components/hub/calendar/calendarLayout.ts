@@ -1,9 +1,9 @@
 import type { MergedEvent, PositionedEvent } from "./calendarTypes";
 import {
-  SLOT_HEIGHT,
-  MINUTES_PER_SLOT,
   EVENT_MIN_HEIGHT,
   MAX_OVERLAP_COLUMNS,
+  MINUTES_PER_SLOT,
+  SLOT_HEIGHT,
 } from "./calendarTypes";
 
 /**
@@ -24,10 +24,7 @@ export function normalizeToMinutes(time: string): number {
 /**
  * Convert minutes-from-midnight to a pixel offset relative to grid start.
  */
-export function timeToPixelOffset(
-  minutes: number,
-  gridStartMinutes: number,
-): number {
+export function timeToPixelOffset(minutes: number, gridStartMinutes: number): number {
   return ((minutes - gridStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT;
 }
 
@@ -35,10 +32,7 @@ export function timeToPixelOffset(
  * Compute pixel height for an event given start/end in minutes.
  * Clamps to EVENT_MIN_HEIGHT for very short events.
  */
-export function eventHeight(
-  startMinutes: number,
-  endMinutes: number,
-): number {
+export function eventHeight(startMinutes: number, endMinutes: number): number {
   const durationMinutes = endMinutes - startMinutes;
   const raw = (durationMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT;
   return Math.max(EVENT_MIN_HEIGHT, raw);
@@ -54,16 +48,14 @@ export function eventHeight(
  * components of overlapping events. totalColumns for each event is
  * the number of distinct columns in its group, capped at MAX_OVERLAP_COLUMNS.
  */
-export function assignOverlapColumns(
-  events: MergedEvent[],
-): PositionedEvent[] {
+export function assignOverlapColumns(events: MergedEvent[]): PositionedEvent[] {
   if (events.length === 0) return [];
 
   // Sort by start time, then by duration descending (longer first)
   const sorted = [...events].sort((a, b) => {
     const diff = a.startMinutes - b.startMinutes;
     if (diff !== 0) return diff;
-    return (b.endMinutes - b.startMinutes) - (a.endMinutes - a.startMinutes);
+    return b.endMinutes - b.startMinutes - (a.endMinutes - a.startMinutes);
   });
 
   // Greedy column assignment: for each event, find first column where
@@ -129,13 +121,13 @@ export function assignOverlapColumns(
     if (!groupColumns.has(root)) {
       groupColumns.set(root, new Set());
     }
-    groupColumns.get(root)!.add(eventColumnMap.get(event.id)!);
+    groupColumns.get(root)?.add(eventColumnMap.get(event.id)!);
   }
 
   // Build result
   return sorted.map((event) => {
     const root = find(event.id);
-    const colCount = groupColumns.get(root)!.size;
+    const colCount = groupColumns.get(root)?.size;
     return {
       event,
       column: eventColumnMap.get(event.id)!,

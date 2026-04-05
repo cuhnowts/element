@@ -1,19 +1,19 @@
-import { useState, useRef } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, ChevronRight, Plus } from "lucide-react";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { ChevronRight, GripVertical, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   ContextMenu,
-  ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { TaskRow } from "./TaskRow";
 import type { Phase, Task, TaskStatus } from "@/lib/types";
+import { TaskRow } from "./TaskRow";
 
 interface PhaseRowProps {
   phase: Phase;
@@ -49,13 +49,9 @@ export function PhaseRow({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: phase.id });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: phase.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -107,16 +103,10 @@ export function PhaseRow({
             <ContextMenuTrigger>
               <div
                 className={`flex items-center gap-2 min-h-[40px] px-2 rounded-md transition-colors ${
-                  isDropTarget
-                    ? "bg-primary/10 ring-1 ring-primary/30"
-                    : "hover:bg-card"
+                  isDropTarget ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-card"
                 }`}
               >
-                <div
-                  className="cursor-grab touch-none"
-                  {...attributes}
-                  {...listeners}
-                >
+                <div className="cursor-grab touch-none" {...attributes} {...listeners}>
                   <GripVertical className="size-4 text-muted-foreground" />
                 </div>
                 <CollapsibleTrigger className="flex items-center gap-2 flex-1 min-w-0">
@@ -144,7 +134,10 @@ export function PhaseRow({
                     <span className="text-sm flex-1 text-left flex items-center gap-2">
                       {phase.name}
                       {isSynced && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                        >
                           GSD
                         </Badge>
                       )}
@@ -166,10 +159,7 @@ export function PhaseRow({
               {!isSynced && (
                 <>
                   <ContextMenuItem onClick={handleStartRename}>Rename</ContextMenuItem>
-                  <ContextMenuItem
-                    variant="destructive"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
+                  <ContextMenuItem variant="destructive" onClick={() => setShowDeleteConfirm(true)}>
                     Delete
                   </ContextMenuItem>
                 </>
@@ -190,42 +180,39 @@ export function PhaseRow({
                   onSetTaskPhase={onSetTaskPhase}
                 />
               ))}
-              {!isSynced && (
-                <>
-                  {isAddingTask ? (
-                    <div className="pl-10 pr-2 py-1">
-                      <Input
-                        autoFocus
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddTask();
-                          if (e.key === "Escape") {
-                            setIsAddingTask(false);
-                            setNewTaskTitle("");
-                          }
-                        }}
-                        onBlur={handleAddTask}
-                        placeholder="Task name..."
-                        className="h-7 text-sm"
-                      />
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-muted-foreground pl-10"
-                      onClick={() => {
-                        setIsAddingTask(true);
-                        setNewTaskTitle("");
+              {!isSynced &&
+                (isAddingTask ? (
+                  <div className="pl-10 pr-2 py-1">
+                    <Input
+                      autoFocus
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddTask();
+                        if (e.key === "Escape") {
+                          setIsAddingTask(false);
+                          setNewTaskTitle("");
+                        }
                       }}
-                    >
-                      <Plus className="size-3 mr-1" />
-                      Add task
-                    </Button>
-                  )}
-                </>
-              )}
+                      onBlur={handleAddTask}
+                      placeholder="Task name..."
+                      className="h-7 text-sm"
+                    />
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground pl-10"
+                    onClick={() => {
+                      setIsAddingTask(true);
+                      setNewTaskTitle("");
+                    }}
+                  >
+                    <Plus className="size-3 mr-1" />
+                    Add task
+                  </Button>
+                ))}
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -241,18 +228,10 @@ export function PhaseRow({
                 : `Delete "${phase.name}"? Its ${total} task${total === 1 ? "" : "s"} will be moved to Unassigned.`}
             </p>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmDelete}
-              >
+              <Button variant="destructive" size="sm" onClick={handleConfirmDelete}>
                 Delete
               </Button>
             </div>

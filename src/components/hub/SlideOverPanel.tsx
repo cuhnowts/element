@@ -6,7 +6,9 @@ interface SlideOverPanelProps {
 
 export function SlideOverPanel({ open, side, children }: SlideOverPanelProps) {
   const positionClasses =
-    side === "left" ? "left-0 top-0 bottom-0 border-r border-border" : "right-0 top-0 bottom-0 border-l border-border";
+    side === "left"
+      ? "left-0 top-0 bottom-0 border-r border-border"
+      : "right-0 top-0 bottom-0 border-l border-border";
 
   const transformClass = open
     ? "translate-x-0"

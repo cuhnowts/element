@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useStore } from "@/stores";
-import { TaskDetail } from "@/components/center/TaskDetail";
-import { ProjectDetail } from "@/components/center/ProjectDetail";
-import { ThemeDetail } from "@/components/center/ThemeDetail";
-import { WorkflowDetail } from "@/components/center/WorkflowDetail";
-import { ProjectTabBar } from "@/components/center/ProjectTabBar";
 import { FileExplorer } from "@/components/center/FileExplorer";
 import { HubView } from "@/components/center/HubView";
+import { ProjectDetail } from "@/components/center/ProjectDetail";
+import { ProjectTabBar } from "@/components/center/ProjectTabBar";
+import { TaskDetail } from "@/components/center/TaskDetail";
+import { ThemeDetail } from "@/components/center/ThemeDetail";
+import { WorkflowDetail } from "@/components/center/WorkflowDetail";
+import { useStore } from "@/stores";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function CenterPanel() {
   const activeView = useStore((s) => s.activeView);
@@ -35,7 +35,13 @@ export function CenterPanel() {
     setActiveProjectTab(projectState.centerTab);
 
     prevProjectRef.current = selectedProjectId;
-  }, [selectedProjectId]);
+  }, [
+    selectedProjectId,
+    getProjectState,
+    restoreProjectState,
+    saveCurrentProjectState,
+    setActiveProjectTab,
+  ]);
 
   const handleTabChange = (tab: "detail" | "files") => {
     setActiveProjectTab(tab);
@@ -50,35 +56,32 @@ export function CenterPanel() {
   const hasDirectory = !!selectedProject?.directoryPath;
 
   switch (activeView) {
-    case 'hub':
+    case "hub":
       return <HubView />;
-    case 'workflow':
+    case "workflow":
       return (
         <div className="h-full overflow-auto p-6">
           <WorkflowDetail />
         </div>
       );
-    case 'task':
+    case "task":
       return (
         <div className="h-full overflow-auto p-6">
           <TaskDetail />
         </div>
       );
-    case 'project':
+    case "project":
       if (selectedProjectId && hasDirectory) {
         return (
           <div className="h-full flex flex-col">
-            <ProjectTabBar
-              activeTab={activeProjectTab}
-              onTabChange={handleTabChange}
-            />
+            <ProjectTabBar activeTab={activeProjectTab} onTabChange={handleTabChange} />
             <div className="flex-1 overflow-auto p-6">
               {activeProjectTab === "detail" ? (
                 <ProjectDetail />
               ) : (
                 <FileExplorer
                   projectId={selectedProjectId}
-                  directoryPath={selectedProject!.directoryPath!}
+                  directoryPath={selectedProject?.directoryPath!}
                 />
               )}
             </div>
@@ -90,7 +93,7 @@ export function CenterPanel() {
           <ProjectDetail />
         </div>
       );
-    case 'theme':
+    case "theme":
       return (
         <div className="h-full overflow-auto p-6">
           <ThemeDetail />

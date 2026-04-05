@@ -20,9 +20,7 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">
-          Operation
-        </label>
+        <label className="text-xs font-semibold tracking-wide">Operation</label>
         <Select
           value={config.operation}
           onValueChange={(val: string | null) => {
@@ -30,8 +28,7 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
               onChange({
                 ...config,
                 operation: val as FsStepConfigType["operation"],
-                content:
-                  val === "write" ? config.content ?? "" : undefined,
+                content: val === "write" ? (config.content ?? "") : undefined,
               });
             }
           }}
@@ -62,16 +59,12 @@ export function FileStepConfig({ config, onChange }: FileStepConfigProps) {
 
       {config.operation === "write" && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold tracking-wide">
-            Content
-          </label>
+          <label className="text-xs font-semibold tracking-wide">Content</label>
           <Textarea
             className="font-mono"
             placeholder="File contents..."
             value={config.content ?? ""}
-            onChange={(e) =>
-              onChange({ ...config, content: e.target.value || undefined })
-            }
+            onChange={(e) => onChange({ ...config, content: e.target.value || undefined })}
           />
         </div>
       )}

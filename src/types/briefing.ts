@@ -19,9 +19,4 @@ export interface BriefingJSON {
   projects: BriefingProject[];
 }
 
-export type BriefingStatus =
-  | "idle"
-  | "loading"
-  | "streaming"
-  | "complete"
-  | "error";
+export type BriefingStatus = "idle" | "loading" | "streaming" | "complete" | "error";

@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useCallback } from "react";
 import { getAction, isDestructive } from "@/lib/actionRegistry";
 import { useStore } from "@/stores";
 
@@ -18,10 +18,7 @@ export interface PendingAction {
 
 export function useActionDispatch() {
   const dispatch = useCallback(
-    async (
-      actionName: string,
-      input: Record<string, unknown>,
-    ): Promise<DispatchResult> => {
+    async (actionName: string, input: Record<string, unknown>): Promise<DispatchResult> => {
       const action = getAction(actionName);
       if (!action) {
         return { success: false, error: `Unknown action: ${actionName}` };
@@ -51,11 +48,7 @@ export function useActionDispatch() {
   }, []);
 
   const createPendingAction = useCallback(
-    (
-      toolUseId: string,
-      actionName: string,
-      input: Record<string, unknown>,
-    ): PendingAction => ({
+    (toolUseId: string, actionName: string, input: Record<string, unknown>): PendingAction => ({
       toolUseId,
       actionName,
       input,

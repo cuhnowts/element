@@ -32,7 +32,7 @@ const DEFAULT_PROJECT_STATE: ProjectWorkspaceState = {
 };
 
 interface WorkspaceState {
-  drawerHeight: number;       // percentage (0-100)
+  drawerHeight: number; // percentage (0-100)
   drawerOpen: boolean;
   calendarVisible: boolean;
   selectedTaskId: string | null;
@@ -58,7 +58,7 @@ interface WorkspaceState {
 
   // Terminal/drawer tab state
   activeDrawerTab: DrawerTab;
-  hasAutoOpenedTerminal: boolean;  // session-only, per D-03
+  hasAutoOpenedTerminal: boolean; // session-only, per D-03
 
   // Per-project workspace state (session-only, not persisted)
   projectStates: Record<string, ProjectWorkspaceState>;
@@ -154,7 +154,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           projectStates: {
             ...s.projectStates,
             [projectId]: {
-              centerTab: (s.projectStates[projectId]?.centerTab ?? DEFAULT_PROJECT_STATE.centerTab),
+              centerTab: s.projectStates[projectId]?.centerTab ?? DEFAULT_PROJECT_STATE.centerTab,
               drawerOpen: state.drawerOpen,
               drawerTab: state.activeDrawerTab,
             },
@@ -192,6 +192,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         // Do NOT persist activeDrawerTab or hasAutoOpenedTerminal -- session-only state
         // Do NOT persist projectStates -- session-only (D-14)
       }),
-    }
-  )
+    },
+  ),
 );

@@ -1,5 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
-import { Switch } from "@/components/ui/switch";
+import { useCallback, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/stores";
 import type { WorkHoursConfig } from "@/types/scheduling";
 
@@ -99,8 +99,7 @@ export function ScheduleSettings() {
       <div>
         <h2 className="text-lg font-semibold">Work Hours</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Set your working hours to help Element find open time blocks for
-          focused work.
+          Set your working hours to help Element find open time blocks for focused work.
         </p>
       </div>
 

@@ -1,36 +1,41 @@
-import { useEffect, useState, useRef } from "react";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
   DragOverlay,
+  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-  type DragOverEvent,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { listen } from "@tauri-apps/api/event";
 import { Bot, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { useStore } from "@/stores";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
-import { GoalHeroCard } from "./GoalHeroCard";
-import { WorkspaceButton } from "./WorkspaceButton";
-import { PhaseRow } from "./PhaseRow";
-import { UnassignedBucket } from "./UnassignedBucket";
-import { AiPlanReview } from "./AiPlanReview";
-import { TierSelectionDialog, type PlanningTier } from "./TierSelectionDialog";
 import { api } from "@/lib/tauri";
-import { listen } from "@tauri-apps/api/event";
-import { toast } from "sonner";
 import type { Task, TaskStatus } from "@/lib/types";
+import { useStore } from "@/stores";
+import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import type { PlanOutput } from "@/types/onboarding";
+import { AiPlanReview } from "./AiPlanReview";
+import { GoalHeroCard } from "./GoalHeroCard";
+import { PhaseRow } from "./PhaseRow";
+import { type PlanningTier, TierSelectionDialog } from "./TierSelectionDialog";
+import { UnassignedBucket } from "./UnassignedBucket";
+import { WorkspaceButton } from "./WorkspaceButton";
 
 // --- Exported helpers for testing ---
 
@@ -40,9 +45,7 @@ export function computeProgress(tasks: Task[]): { complete: number; total: numbe
 }
 
 export function tasksForPhase(tasks: Task[], phaseId: string | null): Task[] {
-  return tasks.filter((t) =>
-    phaseId === null ? t.phaseId === null : t.phaseId === phaseId
-  );
+  return tasks.filter((t) => (phaseId === null ? t.phaseId === null : t.phaseId === phaseId));
 }
 
 // --- Component ---
@@ -85,9 +88,7 @@ export function ProjectDetail() {
 
   const project = projects.find((p) => p.id === selectedProjectId);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   // Load phases when project changes
   useEffect(() => {
@@ -135,7 +136,7 @@ export function ProjectDetail() {
       cancelled = true;
       api.stopPlanningWatcher().catch(() => {});
     };
-  }, [project?.id, project?.planningTier, project?.directoryPath]);
+  }, [project?.id, project?.planningTier, project?.directoryPath, project]);
 
   // Sync local state when project loads
   useEffect(() => {
@@ -143,7 +144,7 @@ export function ProjectDetail() {
       setName(project.name);
       setDescription(project.description);
     }
-  }, [project?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [project?.id, project.description, project]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for plan-output events from Tauri backend
   useEffect(() => {
@@ -156,7 +157,9 @@ export function ProjectDetail() {
         toast.error(event.payload);
       }),
     ]);
-    return () => { unlisteners.then((fns) => fns.forEach((fn) => fn())); };
+    return () => {
+      unlisteners.then((fns) => fns.forEach((fn) => fn()));
+    };
   }, [setPendingPlan, setOnboardingStep]);
 
   // When review completes and returns to idle, reload phases
@@ -220,9 +223,9 @@ export function ProjectDetail() {
       if (args) fullArgs.push(args.trim());
       fullArgs.push("--");
       fullArgs.push(contextPath);
-      useTerminalSessionStore.getState().createSession(
-        project.id, "AI Planning", "ai", { command, args: fullArgs }
-      );
+      useTerminalSessionStore
+        .getState()
+        .createSession(project.id, "AI Planning", "ai", { command, args: fullArgs });
       openTerminal();
 
       // 7. Close dialog
@@ -266,9 +269,7 @@ export function ProjectDetail() {
 
   // Is the current drag a task drag?
   const isDraggingTask = activeDragId?.startsWith("task:");
-  const draggedTask = isDraggingTask
-    ? tasks.find((t) => t.id === activeDragId!.slice(5))
-    : null;
+  const draggedTask = isDraggingTask ? tasks.find((t) => t.id === activeDragId?.slice(5)) : null;
 
   // DnD handlers
   const handleDragStart = (event: DragStartEvent) => {
@@ -313,7 +314,10 @@ export function ProjectDetail() {
     const newIndex = sortedPhases.findIndex((p) => p.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
     const reordered = arrayMove(sortedPhases, oldIndex, newIndex);
-    reorderPhases(project.id, reordered.map((p) => p.id));
+    reorderPhases(
+      project.id,
+      reordered.map((p) => p.id),
+    );
   };
 
   // Phase creation
@@ -389,11 +393,18 @@ export function ProjectDetail() {
             aria-label="Change planning tier"
             onClick={handleTierDialogOpen}
           >
-            {project.planningTier === "full" ? "GSD" : project.planningTier === "medium" ? "Medium" : "Quick"}
+            {project.planningTier === "full"
+              ? "GSD"
+              : project.planningTier === "medium"
+                ? "Medium"
+                : "Quick"}
           </Badge>
         )}
         {total > 0 && (
-          <span className="text-sm text-muted-foreground" aria-label={`${complete} of ${total} tasks complete`}>
+          <span
+            className="text-sm text-muted-foreground"
+            aria-label={`${complete} of ${total} tasks complete`}
+          >
             {complete}/{total}
           </span>
         )}
@@ -413,107 +424,115 @@ export function ProjectDetail() {
       {onboardingStep === "review" && pendingPlan ? (
         <AiPlanReview projectId={project.id} />
       ) : (
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Phases
-        </span>
+        <div>
+          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
+            Phases
+          </span>
 
-        {!hasContent && !phasesLoading ? (
-          <div className="bg-card rounded-lg p-8 text-center max-w-md mx-auto mt-12">
-            <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-base font-semibold mb-2">No phases yet</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Set a goal above, then use AI to plan your project or add phases manually.
-            </p>
-            <Button variant="ghost" size="sm" onClick={() => { setIsAddingPhase(true); setNewPhaseName(""); }} className="text-sm">
-              + Add phase manually
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sortedPhases.map((p) => p.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sortedPhases.map((phase) => (
-                  <PhaseRow
-                    key={phase.id}
-                    phase={phase}
-                    tasks={tasksForPhase(tasks, phase.id)}
-                    allPhases={sortedPhases}
-                    onUpdatePhase={updatePhase}
-                    onDeletePhase={handleDeletePhase}
-                    onCreateTask={handleCreateTaskInPhase}
-                    onSelectTask={handleSelectTask}
-                    onToggleTaskStatus={handleToggleTaskStatus}
-                    onSetTaskPhase={handleSetTaskPhase}
-                    isDropTarget={isDraggingTask === true && overDropId === phase.id}
-                  />
-                ))}
-              </SortableContext>
-
-              <UnassignedBucket
-                tasks={unassignedTasks}
-                phases={sortedPhases}
-                onCreateTask={handleCreateUnassignedTask}
-                onSelectTask={handleSelectTask}
-                onToggleTaskStatus={handleToggleTaskStatus}
-                onSetTaskPhase={handleSetTaskPhase}
-                isDropTarget={isDraggingTask === true && overDropId === "unassigned-drop"}
-              />
-
-              <DragOverlay>
-                {draggedTask ? (
-                  <div className="flex items-center gap-2 py-1 px-3 text-sm bg-popover rounded-md shadow-lg ring-1 ring-primary/20">
-                    {draggedTask.title}
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          </div>
-        )}
-
-        {/* Add Phase */}
-        {isAddingPhase ? (
-          <div className="mt-2">
-            <Input
-              autoFocus
-              value={newPhaseName}
-              onChange={(e) => setNewPhaseName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddPhase();
-                if (e.key === "Escape") {
-                  setIsAddingPhase(false);
+          {!hasContent && !phasesLoading ? (
+            <div className="bg-card rounded-lg p-8 text-center max-w-md mx-auto mt-12">
+              <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-base font-semibold mb-2">No phases yet</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Set a goal above, then use AI to plan your project or add phases manually.
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsAddingPhase(true);
                   setNewPhaseName("");
-                }
+                }}
+                className="text-sm"
+              >
+                + Add phase manually
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedPhases.map((p) => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sortedPhases.map((phase) => (
+                    <PhaseRow
+                      key={phase.id}
+                      phase={phase}
+                      tasks={tasksForPhase(tasks, phase.id)}
+                      allPhases={sortedPhases}
+                      onUpdatePhase={updatePhase}
+                      onDeletePhase={handleDeletePhase}
+                      onCreateTask={handleCreateTaskInPhase}
+                      onSelectTask={handleSelectTask}
+                      onToggleTaskStatus={handleToggleTaskStatus}
+                      onSetTaskPhase={handleSetTaskPhase}
+                      isDropTarget={isDraggingTask === true && overDropId === phase.id}
+                    />
+                  ))}
+                </SortableContext>
+
+                <UnassignedBucket
+                  tasks={unassignedTasks}
+                  phases={sortedPhases}
+                  onCreateTask={handleCreateUnassignedTask}
+                  onSelectTask={handleSelectTask}
+                  onToggleTaskStatus={handleToggleTaskStatus}
+                  onSetTaskPhase={handleSetTaskPhase}
+                  isDropTarget={isDraggingTask === true && overDropId === "unassigned-drop"}
+                />
+
+                <DragOverlay>
+                  {draggedTask ? (
+                    <div className="flex items-center gap-2 py-1 px-3 text-sm bg-popover rounded-md shadow-lg ring-1 ring-primary/20">
+                      {draggedTask.title}
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            </div>
+          )}
+
+          {/* Add Phase */}
+          {isAddingPhase ? (
+            <div className="mt-2">
+              <Input
+                autoFocus
+                value={newPhaseName}
+                onChange={(e) => setNewPhaseName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddPhase();
+                  if (e.key === "Escape") {
+                    setIsAddingPhase(false);
+                    setNewPhaseName("");
+                  }
+                }}
+                onBlur={handleAddPhase}
+                placeholder="Phase name..."
+                className="h-8 text-sm"
+              />
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground mt-2"
+              onClick={() => {
+                setIsAddingPhase(true);
+                setNewPhaseName("");
               }}
-              onBlur={handleAddPhase}
-              placeholder="Phase name..."
-              className="h-8 text-sm"
-            />
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-muted-foreground mt-2"
-            onClick={() => {
-              setIsAddingPhase(true);
-              setNewPhaseName("");
-            }}
-          >
-            <Plus className="size-3 mr-1" />
-            Add phase
-          </Button>
-        )}
-      </div>
+            >
+              <Plus className="size-3 mr-1" />
+              Add phase
+            </Button>
+          )}
+        </div>
       )}
 
       {/* 5. Details Accordion (D-08, D-09) */}
@@ -538,11 +557,15 @@ export function ProjectDetail() {
               {/* Metadata (moved per D-09) */}
               <div className="flex items-center gap-4 text-sm">
                 <div>
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">Created</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">
+                    Created
+                  </span>
                   <span className="text-muted-foreground">{createdDate}</span>
                 </div>
                 <div>
-                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">Tasks</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">
+                    Tasks
+                  </span>
                   <span className="text-muted-foreground">{total}</span>
                 </div>
               </div>

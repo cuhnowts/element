@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { Plus } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStore } from "@/stores";
 import { TaskRow } from "./TaskRow";
 
@@ -34,12 +34,7 @@ export function NewTaskList() {
           {selectedProject ? selectedProject.name : "Tasks"}
         </span>
         {selectedProjectId && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-6"
-            onClick={handleNewTask}
-          >
+          <Button variant="ghost" size="icon" className="size-6" onClick={handleNewTask}>
             <Plus className="size-4" />
           </Button>
         )}

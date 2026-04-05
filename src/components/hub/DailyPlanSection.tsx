@@ -27,14 +27,8 @@ function parseMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function DailyPlanSection({
-  blocks,
-  isLoading,
-  overflowIndex,
-}: DailyPlanSectionProps) {
-  const workBlocks = blocks.filter(
-    (b) => b.blockType === "work" && b.taskTitle,
-  );
+export function DailyPlanSection({ blocks, isLoading, overflowIndex }: DailyPlanSectionProps) {
+  const workBlocks = blocks.filter((b) => b.blockType === "work" && b.taskTitle);
 
   return (
     <div>
@@ -52,8 +46,7 @@ export function DailyPlanSection({
         <div className="mt-4">
           <p className="text-sm font-semibold">No tasks scheduled</p>
           <p className="text-xs text-muted-foreground">
-            Your day is open. Add due dates to tasks or ask the bot to plan your
-            day.
+            Your day is open. Add due dates to tasks or ask the bot to plan your day.
           </p>
         </div>
       )}
@@ -61,15 +54,12 @@ export function DailyPlanSection({
       {!isLoading && workBlocks.length > 0 && (
         <div role="list" className="mt-4 space-y-4">
           {workBlocks.map((block, idx) => {
-            const duration =
-              parseMinutes(block.endTime) - parseMinutes(block.startTime);
+            const duration = parseMinutes(block.endTime) - parseMinutes(block.startTime);
             const isFaded = overflowIndex !== null && idx >= overflowIndex;
 
             return (
               <div key={block.id}>
-                {overflowIndex !== null && idx === overflowIndex && (
-                  <OutOfTimeDivider />
-                )}
+                {overflowIndex !== null && idx === overflowIndex && <OutOfTimeDivider />}
                 <div role="listitem">
                   <DailyPlanTaskRow
                     taskTitle={block.taskTitle!}

@@ -1,33 +1,18 @@
 import { create } from "zustand";
-import { createProjectSlice, type ProjectSlice } from "./projectSlice";
-import { createTaskSlice, type TaskSlice } from "./taskSlice";
-import { createUiSlice, type UiSlice } from "./uiSlice";
-import { createPluginSlice, type PluginSlice } from "./pluginSlice";
-import { createCredentialSlice, type CredentialSlice } from "./credentialSlice";
-import { createCalendarSlice, type CalendarSlice } from "./calendarSlice";
-import {
-  createSchedulingSlice,
-  type SchedulingSlice,
-} from "./schedulingSlice";
-import { createAiSlice, type AiSlice } from "./aiSlice";
-import { createThemeSlice, type ThemeSlice } from "./themeSlice";
+import { type AiSlice, createAiSlice } from "./aiSlice";
+import { type CalendarSlice, createCalendarSlice } from "./calendarSlice";
+import { type CredentialSlice, createCredentialSlice } from "./credentialSlice";
+import { createFileExplorerSlice, type FileExplorerSlice } from "./fileExplorerSlice";
+import { createHeartbeatSlice, type HeartbeatSlice } from "./heartbeatSlice";
+import { createNotificationSlice, type NotificationSlice } from "./notificationSlice";
+import { createOnboardingSlice, type OnboardingSlice } from "./onboardingSlice";
 import { createPhaseSlice, type PhaseSlice } from "./phaseSlice";
-import {
-  createFileExplorerSlice,
-  type FileExplorerSlice,
-} from "./fileExplorerSlice";
-import {
-  createOnboardingSlice,
-  type OnboardingSlice,
-} from "./onboardingSlice";
-import {
-  createNotificationSlice,
-  type NotificationSlice,
-} from "./notificationSlice";
-import {
-  createHeartbeatSlice,
-  type HeartbeatSlice,
-} from "./heartbeatSlice";
+import { createPluginSlice, type PluginSlice } from "./pluginSlice";
+import { createProjectSlice, type ProjectSlice } from "./projectSlice";
+import { createSchedulingSlice, type SchedulingSlice } from "./schedulingSlice";
+import { createTaskSlice, type TaskSlice } from "./taskSlice";
+import { createThemeSlice, type ThemeSlice } from "./themeSlice";
+import { createUiSlice, type UiSlice } from "./uiSlice";
 
 export type AppStore = ProjectSlice &
   TaskSlice &

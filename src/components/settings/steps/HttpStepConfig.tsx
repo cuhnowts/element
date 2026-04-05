@@ -21,11 +21,7 @@ interface HttpStepConfigProps {
 const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 const BODY_METHODS = ["POST", "PUT", "PATCH"];
 
-export function HttpStepConfig({
-  config,
-  onChange,
-  credentials,
-}: HttpStepConfigProps) {
+export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfigProps) {
   const showBody = BODY_METHODS.includes(config.method);
 
   const handleAddHeader = () => {
@@ -38,11 +34,7 @@ export function HttpStepConfig({
     onChange({ ...config, headers: headers.length > 0 ? headers : undefined });
   };
 
-  const handleHeaderChange = (
-    index: number,
-    field: "key" | "value",
-    value: string
-  ) => {
+  const handleHeaderChange = (index: number, field: "key" | "value", value: string) => {
     const headers = [...(config.headers ?? [])];
     headers[index] = { ...headers[index], [field]: value };
     onChange({ ...config, headers });
@@ -92,17 +84,13 @@ export function HttpStepConfig({
               className="flex-1"
               placeholder="Key"
               value={header.key}
-              onChange={(e) =>
-                handleHeaderChange(index, "key", e.target.value)
-              }
+              onChange={(e) => handleHeaderChange(index, "key", e.target.value)}
             />
             <Input
               className="flex-1"
               placeholder="Value"
               value={header.value}
-              onChange={(e) =>
-                handleHeaderChange(index, "value", e.target.value)
-              }
+              onChange={(e) => handleHeaderChange(index, "value", e.target.value)}
             />
             <Button
               variant="ghost"
@@ -114,12 +102,7 @@ export function HttpStepConfig({
             </Button>
           </div>
         ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={handleAddHeader}
-        >
+        <Button variant="outline" size="sm" className="w-fit" onClick={handleAddHeader}>
           Add Header
         </Button>
       </div>
@@ -131,17 +114,13 @@ export function HttpStepConfig({
             className="font-mono"
             placeholder='{"key": "value"}'
             value={config.body ?? ""}
-            onChange={(e) =>
-              onChange({ ...config, body: e.target.value || undefined })
-            }
+            onChange={(e) => onChange({ ...config, body: e.target.value || undefined })}
           />
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">
-          Authentication
-        </label>
+        <label className="text-xs font-semibold tracking-wide">Authentication</label>
         <Select
           value={config.auth?.type ?? "none"}
           onValueChange={(val: string | null) => {
@@ -170,33 +149,31 @@ export function HttpStepConfig({
           </SelectContent>
         </Select>
 
-        {config.auth &&
-          config.auth.type !== "none" &&
-          "credentialId" in config.auth && (
-            <Select
-              value={config.auth.credentialId}
-              onValueChange={(val: string | null) => {
-                if (val && config.auth && config.auth.type !== "none") {
-                  onChange({
-                    ...config,
-                    auth: { ...config.auth, credentialId: val },
-                  });
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select credential..." />
-              </SelectTrigger>
-              <SelectContent>
-                {credentials.map((cred) => (
-                  <SelectItem key={cred.id} value={cred.id}>
-                    <Lock className="size-3" />
-                    {cred.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+        {config.auth && config.auth.type !== "none" && "credentialId" in config.auth && (
+          <Select
+            value={config.auth.credentialId}
+            onValueChange={(val: string | null) => {
+              if (val && config.auth && config.auth.type !== "none") {
+                onChange({
+                  ...config,
+                  auth: { ...config.auth, credentialId: val },
+                });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select credential..." />
+            </SelectTrigger>
+            <SelectContent>
+              {credentials.map((cred) => (
+                <SelectItem key={cred.id} value={cred.id}>
+                  <Lock className="size-3" />
+                  {cred.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -209,9 +186,7 @@ export function HttpStepConfig({
             onChange={(e) =>
               onChange({
                 ...config,
-                timeoutSeconds: e.target.value
-                  ? parseInt(e.target.value, 10)
-                  : undefined,
+                timeoutSeconds: e.target.value ? parseInt(e.target.value, 10) : undefined,
               })
             }
           />

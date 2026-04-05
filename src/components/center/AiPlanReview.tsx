@@ -1,29 +1,21 @@
-import { useState } from "react";
-import {
-  DndContext,
-  closestCenter,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
+import { closestCenter, DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X, Loader2, Plus } from "lucide-react";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "../ui/accordion";
+import { GripVertical, Loader2, Plus, X } from "lucide-react";
+import { useState } from "react";
+import { api } from "@/lib/tauri";
+import { useStore } from "@/stores";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "../ui/dialog";
-import { useStore } from "@/stores";
-import { api } from "@/lib/tauri";
+import { Input } from "../ui/input";
 
 interface AiPlanReviewProps {
   projectId: string;
@@ -121,15 +113,13 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
         <div>
           <h2 className="text-2xl font-semibold">Review AI Plan</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {isQuickTier ? `${totalTasks} tasks generated` : `${totalPhases} phases, ${totalTasks} tasks generated`}
+            {isQuickTier
+              ? `${totalTasks} tasks generated`
+              : `${totalPhases} phases, ${totalTasks} tasks generated`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            className="text-destructive"
-            onClick={() => setShowDiscard(true)}
-          >
+          <Button variant="ghost" className="text-destructive" onClick={() => setShowDiscard(true)}>
             Discard plan
           </Button>
           <Button onClick={handleConfirm} disabled={onboardingSaving}>
@@ -204,28 +194,34 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                     <AccordionContent>
                       <div className="space-y-1 pl-6">
                         {phase.tasks.map((task, taskIndex) => (
-                          <div
-                            key={taskIndex}
-                            className="flex items-center gap-2 py-1"
-                          >
-                            {editingTask?.phase === phaseIndex && editingTask?.task === taskIndex ? (
+                          <div key={taskIndex} className="flex items-center gap-2 py-1">
+                            {editingTask?.phase === phaseIndex &&
+                            editingTask?.task === taskIndex ? (
                               <Input
                                 autoFocus
                                 defaultValue={task.title}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
-                                    handleTaskNameBlur(phaseIndex, taskIndex, e.currentTarget.value);
+                                    handleTaskNameBlur(
+                                      phaseIndex,
+                                      taskIndex,
+                                      e.currentTarget.value,
+                                    );
                                   }
                                   if (e.key === "Escape") {
                                     setEditingTask(null);
                                   }
                                 }}
-                                onBlur={(e) => handleTaskNameBlur(phaseIndex, taskIndex, e.target.value)}
+                                onBlur={(e) =>
+                                  handleTaskNameBlur(phaseIndex, taskIndex, e.target.value)
+                                }
                                 className="h-7 text-sm flex-1"
                               />
                             ) : (
                               <span
-                                onClick={() => setEditingTask({ phase: phaseIndex, task: taskIndex })}
+                                onClick={() =>
+                                  setEditingTask({ phase: phaseIndex, task: taskIndex })
+                                }
                                 className="text-sm flex-1 cursor-text"
                               >
                                 {task.title || "Untitled task"}
@@ -249,8 +245,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                             setEditingTask({ phase: phaseIndex, task: phase.tasks.length });
                           }}
                         >
-                          <Plus className="h-3 w-3 mr-1" />
-                          + Add task
+                          <Plus className="h-3 w-3 mr-1" />+ Add task
                         </Button>
                       </div>
                     </AccordionContent>
@@ -272,8 +267,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
           setEditingPhase(phases.length);
         }}
       >
-        <Plus className="h-3 w-3 mr-1" />
-        + Add phase
+        <Plus className="h-3 w-3 mr-1" />+ Add phase
       </Button>
 
       {/* Discard Confirmation Dialog */}

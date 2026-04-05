@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useBriefingStore } from "@/stores/useBriefingStore";
+import { ChevronUp } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useBriefingStream } from "@/hooks/useBriefingStream";
 import { useStore } from "@/stores";
-import { BriefingGreeting } from "./BriefingGreeting";
+import { useBriefingStore } from "@/stores/useBriefingStore";
 import { ActionChipBar } from "./ActionChipBar";
-import { BriefingSummaryCard } from "./BriefingSummaryCard";
+import { BriefingGreeting } from "./BriefingGreeting";
 import { BriefingProjectCard } from "./BriefingProjectCard";
+import { BriefingSummaryCard } from "./BriefingSummaryCard";
 import { HubChat } from "./HubChat";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChevronUp } from "lucide-react";
 
 export function HubCenterPanel() {
   // Wire up briefing event listeners
@@ -63,7 +63,8 @@ export function HubCenterPanel() {
       useBriefingStore
         .getState()
         .failBriefing(
-          String(err) || "Briefing could not be generated. Check your AI provider settings and try again.",
+          String(err) ||
+            "Briefing could not be generated. Check your AI provider settings and try again.",
         );
     }
   }, [requestBriefing]);
@@ -79,8 +80,7 @@ export function HubCenterPanel() {
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const isGenerating =
-    briefingStatus === "loading" || briefingStatus === "streaming";
+  const isGenerating = briefingStatus === "loading" || briefingStatus === "streaming";
 
   return (
     <div className="flex h-full flex-col">
@@ -88,21 +88,14 @@ export function HubCenterPanel() {
       <div className="shrink-0 px-6 pt-12">
         <BriefingGreeting summary={contextSummary} />
         <div className="mt-6">
-          <ActionChipBar
-            onRunBriefing={onRunBriefing}
-            isGenerating={isGenerating}
-          />
+          <ActionChipBar onRunBriefing={onRunBriefing} isGenerating={isGenerating} />
         </div>
       </div>
 
       {/* Scrollable area */}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         {/* Briefing region */}
-        <div
-          role="region"
-          aria-label="Daily briefing"
-          aria-live="polite"
-        >
+        <div role="region" aria-label="Daily briefing" aria-live="polite">
           {/* Loading skeleton */}
           {briefingStatus === "loading" && (
             <div className="flex flex-col gap-4">

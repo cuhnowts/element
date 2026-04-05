@@ -10,7 +10,7 @@ interface DueDateSuggestionProps {
 }
 
 function formatSuggestedDate(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
+  const date = new Date(`${dateStr}T00:00:00`);
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
@@ -25,9 +25,7 @@ export function DueDateSuggestion({
   onConfirm,
   onSkip,
 }: DueDateSuggestionProps) {
-  const [state, setState] = useState<"active" | "confirmed" | "skipped">(
-    "active",
-  );
+  const [state, setState] = useState<"active" | "confirmed" | "skipped">("active");
 
   if (state === "skipped") return null;
 
@@ -42,9 +40,7 @@ export function DueDateSuggestion({
   return (
     <div className="border rounded-md p-3 bg-card flex items-center justify-between gap-2">
       <div className="min-w-0">
-        <span className="text-sm font-semibold truncate block">
-          {taskTitle}
-        </span>
+        <span className="text-sm font-semibold truncate block">{taskTitle}</span>
         <span className="text-sm">{formatSuggestedDate(suggestedDate)}</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">

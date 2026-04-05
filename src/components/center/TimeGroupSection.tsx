@@ -1,12 +1,7 @@
-import type { Task } from "@/lib/types";
 import { TodayTaskRow } from "@/components/center/TodayTaskRow";
+import type { Task } from "@/lib/types";
 
-export type TimeGroup =
-  | "overdue"
-  | "morning"
-  | "afternoon"
-  | "evening"
-  | "unscheduled";
+export type TimeGroup = "overdue" | "morning" | "afternoon" | "evening" | "unscheduled";
 
 const GROUP_LABELS: Record<TimeGroup, string> = {
   overdue: "OVERDUE",
@@ -22,11 +17,7 @@ interface TimeGroupSectionProps {
   nextUpTaskId: string | null;
 }
 
-export function TimeGroupSection({
-  group,
-  tasks,
-  nextUpTaskId,
-}: TimeGroupSectionProps) {
+export function TimeGroupSection({ group, tasks, nextUpTaskId }: TimeGroupSectionProps) {
   if (tasks.length === 0) return null;
 
   const isOverdue = group === "overdue";

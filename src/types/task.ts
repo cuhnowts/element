@@ -1,4 +1,5 @@
-export type { TaskStatus, TaskPriority, Task, TaskWithTags } from "@/lib/types";
+export type { Task, TaskPriority, TaskStatus, TaskWithTags } from "@/lib/types";
+
 import type { Task } from "@/lib/types";
 import type { Step } from "./execution";
 

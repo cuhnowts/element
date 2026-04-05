@@ -1,11 +1,11 @@
 import { Settings } from "lucide-react";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useStore } from "@/stores";
-import { Button } from "@/components/ui/button";
 import { CalendarToggle } from "@/components/sidebar/CalendarToggle";
 import { MiniCalendar } from "@/components/sidebar/MiniCalendar";
 import { ThemeSidebar } from "@/components/sidebar/ThemeSidebar";
 import { WorkflowList } from "@/components/sidebar/WorkflowList";
+import { Button } from "@/components/ui/button";
+import { useStore } from "@/stores";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function Sidebar() {
   const calendarVisible = useWorkspaceStore((s) => s.calendarVisible);

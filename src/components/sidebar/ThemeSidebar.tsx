@@ -1,26 +1,22 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ListPlus, Plus } from "lucide-react";
+import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import { closestCenter, DndContext, type DragEndEvent } from "@dnd-kit/core";
 import {
-  DndContext,
-  closestCenter,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
   arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ListPlus, Plus } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Task, Theme } from "@/lib/types";
 import { useStore } from "@/stores";
-import { ThemeSection } from "./ThemeSection";
-import { UncategorizedSection } from "./UncategorizedSection";
 import { CreateThemeDialog } from "./CreateThemeDialog";
 import { HomeButton } from "./HomeButton";
-import type { Theme, Task } from "@/lib/types";
-import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import { ThemeSection } from "./ThemeSection";
+import { UncategorizedSection } from "./UncategorizedSection";
 
 type DragHandleProps = {
   attributes: DraggableAttributes;
@@ -33,15 +29,10 @@ export function useDragHandle() {
   return useContext(DragHandleContext);
 }
 
-function SortableThemeItem({
-  theme,
-  children,
-}: {
-  theme: Theme;
-  children: React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: theme.id });
+function SortableThemeItem({ theme, children }: { theme: Theme; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: theme.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -103,12 +94,12 @@ export function ThemeSidebar() {
 
   const uncategorizedProjects = useMemo(
     () => projects.filter((p) => p.themeId === null),
-    [projects]
+    [projects],
   );
 
   const uncategorizedTasks = useMemo(
     () => standaloneTasks.filter((t) => t.themeId === null),
-    [standaloneTasks]
+    [standaloneTasks],
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -124,9 +115,7 @@ export function ThemeSidebar() {
   };
 
   const hasContent =
-    themes.length > 0 ||
-    uncategorizedProjects.length > 0 ||
-    uncategorizedTasks.length > 0;
+    themes.length > 0 || uncategorizedProjects.length > 0 || uncategorizedTasks.length > 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -164,20 +153,13 @@ export function ThemeSidebar() {
         <div className="px-4 py-6 text-center">
           <p className="text-sm font-medium">Organize with themes</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Create a theme to group your projects and tasks. Click + above to
-            get started.
+            Create a theme to group your projects and tasks. Click + above to get started.
           </p>
         </div>
       ) : (
         <ScrollArea className="flex-1">
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={themes.map((t) => t.id)}
-              strategy={verticalListSortingStrategy}
-            >
+          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={themes.map((t) => t.id)} strategy={verticalListSortingStrategy}>
               {themes.map((theme) => (
                 <SortableThemeItem key={theme.id} theme={theme}>
                   <ThemeSection
@@ -190,17 +172,11 @@ export function ThemeSidebar() {
               ))}
             </SortableContext>
           </DndContext>
-          <UncategorizedSection
-            projects={uncategorizedProjects}
-            tasks={uncategorizedTasks}
-          />
+          <UncategorizedSection projects={uncategorizedProjects} tasks={uncategorizedTasks} />
         </ScrollArea>
       )}
 
-      <CreateThemeDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-      />
+      <CreateThemeDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
     </div>
   );
 }

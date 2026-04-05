@@ -1,9 +1,9 @@
+import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { invoke } from "@tauri-apps/api/core";
-import { useBriefingStore } from "@/stores/useBriefingStore";
 import { useStore } from "@/stores";
+import { useBriefingStore } from "@/stores/useBriefingStore";
 import { DailyPlanSection, type ScheduleBlock } from "./DailyPlanSection";
 import { DueDateSuggestion } from "./DueDateSuggestion";
 
@@ -27,10 +27,7 @@ interface BriefingContentProps {
   scheduleLoading: boolean;
 }
 
-export function BriefingContent({
-  scheduleBlocks,
-  scheduleLoading,
-}: BriefingContentProps) {
+export function BriefingContent({ scheduleBlocks, scheduleLoading }: BriefingContentProps) {
   const content = useBriefingStore((s) => s.briefingContent);
   const status = useBriefingStore((s) => s.briefingStatus);
   const updateTask = useStore((s) => s.updateTask);
@@ -46,7 +43,9 @@ export function BriefingContent({
   }, [content]);
 
   // Parse and validate suggestions — verify task IDs exist
-  const [suggestions, setSuggestions] = useState<Array<{ taskId: string; date: string; taskTitle: string }>>([]);
+  const [suggestions, setSuggestions] = useState<
+    Array<{ taskId: string; date: string; taskTitle: string }>
+  >([]);
   useEffect(() => {
     const regex = /SUGGEST_DUE_DATE:\s*(\{[^}]+\})/g;
     const found: Array<{ taskId: string; date: string; taskTitle: string }> = [];
@@ -57,7 +56,9 @@ export function BriefingContent({
         if (parsed.taskId && parsed.date && parsed.taskTitle) {
           found.push(parsed);
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     // Validate each task ID exists
     Promise.all(
@@ -68,16 +69,14 @@ export function BriefingContent({
         } catch {
           return null; // hallucinated ID
         }
-      })
+      }),
     ).then((results) => {
       setSuggestions(results.filter((r): r is NonNullable<typeof r> => r !== null));
     });
   }, [content]);
 
   const overflowIndex = useMemo(() => {
-    const workBlocks = scheduleBlocks.filter(
-      (b) => b.blockType === "work" && b.taskTitle,
-    );
+    const workBlocks = scheduleBlocks.filter((b) => b.blockType === "work" && b.taskTitle);
     const idx = workBlocks.findIndex((b) => b.isContinuation === true);
     return idx >= 0 ? idx : null;
   }, [scheduleBlocks]);
@@ -85,9 +84,7 @@ export function BriefingContent({
   return (
     <div>
       <div className="prose prose-sm prose-invert max-w-none">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {cleanContent}
-        </ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{cleanContent}</ReactMarkdown>
         {status === "streaming" && (
           <span
             className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse ml-1"
@@ -114,14 +111,10 @@ export function BriefingContent({
                   } catch {
                     // Task ID doesn't exist — hallucinated by LLM, skip silently
                   }
-                  setDismissedSuggestions(
-                    (prev) => new Set(prev).add(taskId),
-                  );
+                  setDismissedSuggestions((prev) => new Set(prev).add(taskId));
                 }}
                 onSkip={(taskId) => {
-                  setDismissedSuggestions(
-                    (prev) => new Set(prev).add(taskId),
-                  );
+                  setDismissedSuggestions((prev) => new Set(prev).add(taskId));
                 }}
               />
             ))}

@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { TerminalSession } from "@/stores/useTerminalSessionStore";
 
 interface SessionTabProps {
@@ -20,16 +20,12 @@ export function SessionTab({ session, isActive, onClick, onClose }: SessionTabPr
             type="button"
             onClick={onClick}
             className={`group flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold tracking-wide uppercase transition-colors ${
-              isActive
-                ? "text-foreground bg-muted"
-                : "text-muted-foreground hover:text-foreground"
+              isActive ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground"
             }`}
           />
         }
       >
-        <span className="truncate max-w-[160px]">
-          {displayName}
-        </span>
+        <span className="truncate max-w-[160px]">{displayName}</span>
         <span
           role="button"
           tabIndex={0}
@@ -48,9 +44,7 @@ export function SessionTab({ session, isActive, onClick, onClose }: SessionTabPr
           <X className="size-3" />
         </span>
       </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {session.name}
-      </TooltipContent>
+      <TooltipContent side="bottom">{session.name}</TooltipContent>
     </Tooltip>
   );
 }

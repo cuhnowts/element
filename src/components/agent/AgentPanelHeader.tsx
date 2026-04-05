@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { useAgentStore } from "@/stores/useAgentStore";
 import { useAgentLifecycle } from "@/hooks/useAgentLifecycle";
+import { useAgentStore } from "@/stores/useAgentStore";
 import type { AgentStatus } from "@/types/agent";
 
 const statusDotColor: Record<AgentStatus, string> = {
@@ -27,19 +27,25 @@ export function AgentPanelHeader() {
 
   const tabClass = (tab: "activity" | "terminal") =>
     `text-xs font-semibold tracking-wide uppercase px-2 py-1 rounded transition-colors ${
-      activeTab === tab
-        ? "text-foreground bg-muted"
-        : "text-muted-foreground hover:text-foreground"
+      activeTab === tab ? "text-foreground bg-muted" : "text-muted-foreground hover:text-foreground"
     }`;
 
   return (
     <div className="h-10 px-4 py-2 flex items-center justify-between border-b border-border flex-shrink-0">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setActiveTab("activity")} className={tabClass("activity")}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("activity")}
+            className={tabClass("activity")}
+          >
             Activity
           </button>
-          <button type="button" onClick={() => setActiveTab("terminal")} className={tabClass("terminal")}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("terminal")}
+            className={tabClass("terminal")}
+          >
             Terminal
           </button>
         </div>

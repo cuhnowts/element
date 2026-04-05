@@ -1,4 +1,4 @@
-import { Sparkles, CalendarDays, Target } from "lucide-react";
+import { CalendarDays, Sparkles, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ACTIONS = [
@@ -16,12 +16,7 @@ export function ActionButtons() {
   return (
     <div className="flex flex-wrap gap-2 mt-6">
       {ACTIONS.map((action) => (
-        <Button
-          key={action.id}
-          variant="outline"
-          size="sm"
-          onClick={() => handleAction(action.id)}
-        >
+        <Button key={action.id} variant="outline" size="sm" onClick={() => handleAction(action.id)}>
           <action.icon className="mr-1.5 h-4 w-4" />
           {action.label}
         </Button>

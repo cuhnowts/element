@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -7,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useStore } from "@/stores";
 
 const INTERVAL_OPTIONS = [
@@ -49,9 +49,7 @@ export function HeartbeatSettings() {
         <h2 className="text-base font-semibold">Heartbeat</h2>
         <span
           className={`inline-block h-1.5 w-1.5 rounded-full ${
-            heartbeatRunning
-              ? "bg-chart-2 animate-pulse"
-              : "bg-muted-foreground"
+            heartbeatRunning ? "bg-chart-2 animate-pulse" : "bg-muted-foreground"
           }`}
           aria-label={heartbeatRunning ? "Heartbeat is running" : "Heartbeat is stopped"}
         />
@@ -60,17 +58,12 @@ export function HeartbeatSettings() {
       {/* Enable switch */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">
-            Background deadline monitoring
-          </label>
+          <label className="text-sm font-medium">Background deadline monitoring</label>
           <p className="text-xs text-muted-foreground">
             Check for deadline risks every {intervalLabel}
           </p>
         </div>
-        <Switch
-          checked={heartbeatEnabled}
-          onCheckedChange={setHeartbeatEnabled}
-        />
+        <Switch checked={heartbeatEnabled} onCheckedChange={setHeartbeatEnabled} />
       </div>
 
       {/* Check interval */}

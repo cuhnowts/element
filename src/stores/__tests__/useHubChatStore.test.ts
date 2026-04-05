@@ -1,4 +1,5 @@
 import { describe, it } from "vitest";
+
 // import { useHubChatStore } from "@/stores/useHubChatStore"; // uncomment when filling in tests
 
 describe("useHubChatStore", () => {

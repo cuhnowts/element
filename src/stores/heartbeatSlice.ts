@@ -46,12 +46,7 @@ export interface HeartbeatSlice {
   initHeartbeatListener: () => () => void;
 }
 
-export const createHeartbeatSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  HeartbeatSlice
-> = (set, get) => ({
+export const createHeartbeatSlice: StateCreator<AppStore, [], [], HeartbeatSlice> = (set, get) => ({
   heartbeatEnabled: false,
   heartbeatInterval: 30,
   heartbeatProviderId: null,

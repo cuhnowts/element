@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Task, TaskDetail } from "@/types/task";
 import type { ExecutionRecord, LogEntry, WorkflowRun, WorkflowStepResult } from "@/types/execution";
-import type { Workflow, StepDefinition, Schedule } from "@/types/workflow";
+import type { Task, TaskDetail } from "@/types/task";
+import type { Schedule, StepDefinition, Workflow } from "@/types/workflow";
 
 export async function getTodaysTasks(): Promise<Task[]> {
   return invoke<Task[]>("get_todays_tasks");
@@ -83,9 +83,7 @@ export async function createSchedule(
   return invoke<Schedule>("create_schedule", { workflowId, cronExpression });
 }
 
-export async function getScheduleForWorkflow(
-  workflowId: string,
-): Promise<Schedule | null> {
+export async function getScheduleForWorkflow(workflowId: string): Promise<Schedule | null> {
   return invoke<Schedule | null>("get_schedule_for_workflow", { workflowId });
 }
 
@@ -96,10 +94,7 @@ export async function updateSchedule(
   return invoke<Schedule>("update_schedule", { scheduleId, cronExpression });
 }
 
-export async function toggleSchedule(
-  scheduleId: string,
-  isActive: boolean,
-): Promise<Schedule> {
+export async function toggleSchedule(scheduleId: string, isActive: boolean): Promise<Schedule> {
   return invoke<Schedule>("toggle_schedule", { scheduleId, isActive });
 }
 
@@ -107,10 +102,7 @@ export async function deleteSchedule(scheduleId: string): Promise<void> {
   return invoke<void>("delete_schedule", { scheduleId });
 }
 
-export async function getNextRunTimes(
-  cronExpression: string,
-  count: number,
-): Promise<string[]> {
+export async function getNextRunTimes(cronExpression: string, count: number): Promise<string[]> {
   return invoke<string[]>("get_next_run_times", { cronExpression, count });
 }
 

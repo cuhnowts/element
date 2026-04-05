@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
 import { invoke } from "@tauri-apps/api/core";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useActionDispatch } from "./useActionDispatch";
 
 describe("useActionDispatch", () => {
@@ -83,11 +83,9 @@ describe("useActionDispatch", () => {
   describe("createPendingAction", () => {
     it("creates destructive pending action for delete_task", () => {
       const { result } = renderHook(() => useActionDispatch());
-      const pending = result.current.createPendingAction(
-        "tool-123",
-        "delete_task",
-        { taskId: "abc" },
-      );
+      const pending = result.current.createPendingAction("tool-123", "delete_task", {
+        taskId: "abc",
+      });
       expect(pending).toEqual({
         toolUseId: "tool-123",
         actionName: "delete_task",
@@ -98,11 +96,9 @@ describe("useActionDispatch", () => {
 
     it("creates non-destructive pending action for create_task", () => {
       const { result } = renderHook(() => useActionDispatch());
-      const pending = result.current.createPendingAction(
-        "tool-456",
-        "create_task",
-        { title: "New" },
-      );
+      const pending = result.current.createPendingAction("tool-456", "create_task", {
+        title: "New",
+      });
       expect(pending).toEqual({
         toolUseId: "tool-456",
         actionName: "create_task",

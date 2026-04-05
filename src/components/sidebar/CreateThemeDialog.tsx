@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useStore } from "@/stores";
-import { THEME_COLORS } from "@/lib/types";
 import type { Theme } from "@/lib/types";
+import { THEME_COLORS } from "@/lib/types";
+import { useStore } from "@/stores";
 
 interface CreateThemeDialogProps {
   open: boolean;
@@ -18,11 +18,7 @@ interface CreateThemeDialogProps {
   editTheme?: Theme | null;
 }
 
-export function CreateThemeDialog({
-  open,
-  onOpenChange,
-  editTheme,
-}: CreateThemeDialogProps) {
+export function CreateThemeDialog({ open, onOpenChange, editTheme }: CreateThemeDialogProps) {
   const createTheme = useStore((s) => s.createTheme);
   const updateTheme = useStore((s) => s.updateTheme);
 
@@ -63,9 +59,7 @@ export function CreateThemeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {editTheme ? "Edit Theme" : "Create Theme"}
-          </DialogTitle>
+          <DialogTitle>{editTheme ? "Edit Theme" : "Create Theme"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
@@ -80,9 +74,7 @@ export function CreateThemeDialog({
               onKeyDown={handleKeyDown}
               placeholder="e.g. Work, Personal, Side Projects"
             />
-            {error && (
-              <p className="text-sm text-destructive-foreground">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive-foreground">{error}</p>}
           </div>
           <div className="space-y-2">
             <span className="text-sm text-muted-foreground">Color</span>
@@ -106,9 +98,7 @@ export function CreateThemeDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
-            {editTheme ? "Update Theme" : "Create Theme"}
-          </Button>
+          <Button onClick={handleSubmit}>{editTheme ? "Update Theme" : "Create Theme"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

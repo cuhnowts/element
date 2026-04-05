@@ -1,19 +1,19 @@
-import { useEffect, useRef, type KeyboardEvent } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  Plus,
-  Pencil,
   CircleCheck,
-  Trash2,
-  FolderPlus,
-  Palette,
   FilePlus,
-  Terminal,
+  FolderPlus,
   type LucideIcon,
+  Palette,
+  Pencil,
+  Plus,
+  Terminal,
+  Trash2,
 } from "lucide-react";
+import { type KeyboardEvent, useEffect, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 const ACTION_ICON_MAP: Record<string, LucideIcon> = {
   create_task: Plus,
@@ -51,10 +51,7 @@ const REJECT_LABEL_MAP: Record<string, string> = {
   execute_shell: "Don't Run",
 };
 
-function getBodyText(
-  actionName: string,
-  input: Record<string, unknown>,
-): string {
+function getBodyText(actionName: string, input: Record<string, unknown>): string {
   switch (actionName) {
     case "create_task":
       return `Create task "${input.title ?? ""}" in project?`;
@@ -125,9 +122,7 @@ export function ActionConfirmCard({
       className="animate-in slide-in-from-bottom-2 fade-in duration-200 ease-out"
     >
       <Card
-        className={`w-full transition-opacity ${
-          isResolved ? "opacity-50" : ""
-        } ${
+        className={`w-full transition-opacity ${isResolved ? "opacity-50" : ""} ${
           !isResolved
             ? destructive
               ? "border-destructive animate-pulse-border-destructive"
@@ -163,12 +158,7 @@ export function ActionConfirmCard({
             </p>
           ) : (
             <div className="flex items-center gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onReject}
-                disabled={isResolved}
-              >
+              <Button variant="outline" size="sm" onClick={onReject} disabled={isResolved}>
                 {rejectLabel}
               </Button>
               <Button

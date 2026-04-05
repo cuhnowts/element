@@ -20,14 +20,11 @@ export function TodayViewHeader({
   overdueCount,
   upcomingCount,
 }: TodayViewHeaderProps) {
-  const progressValue =
-    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const progressValue = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
     <div className="mb-12">
-      <h1 className="text-[28px] font-semibold leading-[1.2]">
-        {getGreeting()}
-      </h1>
+      <h1 className="text-[28px] font-semibold leading-[1.2]">{getGreeting()}</h1>
       <p className="text-sm text-foreground mt-1">
         {completedCount} of {totalCount} tasks complete
       </p>

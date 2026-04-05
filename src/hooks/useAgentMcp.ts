@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useCallback } from "react";
 
 export function useAgentMcp() {
   /** Write a file relative to the app data directory via Rust. Returns the absolute path. */
@@ -23,7 +23,7 @@ export function useAgentMcp() {
 
       return writeFile("agent/mcp-config.json", JSON.stringify(config, null, 2));
     },
-    [writeFile]
+    [writeFile],
   );
 
   const generateSystemPrompt = useCallback(async (): Promise<string> => {

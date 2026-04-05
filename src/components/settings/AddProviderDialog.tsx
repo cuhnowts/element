@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
-import { Loader2, Check, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -17,10 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useStore } from "@/stores";
 import { api } from "@/lib/tauri";
+import { useStore } from "@/stores";
 import type { ProviderType } from "@/types/ai";
-import { toast } from "sonner";
 
 interface AddProviderDialogProps {
   open: boolean;
@@ -34,10 +34,7 @@ const providerTypeOptions: { value: ProviderType; label: string }[] = [
   { value: "openai_compatible", label: "Custom Endpoint" },
 ];
 
-export function AddProviderDialog({
-  open,
-  onOpenChange,
-}: AddProviderDialogProps) {
+export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps) {
   const addProvider = useStore((s) => s.addProvider);
 
   const [providerType, setProviderType] = useState<ProviderType>("anthropic");
@@ -69,8 +66,7 @@ export function AddProviderDialog({
   }, [testResult]);
 
   const showApiKey = providerType !== "ollama";
-  const showBaseUrl =
-    providerType === "ollama" || providerType === "openai_compatible";
+  const showBaseUrl = providerType === "ollama" || providerType === "openai_compatible";
 
   const handleTestConnection = async () => {
     // Save first so we can test, then we'll use the test endpoint
@@ -119,9 +115,7 @@ export function AddProviderDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add AI Provider</DialogTitle>
-          <DialogDescription>
-            Configure an AI provider for task scaffolding.
-          </DialogDescription>
+          <DialogDescription>Configure an AI provider for task scaffolding.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
@@ -220,10 +214,7 @@ export function AddProviderDialog({
             ) : null}
             Test Connection
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={submitting || !name.trim() || !model.trim()}
-          >
+          <Button onClick={handleSave} disabled={submitting || !name.trim() || !model.trim()}>
             Save Provider
           </Button>
         </DialogFooter>

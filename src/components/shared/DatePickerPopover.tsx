@@ -1,13 +1,9 @@
-import { useState } from "react";
+import { addDays, addMonths, format, nextMonday } from "date-fns";
 import { CalendarDays } from "lucide-react";
-import { addDays, addMonths, nextMonday, format } from "date-fns";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface DatePickerPopoverProps {
   value: string | null;
@@ -15,7 +11,7 @@ interface DatePickerPopoverProps {
 }
 
 function formatDisplay(isoDate: string): string {
-  const date = new Date(isoDate + "T00:00:00");
+  const date = new Date(`${isoDate}T00:00:00`);
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -42,7 +38,7 @@ export function DatePickerPopover({ value, onChange }: DatePickerPopoverProps) {
     { label: "+1 month", date: () => addMonths(new Date(), 1) },
   ];
 
-  const selected = value ? new Date(value + "T00:00:00") : undefined;
+  const selected = value ? new Date(`${value}T00:00:00`) : undefined;
 
   return (
     <Popover open={open} onOpenChange={(o) => setOpen(o)}>

@@ -1,8 +1,8 @@
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAgentStore } from "@/stores/useAgentStore";
-import { writeApprovalDecision } from "@/hooks/useAgentQueue";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { writeApprovalDecision } from "@/hooks/useAgentQueue";
+import { useAgentStore } from "@/stores/useAgentStore";
 import type { AgentActivityEntry } from "@/types/agent";
 
 function formatRelativeTime(timestamp: number): string {

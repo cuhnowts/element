@@ -1,8 +1,8 @@
-import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useEffect } from "react";
 import { toast } from "sonner";
-import { useStore } from "@/stores";
 import type { Notification } from "@/lib/types";
+import { useStore } from "@/stores";
 
 export function useNotificationEvents() {
   const addNotification = useStore((s) => s.addNotification);

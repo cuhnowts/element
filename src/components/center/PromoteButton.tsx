@@ -1,10 +1,10 @@
+import { GitBranch, Loader2, Zap } from "lucide-react";
 import { useState } from "react";
-import type { Workflow } from "@/types/workflow";
+import { Button } from "@/components/ui/button";
+import { useStore } from "@/stores";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useStore } from "@/stores";
-import { Button } from "@/components/ui/button";
-import { Zap, GitBranch, Loader2 } from "lucide-react";
+import type { Workflow } from "@/types/workflow";
 
 interface PromoteButtonProps {
   taskId: string;
@@ -12,11 +12,7 @@ interface PromoteButtonProps {
   onPromoted?: (workflow: Workflow) => void;
 }
 
-export function PromoteButton({
-  taskId,
-  variant = "button",
-  onPromoted,
-}: PromoteButtonProps) {
+export function PromoteButton({ taskId, variant = "button", onPromoted }: PromoteButtonProps) {
   const [isPromoting, setIsPromoting] = useState(false);
 
   const handlePromote = async () => {
@@ -24,7 +20,7 @@ export function PromoteButton({
     try {
       const workflow = await useWorkflowStore.getState().promoteTask(taskId);
       await useWorkflowStore.getState().selectWorkflow(workflow.id);
-      useStore.getState().setActiveView('workflow');
+      useStore.getState().setActiveView("workflow");
       // Deselect task so CenterPanel shows workflow
       useWorkspaceStore.getState().selectTask(null);
       onPromoted?.(workflow);
@@ -50,12 +46,7 @@ export function PromoteButton({
   }
 
   return (
-    <Button
-      variant="default"
-      size="sm"
-      onClick={handlePromote}
-      disabled={isPromoting}
-    >
+    <Button variant="default" size="sm" onClick={handlePromote} disabled={isPromoting}>
       {isPromoting ? (
         <Loader2 className="h-4 w-4 mr-1 animate-spin" />
       ) : (

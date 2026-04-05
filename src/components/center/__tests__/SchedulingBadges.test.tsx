@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SchedulingBadges } from "../../shared/SchedulingBadges";
 
 const nullProps = {
@@ -42,13 +42,7 @@ describe("SchedulingBadges", () => {
   });
 
   it("renders scheduled date and time badge", () => {
-    render(
-      <SchedulingBadges
-        {...nullProps}
-        scheduledDate="2026-03-18"
-        scheduledTime="14:30"
-      />,
-    );
+    render(<SchedulingBadges {...nullProps} scheduledDate="2026-03-18" scheduledTime="14:30" />);
     expect(screen.getByText(/2:30 PM/)).toBeInTheDocument();
   });
 });

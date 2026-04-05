@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Switch } from "@/components/ui/switch";
+import { useCallback, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,10 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { CronPreview } from "./CronPreview";
+import { Switch } from "@/components/ui/switch";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import type { Schedule } from "@/types/workflow";
+import { CronPreview } from "./CronPreview";
 
 const CRON_PRESETS: { label: string; value: string }[] = [
   { label: "Every hour", value: "0 * * * *" },
@@ -27,9 +27,7 @@ interface CronSchedulerProps {
 
 export function CronScheduler({ workflowId, schedule }: CronSchedulerProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [advancedValue, setAdvancedValue] = useState(
-    schedule?.cronExpression ?? "",
-  );
+  const [advancedValue, setAdvancedValue] = useState(schedule?.cronExpression ?? "");
 
   const createSchedule = useWorkflowStore((s) => s.createSchedule);
   const updateSchedule = useWorkflowStore((s) => s.updateSchedule);
@@ -44,10 +42,10 @@ export function CronScheduler({ workflowId, schedule }: CronSchedulerProps) {
         if (!hasSchedule) {
           await createSchedule(workflowId, "0 0 * * *");
         } else {
-          await toggleSchedule(schedule!.id, true);
+          await toggleSchedule(schedule?.id, true);
         }
       } else if (hasSchedule) {
-        await toggleSchedule(schedule!.id, false);
+        await toggleSchedule(schedule?.id, false);
       }
     },
     [hasSchedule, schedule, workflowId, createSchedule, toggleSchedule],
@@ -79,17 +77,12 @@ export function CronScheduler({ workflowId, schedule }: CronSchedulerProps) {
   );
 
   // Determine which preset matches the current cron expression
-  const currentPreset = CRON_PRESETS.find(
-    (p) => p.value === schedule?.cronExpression,
-  );
+  const currentPreset = CRON_PRESETS.find((p) => p.value === schedule?.cronExpression);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Switch
-          checked={isActive}
-          onCheckedChange={handleToggleRecurring}
-        />
+        <Switch checked={isActive} onCheckedChange={handleToggleRecurring} />
         <span className="text-sm font-medium">Recurring</span>
         {hasSchedule && !isActive && (
           <Badge variant="outline" className="text-xs">
@@ -101,10 +94,7 @@ export function CronScheduler({ workflowId, schedule }: CronSchedulerProps) {
       {hasSchedule && (
         <div className={isActive ? "" : "opacity-50 pointer-events-none"}>
           <div className="space-y-2">
-            <Select
-              value={currentPreset?.value ?? ""}
-              onValueChange={handlePresetChange}
-            >
+            <Select value={currentPreset?.value ?? ""} onValueChange={handlePresetChange}>
               <SelectTrigger size="sm">
                 <SelectValue placeholder="Choose a schedule..." />
               </SelectTrigger>
@@ -136,7 +126,7 @@ export function CronScheduler({ workflowId, schedule }: CronSchedulerProps) {
               />
             )}
 
-            <CronPreview cronExpression={schedule!.cronExpression} />
+            <CronPreview cronExpression={schedule?.cronExpression} />
           </div>
         </div>
       )}

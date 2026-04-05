@@ -1,21 +1,12 @@
 import { useEffect, useMemo } from "react";
-import type { Task } from "@/lib/types";
-import { useTaskStore } from "@/stores/useTaskStore";
-import { useStore } from "@/stores";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { type TimeGroup, TimeGroupSection } from "@/components/center/TimeGroupSection";
 import { TodayViewHeader } from "@/components/center/TodayViewHeader";
-import {
-  TimeGroupSection,
-  type TimeGroup,
-} from "@/components/center/TimeGroupSection";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Task } from "@/lib/types";
+import { useStore } from "@/stores";
+import { useTaskStore } from "@/stores/useTaskStore";
 
-const TIME_GROUP_ORDER: TimeGroup[] = [
-  "overdue",
-  "morning",
-  "afternoon",
-  "evening",
-  "unscheduled",
-];
+const TIME_GROUP_ORDER: TimeGroup[] = ["overdue", "morning", "afternoon", "evening", "unscheduled"];
 
 export function getTimeGroup(task: Task, today: string): TimeGroup {
   // Overdue: has due date before today AND not complete
@@ -52,16 +43,13 @@ export function TodayView() {
   const today = new Date().toISOString().slice(0, 10);
 
   const grouped = useMemo(() => {
-    const groups = new Map<
-      TimeGroup,
-      Array<{ task: Task; projectName: string }>
-    >();
+    const groups = new Map<TimeGroup, Array<{ task: Task; projectName: string }>>();
     for (const group of TIME_GROUP_ORDER) {
       groups.set(group, []);
     }
     for (const task of todaysTasks) {
       const group = getTimeGroup(task, today);
-      groups.get(group)!.push({
+      groups.get(group)?.push({
         task,
         projectName: (task.projectId ? projectMap[task.projectId] : null) ?? "Unknown",
       });
@@ -69,24 +57,17 @@ export function TodayView() {
     return groups;
   }, [todaysTasks, today, projectMap]);
 
-  const completedCount = todaysTasks.filter(
-    (t) => t.status === "complete"
-  ).length;
+  const completedCount = todaysTasks.filter((t) => t.status === "complete").length;
   const totalCount = todaysTasks.length;
   const overdueCount = grouped.get("overdue")?.length ?? 0;
   const upcomingCount = todaysTasks.filter(
-    (t) =>
-      t.status !== "complete" &&
-      getTimeGroup(t, today) !== "overdue"
+    (t) => t.status !== "complete" && getTimeGroup(t, today) !== "overdue",
   ).length;
 
   // Find next up: first incomplete, non-overdue task in scheduled time order
   const nextUpTaskId = useMemo(() => {
     const candidates = todaysTasks
-      .filter(
-        (t) =>
-          t.status !== "complete" && getTimeGroup(t, today) !== "overdue"
-      )
+      .filter((t) => t.status !== "complete" && getTimeGroup(t, today) !== "overdue")
       .sort((a, b) => {
         // Tasks with scheduled time first, then by time
         if (a.scheduledTime && b.scheduledTime)
@@ -103,8 +84,7 @@ export function TodayView() {
       <div className="flex flex-col items-center justify-center h-full text-center">
         <h2 className="text-lg font-semibold">No tasks for today</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Press Ctrl+Space to quickly capture a task, or create one from the
-          sidebar.
+          Press Ctrl+Space to quickly capture a task, or create one from the sidebar.
         </p>
       </div>
     );

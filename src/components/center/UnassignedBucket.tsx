@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { ChevronRight, Plus } from "lucide-react";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import type { Phase, Task, TaskStatus } from "@/lib/types";
 import { TaskRow } from "./TaskRow";
-import type { Task, TaskStatus, Phase } from "@/lib/types";
 
 interface UnassignedBucketProps {
   tasks: Task[];
@@ -56,15 +56,11 @@ export function UnassignedBucket({
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div
           className={`flex items-center gap-2 min-h-[40px] px-2 rounded-md transition-colors ${
-            isDropTarget
-              ? "bg-primary/10 ring-1 ring-primary/30"
-              : "hover:bg-card"
+            isDropTarget ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-card"
           }`}
         >
           <CollapsibleTrigger className="flex items-center gap-2 flex-1 min-w-0">
-            <ChevronRight
-              className={`size-4 transition-transform ${isOpen ? "rotate-90" : ""}`}
-            />
+            <ChevronRight className={`size-4 transition-transform ${isOpen ? "rotate-90" : ""}`} />
             <span className="text-sm flex-1 text-left">Unassigned</span>
           </CollapsibleTrigger>
           <div className="w-20 h-1 bg-secondary rounded-full flex-shrink-0">

@@ -6,7 +6,7 @@ interface SessionIndicatorProps {
 
 export function SessionIndicator({ projectId }: SessionIndicatorProps) {
   const runningCount = useTerminalSessionStore(
-    (s) => (s.sessions[projectId] ?? []).filter((sess) => sess.status === "running").length
+    (s) => (s.sessions[projectId] ?? []).filter((sess) => sess.status === "running").length,
   );
 
   if (runningCount === 0) return null;

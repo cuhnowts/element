@@ -1,4 +1,4 @@
-import { Puzzle, KeyRound, Calendar, Clock, Sparkles, HeartPulse } from "lucide-react";
+import { Calendar, Clock, HeartPulse, KeyRound, Puzzle, Sparkles } from "lucide-react";
 import type { SettingsTab } from "@/lib/types";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [

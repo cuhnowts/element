@@ -1,9 +1,9 @@
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { HubToolbar } from "@/components/hub/HubToolbar";
-import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
-import { SlideOverPanel } from "@/components/hub/SlideOverPanel";
-import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
 import { HubCalendar } from "@/components/hub/calendar/HubCalendar";
+import { GoalsTreePanel } from "@/components/hub/GoalsTreePanel";
+import { HubCenterPanel } from "@/components/hub/HubCenterPanel";
+import { HubToolbar } from "@/components/hub/HubToolbar";
+import { SlideOverPanel } from "@/components/hub/SlideOverPanel";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function HubView() {
   const calendarOpen = useWorkspaceStore((s) => s.hubCalendarOpen);

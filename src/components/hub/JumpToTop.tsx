@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface JumpToTopProps {
@@ -13,10 +13,9 @@ export function JumpToTop({ scrollRef, sentinelRef }: JumpToTopProps) {
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShow(!entry.isIntersecting),
-      { threshold: 0 }
-    );
+    const observer = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting), {
+      threshold: 0,
+    });
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [sentinelRef]);

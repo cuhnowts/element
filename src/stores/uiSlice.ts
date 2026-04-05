@@ -1,9 +1,9 @@
 import type { StateCreator } from "zustand";
-import type { AppStore } from "./index";
 import type { SettingsTab } from "../lib/types";
+import type { AppStore } from "./index";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 
-export type ActiveView = 'hub' | 'project' | 'task' | 'theme' | 'workflow';
+export type ActiveView = "hub" | "project" | "task" | "theme" | "workflow";
 
 export interface UiSlice {
   activeView: ActiveView;
@@ -22,24 +22,18 @@ export interface UiSlice {
   toggleCommandPalette: () => void;
   openCreateProjectDialog: () => void;
   closeCreateProjectDialog: () => void;
-  openDeleteConfirm: (target: {
-    type: "task" | "project";
-    id: string;
-    name: string;
-  }) => void;
+  openDeleteConfirm: (target: { type: "task" | "project"; id: string; name: string }) => void;
   closeDeleteConfirm: () => void;
   openSettings: (tab?: SettingsTab) => void;
   closeSettings: () => void;
 }
 
-export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (
-  set,
-) => ({
-  activeView: 'hub' as ActiveView,
+export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (set) => ({
+  activeView: "hub" as ActiveView,
   setActiveView: (view) => set({ activeView: view, settingsOpen: false }),
   navigateToHub: () => {
     set({
-      activeView: 'hub' as ActiveView,
+      activeView: "hub" as ActiveView,
       selectedProjectId: null,
       selectedTaskId: null,
       selectedThemeId: null,
@@ -53,15 +47,11 @@ export const createUiSlice: StateCreator<AppStore, [], [], UiSlice> = (
   deleteTarget: null,
   settingsOpen: false,
   settingsTab: "plugins",
-  toggleCommandPalette: () =>
-    set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
+  toggleCommandPalette: () => set((s) => ({ commandPaletteOpen: !s.commandPaletteOpen })),
   openCreateProjectDialog: () => set({ createProjectDialogOpen: true }),
   closeCreateProjectDialog: () => set({ createProjectDialogOpen: false }),
-  openDeleteConfirm: (target) =>
-    set({ deleteConfirmOpen: true, deleteTarget: target }),
-  closeDeleteConfirm: () =>
-    set({ deleteConfirmOpen: false, deleteTarget: null }),
-  openSettings: (tab) =>
-    set({ settingsOpen: true, settingsTab: tab ?? "plugins" }),
+  openDeleteConfirm: (target) => set({ deleteConfirmOpen: true, deleteTarget: target }),
+  closeDeleteConfirm: () => set({ deleteConfirmOpen: false, deleteTarget: null }),
+  openSettings: (tab) => set({ settingsOpen: true, settingsTab: tab ?? "plugins" }),
   closeSettings: () => set({ settingsOpen: false }),
 });

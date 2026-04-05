@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { act } from "react";
-import { SlideOverPanel } from "../SlideOverPanel";
+import { describe, expect, it } from "vitest";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { SlideOverPanel } from "../SlideOverPanel";
 
 describe("useWorkspaceStore hub panel toggles", () => {
   beforeEach(() => {
@@ -53,7 +53,7 @@ describe("SlideOverPanel", () => {
     const { container } = render(
       <SlideOverPanel side="left" open={false}>
         <div>Content</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("-translate-x-full");
@@ -63,7 +63,7 @@ describe("SlideOverPanel", () => {
     const { container } = render(
       <SlideOverPanel side="left" open={true}>
         <div>Content</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("translate-x-0");
@@ -73,7 +73,7 @@ describe("SlideOverPanel", () => {
     const { container } = render(
       <SlideOverPanel side="right" open={false}>
         <div>Content</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     const panel = container.firstElementChild!;
     // Should have translate-x-full but NOT -translate-x-full
@@ -85,7 +85,7 @@ describe("SlideOverPanel", () => {
     const { container } = render(
       <SlideOverPanel side="right" open={true}>
         <div>Content</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("translate-x-0");
@@ -95,7 +95,7 @@ describe("SlideOverPanel", () => {
     const { container } = render(
       <SlideOverPanel side="left" open={false}>
         <div>Content</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("transition-transform");
@@ -106,7 +106,7 @@ describe("SlideOverPanel", () => {
     render(
       <SlideOverPanel side="left" open={true}>
         <div data-testid="child">Hello</div>
-      </SlideOverPanel>
+      </SlideOverPanel>,
     );
     expect(screen.getByTestId("child")).toBeInTheDocument();
   });

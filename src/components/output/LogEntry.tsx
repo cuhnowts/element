@@ -14,9 +14,7 @@ interface LogEntryProps {
 export function LogEntry({ entry }: LogEntryProps) {
   return (
     <div className="flex gap-2 px-3 py-0.5 hover:bg-muted/50 font-mono text-sm">
-      <span className="text-muted-foreground whitespace-nowrap">
-        [{entry.timestamp}]
-      </span>
+      <span className="text-muted-foreground whitespace-nowrap">[{entry.timestamp}]</span>
       <span className={`font-semibold w-12 ${LOG_LEVEL_STYLES[entry.level] ?? "text-foreground"}`}>
         {entry.level}
       </span>

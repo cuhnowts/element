@@ -1,5 +1,5 @@
-import type { ExecutionRecord } from "@/types/execution";
 import { EmptyState } from "@/components/shared/EmptyState";
+import type { ExecutionRecord } from "@/types/execution";
 
 const STATUS_STYLES: Record<string, string> = {
   complete: "bg-green-500",

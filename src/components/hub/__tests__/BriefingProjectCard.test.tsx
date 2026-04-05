@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BriefingProjectCard } from "../BriefingProjectCard";
+import { describe, expect, it, vi } from "vitest";
 import type { BriefingProject } from "@/types/briefing";
+import { BriefingProjectCard } from "../BriefingProjectCard";
 
 const baseProject: BriefingProject = {
   name: "Test Project",
@@ -17,25 +17,19 @@ describe("BriefingProjectCard", () => {
   // BRIEF-02: Structured sections rendered from BriefingJSON
   describe("sections", () => {
     it("renders blockers section with AlertTriangle icon when blockers exist", () => {
-      render(
-        <BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />);
       expect(screen.getByText("Blockers")).toBeInTheDocument();
       expect(screen.getByText("API endpoint failing")).toBeInTheDocument();
     });
 
     it("renders deadlines section with Clock icon when deadlines exist", () => {
-      render(
-        <BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />);
       expect(screen.getByText("Deadlines")).toBeInTheDocument();
       expect(screen.getByText("Feature due tomorrow")).toBeInTheDocument();
     });
 
     it("renders wins section with Trophy icon when wins exist", () => {
-      render(
-        <BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={baseProject} onNavigate={vi.fn()} />);
       expect(screen.getByText("Wins")).toBeInTheDocument();
       // Wins is collapsed by default, items not visible until toggled
     });
@@ -46,9 +40,7 @@ describe("BriefingProjectCard", () => {
         blockers: [],
         wins: [],
       };
-      render(
-        <BriefingProjectCard project={noBlockers} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={noBlockers} onNavigate={vi.fn()} />);
       expect(screen.queryByText("Blockers")).not.toBeInTheDocument();
       expect(screen.queryByText("Wins")).not.toBeInTheDocument();
       expect(screen.getByText("Deadlines")).toBeInTheDocument();
@@ -62,9 +54,7 @@ describe("BriefingProjectCard", () => {
         ...baseProject,
         tags: ["overdue", "blocked"],
       };
-      render(
-        <BriefingProjectCard project={multiTag} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={multiTag} onNavigate={vi.fn()} />);
       expect(screen.getByText("overdue")).toBeInTheDocument();
       expect(screen.getByText("blocked")).toBeInTheDocument();
     });
@@ -74,9 +64,7 @@ describe("BriefingProjectCard", () => {
         ...baseProject,
         tags: ["overdue", "blocked"],
       };
-      render(
-        <BriefingProjectCard project={proj} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={proj} onNavigate={vi.fn()} />);
       const overdueBadge = screen.getByText("overdue");
       const blockedBadge = screen.getByText("blocked");
       // Destructive badges have bg-destructive class
@@ -89,9 +77,7 @@ describe("BriefingProjectCard", () => {
         ...baseProject,
         tags: ["on-track", "recently-completed"],
       };
-      render(
-        <BriefingProjectCard project={proj} onNavigate={vi.fn()} />,
-      );
+      render(<BriefingProjectCard project={proj} onNavigate={vi.fn()} />);
       const onTrack = screen.getByText("on track");
       const completed = screen.getByText("recently completed");
       expect(onTrack.className).toContain("bg-secondary");
@@ -103,9 +89,7 @@ describe("BriefingProjectCard", () => {
     it("calls onNavigate with projectId when card header is clicked", async () => {
       const user = userEvent.setup();
       const onNavigate = vi.fn();
-      render(
-        <BriefingProjectCard project={baseProject} onNavigate={onNavigate} />,
-      );
+      render(<BriefingProjectCard project={baseProject} onNavigate={onNavigate} />);
       // Click the card header (project name area)
       await user.click(screen.getByText("Test Project"));
       expect(onNavigate).toHaveBeenCalledWith(42);
@@ -118,9 +102,7 @@ describe("BriefingProjectCard", () => {
         ...baseProject,
         projectId: undefined,
       };
-      render(
-        <BriefingProjectCard project={noIdProject} onNavigate={onNavigate} />,
-      );
+      render(<BriefingProjectCard project={noIdProject} onNavigate={onNavigate} />);
       await user.click(screen.getByText("Test Project"));
       expect(onNavigate).not.toHaveBeenCalled();
     });

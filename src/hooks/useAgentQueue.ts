@@ -1,7 +1,7 @@
+import { invoke } from "@tauri-apps/api/core";
+import { appDataDir } from "@tauri-apps/api/path";
 import { useEffect, useRef } from "react";
 import { useAgentStore } from "@/stores/useAgentStore";
-import { appDataDir } from "@tauri-apps/api/path";
-import { invoke } from "@tauri-apps/api/core";
 import type { AgentEntryType } from "@/types/agent";
 
 // --- Tauri fs invoke helpers ---
@@ -26,11 +26,9 @@ async function fsWriteTextFile(path: string, contents: string): Promise<void> {
 }
 
 async function fsMkdir(path: string): Promise<void> {
-  await invoke("plugin:fs|mkdir", { path, options: { recursive: true } }).catch(
-    () => {
-      // directory may already exist
-    },
-  );
+  await invoke("plugin:fs|mkdir", { path, options: { recursive: true } }).catch(() => {
+    // directory may already exist
+  });
 }
 
 async function fsExists(path: string): Promise<boolean> {
@@ -90,10 +88,7 @@ function mapStatusToEntryType(status: string, _action: string): AgentEntryType {
 
 // --- Poll logic ---
 
-async function scanApprovals(
-  queueDir: string,
-  processedIds: Set<string>,
-): Promise<void> {
+async function scanApprovals(queueDir: string, processedIds: Set<string>): Promise<void> {
   const dir = `${queueDir}/approvals`;
   const dirExists = await fsExists(dir);
   if (!dirExists) return;
@@ -134,10 +129,7 @@ async function scanApprovals(
   }
 }
 
-async function scanNotifications(
-  queueDir: string,
-  processedIds: Set<string>,
-): Promise<void> {
+async function scanNotifications(queueDir: string, processedIds: Set<string>): Promise<void> {
   const dir = `${queueDir}/notifications`;
   const dirExists = await fsExists(dir);
   if (!dirExists) return;
@@ -172,10 +164,7 @@ async function scanNotifications(
   }
 }
 
-async function scanStatus(
-  queueDir: string,
-  processedIds: Set<string>,
-): Promise<void> {
+async function scanStatus(queueDir: string, processedIds: Set<string>): Promise<void> {
   const dir = `${queueDir}/status`;
   const dirExists = await fsExists(dir);
   if (!dirExists) return;
@@ -208,10 +197,7 @@ async function scanStatus(
   }
 }
 
-async function scanSessions(
-  queueDir: string,
-  processedIds: Set<string>,
-): Promise<void> {
+async function scanSessions(queueDir: string, processedIds: Set<string>): Promise<void> {
   const dir = `${queueDir}/sessions`;
   const dirExists = await fsExists(dir);
   if (!dirExists) return;
@@ -264,10 +250,7 @@ export async function writeApprovalDecision(
   await fsWriteTextFile(filePath, JSON.stringify(data, null, 2));
 }
 
-export async function writeSessionRequest(
-  projectId: string,
-  sessionName: string,
-): Promise<void> {
+export async function writeSessionRequest(projectId: string, sessionName: string): Promise<void> {
   const queueDir = await getQueueDir();
   const dir = `${queueDir}/sessions`;
   await fsMkdir(dir);
@@ -280,10 +263,7 @@ export async function writeSessionRequest(
     sessionName,
     createdAt: new Date().toISOString(),
   };
-  await fsWriteTextFile(
-    `${dir}/${fileId}.json`,
-    JSON.stringify(payload, null, 2),
-  );
+  await fsWriteTextFile(`${dir}/${fileId}.json`, JSON.stringify(payload, null, 2));
 }
 
 // --- Hook ---

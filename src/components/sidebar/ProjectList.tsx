@@ -1,15 +1,15 @@
-import { useEffect } from "react";
 import { Plus } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect } from "react";
+import { SessionIndicator } from "@/components/sidebar/SessionIndicator";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStore } from "@/stores";
-import { SessionIndicator } from "@/components/sidebar/SessionIndicator";
 
 export function ProjectList() {
   const projects = useStore((s) => s.projects);
@@ -55,9 +55,7 @@ export function ProjectList() {
                     type="button"
                     onClick={() => handleSelectProject(project.id)}
                     className={`flex items-center w-full px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-muted text-left ${
-                      selectedProjectId === project.id
-                        ? "text-primary font-medium"
-                        : ""
+                      selectedProjectId === project.id ? "text-primary font-medium" : ""
                     }`}
                   />
                 }

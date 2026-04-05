@@ -12,8 +12,7 @@ export function ProgressDot({ status }: ProgressDotProps) {
       className={cn("inline-block w-2 h-2 rounded-full shrink-0", {
         "bg-primary": status === "complete",
         "border border-primary bg-transparent": status === "in-progress",
-        "border border-muted-foreground/40 bg-transparent":
-          status === "not-started",
+        "border border-muted-foreground/40 bg-transparent": status === "not-started",
         "bg-destructive": status === "overdue",
       })}
       aria-label={status}

@@ -1,14 +1,16 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  assignOverlapColumns,
+  eventHeight,
   normalizeToMinutes,
   timeToPixelOffset,
-  eventHeight,
-  assignOverlapColumns,
 } from "./calendarLayout";
 import type { MergedEvent } from "./calendarTypes";
-import { SLOT_HEIGHT, MINUTES_PER_SLOT, EVENT_MIN_HEIGHT, MAX_OVERLAP_COLUMNS } from "./calendarTypes";
+import { EVENT_MIN_HEIGHT, MAX_OVERLAP_COLUMNS, SLOT_HEIGHT } from "./calendarTypes";
 
-function makeEvent(overrides: Partial<MergedEvent> & { startMinutes: number; endMinutes: number }): MergedEvent {
+function makeEvent(
+  overrides: Partial<MergedEvent> & { startMinutes: number; endMinutes: number },
+): MergedEvent {
   return {
     id: overrides.id ?? "evt-1",
     type: overrides.type ?? "meeting",

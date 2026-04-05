@@ -1,16 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { Project, Task, TaskPriority } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DurationChips } from "@/components/shared/DurationChips";
+import type { Project, Task, TaskPriority } from "@/lib/types";
 
 export function QuickCaptureWindow() {
   const [title, setTitle] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null,
-  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [dueDate, setDueDate] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
@@ -73,10 +71,7 @@ export function QuickCaptureWindow() {
     "h-8 rounded-md border border-border bg-secondary px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring";
 
   return (
-    <div
-      className="h-screen w-screen overflow-hidden"
-      style={{ borderRadius: "12px" }}
-    >
+    <div className="h-screen w-screen overflow-hidden" style={{ borderRadius: "12px" }}>
       <div className="bg-card border border-border rounded-xl p-8 shadow-lg h-full flex flex-col gap-4">
         {/* Title input */}
         <input

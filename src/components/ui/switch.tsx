@@ -1,6 +1,6 @@
-import { Switch as SwitchPrimitive } from "@base-ui/react/switch"
+import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Switch({
   className,
@@ -8,8 +8,8 @@ function Switch({
   onCheckedChange,
   ...props
 }: Omit<SwitchPrimitive.Root.Props, "onChange"> & {
-  checked?: boolean
-  onCheckedChange?: (checked: boolean) => void
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
   return (
     <SwitchPrimitive.Root
@@ -27,7 +27,7 @@ function Switch({
         className="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[checked]:translate-x-4 data-[unchecked]:translate-x-0"
       />
     </SwitchPrimitive.Root>
-  )
+  );
 }
 
-export { Switch }
+export { Switch };

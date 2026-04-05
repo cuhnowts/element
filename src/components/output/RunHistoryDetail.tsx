@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { StatusDot } from "@/components/shared/StatusDot";
-import type { WorkflowRun, WorkflowStepResult, StepStatus } from "@/types/execution";
+import { Badge } from "@/components/ui/badge";
+import type { StepStatus, WorkflowRun, WorkflowStepResult } from "@/types/execution";
 
 interface RunHistoryDetailProps {
   run: WorkflowRun;
@@ -85,7 +85,7 @@ function StepResultItem({ step }: { step: WorkflowStepResult }) {
         >
           <pre className="font-mono text-xs text-muted-foreground bg-muted/50 rounded p-2 overflow-hidden">
             {expanded
-              ? step.outputFull ?? step.outputPreview
+              ? (step.outputFull ?? step.outputPreview)
               : step.outputPreview.split("\n").slice(0, 3).join("\n")}
           </pre>
           {step.outputPreview.split("\n").length > 3 && (
@@ -109,18 +109,12 @@ export function RunHistoryDetail({ run, steps }: RunHistoryDetailProps) {
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <StatusDot
-          status={STEP_STATUS_MAP[run.status] ?? "pending"}
-        />
-        <span className="text-sm font-medium">
-          {STATUS_LABELS[run.status] ?? run.status}
-        </span>
+        <StatusDot status={STEP_STATUS_MAP[run.status] ?? "pending"} />
+        <span className="text-sm font-medium">{STATUS_LABELS[run.status] ?? run.status}</span>
         <Badge variant="outline" className="text-xs">
           {TRIGGER_LABELS[run.triggerType] ?? run.triggerType}
         </Badge>
-        <span className="text-xs text-muted-foreground font-mono">
-          {run.id.slice(0, 8)}
-        </span>
+        <span className="text-xs text-muted-foreground font-mono">{run.id.slice(0, 8)}</span>
         <span className="text-xs text-muted-foreground ml-auto">
           {new Date(run.startedAt).toLocaleString()}
           {run.completedAt && (
@@ -131,9 +125,7 @@ export function RunHistoryDetail({ run, steps }: RunHistoryDetailProps) {
         </span>
       </div>
 
-      {run.errorMessage && (
-        <p className="text-sm text-destructive">{run.errorMessage}</p>
-      )}
+      {run.errorMessage && <p className="text-sm text-destructive">{run.errorMessage}</p>}
 
       <div className="space-y-2">
         {steps.map((step) => (

@@ -1,11 +1,7 @@
 import type { StateCreator } from "zustand";
-import type { AppStore } from "./index";
-import type {
-  AiProvider,
-  CreateProviderInput,
-  TaskScaffold,
-} from "../types/ai";
 import { api } from "../lib/tauri";
+import type { AiProvider, CreateProviderInput, TaskScaffold } from "../types/ai";
+import type { AppStore } from "./index";
 
 export interface AiSlice {
   providers: AiProvider[];
@@ -31,10 +27,7 @@ export interface AiSlice {
   hasDefaultProvider: () => boolean;
 }
 
-export const createAiSlice: StateCreator<AppStore, [], [], AiSlice> = (
-  set,
-  get,
-) => ({
+export const createAiSlice: StateCreator<AppStore, [], [], AiSlice> = (set, get) => ({
   providers: [],
   isGenerating: false,
   currentRequestId: null,

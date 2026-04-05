@@ -1,15 +1,11 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { isBacklogPhase, isOverdue } from "@/lib/date-utils";
+import type { Phase, Project, Task } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/stores";
 import { ProgressDot, type ProgressStatus } from "./ProgressDot";
-import type { Project, Phase, Task } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { isOverdue, isBacklogPhase } from "@/lib/date-utils";
 
 interface GoalsTreeNodeProps {
   project: Project;
@@ -30,41 +26,32 @@ export function derivePhaseStatus(
   if (
     phaseSortOrder !== undefined &&
     !isBacklogPhase(phaseSortOrder) &&
-    phaseTasks.some(
-      (t) => t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate),
-    )
+    phaseTasks.some((t) => t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate))
   ) {
     return "overdue";
   }
 
-  if (
-    phaseTasks.some(
-      (t) => t.status === "in-progress" || t.status === "blocked",
-    )
-  )
+  if (phaseTasks.some((t) => t.status === "in-progress" || t.status === "blocked"))
     return "in-progress";
   // Mix of pending and complete
   if (phaseTasks.some((t) => t.status === "complete")) return "in-progress";
   return "not-started";
 }
 
-export function deriveProjectStatus(
-  phases: Phase[],
-  tasks: Task[],
-): ProgressStatus {
+export function deriveProjectStatus(phases: Phase[], tasks: Task[]): ProgressStatus {
   if (phases.length === 0) return "not-started";
   const statuses = phases.map((p) => derivePhaseStatus(p.id, tasks, p.sortOrder));
   if (statuses.every((s) => s === "complete")) return "complete";
   if (statuses.some((s) => s === "overdue")) return "overdue";
-  if (statuses.some((s) => s === "in-progress" || s === "complete"))
-    return "in-progress";
+  if (statuses.some((s) => s === "in-progress" || s === "complete")) return "in-progress";
   return "not-started";
 }
 
 function countOverdueTasks(tasks: Task[], phaseId: string, phaseSortOrder: number): number {
   if (isBacklogPhase(phaseSortOrder)) return 0;
   return tasks.filter(
-    (t) => t.phaseId === phaseId && t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate),
+    (t) =>
+      t.phaseId === phaseId && t.status !== "complete" && t.dueDate != null && isOverdue(t.dueDate),
   ).length;
 }
 
@@ -85,11 +72,7 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div
-        role="treeitem"
-        aria-expanded={phases.length > 0 ? open : undefined}
-        className="group"
-      >
+      <div role="treeitem" aria-expanded={phases.length > 0 ? open : undefined} className="group">
         <div className="flex items-center gap-1 pl-2 pr-2 py-1 hover:bg-secondary rounded-sm">
           {phases.length > 0 ? (
             <CollapsibleTrigger

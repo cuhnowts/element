@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { Target, Pencil } from "lucide-react";
+import { Pencil, Target } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { api } from "@/lib/tauri";
 import { useStore } from "@/stores";
 
@@ -19,7 +19,7 @@ export function GoalHeroCard({ projectId, goal }: GoalHeroCardProps) {
   // Sync localGoal from prop when projectId changes
   useEffect(() => {
     setLocalGoal(goal);
-  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [goal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -57,11 +57,7 @@ export function GoalHeroCard({ projectId, goal }: GoalHeroCardProps) {
   const isEmpty = !localGoal;
 
   return (
-    <Card
-      className="group p-4"
-      role="region"
-      aria-label="Project goal"
-    >
+    <Card className="group p-4" role="region" aria-label="Project goal">
       <div className="flex items-center gap-3">
         <Target size={16} className="text-muted-foreground shrink-0" />
 
@@ -84,9 +80,7 @@ export function GoalHeroCard({ projectId, goal }: GoalHeroCardProps) {
             Set a project goal...
           </span>
         ) : (
-          <span className="flex-1 text-base text-foreground">
-            {localGoal}
-          </span>
+          <span className="flex-1 text-base text-foreground">{localGoal}</span>
         )}
 
         {!isEditing && (

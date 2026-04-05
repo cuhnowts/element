@@ -1,13 +1,8 @@
+import { toast } from "sonner";
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
+import type { OnboardingStep, PendingPhase, PendingTask, PlanOutput } from "../types/onboarding";
 import type { AppStore } from "./index";
-import type {
-  OnboardingStep,
-  PlanOutput,
-  PendingPhase,
-  PendingTask,
-} from "../types/onboarding";
-import { toast } from "sonner";
 
 export interface OnboardingSlice {
   onboardingStep: OnboardingStep;
@@ -32,12 +27,10 @@ export interface OnboardingSlice {
   discardPlan: () => void;
 }
 
-export const createOnboardingSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  OnboardingSlice
-> = (set, get) => ({
+export const createOnboardingSlice: StateCreator<AppStore, [], [], OnboardingSlice> = (
+  set,
+  get,
+) => ({
   onboardingStep: "idle",
   onboardingScope: "",
   onboardingGoals: "",
@@ -121,7 +114,7 @@ export const createOnboardingSlice: StateCreator<
         plan.phases.map((p) => ({
           name: p.name,
           tasks: p.tasks.map((t) => ({ title: t.title, description: t.description })),
-        }))
+        })),
       );
 
       // D-07: Regenerate context file to execution mode
@@ -139,7 +132,7 @@ export const createOnboardingSlice: StateCreator<
         onboardingGoals: "",
         onboardingSaving: false,
       });
-    } catch (e) {
+    } catch (_e) {
       toast.error("Could not save plan. Check your connection and try again.");
       set({ onboardingSaving: false });
     }
@@ -152,7 +145,7 @@ export const createOnboardingSlice: StateCreator<
     try {
       // Quick tier: extract tasks from the single phase wrapper and create as flat tasks
       const allTasks = plan.phases.flatMap((p) =>
-        p.tasks.map((t) => ({ title: t.title, description: t.description }))
+        p.tasks.map((t) => ({ title: t.title, description: t.description })),
       );
       const result = await api.batchCreateTasks(projectId, allTasks);
 
@@ -171,7 +164,7 @@ export const createOnboardingSlice: StateCreator<
         onboardingGoals: "",
         onboardingSaving: false,
       });
-    } catch (e) {
+    } catch (_e) {
       toast.error("Could not save tasks. Check your connection and try again.");
       set({ onboardingSaving: false });
     }

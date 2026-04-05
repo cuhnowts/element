@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { AiProvider } from "@/types/ai";
 
 interface ProviderCardProps {
@@ -9,11 +9,7 @@ interface ProviderCardProps {
   onSetDefault: (id: string) => void;
 }
 
-export function ProviderCard({
-  provider,
-  onRemove,
-  onSetDefault,
-}: ProviderCardProps) {
+export function ProviderCard({ provider, onRemove, onSetDefault }: ProviderCardProps) {
   return (
     <div className="flex items-center justify-between rounded-lg bg-card p-4">
       <div className="flex items-center gap-3">
@@ -21,22 +17,14 @@ export function ProviderCard({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{provider.name}</span>
-            {provider.isDefault && (
-              <Badge variant="secondary">Default</Badge>
-            )}
+            {provider.isDefault && <Badge variant="secondary">Default</Badge>}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {provider.model}
-          </span>
+          <span className="text-xs text-muted-foreground">{provider.model}</span>
         </div>
       </div>
       <div className="flex items-center gap-1">
         {!provider.isDefault && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onSetDefault(provider.id)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => onSetDefault(provider.id)}>
             Set as Default
           </Button>
         )}

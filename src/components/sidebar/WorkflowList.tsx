@@ -1,12 +1,12 @@
+import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useEffect } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStore } from "@/stores";
-import { ChevronRight, ChevronDown, Plus } from "lucide-react";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { useWorkflowStore } from "@/stores/useWorkflowStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 export function WorkflowList() {
@@ -26,15 +26,22 @@ export function WorkflowList() {
   const handleCreate = async () => {
     const workflow = await createWorkflow("New Workflow", "", []);
     selectWorkflow(workflow.id);
-    useStore.getState().setActiveView('workflow');
+    useStore.getState().setActiveView("workflow");
   };
 
   return (
     <Collapsible open={!workflowsCollapsed} onOpenChange={() => toggleWorkflows()}>
       <div className="flex flex-col">
         <div className="flex items-center justify-between px-4 py-2">
-          <CollapsibleTrigger className="flex items-center gap-1 cursor-pointer" aria-label="Toggle workflows section">
-            {workflowsCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
+          <CollapsibleTrigger
+            className="flex items-center gap-1 cursor-pointer"
+            aria-label="Toggle workflows section"
+          >
+            {workflowsCollapsed ? (
+              <ChevronRight className="size-3" />
+            ) : (
+              <ChevronDown className="size-3" />
+            )}
             <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">
               Workflows
             </span>
@@ -62,7 +69,7 @@ export function WorkflowList() {
                   type="button"
                   onClick={() => {
                     selectWorkflow(wf.id);
-                    useStore.getState().setActiveView('workflow');
+                    useStore.getState().setActiveView("workflow");
                   }}
                   className={`w-full text-left flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
                     selectedWorkflowId === wf.id ? "bg-accent/10" : ""

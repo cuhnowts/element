@@ -1,11 +1,7 @@
 import { AlertTriangle, FolderOpen } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ShellStepConfig as ShellStepConfigType } from "@/lib/types";
 
 interface ShellStepConfigProps {
@@ -21,13 +17,9 @@ export function ShellStepConfig({ config, onChange }: ShellStepConfigProps) {
           <TooltipTrigger>
             <AlertTriangle className="size-4 text-chart-4" />
           </TooltipTrigger>
-          <TooltipContent>
-            Shell commands run with full system access
-          </TooltipContent>
+          <TooltipContent>Shell commands run with full system access</TooltipContent>
         </Tooltip>
-        <span className="text-xs font-semibold tracking-wide">
-          Shell Command
-        </span>
+        <span className="text-xs font-semibold tracking-wide">Shell Command</span>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -41,9 +33,7 @@ export function ShellStepConfig({ config, onChange }: ShellStepConfigProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">
-          Working Directory
-        </label>
+        <label className="text-xs font-semibold tracking-wide">Working Directory</label>
         <div className="relative">
           <FolderOpen className="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -70,9 +60,7 @@ export function ShellStepConfig({ config, onChange }: ShellStepConfigProps) {
             onChange={(e) =>
               onChange({
                 ...config,
-                timeoutSeconds: e.target.value
-                  ? parseInt(e.target.value, 10)
-                  : undefined,
+                timeoutSeconds: e.target.value ? parseInt(e.target.value, 10) : undefined,
               })
             }
           />

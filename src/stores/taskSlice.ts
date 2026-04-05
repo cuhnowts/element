@@ -1,11 +1,6 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
-import type {
-  Task,
-  TaskWithTags,
-  TaskStatus,
-  TaskPriority,
-} from "../lib/types";
+import type { Task, TaskPriority, TaskStatus, TaskWithTags } from "../lib/types";
 import type { AppStore } from "./index";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 
@@ -15,7 +10,12 @@ export interface TaskSlice {
   selectedTask: TaskWithTags | null;
   tasksLoading: boolean;
   loadTasks: (projectId: string) => Promise<void>;
-  createTask: (title: string, projectId?: string, themeId?: string, phaseId?: string) => Promise<Task>;
+  createTask: (
+    title: string,
+    projectId?: string,
+    themeId?: string,
+    phaseId?: string,
+  ) => Promise<Task>;
   setTaskPhase: (taskId: string, phaseId: string | null) => Promise<void>;
   loadTaskDetail: (taskId: string) => Promise<void>;
   selectTask: (taskId: string | null) => Promise<void>;
@@ -39,10 +39,7 @@ export interface TaskSlice {
   removeTagFromTask: (taskId: string, tagId: string) => Promise<void>;
 }
 
-export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
-  set,
-  _get,
-) => ({
+export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (set, _get) => ({
   tasks: [],
   selectedTaskId: null,
   selectedTask: null,
@@ -61,9 +58,10 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
     const task = await api.setTaskPhase(taskId, phaseId);
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, phaseId: task.phaseId } : t)),
-      selectedTask: s.selectedTask?.id === taskId
-        ? { ...s.selectedTask, phaseId: task.phaseId }
-        : s.selectedTask,
+      selectedTask:
+        s.selectedTask?.id === taskId
+          ? { ...s.selectedTask, phaseId: task.phaseId }
+          : s.selectedTask,
     }));
   },
   loadTaskDetail: async (taskId) => {
@@ -72,11 +70,16 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
   },
   selectTask: async (taskId) => {
     if (!taskId) {
-      set({ selectedTaskId: null, selectedTask: null, activeView: 'hub' as const });
+      set({ selectedTaskId: null, selectedTask: null, activeView: "hub" as const });
       useWorkspaceStore.getState().selectTask(null);
       return;
     }
-    set({ selectedTaskId: taskId, selectedProjectId: null, selectedThemeId: null, activeView: 'task' as const });
+    set({
+      selectedTaskId: taskId,
+      selectedProjectId: null,
+      selectedThemeId: null,
+      activeView: "task" as const,
+    });
     useWorkspaceStore.getState().selectTask(taskId);
     const task = await api.getTask(taskId);
     set({ selectedTask: task });
@@ -85,10 +88,7 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
     await api.updateTaskStatus(taskId, status);
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, status } : t)),
-      selectedTask:
-        s.selectedTask?.id === taskId
-          ? { ...s.selectedTask, status }
-          : s.selectedTask,
+      selectedTask: s.selectedTask?.id === taskId ? { ...s.selectedTask, status } : s.selectedTask,
     }));
   },
   updateTask: async (taskId, updates) => {
@@ -96,9 +96,7 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t)),
       selectedTask:
-        s.selectedTask?.id === taskId
-          ? { ...s.selectedTask, ...updates }
-          : s.selectedTask,
+        s.selectedTask?.id === taskId ? { ...s.selectedTask, ...updates } : s.selectedTask,
     }));
   },
   deleteTask: async (taskId) => {

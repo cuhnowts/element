@@ -13,12 +13,7 @@ export interface PhaseSlice {
   reorderPhases: (projectId: string, orderedIds: string[]) => Promise<void>;
 }
 
-export const createPhaseSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  PhaseSlice
-> = (set, _get) => ({
+export const createPhaseSlice: StateCreator<AppStore, [], [], PhaseSlice> = (set, _get) => ({
   phases: [],
   phasesLoading: false,
   loadPhases: async (projectId) => {

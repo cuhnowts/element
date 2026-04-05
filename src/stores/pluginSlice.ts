@@ -14,12 +14,7 @@ export interface PluginSlice {
   scanPlugins: () => Promise<void>;
 }
 
-export const createPluginSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  PluginSlice
-> = (set, get) => ({
+export const createPluginSlice: StateCreator<AppStore, [], [], PluginSlice> = (set, get) => ({
   plugins: [],
   pluginsLoading: false,
   pluginsError: null,

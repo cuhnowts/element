@@ -1,32 +1,27 @@
-import { useEffect, useState, useRef } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X, ArrowLeft } from "lucide-react";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { useStore } from "@/stores";
-import { useTaskStore } from "@/stores/useTaskStore";
-import { ExecutionDiagram } from "./ExecutionDiagram";
-import { PromoteButton } from "./PromoteButton";
-import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
+import { ArrowLeft, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { DatePickerPopover } from "@/components/shared/DatePickerPopover";
 import { DurationChips } from "@/components/shared/DurationChips";
-import { isBacklogPhase } from "@/lib/date-utils";
+import { SchedulingBadges } from "@/components/shared/SchedulingBadges";
 import {
   Accordion,
+  AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  AccordionContent,
 } from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
-import type { TaskStatus, TaskPriority } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { isBacklogPhase } from "@/lib/date-utils";
+import type { TaskPriority, TaskStatus } from "@/lib/types";
+import { useStore } from "@/stores";
+import { useTaskStore } from "@/stores/useTaskStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { ExecutionDiagram } from "./ExecutionDiagram";
+import { PromoteButton } from "./PromoteButton";
 
 const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "pending", label: "Pending" },
@@ -82,7 +77,7 @@ export function TaskDetail() {
       setDescription(selectedTask.description);
       setContext(selectedTask.context);
     }
-  }, [selectedTask?.id]); // Only reset on task change, not every update
+  }, [selectedTask?.id, selectedTask.context, selectedTask.description, selectedTask]); // Only reset on task change, not every update
 
   if (!selectedTaskId) return null;
 
@@ -166,7 +161,9 @@ export function TaskDetail() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
-          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
           className="text-lg font-semibold border-none shadow-none px-0 focus-visible:ring-0 bg-transparent flex-1"
           placeholder="Task title"
         />
@@ -266,7 +263,12 @@ export function TaskDetail() {
               <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
                 placeholder="Add tag..."
                 className="h-6 w-24 text-xs border-none shadow-none px-1 focus-visible:ring-0 bg-transparent"
               />
@@ -289,7 +291,9 @@ export function TaskDetail() {
               recurrenceRule={selectedTask.recurrenceRule}
               isBacklog={
                 selectedTask.phaseId
-                  ? isBacklogPhase(phases.find((p) => p.id === selectedTask.phaseId)?.sortOrder ?? 0)
+                  ? isBacklogPhase(
+                      phases.find((p) => p.id === selectedTask.phaseId)?.sortOrder ?? 0,
+                    )
                   : false
               }
             />
@@ -321,7 +325,7 @@ export function TaskDetail() {
                   <SelectTrigger className="w-48 h-8 text-sm">
                     <span className="flex flex-1 text-left truncate">
                       {selectedTask.phaseId
-                        ? phases.find((p) => p.id === selectedTask.phaseId)?.name ?? "Unknown"
+                        ? (phases.find((p) => p.id === selectedTask.phaseId)?.name ?? "Unknown")
                         : "Unassigned"}
                     </span>
                   </SelectTrigger>
@@ -351,7 +355,12 @@ export function TaskDetail() {
 
       {/* Delete */}
       <div className="pt-4 border-t border-border">
-        <Button variant="ghost" size="sm" className="text-xs text-destructive hover:text-destructive" onClick={handleDelete}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-destructive hover:text-destructive"
+          onClick={handleDelete}
+        >
           Delete Task
         </Button>
       </div>

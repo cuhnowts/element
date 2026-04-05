@@ -10,9 +10,7 @@ async function renderApp() {
   const root = ReactDOM.createRoot(document.getElementById("root")!);
 
   if (windowType === "capture") {
-    const { QuickCaptureWindow } = await import(
-      "./components/capture/QuickCaptureWindow"
-    );
+    const { QuickCaptureWindow } = await import("./components/capture/QuickCaptureWindow");
     root.render(
       <React.StrictMode>
         <QuickCaptureWindow />

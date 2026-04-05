@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
-import { useStore } from "@/stores";
-import { api } from "@/lib/tauri";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { GoalsTreeNode } from "./GoalsTreeNode";
-import { ChoresSection } from "./ChoresSection";
+import { api } from "@/lib/tauri";
 import type { Phase, Task } from "@/lib/types";
+import { useStore } from "@/stores";
+import { ChoresSection } from "./ChoresSection";
+import { GoalsTreeNode } from "./GoalsTreeNode";
 
 export function GoalsTreePanel() {
   const projects = useStore((s) => s.projects);
@@ -14,10 +14,7 @@ export function GoalsTreePanel() {
   const [loading, setLoading] = useState(true);
 
   // Stable project IDs string for dependency tracking
-  const projectIds = useMemo(
-    () => projects.map((p) => p.id).join(","),
-    [projects],
-  );
+  const _projectIds = useMemo(() => projects.map((p) => p.id).join(","), [projects]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -51,7 +48,7 @@ export function GoalsTreePanel() {
       setTaskMap(new Map());
       setLoading(false);
     }
-  }, [projectIds]); // Use stable string, not projects array ref
+  }, [projects.length, projects.map]); // Use stable string, not projects array ref
 
   return (
     <ScrollArea className="h-full">

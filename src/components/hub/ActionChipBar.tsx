@@ -1,21 +1,13 @@
+import { Calendar, Loader2, Sparkles, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Sparkles, Calendar, Target, Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ActionChipBarProps {
   onRunBriefing: () => void;
   isGenerating: boolean;
 }
 
-export function ActionChipBar({
-  onRunBriefing,
-  isGenerating,
-}: ActionChipBarProps) {
+export function ActionChipBar({ onRunBriefing, isGenerating }: ActionChipBarProps) {
   return (
     <TooltipProvider>
       <div className="flex flex-wrap gap-2">
@@ -34,12 +26,7 @@ export function ActionChipBar({
         </Button>
         <Tooltip>
           <TooltipTrigger render={<span className="inline-flex" />}>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              aria-disabled="true"
-            >
+            <Button variant="outline" size="sm" disabled aria-disabled="true">
               <Calendar className="h-4 w-4" data-icon="inline-start" />
               Organize Calendar
             </Button>
@@ -48,12 +35,7 @@ export function ActionChipBar({
         </Tooltip>
         <Tooltip>
           <TooltipTrigger render={<span className="inline-flex" />}>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              aria-disabled="true"
-            >
+            <Button variant="outline" size="sm" disabled aria-disabled="true">
               <Target className="h-4 w-4" data-icon="inline-start" />
               Organize Goals
             </Button>

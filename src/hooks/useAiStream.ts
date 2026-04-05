@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { useEffect } from "react";
 import { useStore } from "../stores";
 import type { TaskScaffold } from "../types/ai";
 

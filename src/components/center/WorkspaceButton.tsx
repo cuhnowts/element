@@ -1,9 +1,9 @@
-import { FolderOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
-import { api } from "@/lib/tauri";
 import { open } from "@tauri-apps/plugin-dialog";
+import { FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/tauri";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 
 interface WorkspaceButtonProps {
   projectId: string;
@@ -36,11 +36,7 @@ export function WorkspaceButton({ projectId, directoryPath, onLink }: WorkspaceB
     <div className="flex items-center gap-3">
       {directoryPath ? (
         <>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={handleOpenWorkspace}
-          >
+          <Button variant="outline" size="default" onClick={handleOpenWorkspace}>
             <FolderOpen size={16} className="mr-2" />
             Open Workspace
           </Button>
@@ -49,11 +45,7 @@ export function WorkspaceButton({ projectId, directoryPath, onLink }: WorkspaceB
           </span>
         </>
       ) : (
-        <Button
-          variant="outline"
-          size="default"
-          onClick={handleLinkDirectory}
-        >
+        <Button variant="outline" size="default" onClick={handleLinkDirectory}>
           <FolderOpen size={16} className="mr-2" />
           Link Directory
         </Button>

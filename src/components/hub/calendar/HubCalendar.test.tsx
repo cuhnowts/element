@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Store mocks ---
 
@@ -35,8 +35,7 @@ const defaultStoreState: Record<string, unknown> = {
 
 let storeState = { ...defaultStoreState };
 
-const useStoreMock = (selector: (s: Record<string, unknown>) => unknown) =>
-  selector(storeState);
+const useStoreMock = (selector: (s: Record<string, unknown>) => unknown) => selector(storeState);
 useStoreMock.getState = () => storeState;
 
 vi.mock("@/stores", () => ({
@@ -75,9 +74,7 @@ describe("HubCalendar", () => {
       render(<CalendarDayGrid dateStr={storeState.hubSelectedDate as string} />);
 
       expect(screen.getByText("No events today")).toBeInTheDocument();
-      expect(
-        screen.getByText(/Your calendar is clear/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Your calendar is clear/)).toBeInTheDocument();
     });
   });
 
@@ -107,9 +104,7 @@ describe("HubCalendar", () => {
       const { CalendarDayGrid } = await import("./CalendarDayGrid");
       render(<CalendarDayGrid dateStr={storeState.hubSelectedDate as string} />);
 
-      expect(
-        screen.getByText("Couldn't load your calendar"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Couldn't load your calendar")).toBeInTheDocument();
       expect(screen.getByText("Try Again")).toBeInTheDocument();
     });
   });

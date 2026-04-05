@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { addDays, addWeeks, endOfWeek, format, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addDays, addWeeks, startOfWeek, endOfWeek } from "date-fns";
-import { useStore } from "@/stores";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { useStore } from "@/stores";
 import { HEADER_BAR_HEIGHT } from "./calendarTypes";
 
 function todayISO(): string {
@@ -18,28 +18,26 @@ export function CalendarHeader() {
   const isToday = hubSelectedDate === todayISO();
 
   const dateLabel = useMemo(() => {
-    const date = new Date(hubSelectedDate + "T00:00:00");
+    const date = new Date(`${hubSelectedDate}T00:00:00`);
     if (hubViewMode === "day") {
       return format(date, "EEE, MMM d");
     }
     const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+    const _weekEnd = endOfWeek(date, { weekStartsOn: 1 });
     // Show Mon-Fri (work week)
     const fri = addDays(weekStart, 4);
     return `${format(weekStart, "MMM d")} - ${format(fri, "MMM d")}`;
   }, [hubSelectedDate, hubViewMode]);
 
   const goBack = () => {
-    const date = new Date(hubSelectedDate + "T00:00:00");
-    const result =
-      hubViewMode === "day" ? addDays(date, -1) : addWeeks(date, -1);
+    const date = new Date(`${hubSelectedDate}T00:00:00`);
+    const result = hubViewMode === "day" ? addDays(date, -1) : addWeeks(date, -1);
     setHubSelectedDate(result.toISOString().split("T")[0]);
   };
 
   const goForward = () => {
-    const date = new Date(hubSelectedDate + "T00:00:00");
-    const result =
-      hubViewMode === "day" ? addDays(date, 1) : addWeeks(date, 1);
+    const date = new Date(`${hubSelectedDate}T00:00:00`);
+    const result = hubViewMode === "day" ? addDays(date, 1) : addWeeks(date, 1);
     setHubSelectedDate(result.toISOString().split("T")[0]);
   };
 
@@ -47,8 +45,7 @@ export function CalendarHeader() {
     setHubSelectedDate(todayISO());
   };
 
-  const prevLabel =
-    hubViewMode === "day" ? "Previous day" : "Previous week";
+  const prevLabel = hubViewMode === "day" ? "Previous day" : "Previous week";
   const nextLabel = hubViewMode === "day" ? "Next day" : "Next week";
 
   return (
@@ -57,9 +54,7 @@ export function CalendarHeader() {
       style={{ height: HEADER_BAR_HEIGHT }}
     >
       {/* Left: date display */}
-      <span className="text-base font-semibold whitespace-nowrap">
-        {dateLabel}
-      </span>
+      <span className="text-base font-semibold whitespace-nowrap">{dateLabel}</span>
 
       {/* Center: nav arrows + Today */}
       <div className="flex items-center gap-1">
@@ -72,12 +67,7 @@ export function CalendarHeader() {
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={isToday}
-          onClick={goToday}
-        >
+        <Button variant="ghost" size="sm" disabled={isToday} onClick={goToday}>
           Today
         </Button>
         <Button

@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
 import { api } from "../lib/tauri";
-import type { Credential, CreateCredentialInput } from "../lib/types";
+import type { CreateCredentialInput, Credential } from "../lib/types";
 import type { AppStore } from "./index";
 
 export interface CredentialSlice {
@@ -14,18 +14,13 @@ export interface CredentialSlice {
   revealCredential: (id: string) => Promise<void>;
   hideCredential: () => void;
   deleteCredential: (id: string) => Promise<void>;
-  updateCredential: (
-    id: string,
-    updates: Partial<CreateCredentialInput>,
-  ) => Promise<void>;
+  updateCredential: (id: string, updates: Partial<CreateCredentialInput>) => Promise<void>;
 }
 
-export const createCredentialSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  CredentialSlice
-> = (set, get) => ({
+export const createCredentialSlice: StateCreator<AppStore, [], [], CredentialSlice> = (
+  set,
+  get,
+) => ({
   credentials: [],
   credentialsLoading: false,
   credentialsError: null,
@@ -45,12 +40,7 @@ export const createCredentialSlice: StateCreator<
   },
   createCredential: async (input) => {
     try {
-      await api.createCredential(
-        input.name,
-        input.credentialType,
-        input.value,
-        input.notes,
-      );
+      await api.createCredential(input.name, input.credentialType, input.value, input.notes);
       await get().fetchCredentials();
     } catch (e) {
       set({ credentialsError: e instanceof Error ? e.message : String(e) });
@@ -80,8 +70,7 @@ export const createCredentialSlice: StateCreator<
       await api.deleteCredential(id);
       set((s) => ({
         credentials: s.credentials.filter((c) => c.id !== id),
-        revealedCredentialId:
-          s.revealedCredentialId === id ? null : s.revealedCredentialId,
+        revealedCredentialId: s.revealedCredentialId === id ? null : s.revealedCredentialId,
         revealedValue: s.revealedCredentialId === id ? null : s.revealedValue,
       }));
     } catch (e) {

@@ -1,22 +1,34 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export type PlanningTier = "quick" | "medium" | "full";
 
 const TIERS = [
-  { value: "quick" as const, label: "Quick", description: "A simple task list. Best for small projects or quick todos." },
-  { value: "medium" as const, label: "Medium", description: "AI asks a few questions, then builds phases and tasks for your review." },
-  { value: "full" as const, label: "GSD", description: "Full GSD workflow with phases, plans, and .planning/ directory." },
+  {
+    value: "quick" as const,
+    label: "Quick",
+    description: "A simple task list. Best for small projects or quick todos.",
+  },
+  {
+    value: "medium" as const,
+    label: "Medium",
+    description: "AI asks a few questions, then builds phases and tasks for your review.",
+  },
+  {
+    value: "full" as const,
+    label: "GSD",
+    description: "Full GSD workflow with phases, plans, and .planning/ directory.",
+  },
 ];
 
 interface TierSelectionDialogProps {
@@ -78,16 +90,15 @@ export function TierSelectionDialog({
           <DialogHeader>
             <DialogTitle>Change planning approach?</DialogTitle>
             <DialogDescription>
-              This project already has tasks. Changing the tier will not delete existing work, but new AI sessions will use the new approach.
+              This project already has tasks. Changing the tier will not delete existing work, but
+              new AI sessions will use the new approach.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => handleOpenChange(false)}>
               Keep Current Plan
             </Button>
-            <Button onClick={() => setShowWarning(false)}>
-              Change Plan
-            </Button>
+            <Button onClick={() => setShowWarning(false)}>Change Plan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -161,10 +172,7 @@ export function TierSelectionDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            disabled={!selectedTier || isSubmitting}
-          >
+          <Button onClick={handleSubmit} disabled={!selectedTier || isSubmitting}>
             {isSubmitting ? "Starting..." : "Start Planning"}
           </Button>
         </DialogFooter>

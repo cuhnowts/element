@@ -6,9 +6,7 @@ describe("CredentialVault", () => {
   });
 
   describe("empty state", () => {
-    it.todo(
-      "renders 'No credentials stored' heading when credentials array is empty",
-    );
+    it.todo("renders 'No credentials stored' heading when credentials array is empty");
     it.todo("renders 'Add Credential' button in empty state");
   });
 

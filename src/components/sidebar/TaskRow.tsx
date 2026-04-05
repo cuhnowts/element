@@ -1,22 +1,17 @@
-import {
-  Circle,
-  CircleDot,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle2, Circle, CircleDot, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useStore } from "@/stores";
 import type { Task, TaskStatus } from "@/lib/types";
+import { useStore } from "@/stores";
 
 const STATUS_ICONS: Record<TaskStatus, { icon: typeof Circle; className: string }> = {
   pending: { icon: Circle, className: "text-muted-foreground" },
@@ -91,17 +86,12 @@ export function TaskRow({ task }: TaskRowProps) {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={4}>
-        <DropdownMenuItem onClick={() => selectTask(task.id)}>
-          Edit
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => selectTask(task.id)}>Edit</DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
-              <DropdownMenuItem
-                key={status}
-                onClick={() => updateTaskStatus(task.id, status)}
-              >
+              <DropdownMenuItem key={status} onClick={() => updateTaskStatus(task.id, status)}>
                 {STATUS_LABELS[status]}
               </DropdownMenuItem>
             ))}
@@ -110,9 +100,7 @@ export function TaskRow({ task }: TaskRowProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
-          onClick={() =>
-            openDeleteConfirm({ type: "task", id: task.id, name: task.title })
-          }
+          onClick={() => openDeleteConfirm({ type: "task", id: task.id, name: task.title })}
         >
           Delete
         </DropdownMenuItem>
