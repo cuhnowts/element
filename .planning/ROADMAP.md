@@ -155,7 +155,11 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   1. In calendar week view, only the actual current day shows the "Today" label -- other days show only their date
   2. Overdue tasks are detected by a deterministic database query (due_date < today AND status != complete) with no LLM involvement
   3. User can fully minimize the Workflows section when not actively using it, and it stays minimized across sessions
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 35-01-PLAN.md -- Calendar today fix, overdue audit, and collapsible workflows
+
 **UI hint**: yes
 
 ## Progress
@@ -201,7 +205,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 32. Hub Layout Overhaul | v1.6 | 0/0 | Not started | - |
 | 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
 | 34. Goal-First Project Detail | v1.6 | 0/0 | Not started | - |
-| 35. Bug Fixes & Polish | v1.6 | 0/0 | Not started | - |
+| 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
 
 ## Backlog
 
