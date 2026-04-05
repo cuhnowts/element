@@ -293,3 +293,12 @@ Plans:
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 999.8: Create Test Work Week (BACKLOG)
+
+**Goal:** Populate the app with realistic test data to simulate a typical work week: fake projects with phases/tasks (including overdue, blocked, approaching-deadline, and recently-completed states), fake calendar meetings spread across the week, scheduled work blocks, and varied task priorities. Enables demo, QA testing, and visual verification of features like the daily briefing, calendar view, and scoring engine without requiring real user data.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
