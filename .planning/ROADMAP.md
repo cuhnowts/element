@@ -12,7 +12,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.3 Foundation & Execution** -- Phases 17-21 (shipped 2026-04-01) -- [archive](milestones/v1.3-ROADMAP.md)
 - ✅ **v1.4 Daily Hub** -- Phases 22-25 (shipped 2026-04-03) -- [archive](milestones/v1.4-ROADMAP.md)
 - ✅ **v1.5 Time Bounded** -- Phases 26-30 (shipped 2026-04-05) -- [archive](milestones/v1.5-ROADMAP.md)
-- 🚧 **v1.6 Clarity** -- Phases 31-35 (in progress)
+- ✅ **v1.6 Clarity** -- Phases 31-35 (shipped 2026-04-05)
 
 ## Phases
 
@@ -91,9 +91,9 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Integer phases (31, 32, 33...): Planned milestone work
 - Decimal phases (31.1, 31.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 31: Drawer Consolidation** - Click-to-toggle drawer with AI panel as bottom drawer tab, right sidebar removed
+- [x] **Phase 31: Drawer Consolidation** - Click-to-toggle drawer with AI panel as bottom drawer tab, right sidebar removed (completed 2026-04-05)
 - [x] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout (completed 2026-04-05)
-- [ ] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections
+- [x] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections (completed 2026-04-05)
 - [x] **Phase 34: Goal-First Project Detail** - Goal hero card above phases with streamlined workspace entry (completed 2026-04-05)
 - [x] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows (completed 2026-04-05)
 
@@ -112,7 +112,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 Plans:
 - [x] 31-01-PLAN.md -- State layer: DrawerTab union, agent store refactor, lifecycle decoupling, keyboard shortcut rewire
-- [ ] 31-02-PLAN.md -- UI: Element AI drawer pane, tab bar update, right sidebar removal, dead component cleanup
+- [x] 31-02-PLAN.md -- UI: Element AI drawer pane, tab bar update, right sidebar removal, dead component cleanup
 
 **UI hint**: yes
 
@@ -130,7 +130,7 @@ Plans:
 
 Plans:
 - [x] 32-01-PLAN.md -- Store toggle state, SlideOverPanel component, HubToolbar with Calendar/Goals buttons
-- [ ] 32-02-PLAN.md -- CommandHub center view, DayPulse, ActionButtons, JumpToTop, HubView rewrite
+- [x] 32-02-PLAN.md -- CommandHub center view, DayPulse, ActionButtons, JumpToTop, HubView rewrite
 
 **UI hint**: yes
 
@@ -147,8 +147,8 @@ Plans:
 
 Plans:
 - [x] 33-01-PLAN.md -- Scoring engine (Rust) and TypeScript briefing types
-- [ ] 33-02-PLAN.md -- Briefing command JSON output, store and stream hook update
-- [ ] 33-03-PLAN.md -- HubCenterPanel rewrite, card components, ActionChipBar
+- [x] 33-02-PLAN.md -- Briefing command JSON output, store and stream hook update
+- [x] 33-03-PLAN.md -- HubCenterPanel rewrite, card components, ActionChipBar
 
 **UI hint**: yes
 
@@ -165,7 +165,7 @@ Plans:
 Plans:
 - [x] 34-00-PLAN.md -- Wave 0: test stubs for GoalHeroCard and WorkspaceButton (Nyquist compliance)
 - [x] 34-01-PLAN.md -- Data layer: goal column migration, Rust model, Tauri command, TS types
-- [ ] 34-02-PLAN.md -- UI: GoalHeroCard, WorkspaceButton, ProjectDetail layout restructure
+- [x] 34-02-PLAN.md -- UI: GoalHeroCard, WorkspaceButton, ProjectDetail layout restructure
 
 **UI hint**: yes
 
@@ -180,7 +180,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 35-01-PLAN.md -- Calendar today fix, overdue audit, and collapsible workflows
+- [x] 35-01-PLAN.md -- Calendar today fix, overdue audit, and collapsible workflows
 
 **UI hint**: yes
 
@@ -223,11 +223,11 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 28. Due Dates & Daily Planning | v1.5 | 3/3 | Complete | 2026-04-04 |
 | 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
-| 31. Drawer Consolidation | v1.6 | 1/2 | In Progress|  |
-| 32. Hub Layout Overhaul | v1.6 | 1/2 | Complete    | 2026-04-05 |
-| 33. Briefing Rework | v1.6 | 2/4 | In Progress|  |
-| 34. Goal-First Project Detail | v1.6 | 2/3 | Complete    | 2026-04-05 |
-| 35. Bug Fixes & Polish | v1.6 | 0/1 | Complete    | 2026-04-05 |
+| 31. Drawer Consolidation | v1.6 | 2/2 | Complete | 2026-04-05 |
+| 32. Hub Layout Overhaul | v1.6 | 2/2 | Complete | 2026-04-05 |
+| 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
+| 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
+| 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
 
 ## Backlog
 

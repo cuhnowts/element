@@ -30,7 +30,7 @@ Plan: —
 
 **Velocity:**
 
-- Total plans completed: 60+ (v1.0-v1.5)
+- Total plans completed: 72+ (v1.0-v1.6)
 - Average duration: carried from previous milestones
 - Total execution time: carried from previous milestones
 
@@ -42,6 +42,7 @@ Plan: —
 - v1.3: 5 phases in 2 days
 - v1.4: 4 phases in 2 days
 - v1.5: 7 phases in 2 days
+- v1.6: 5 phases in 1 day (12 plans, UAT passed 2026-04-05)
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -79,8 +80,16 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 32]: shadcn Sheet vs custom SlidePanel needs a spike -- focus-trap may conflict with hub chat input
-- [Phase 34]: Wireframe goal-first layout and verify click count to terminal before coding
+None active.
+
+### v1.6 UAT Results (2026-04-05)
+
+All phases passed human UAT:
+- Phase 31: 5 passed, 1 blocked (fs permissions — pre-existing)
+- Phase 32: 4/4 passed (follow-up: panels should push, not overlay — backlog 999.10)
+- Phase 33: 6/6 passed
+- Phase 34: 3/3 passed (spec correction: workspace opens terminal only — backlog 999.11)
+- Phase 35: 2/2 passed
 
 ## Session Continuity
 
