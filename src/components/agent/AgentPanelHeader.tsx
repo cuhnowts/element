@@ -34,10 +34,19 @@ export function AgentPanelHeader() {
 
   return (
     <div className="h-10 px-4 py-2 flex items-center justify-between border-b border-border flex-shrink-0">
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-semibold">Agent</span>
-        <span className={`size-2 rounded-full ${statusDotColor[status]}`} />
-        <span className="text-xs text-muted-foreground">{statusLabel[status]}</span>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => setActiveTab("activity")} className={tabClass("activity")}>
+            Activity
+          </button>
+          <button type="button" onClick={() => setActiveTab("terminal")} className={tabClass("terminal")}>
+            Terminal
+          </button>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className={`size-2 rounded-full ${statusDotColor[status]}`} />
+          <span className="text-xs text-muted-foreground">{statusLabel[status]}</span>
+        </div>
       </div>
       <div className="flex items-center gap-1">
         {status === "stopped" && (
@@ -45,12 +54,6 @@ export function AgentPanelHeader() {
             Restart Agent
           </Button>
         )}
-        <button type="button" onClick={() => setActiveTab("activity")} className={tabClass("activity")}>
-          Activity
-        </button>
-        <button type="button" onClick={() => setActiveTab("terminal")} className={tabClass("terminal")}>
-          Terminal
-        </button>
       </div>
     </div>
   );

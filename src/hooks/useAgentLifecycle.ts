@@ -22,56 +22,61 @@ export function useAgentLifecycle() {
   const startAgent = useCallback(async () => {
     setStatus("starting");
 
-    // 1. Read CLI settings
-    const command = await api.getAppSetting("cli_command");
-    if (!command) {
+    try {
+      // 1. Read CLI settings
+      const command = await api.getAppSetting("cli_command");
+      if (!command) {
+        setStatus("stopped");
+        toast("No AI tool configured. Set one in Settings > AI.");
+        return;
+      }
+
+      // 2. Validate CLI tool
+      const isValid = await api.validateCliTool(command);
+      if (!isValid) {
+        setStatus("stopped");
+        toast(`AI tool "${command}" not found or not executable.`);
+        return;
+      }
+
+      // 3. Get user-configured args
+      const rawArgs = await api.getAppSetting("cli_args");
+      const userArgs = rawArgs
+        ? rawArgs
+            // Sanitize em-dashes (copy-paste from docs often converts -- to em-dash)
+            .replace(/\u2014/g, "--")
+            .replace(/\u2013/g, "--")
+            .split(/\s+/)
+            .filter(Boolean)
+        : [];
+
+      // 4. Get DB path for MCP server
+      const dataDir = await appDataDir();
+      const dbPath = `${dataDir}/element.db`;
+
+      // 5. Generate MCP config and system prompt
+      const configPath = await generateMcpConfig(dbPath);
+      const promptPath = await generateSystemPrompt();
+
+      // 6. Build agent launch args
+      const agentArgs = [
+        ...userArgs,
+        "--mcp-config",
+        configPath,
+        `@${promptPath}`,
+      ];
+
+      // 7. Store command/args for AgentTerminalTab to consume
+      setAgentCommand(command);
+      setAgentArgs(agentArgs);
+
+      // 8. Set running and reset restart count
+      setStatus("running");
+      resetRestartCount();
+    } catch (err) {
       setStatus("stopped");
-      toast("No AI tool configured. Set one in Settings > AI.");
-      return;
+      toast(`Agent failed to start: ${err instanceof Error ? err.message : String(err)}`);
     }
-
-    // 2. Validate CLI tool
-    const isValid = await api.validateCliTool(command);
-    if (!isValid) {
-      setStatus("stopped");
-      toast(`AI tool "${command}" not found or not executable.`);
-      return;
-    }
-
-    // 3. Get user-configured args
-    const rawArgs = await api.getAppSetting("cli_args");
-    const userArgs = rawArgs
-      ? rawArgs
-          // Sanitize em-dashes (copy-paste from docs often converts -- to em-dash)
-          .replace(/\u2014/g, "--")
-          .replace(/\u2013/g, "--")
-          .split(/\s+/)
-          .filter(Boolean)
-      : [];
-
-    // 4. Get DB path for MCP server
-    const dataDir = await appDataDir();
-    const dbPath = `${dataDir}/element.db`;
-
-    // 5. Generate MCP config and system prompt
-    const configPath = await generateMcpConfig(dbPath);
-    const promptPath = await generateSystemPrompt();
-
-    // 6. Build agent launch args
-    const agentArgs = [
-      ...userArgs,
-      "--mcp-config",
-      configPath,
-      `@${promptPath}`,
-    ];
-
-    // 7. Store command/args for AgentTerminalTab to consume
-    setAgentCommand(command);
-    setAgentArgs(agentArgs);
-
-    // 8. Set running and reset restart count
-    setStatus("running");
-    resetRestartCount();
   }, [setStatus, resetRestartCount, setAgentCommand, setAgentArgs, generateMcpConfig, generateSystemPrompt]);
 
   const handleAgentExit = useCallback(

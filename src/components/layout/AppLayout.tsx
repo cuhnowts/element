@@ -59,15 +59,23 @@ export function AppLayout() {
   const drawerPanelRef = usePanelRef();
 
   const handleTabClick = (tab: DrawerTab) => {
-    if (drawerOpen && activeDrawerTab === tab) {
-      toggleDrawer();
-    } else if (drawerOpen) {
-      setActiveDrawerTab(tab);
-    } else {
+    if (!drawerOpen) {
       openDrawerToTab(tab);
+    } else if (activeDrawerTab === tab) {
+      toggleDrawer();
+    } else {
+      setActiveDrawerTab(tab);
     }
     if (selectedProjectId) {
-      setProjectDrawerState(selectedProjectId, true, tab);
+      setProjectDrawerState(selectedProjectId, !drawerOpen || activeDrawerTab !== tab, tab);
+    }
+  };
+
+  const handleBarClick = (e: React.MouseEvent) => {
+    // Only collapse if clicking the bar background itself (not a tab button or other control)
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) return;
+    if (drawerOpen) {
+      toggleDrawer();
     }
   };
 
@@ -82,6 +90,8 @@ export function AppLayout() {
     const panel = drawerPanelRef.current;
     if (!panel) return;
     if (drawerOpen) {
+      // expand() first to exit collapsed state, then resize to desired height
+      panel.expand();
       panel.resize(Math.max(drawerHeight, 40));
     } else {
       panel.collapse();
@@ -152,7 +162,7 @@ export function AppLayout() {
               </ResizablePanel>
 
               <ResizableHandle className="border-t border-border bg-card cursor-row-resize">
-                <div className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer">
+                <div className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer" onClick={handleBarClick}>
                   <div className="flex items-center gap-1">
                     <GripHorizontal className="size-3 text-muted-foreground mr-1 flex-shrink-0" />
                     {(["elementai", "terminal", "logs", "history"] as DrawerTab[]).map((tab) => (

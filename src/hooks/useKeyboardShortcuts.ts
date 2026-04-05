@@ -50,7 +50,7 @@ export function useKeyboardShortcuts() {
       }
 
       // Cmd+Shift+A: toggle Element AI drawer tab (per D-08)
-      if (meta && e.shiftKey && e.key === "A") {
+      if (meta && e.shiftKey && e.code === "KeyA") {
         e.preventDefault();
         const ws = useWorkspaceStore.getState();
         if (ws.drawerOpen && ws.activeDrawerTab === "elementai") {
