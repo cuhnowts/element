@@ -37,7 +37,7 @@ export function BriefingProjectCard({
           <CardTitle>{project.name}</CardTitle>
           <div className="flex gap-1">
             {project.tags.map((tag) => {
-              const style = TAG_VARIANTS[tag];
+              const style = TAG_VARIANTS[tag] ?? { variant: "outline" as const };
               return (
                 <Badge
                   key={tag}
@@ -52,7 +52,7 @@ export function BriefingProjectCard({
         </div>
       </CardHeader>
       <CardContent>
-        {project.blockers.length > 0 && (
+        {project.blockers?.length > 0 && (
           <BriefingCardSection
             title="Blockers"
             icon={AlertTriangle}
@@ -60,7 +60,7 @@ export function BriefingProjectCard({
             defaultOpen
           />
         )}
-        {project.deadlines.length > 0 && (
+        {project.deadlines?.length > 0 && (
           <BriefingCardSection
             title="Deadlines"
             icon={Clock}
@@ -68,7 +68,7 @@ export function BriefingProjectCard({
             defaultOpen
           />
         )}
-        {project.wins.length > 0 && (
+        {project.wins?.length > 0 && (
           <BriefingCardSection
             title="Wins"
             icon={Trophy}

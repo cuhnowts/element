@@ -24,6 +24,7 @@ export const createNotificationSlice: StateCreator<AppStore, [], [], Notificatio
   },
 
   addNotification: (notification) => {
+    if (!notification) return;
     set((state) => ({
       notifications: [notification, ...state.notifications].slice(0, 100),
       unreadCount: state.unreadCount + (notification.read ? 0 : 1),
