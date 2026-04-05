@@ -119,6 +119,7 @@ export function ShellAllowlistSettings() {
               >
                 {cmd}
                 <button
+                  type="button"
                   onClick={() => handleRemove(cmd)}
                   className="ml-1 rounded-sm hover:text-destructive"
                   aria-label={`Remove ${cmd} from allowlist`}

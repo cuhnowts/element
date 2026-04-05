@@ -85,10 +85,13 @@ export function assignOverlapColumns(events: MergedEvent[]): PositionedEvent[] {
   // Use union-find for efficiency.
   const parent = new Map<string, string>();
   const find = (id: string): string => {
-    if (parent.get(id) !== id) {
-      parent.set(id, find(parent.get(id)!));
+    const p = parent.get(id);
+    if (p !== undefined && p !== id) {
+      const root = find(p);
+      parent.set(id, root);
+      return root;
     }
-    return parent.get(id)!;
+    return id;
   };
   const union = (a: string, b: string) => {
     const ra = find(a);
@@ -121,7 +124,10 @@ export function assignOverlapColumns(events: MergedEvent[]): PositionedEvent[] {
     if (!groupColumns.has(root)) {
       groupColumns.set(root, new Set());
     }
-    groupColumns.get(root)?.add(eventColumnMap.get(event.id)!);
+    const col = eventColumnMap.get(event.id);
+    if (col !== undefined) {
+      groupColumns.get(root)?.add(col);
+    }
   }
 
   // Build result
@@ -130,8 +136,8 @@ export function assignOverlapColumns(events: MergedEvent[]): PositionedEvent[] {
     const colCount = groupColumns.get(root)?.size;
     return {
       event,
-      column: eventColumnMap.get(event.id)!,
-      totalColumns: Math.min(colCount, MAX_OVERLAP_COLUMNS),
+      column: eventColumnMap.get(event.id) ?? 0,
+      totalColumns: Math.min(colCount ?? 1, MAX_OVERLAP_COLUMNS),
     };
   });
 }

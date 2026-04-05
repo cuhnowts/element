@@ -234,71 +234,65 @@ export function HubChat() {
     }
   }, [messages]);
 
-  // Intercept streaming chunks to detect tool_use events
-  const originalAppendChunk = useHubChatStore.getState().appendChunk;
-  const chunkBufferRef = useRef("");
-  useEffect(() => {
-    // Override appendChunk to intercept tool_use JSON events
-    useHubChatStore.setState({
-      appendChunk: (chunk: string) => {
-        // Check for native API tool_use
-        const toolUse = tryParseToolUse(chunk);
-        if (toolUse) {
-          chunkBufferRef.current = "";
-          handleToolUse(toolUse);
-          return;
+  const sendToolResult = useCallback(
+    async (_toolUseId: string, result: DispatchResult) => {
+      const allMessages = useHubChatStore.getState().messages;
+      const chatMessages = allMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      // Format result clearly so the LLM can extract data and act
+      let resultContent: string;
+      if (result.success && Array.isArray(result.data)) {
+        const items = result.data as Record<string, unknown>[];
+        if (items.length === 0) {
+          resultContent =
+            "No results found.\n\nProceed with the next step. Output an ACTION block if needed.";
+        } else {
+          // Format each item showing all its fields
+          const formatted = items
+            .map((item) => {
+              const parts = Object.entries(item)
+                .filter(([, v]) => v != null && v !== "")
+                .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+              return `- ${parts.join(", ")}`;
+            })
+            .join("\n");
+          resultContent = `Results:\n${formatted}\n\nUse the data above for your next action. Output an ACTION block.`;
         }
+      } else if (result.success) {
+        resultContent = `Done: ${JSON.stringify(result.data)}\n\nProceed with the next step if needed.`;
+      } else {
+        resultContent = `Error: ${result.error}`;
+      }
 
-        // Accumulate chunks in case ACTION: spans multiple lines
-        chunkBufferRef.current += chunk;
+      chatMessages.push({
+        role: "user",
+        content: resultContent,
+      });
 
-        // Check accumulated buffer for ACTION blocks
-        const bufferToolUse = tryParseToolUse(chunkBufferRef.current);
-        if (bufferToolUse) {
-          // Strip the ACTION from buffer and flush any text before it
-          const before = chunkBufferRef.current.replace(/ACTION:\s*\{.+\}/s, "").trim();
-          if (before) {
-            originalAppendChunk(before);
-          }
-          chunkBufferRef.current = "";
-          handleToolUse(bufferToolUse);
-          return;
-        }
-
-        // If no ACTION detected, pass through (strip any partial ACTION: hints)
-        const cleaned = chunk.replace(/ACTION:\s*\{.+\}\s*/g, "").trimEnd();
-        if (cleaned) {
-          originalAppendChunk(cleaned);
-        }
-
-        // Keep buffer from growing indefinitely — trim if over 2000 chars with no ACTION
-        if (chunkBufferRef.current.length > 2000 && !chunkBufferRef.current.includes("ACTION:")) {
-          chunkBufferRef.current = "";
-        }
-      },
-    });
-
-    return () => {
-      // Restore original on unmount
-      useHubChatStore.setState({ appendChunk: originalAppendChunk });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleToolUse, originalAppendChunk]);
+      startStreaming();
+      try {
+        await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
+      } catch (err) {
+        useHubChatStore.getState().setError(String(err));
+      }
+    },
+    [manifest, startStreaming],
+  );
 
   const handleToolUse = useCallback(
     async (toolUse: { id: string; name: string; input: Record<string, unknown> }) => {
-      // Dedup: prevent same action from dispatching multiple times
       const dedupeKey = `${toolUse.name}:${JSON.stringify(toolUse.input)}`;
       if (dispatchedActionsRef.current.has(dedupeKey)) return;
       dispatchedActionsRef.current.add(dedupeKey);
 
       if (checkDestructive(toolUse.name)) {
-        // Destructive: show confirmation card
         const pending = createPendingAction(toolUse.id, toolUse.name, toolUse.input);
         setPendingAction(pending);
         setConfirmResolved(null);
       } else {
-        // Non-destructive: dispatch immediately
         const result = await dispatch(toolUse.name, toolUse.input);
         const actionResult: ActionResult = {
           id: toolUse.id,
@@ -309,7 +303,6 @@ export function HubChat() {
         };
         setActionResults((prev) => [...prev, actionResult]);
 
-        // Send results back for lookup actions so the bot can act on them (max 2 rounds)
         const lookupActions = ["search_tasks", "list_calendar_events", "get_available_slots"];
         if (lookupActions.includes(toolUse.name) && feedbackRoundRef.current < 2) {
           feedbackRoundRef.current++;
@@ -320,50 +313,47 @@ export function HubChat() {
     [checkDestructive, createPendingAction, dispatch, sendToolResult],
   );
 
-  const sendToolResult = async (_toolUseId: string, result: DispatchResult) => {
-    const allMessages = useHubChatStore.getState().messages;
-    const chatMessages = allMessages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+  // Intercept streaming chunks to detect tool_use events
+  const originalAppendChunk = useHubChatStore.getState().appendChunk;
+  const chunkBufferRef = useRef("");
+  useEffect(() => {
+    useHubChatStore.setState({
+      appendChunk: (chunk: string) => {
+        const toolUse = tryParseToolUse(chunk);
+        if (toolUse) {
+          chunkBufferRef.current = "";
+          handleToolUse(toolUse);
+          return;
+        }
 
-    // Format result clearly so the LLM can extract data and act
-    let resultContent: string;
-    if (result.success && Array.isArray(result.data)) {
-      const items = result.data as Record<string, unknown>[];
-      if (items.length === 0) {
-        resultContent =
-          "No results found.\n\nProceed with the next step. Output an ACTION block if needed.";
-      } else {
-        // Format each item showing all its fields
-        const formatted = items
-          .map((item) => {
-            const parts = Object.entries(item)
-              .filter(([, v]) => v != null && v !== "")
-              .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
-            return `- ${parts.join(", ")}`;
-          })
-          .join("\n");
-        resultContent = `Results:\n${formatted}\n\nUse the data above for your next action. Output an ACTION block.`;
-      }
-    } else if (result.success) {
-      resultContent = `Done: ${JSON.stringify(result.data)}\n\nProceed with the next step if needed.`;
-    } else {
-      resultContent = `Error: ${result.error}`;
-    }
+        chunkBufferRef.current += chunk;
 
-    chatMessages.push({
-      role: "user",
-      content: resultContent,
+        const bufferToolUse = tryParseToolUse(chunkBufferRef.current);
+        if (bufferToolUse) {
+          const before = chunkBufferRef.current.replace(/ACTION:\s*\{.+\}/s, "").trim();
+          if (before) {
+            originalAppendChunk(before);
+          }
+          chunkBufferRef.current = "";
+          handleToolUse(bufferToolUse);
+          return;
+        }
+
+        const cleaned = chunk.replace(/ACTION:\s*\{.+\}\s*/g, "").trimEnd();
+        if (cleaned) {
+          originalAppendChunk(cleaned);
+        }
+
+        if (chunkBufferRef.current.length > 2000 && !chunkBufferRef.current.includes("ACTION:")) {
+          chunkBufferRef.current = "";
+        }
+      },
     });
 
-    startStreaming();
-    try {
-      await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
-    } catch (err) {
-      useHubChatStore.getState().setError(String(err));
-    }
-  };
+    return () => {
+      useHubChatStore.setState({ appendChunk: originalAppendChunk });
+    };
+  }, [handleToolUse, originalAppendChunk]);
 
   const handleApprove = useCallback(async () => {
     if (!pendingAction) return;

@@ -73,6 +73,7 @@ export function GoalHeroCard({ projectId, goal }: GoalHeroCardProps) {
             placeholder="Set a project goal..."
           />
         ) : isEmpty ? (
+          // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive element with click handler
           <span
             className="flex-1 text-base text-muted-foreground cursor-pointer"
             onClick={enterEditMode}

@@ -115,6 +115,7 @@ export function ProjectDetail() {
     const initSync = async () => {
       try {
         // Auto-import: trigger sync on project open (per D-11)
+        // biome-ignore lint/style/noNonNullAssertion: directoryPath checked by parent
         await api.syncPlanningRoadmap(project.id, project.directoryPath!);
       } catch {
         // Errors emitted as planning-sync-error event, handled by useTauriEvents
@@ -124,6 +125,7 @@ export function ProjectDetail() {
 
       try {
         // Start watcher after initial sync to avoid race condition (per Pitfall 2)
+        // biome-ignore lint/style/noNonNullAssertion: directoryPath checked by parent
         await api.startPlanningWatcher(project.id, project.directoryPath!);
       } catch {
         // Watcher start failure is non-fatal
@@ -158,7 +160,9 @@ export function ProjectDetail() {
       }),
     ]);
     return () => {
-      unlisteners.then((fns) => fns.forEach((fn) => fn()));
+      unlisteners.then((fns) => {
+        for (const fn of fns) fn();
+      });
     };
   }, [setPendingPlan, setOnboardingStep]);
 
@@ -403,6 +407,7 @@ export function ProjectDetail() {
         {total > 0 && (
           <span
             className="text-sm text-muted-foreground"
+            role="status"
             aria-label={`${complete} of ${total} tasks complete`}
           >
             {complete}/{total}

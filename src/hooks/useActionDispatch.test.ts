@@ -23,6 +23,7 @@ describe("useActionDispatch", () => {
       });
 
       expect(invoke).toHaveBeenCalledWith("create_task", { title: "Test" });
+      // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
       expect(dispatchResult!).toEqual({
         success: true,
         data: mockResult,
@@ -38,6 +39,7 @@ describe("useActionDispatch", () => {
       });
 
       expect(invoke).not.toHaveBeenCalled();
+      // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
       expect(dispatchResult!).toEqual({
         success: false,
         error: "Unknown action: unknown_action",
@@ -56,6 +58,7 @@ describe("useActionDispatch", () => {
         });
       });
 
+      // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
       expect(dispatchResult!).toEqual({
         success: false,
         error: "Error: Network error",

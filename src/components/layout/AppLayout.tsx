@@ -156,6 +156,7 @@ export function AppLayout() {
               </ResizablePanel>
 
               <ResizableHandle className="border-t border-border bg-card cursor-row-resize">
+                {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive element with click handler */}
                 <div
                   className="flex items-center justify-between w-full px-4 py-1.5 [&_button]:cursor-pointer"
                   onClick={handleBarClick}

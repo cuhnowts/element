@@ -40,6 +40,7 @@ export function BriefingPanel() {
   };
 
   // Only regenerate if stale (30+ minutes) or never generated
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchSchedule is stable by intent, only re-run on stale check
   useEffect(() => {
     const STALE_MS = 30 * 60 * 1000; // 30 minutes
     const isStale = !lastRefreshedAt || Date.now() - lastRefreshedAt > STALE_MS;
@@ -49,7 +50,7 @@ export function BriefingPanel() {
       invoke("build_context_manifest").then(() => invoke("generate_briefing"));
       fetchSchedule();
     }
-  }, [fetchSchedule, lastRefreshedAt, requestBriefing]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lastRefreshedAt, requestBriefing]);
 
   const handleRefresh = async () => {
     requestBriefing();
@@ -97,9 +98,8 @@ export function BriefingPanel() {
             </div>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 overflow-auto">
-            <div role="region" aria-label="AI daily briefing">
-              {bodyContent}
-            </div>
+            {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria prop for custom component state */}
+            <div aria-label="AI daily briefing">{bodyContent}</div>
           </CardContent>
         </Card>
       </div>

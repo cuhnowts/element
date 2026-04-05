@@ -1,6 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "files": {
+    "includes": ["src/**/*.ts", "src/**/*.tsx"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

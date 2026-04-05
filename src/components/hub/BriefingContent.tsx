@@ -49,7 +49,8 @@ export function BriefingContent({ scheduleBlocks, scheduleLoading }: BriefingCon
   useEffect(() => {
     const regex = /SUGGEST_DUE_DATE:\s*(\{[^}]+\})/g;
     const found: Array<{ taskId: string; date: string; taskTitle: string }> = [];
-    let match;
+    let match: RegExpExecArray | null = null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex iteration
     while ((match = regex.exec(content)) !== null) {
       try {
         const parsed = JSON.parse(match[1]);

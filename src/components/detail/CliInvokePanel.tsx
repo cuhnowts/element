@@ -142,6 +142,7 @@ export function CliInvokePanel({ taskId: _taskId }: CliInvokePanelProps) {
                 className="font-mono text-xs bg-muted p-3 rounded-md max-h-[300px] overflow-y-auto whitespace-pre-wrap break-all"
               >
                 {output.map((line, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
                   <div key={i} className={line.stream === "stderr" ? "text-destructive" : ""}>
                     {line.line}
                   </div>

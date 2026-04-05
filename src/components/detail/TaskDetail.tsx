@@ -217,7 +217,7 @@ export function TaskDetail() {
 
         {/* Status */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Status</label>
+          <span className="text-xs text-muted-foreground">Status</span>
           <Select
             value={selectedTask.status}
             onValueChange={(val) => handleStatusChange(val as TaskStatus)}
@@ -237,7 +237,7 @@ export function TaskDetail() {
 
         {/* Priority */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Priority</label>
+          <span className="text-xs text-muted-foreground">Priority</span>
           <Select
             value={selectedTask.priority}
             onValueChange={(val) => handlePriorityChange(val as TaskPriority)}
@@ -257,7 +257,7 @@ export function TaskDetail() {
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Tags</label>
+          <span className="text-xs text-muted-foreground">Tags</span>
           <div className="flex flex-wrap gap-1.5 items-center">
             {selectedTask.tags.map((tag) => (
               <Badge key={tag.id} variant="secondary" className="gap-1">
@@ -284,7 +284,7 @@ export function TaskDetail() {
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Description</label>
+          <span className="text-xs text-muted-foreground">Description</span>
           <Textarea
             value={description}
             onChange={(e) => handleDescriptionChange(e.target.value)}
@@ -295,7 +295,7 @@ export function TaskDetail() {
 
         {/* Context */}
         <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Context</label>
+          <span className="text-xs text-muted-foreground">Context</span>
           <Textarea
             value={context}
             onChange={(e) => handleContextChange(e.target.value)}

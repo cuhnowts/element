@@ -115,8 +115,11 @@ describe("assignOverlapColumns", () => {
     expect(result).toHaveLength(3);
     // A and B overlap -> 2 cols; B and C overlap -> they share a group
     // All 3 are in the same connected group
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const aResult = result.find((r) => r.event.id === "a")!;
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const bResult = result.find((r) => r.event.id === "b")!;
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const cResult = result.find((r) => r.event.id === "c")!;
     // A is col 0, B is col 1, C can reuse col 0 (since A ends before C starts)
     expect(aResult.column).toBe(0);

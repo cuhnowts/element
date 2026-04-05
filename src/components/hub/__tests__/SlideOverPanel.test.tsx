@@ -55,6 +55,7 @@ describe("SlideOverPanel", () => {
         <div>Content</div>
       </SlideOverPanel>,
     );
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("-translate-x-full");
   });
@@ -65,6 +66,7 @@ describe("SlideOverPanel", () => {
         <div>Content</div>
       </SlideOverPanel>,
     );
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("translate-x-0");
   });
@@ -75,6 +77,7 @@ describe("SlideOverPanel", () => {
         <div>Content</div>
       </SlideOverPanel>,
     );
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const panel = container.firstElementChild!;
     // Should have translate-x-full but NOT -translate-x-full
     expect(panel.className).toContain("translate-x-full");
@@ -87,6 +90,7 @@ describe("SlideOverPanel", () => {
         <div>Content</div>
       </SlideOverPanel>,
     );
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("translate-x-0");
   });
@@ -97,6 +101,7 @@ describe("SlideOverPanel", () => {
         <div>Content</div>
       </SlideOverPanel>,
     );
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const panel = container.firstElementChild!;
     expect(panel.className).toContain("transition-transform");
     expect(panel.className).toContain("duration-200");

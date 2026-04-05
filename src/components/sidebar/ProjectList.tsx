@@ -65,6 +65,7 @@ export function ProjectList() {
                 {project.id === selectedProjectId && tasks.length > 0 && (
                   <span
                     className="ml-auto text-[11px] text-muted-foreground"
+                    role="status"
                     aria-label={`${tasks.filter((t) => t.status === "complete").length} of ${tasks.length} tasks complete`}
                   >
                     {tasks.filter((t) => t.status === "complete").length}/{tasks.length}

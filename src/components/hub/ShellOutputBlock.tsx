@@ -49,7 +49,7 @@ export function ShellOutputBlock({
   }
 
   return (
-    <div
+    <section
       className={cn(
         "rounded-[--radius] border bg-secondary",
         isError ? "border-destructive" : "border-border",
@@ -80,7 +80,7 @@ export function ShellOutputBlock({
           </ScrollArea>
         </CollapsibleContent>
       </Collapsible>
-    </div>
+    </section>
   );
 }
 

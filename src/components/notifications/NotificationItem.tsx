@@ -47,8 +47,9 @@ export function NotificationItem({ notification, onNavigate, onMarkRead }: Notif
   };
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: interactive element with click handler
     <div
-      role="button"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={(e) => {

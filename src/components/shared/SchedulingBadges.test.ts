@@ -26,6 +26,7 @@ describe("SchedulingBadges three-tier variant logic", () => {
         ...baseProps,
         dueDate: "2026-04-01",
         isBacklog: false,
+        // biome-ignore lint/suspicious/noExplicitAny: test mock, exact type not critical
       }) as any,
     );
     const badge = screen.getByText(/overdue/i).closest("div");
@@ -38,6 +39,7 @@ describe("SchedulingBadges three-tier variant logic", () => {
         ...baseProps,
         dueDate: "2026-04-04",
         isBacklog: false,
+        // biome-ignore lint/suspicious/noExplicitAny: test mock, exact type not critical
       }) as any,
     );
     const badge = screen.getByText(/due tomorrow/i).closest("div");
@@ -50,6 +52,7 @@ describe("SchedulingBadges three-tier variant logic", () => {
         ...baseProps,
         dueDate: "2026-04-10",
         isBacklog: false,
+        // biome-ignore lint/suspicious/noExplicitAny: test mock, exact type not critical
       }) as any,
     );
     const badge = screen.getByText(/apr 10/i).closest("div");
@@ -63,6 +66,7 @@ describe("SchedulingBadges three-tier variant logic", () => {
         ...baseProps,
         dueDate: "2026-04-01",
         isBacklog: true,
+        // biome-ignore lint/suspicious/noExplicitAny: test mock, exact type not critical
       }) as any,
     );
     const badge = screen.getByText(/apr 1/i).closest("div");

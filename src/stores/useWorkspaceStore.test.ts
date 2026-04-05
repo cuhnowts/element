@@ -39,6 +39,7 @@ describe("useWorkspaceStore per-project state", () => {
 
     // Get the partialize function and check its output
     const options = useWorkspaceStore.persist.getOptions();
+    // biome-ignore lint/style/noNonNullAssertion: value guaranteed non-null in this context
     const partialize = options.partialize!;
     const fullState = useWorkspaceStore.getState();
     const persisted = partialize(fullState);

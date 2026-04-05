@@ -15,6 +15,7 @@ export function ProgressDot({ status }: ProgressDotProps) {
         "border border-muted-foreground/40 bg-transparent": status === "not-started",
         "bg-destructive": status === "overdue",
       })}
+      role="img"
       aria-label={status}
     />
   );

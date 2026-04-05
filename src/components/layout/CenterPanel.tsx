@@ -81,7 +81,7 @@ export function CenterPanel() {
               ) : (
                 <FileExplorer
                   projectId={selectedProjectId}
-                  directoryPath={selectedProject?.directoryPath!}
+                  directoryPath={selectedProject?.directoryPath ?? ""}
                 />
               )}
             </div>

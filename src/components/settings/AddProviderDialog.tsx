@@ -119,9 +119,9 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Provider Type
-            </label>
+            </span>
             <Select
               value={providerType}
               onValueChange={(val: string | null) => {
@@ -141,9 +141,9 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
             </Select>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Name
-            </label>
+            </span>
             <Input
               placeholder="My Claude Provider"
               value={name}
@@ -152,9 +152,9 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
           </div>
           {showApiKey && (
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 API Key
-              </label>
+              </span>
               <Input
                 type="password"
                 placeholder="sk-..."
@@ -168,9 +168,9 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
           )}
           {showBaseUrl && (
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Base URL
-              </label>
+              </span>
               <Input
                 placeholder={
                   providerType === "ollama"
@@ -183,9 +183,9 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
             </div>
           )}
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Model
-            </label>
+            </span>
             <Input
               placeholder={
                 providerType === "anthropic"

@@ -44,6 +44,7 @@ export function SettingsNav({ activeTab, onTabChange }: SettingsNavProps) {
       <div className="flex flex-col gap-1">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-100 ${

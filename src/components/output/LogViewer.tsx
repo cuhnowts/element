@@ -37,6 +37,7 @@ export function LogViewer({ entries }: LogViewerProps) {
     <div className="relative h-full">
       <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-auto">
         {entries.map((entry, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
           <LogEntry key={i} entry={entry} />
         ))}
       </div>

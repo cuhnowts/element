@@ -20,6 +20,7 @@ export function StatusDot({ status, className = "" }: StatusDotProps) {
   return (
     <span
       className={`inline-block w-2 h-2 rounded-full ${STATUS_STYLES[status] ?? "bg-muted-foreground"} ${className}`}
+      role="img"
       aria-label={`Status: ${status}`}
     />
   );

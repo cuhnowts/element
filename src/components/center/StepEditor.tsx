@@ -97,10 +97,11 @@ export function StepEditor({
   return (
     <div className="rounded-lg border border-border bg-card">
       {/* Collapsed header row */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive element with click handler */}
       <div
         className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={onToggle}
-        role="button"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
         tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -150,9 +151,9 @@ export function StepEditor({
         <div className="px-3 pb-3 space-y-3 border-t border-border pt-3">
           {/* Step name */}
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Step Name
-            </label>
+            </span>
             <Input
               value={step.name}
               onChange={(e) => handleNameChange(e.target.value)}
@@ -162,9 +163,9 @@ export function StepEditor({
 
           {/* Type picker */}
           <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Step Type
-            </label>
+            </span>
             <WorkflowExecutorPicker value={step.type} onChange={handleTypeChange} />
           </div>
 
@@ -172,18 +173,18 @@ export function StepEditor({
           {step.type === "shell" && (
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Command
-                </label>
+                </span>
                 <ShellEditor
                   value={(step as ShellStepConfig).command}
                   onChange={(val) => onChange({ ...step, command: val } as ShellStepConfig)}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Working Directory
-                </label>
+                </span>
                 <Input
                   value={(step as ShellStepConfig).workingDir ?? ""}
                   onChange={(e) =>
@@ -196,9 +197,9 @@ export function StepEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Timeout (ms)
-                </label>
+                </span>
                 <Input
                   type="number"
                   value={(step as ShellStepConfig).timeoutMs ?? ""}
@@ -226,9 +227,9 @@ export function StepEditor({
 
           {step.type === "manual" && (
             <div className="space-y-1">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Description
-              </label>
+              </span>
               <Textarea
                 value={(step as ManualStepConfig).description}
                 onChange={(e) =>

@@ -70,10 +70,11 @@ export function HttpStepForm({ method, url, headers, body, onChange }: HttpStepF
 
       {/* Headers */}
       <div className="space-y-2">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Headers
-        </label>
+        </span>
         {headers.map((header, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
           <div key={index} className="flex gap-2 items-center">
             <Input
               value={header[0]}
@@ -111,9 +112,9 @@ export function HttpStepForm({ method, url, headers, body, onChange }: HttpStepF
       {/* Body */}
       {showBody && (
         <div className="space-y-2">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Body
-          </label>
+          </span>
           <CodeMirror
             value={typeof body === "string" ? body : JSON.stringify(body ?? {}, null, 2)}
             onChange={(val) => onChange("body", val)}

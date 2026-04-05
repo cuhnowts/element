@@ -52,28 +52,26 @@ export function DailyPlanSection({ blocks, isLoading, overflowIndex }: DailyPlan
       )}
 
       {!isLoading && workBlocks.length > 0 && (
-        <div role="list" className="mt-4 space-y-4">
+        <ul className="mt-4 space-y-4 list-none p-0 m-0">
           {workBlocks.map((block, idx) => {
             const duration = parseMinutes(block.endTime) - parseMinutes(block.startTime);
             const isFaded = overflowIndex !== null && idx >= overflowIndex;
 
             return (
-              <div key={block.id}>
+              <li key={block.id} className="list-none">
                 {overflowIndex !== null && idx === overflowIndex && <OutOfTimeDivider />}
-                <div role="listitem">
-                  <DailyPlanTaskRow
-                    taskTitle={block.taskTitle!}
-                    startTime={block.startTime}
-                    endTime={block.endTime}
-                    durationMinutes={duration}
-                    priority={block.taskPriority ?? "medium"}
-                    faded={isFaded}
-                  />
-                </div>
-              </div>
+                <DailyPlanTaskRow
+                  taskTitle={block.taskTitle ?? "Untitled"}
+                  startTime={block.startTime}
+                  endTime={block.endTime}
+                  durationMinutes={duration}
+                  priority={block.taskPriority ?? "medium"}
+                  faded={isFaded}
+                />
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ export function SessionIndicator({ projectId }: SessionIndicatorProps) {
   return (
     <span
       className="size-1.5 rounded-full bg-green-500/50 ml-1 flex-shrink-0"
+      role="status"
       aria-label={`${runningCount} running terminal session${runningCount !== 1 ? "s" : ""}`}
     />
   );

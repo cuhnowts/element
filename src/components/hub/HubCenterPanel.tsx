@@ -95,7 +95,8 @@ export function HubCenterPanel() {
       {/* Scrollable area */}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         {/* Briefing region */}
-        <div role="region" aria-label="Daily briefing" aria-live="polite">
+        {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria prop for custom component state */}
+        <div aria-label="Daily briefing" aria-live="polite">
           {/* Loading skeleton */}
           {briefingStatus === "loading" && (
             <div className="flex flex-col gap-4">

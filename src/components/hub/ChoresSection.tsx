@@ -32,7 +32,7 @@ export function ChoresSection() {
       <p className="text-xs text-muted-foreground mt-1 mb-2">To-Do's</p>
       <div className="space-y-1">
         {standaloneTasks.map((task) => (
-          <label
+          <span
             key={task.id}
             className="flex items-center gap-2 px-2 py-1 rounded-sm hover:bg-secondary cursor-pointer"
           >
@@ -50,7 +50,7 @@ export function ChoresSection() {
             >
               {task.title}
             </span>
-          </label>
+          </span>
         ))}
       </div>
     </div>

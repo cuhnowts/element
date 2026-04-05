@@ -30,6 +30,7 @@ function SuggestionFieldRow({
       return (
         <ol className="list-inside list-decimal space-y-0.5 text-sm">
           {(value as string[]).map((step, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
             <li key={i}>{step}</li>
           ))}
         </ol>
@@ -50,6 +51,7 @@ function SuggestionFieldRow({
       return (
         <ul className="list-inside list-disc space-y-0.5 text-sm">
           {(value as string[]).map((task, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
             <li key={i}>{task}</li>
           ))}
         </ul>

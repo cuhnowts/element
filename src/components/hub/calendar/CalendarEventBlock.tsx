@@ -118,8 +118,9 @@ export function CalendarEventBlock({
         <PopoverTrigger
           nativeButton={false}
           render={
+            // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useAriaPropsSupportedByRole: interactive element with click handler
             <div
-              role="button"
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
               tabIndex={0}
               aria-label={ariaLabel}
               className="absolute overflow-hidden transition-opacity duration-150"
@@ -160,8 +161,9 @@ export function CalendarEventBlock({
 
   // Work/buffer type: no popover, click navigates
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useAriaPropsSupportedByRole: interactive element with click handler
     <div
-      role="button"
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
       tabIndex={0}
       aria-label={ariaLabel}
       className="absolute overflow-hidden transition-opacity duration-150"

@@ -60,7 +60,7 @@ describe("WorkspaceButton", () => {
   });
 
   it("calls onLink when directory is selected via dialog", async () => {
-    const { open } = await import("@tauri-apps/plugin-dialog");
+    const { open: _open } = await import("@tauri-apps/plugin-dialog");
     render(<WorkspaceButton projectId="proj-1" directoryPath={null} onLink={mockOnLink} />);
     const button = screen.getByText("Link Directory");
     fireEvent.click(button);

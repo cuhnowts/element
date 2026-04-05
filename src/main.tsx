@@ -7,6 +7,7 @@ const params = new URLSearchParams(window.location.search);
 const windowType = params.get("window");
 
 async function renderApp() {
+  // biome-ignore lint/style/noNonNullAssertion: root element guaranteed to exist in index.html
   const root = ReactDOM.createRoot(document.getElementById("root")!);
 
   if (windowType === "capture") {

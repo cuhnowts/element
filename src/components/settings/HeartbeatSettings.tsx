@@ -51,6 +51,7 @@ export function HeartbeatSettings() {
           className={`inline-block h-1.5 w-1.5 rounded-full ${
             heartbeatRunning ? "bg-chart-2 animate-pulse" : "bg-muted-foreground"
           }`}
+          role="status"
           aria-label={heartbeatRunning ? "Heartbeat is running" : "Heartbeat is stopped"}
         />
       </div>
@@ -58,7 +59,7 @@ export function HeartbeatSettings() {
       {/* Enable switch */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Background deadline monitoring</label>
+          <span className="text-sm font-medium">Background deadline monitoring</span>
           <p className="text-xs text-muted-foreground">
             Check for deadline risks every {intervalLabel}
           </p>
@@ -68,7 +69,7 @@ export function HeartbeatSettings() {
 
       {/* Check interval */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Check interval</label>
+        <span className="text-sm font-medium">Check interval</span>
         <Select
           value={String(heartbeatInterval)}
           onValueChange={(v) => setHeartbeatInterval(Number(v))}
@@ -89,7 +90,7 @@ export function HeartbeatSettings() {
 
       {/* AI provider for summaries */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">AI provider for summaries</label>
+        <span className="text-sm font-medium">AI provider for summaries</span>
         <p className="text-xs text-muted-foreground">
           Used for risk summaries. Falls back to template when unavailable.
         </p>

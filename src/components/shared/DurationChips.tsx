@@ -53,6 +53,7 @@ export function DurationChips({ value, onChange }: DurationChipsProps) {
   return (
     <div role="radiogroup" aria-label="Duration estimate" className="flex gap-1">
       {PRESETS.map((preset) => (
+        // biome-ignore lint/a11y/useSemanticElements: custom radio chip button
         <button
           key={preset.value}
           type="button"
@@ -64,6 +65,7 @@ export function DurationChips({ value, onChange }: DurationChipsProps) {
           {preset.label}
         </button>
       ))}
+      {/* biome-ignore lint/a11y/useSemanticElements: custom radio chip button */}
       <button
         type="button"
         role="radio"

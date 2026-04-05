@@ -143,6 +143,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
         >
           <Accordion>
             {phases.map((phase, phaseIndex) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
               <SortablePhaseItem key={`phase-${phaseIndex}`} id={`phase-${phaseIndex}`}>
                 {(listeners) => (
                   <AccordionItem value={`phase-${phaseIndex}`}>
@@ -172,6 +173,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                             className="h-7 text-sm"
                           />
                         ) : (
+                          // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive element with click handler
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
@@ -194,6 +196,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                     <AccordionContent>
                       <div className="space-y-1 pl-6">
                         {phase.tasks.map((task, taskIndex) => (
+                          // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
                           <div key={taskIndex} className="flex items-center gap-2 py-1">
                             {editingTask?.phase === phaseIndex &&
                             editingTask?.task === taskIndex ? (
@@ -218,6 +221,7 @@ export function AiPlanReview({ projectId }: AiPlanReviewProps) {
                                 className="h-7 text-sm flex-1"
                               />
                             ) : (
+                              // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: interactive element with click handler
                               <span
                                 onClick={() =>
                                   setEditingTask({ phase: phaseIndex, task: taskIndex })

@@ -72,6 +72,7 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
+      {/* biome-ignore lint/a11y/useFocusableInteractive: focus managed by parent component */}
       <div role="treeitem" aria-expanded={phases.length > 0 ? open : undefined} className="group">
         <div className="flex items-center gap-1 pl-2 pr-2 py-1 hover:bg-secondary rounded-sm">
           {phases.length > 0 ? (
@@ -100,6 +101,7 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
           {projectOverdueCount > 0 && (
             <span
               className="inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold px-1"
+              role="status"
               aria-label={`${projectOverdueCount} overdue task${projectOverdueCount === 1 ? "" : "s"}`}
             >
               {projectOverdueCount}
@@ -126,6 +128,7 @@ export function GoalsTreeNode({ project, phases, tasks }: GoalsTreeNodeProps) {
                     {overdueCount > 0 && (
                       <span
                         className="inline-flex items-center justify-center min-w-[16px] h-4 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold px-1"
+                        role="status"
                         aria-label={`${overdueCount} overdue task${overdueCount === 1 ? "" : "s"}`}
                       >
                         {overdueCount}

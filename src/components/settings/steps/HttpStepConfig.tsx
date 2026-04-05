@@ -43,7 +43,7 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">Method</label>
+        <span className="text-xs font-semibold tracking-wide">Method</span>
         <Select
           value={config.method}
           onValueChange={(val: string | null) => {
@@ -68,7 +68,7 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">URL</label>
+        <span className="text-xs font-semibold tracking-wide">URL</span>
         <Input
           placeholder="https://api.example.com/endpoint"
           value={config.url}
@@ -77,8 +77,9 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">Headers</label>
+        <span className="text-xs font-semibold tracking-wide">Headers</span>
         {(config.headers ?? []).map((header, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
           <div key={index} className="flex items-center gap-2">
             <Input
               className="flex-1"
@@ -109,7 +110,7 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
 
       {showBody && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold tracking-wide">Body</label>
+          <span className="text-xs font-semibold tracking-wide">Body</span>
           <Textarea
             className="font-mono"
             placeholder='{"key": "value"}'
@@ -120,7 +121,7 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
       )}
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">Authentication</label>
+        <span className="text-xs font-semibold tracking-wide">Authentication</span>
         <Select
           value={config.auth?.type ?? "none"}
           onValueChange={(val: string | null) => {
@@ -177,7 +178,7 @@ export function HttpStepConfig({ config, onChange, credentials }: HttpStepConfig
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold tracking-wide">Timeout</label>
+        <span className="text-xs font-semibold tracking-wide">Timeout</span>
         <div className="flex items-center gap-2">
           <Input
             type="number"

@@ -85,7 +85,9 @@ export function useTauriEvents() {
     ]);
 
     return () => {
-      listeners.then((fns) => fns.forEach((fn) => fn()));
+      listeners.then((fns) => {
+        for (const fn of fns) fn();
+      });
     };
   }, [
     selectedProjectId,

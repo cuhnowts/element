@@ -141,6 +141,7 @@ export function WorkflowBuilder({ workflow, onSave }: WorkflowBuilderProps) {
       <StepInsertButton onClick={() => handleInsert(0)} />
 
       {steps.map((step, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
         <div key={`step-${index}`}>
           <StepEditor
             step={step}

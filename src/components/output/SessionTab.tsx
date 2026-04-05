@@ -26,8 +26,9 @@ export function SessionTab({ session, isActive, onClick, onClose }: SessionTabPr
         }
       >
         <span className="truncate max-w-[160px]">{displayName}</span>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: interactive element with click handler */}
         <span
-          role="button"
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: custom interactive element needs focus
           tabIndex={0}
           onClick={(e) => {
             e.stopPropagation();

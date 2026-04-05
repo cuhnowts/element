@@ -157,6 +157,7 @@ export function MiniCalendar({ onDateSelect }: MiniCalendarProps) {
                   <div className="absolute -bottom-0.5 flex gap-0.5">
                     {dotColors.map((color, i) => (
                       <span
+                        // biome-ignore lint/suspicious/noArrayIndexKey: static list, never reordered
                         key={i}
                         className="size-1 rounded-full"
                         style={{ backgroundColor: color }}
