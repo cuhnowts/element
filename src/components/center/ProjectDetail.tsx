@@ -15,15 +15,15 @@ import { Bot, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { useStore } from "@/stores";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useTerminalSessionStore } from "@/stores/useTerminalSessionStore";
-import { DirectoryLink } from "./DirectoryLink";
+import { GoalHeroCard } from "./GoalHeroCard";
+import { WorkspaceButton } from "./WorkspaceButton";
 import { PhaseRow } from "./PhaseRow";
 import { UnassignedBucket } from "./UnassignedBucket";
-import { OpenAiButton } from "./OpenAiButton";
 import { AiPlanReview } from "./AiPlanReview";
 import { TierSelectionDialog, type PlanningTier } from "./TierSelectionDialog";
 import { api } from "@/lib/tauri";
@@ -257,7 +257,6 @@ export function ProjectDetail() {
 
   // Progress
   const { complete, total } = computeProgress(tasks);
-  const progressPct = total > 0 ? (complete / total) * 100 : 0;
 
   // Sorted phases
   const sortedPhases = [...phases].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -370,7 +369,7 @@ export function ProjectDetail() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Project Name + Tier Badge + Change Plan + Open AI */}
+      {/* 1. Name Row: Input + Tier Badge + Compact Progress (D-07, D-09, D-10) */}
       <div className="flex items-center gap-3">
         <Input
           value={name}
@@ -383,74 +382,34 @@ export function ProjectDetail() {
           placeholder="Project name"
         />
         {project.planningTier && (
-          <>
-            <Badge variant={project.planningTier === "full" ? "outline" : "secondary"} className="text-xs">
-              {project.planningTier === "full" ? "GSD" : project.planningTier === "medium" ? "Medium" : "Quick"}
-            </Badge>
-            <Button variant="ghost" size="sm" onClick={handleChangePlan} className="text-xs">
-              Change plan
-            </Button>
-          </>
+          <Badge
+            variant={project.planningTier === "full" ? "outline" : "secondary"}
+            className="text-xs cursor-pointer"
+            role="button"
+            aria-label="Change planning tier"
+            onClick={handleTierDialogOpen}
+          >
+            {project.planningTier === "full" ? "GSD" : project.planningTier === "medium" ? "Medium" : "Quick"}
+          </Badge>
+        )}
+        {total > 0 && (
+          <span className="text-sm text-muted-foreground" aria-label={`${complete} of ${total} tasks complete`}>
+            {complete}/{total}
+          </span>
         )}
       </div>
 
-      {/* AI Button + Directory - Single Row (D-08) */}
-      <div className="flex items-center gap-3">
-        <OpenAiButton
-          projectId={project.id}
-          directoryPath={project.directoryPath}
-          planningTier={project.planningTier}
-          hasContent={hasContent}
-          onTierDialogOpen={handleTierDialogOpen}
-        />
-        <div className="flex-1" />
-        <DirectoryLink
-          directoryPath={project.directoryPath}
-          onLink={(path) => linkDirectory(project.id, path)}
-        />
-      </div>
+      {/* 2. Goal Hero Card (D-03, D-04, PROJ-01, PROJ-02) */}
+      <GoalHeroCard projectId={project.id} goal={project.goal} />
 
-      {/* Progress Section */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Progress
-        </span>
-        <Progress value={progressPct} className="h-2" />
-        <span className="text-xs text-muted-foreground mt-1 block">
-          {complete} of {total} tasks complete
-        </span>
-      </div>
+      {/* 3. Workspace Button Row (D-05, D-06, PROJ-03) */}
+      <WorkspaceButton
+        projectId={project.id}
+        directoryPath={project.directoryPath}
+        onLink={(path) => linkDirectory(project.id, path)}
+      />
 
-      {/* Description Section */}
-      <div>
-        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
-          Description
-        </span>
-        <Textarea
-          value={description}
-          onChange={(e) => handleDescriptionChange(e.target.value)}
-          placeholder="Add a description..."
-          className="min-h-[80px] resize-none"
-        />
-      </div>
-
-      {/* Metadata */}
-      <div className="flex items-center gap-4 text-sm">
-        <div>
-          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">
-            Created
-          </span>
-          <span className="text-muted-foreground">{createdDate}</span>
-        </div>
-        <div>
-          <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">
-            Tasks
-          </span>
-          <span className="text-muted-foreground">{total}</span>
-        </div>
-      </div>
-
-      {/* Phases Section / Onboarding Flow */}
+      {/* 4. Phases Section (same DnD logic, updated empty state) */}
       {onboardingStep === "review" && pendingPlan ? (
         <AiPlanReview projectId={project.id} />
       ) : (
@@ -464,20 +423,11 @@ export function ProjectDetail() {
             <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-base font-semibold mb-2">No phases yet</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Use AI to plan your project, or add phases manually.
+              Set a goal above, then use AI to plan your project or add phases manually.
             </p>
-            <OpenAiButton
-              projectId={project.id}
-              directoryPath={project.directoryPath}
-              planningTier={project.planningTier}
-              hasContent={hasContent}
-              onTierDialogOpen={handleTierDialogOpen}
-            />
-            <div className="mt-3">
-              <Button variant="ghost" size="sm" onClick={() => { setIsAddingPhase(true); setNewPhaseName(""); }} className="text-sm">
-                + Add phase manually
-              </Button>
-            </div>
+            <Button variant="ghost" size="sm" onClick={() => { setIsAddingPhase(true); setNewPhaseName(""); }} className="text-sm">
+              + Add phase manually
+            </Button>
           </div>
         ) : (
           <div className="space-y-1">
@@ -565,6 +515,48 @@ export function ProjectDetail() {
         )}
       </div>
       )}
+
+      {/* 5. Details Accordion (D-08, D-09) */}
+      <Accordion>
+        <AccordionItem>
+          <AccordionTrigger className="text-sm font-medium">Details</AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-4">
+              {/* Description (moved from standalone section per D-08) */}
+              <div>
+                <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground block mb-2">
+                  Description
+                </span>
+                <Textarea
+                  value={description}
+                  onChange={(e) => handleDescriptionChange(e.target.value)}
+                  placeholder="Add a description..."
+                  className="min-h-[80px] resize-none"
+                />
+              </div>
+
+              {/* Metadata (moved per D-09) */}
+              <div className="flex items-center gap-4 text-sm">
+                <div>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">Created</span>
+                  <span className="text-muted-foreground">{createdDate}</span>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mr-2">Tasks</span>
+                  <span className="text-muted-foreground">{total}</span>
+                </div>
+              </div>
+
+              {/* Tier change (moved per D-10) */}
+              {project.planningTier && (
+                <Button variant="ghost" size="sm" onClick={handleChangePlan} className="text-xs">
+                  Change planning tier
+                </Button>
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       <TierSelectionDialog
         open={showTierDialog}
