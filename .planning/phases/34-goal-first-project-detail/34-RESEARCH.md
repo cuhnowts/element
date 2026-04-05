@@ -92,14 +92,16 @@ The `Project` struct in `src-tauri/src/models/project.rs` needs:
 1. Add `pub goal: String` field
 2. Update ALL SELECT queries to include `goal` column (there are 3: `list_projects`, `get_project`, and `update_project` return)
 3. Update `create_project` INSERT to include goal (default empty string)
-4. Update `update_project` to accept and save goal
+4. ~~Update `update_project` to accept and save goal~~ **CORRECTION (Pitfall 2 resolution):** Do NOT extend `update_project`. Instead, create a separate `update_project_goal(id, goal)` method that only updates the goal column. This prevents goal from being silently cleared when name/description are saved. See "Separate Goal Update Command" in Code Examples below.
 5. Update ALL `|row|` closures to read the new column index
 
-**Critical detail:** The current `update_project` signature is `(id, name, description)`. Per D-02, it needs to become `(id, name, description, goal)`. This cascades to:
-- Tauri command `update_project` in `project_commands.rs` (add `goal: String` parameter)
-- Frontend `api.updateProject()` in `src/lib/tauri.ts` (add goal parameter)
-- Frontend `Project` type in `src/lib/types.ts` (add `goal: string` field)
-- All callers of `apiUpdateProject()` in `ProjectDetail.tsx`
+~~**Critical detail:** The current `update_project` signature is `(id, name, description)`. Per D-02, it needs to become `(id, name, description, goal)`. This cascades to:~~
+~~- Tauri command `update_project` in `project_commands.rs` (add `goal: String` parameter)~~
+~~- Frontend `api.updateProject()` in `src/lib/tauri.ts` (add goal parameter)~~
+~~- Frontend `Project` type in `src/lib/types.ts` (add `goal: string` field)~~
+~~- All callers of `apiUpdateProject()` in `ProjectDetail.tsx`~~
+
+**CORRECTION:** The above cascade is NOT needed. The plans use a separate `updateProjectGoal` Tauri command and `api.updateProjectGoal()` wrapper instead, leaving `update_project` unchanged at `(id, name, description)`. This avoids Pitfall 2 entirely. Only the TypeScript `Project` type still needs the `goal: string` field added (for reading, not writing via updateProject).
 
 ### Inline Edit Pattern (from existing codebase)
 
@@ -119,11 +121,12 @@ useEffect(() => {
 }, [project?.id]);
 
 // Save handler (same 800ms debounce as description)
+// NOTE: Uses api.updateProjectGoal (separate command), NOT apiUpdateProject
 const handleGoalChange = (value: string) => {
   setGoal(value);
   if (goalTimer.current) clearTimeout(goalTimer.current);
   goalTimer.current = setTimeout(() => {
-    apiUpdateProject(project.id, project.name, project.description, value);
+    api.updateProjectGoal(project.id, value);
   }, 800);
 };
 ```
@@ -193,7 +196,7 @@ Note: The Accordion component does NOT use `type="single"` or `collapsible` prop
 ### Pitfall 2: apiUpdateProject Cascade
 **What goes wrong:** The `apiUpdateProject` helper in ProjectDetail.tsx calls `api.updateProject(id, name, description)`. After adding goal, all callers must pass goal too, or goal will be silently cleared.
 **Why it happens:** The Rust update_project overwrites ALL fields including goal.
-**How to avoid:** Option A: Add goal to updateProject signature. Option B: Create a separate `updateProjectGoal(id, goal)` Tauri command that only updates the goal column. Option B is safer -- prevents goal from being overwritten by name/description saves.
+**How to avoid:** Option A: Add goal to updateProject signature. Option B: Create a separate `updateProjectGoal(id, goal)` Tauri command that only updates the goal column. **Option B is the chosen approach** -- prevents goal from being overwritten by name/description saves.
 **Warning signs:** Goal disappears after editing name or description.
 
 ### Pitfall 3: Accordion Base-UI vs Radix API Confusion
@@ -330,9 +333,7 @@ pub fn update_project_goal(&self, id: &str, goal: &str) -> Result<Project, rusql
 ## Open Questions
 
 1. **Separate `updateProjectGoal` command vs extended `updateProject`**
-   - What we know: Extended `updateProject` requires all callers to pass goal, risking silent data loss. Separate command is safer.
-   - What's unclear: Whether the user prefers API simplicity (one update) or safety (separate commands).
-   - Recommendation: Create a separate `updateProjectGoal(id, goal)` Tauri command AND also add goal to the main `updateProject` for completeness. The GoalHeroCard should use the dedicated command.
+   - **RESOLVED:** Using separate `updateProjectGoal` command (Option B from Pitfall 2). The existing `updateProject(id, name, description)` is left unchanged. This prevents goal from being silently cleared by name/description saves.
 
 2. **WorkspaceButton interaction with existing OpenAiButton flows**
    - What we know: OpenAiButton handles complex logic (tier dialog, agent delegation, plan watchers, CLI validation). WorkspaceButton is simpler (just open files + terminal).
