@@ -3,9 +3,44 @@
 **Defined:** 2026-04-04
 **Core Value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## v1.6 Requirements
+## v1.7 Requirements
 
-Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
+Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
+
+### Linting
+
+- [ ] **LINT-01**: Biome schema migrated from v1.9.4 to v2.x and `biome check` passes on full codebase
+- [ ] **LINT-02**: Biome rules incrementally tightened with project-specific TypeScript/React rules enforced
+- [ ] **LINT-03**: All clippy warnings resolved including `await_holding_lock` concurrency bug in calendar.rs
+- [ ] **LINT-04**: rustfmt enforced across all Rust source files with consistent formatting config
+
+### Backend Testing
+
+- [ ] **TEST-01**: Vitest configured with coverage reporting (`@vitest/coverage-v8`) for TypeScript utility functions
+- [ ] **TEST-02**: Rust model tests expanded with per-test SQLite isolation using established `setup_test_db()` pattern
+- [ ] **TEST-03**: Tauri command integration tests using `tauri::test::mock_builder()` for core commands
+- [ ] **TEST-04**: Coverage baselines established for both Vitest and cargo test suites
+
+### Error Logger
+
+- [ ] **ELOG-01**: Console.error interceptor captures frontend errors and writes to `.element/errors.log` via Tauri IPC
+- [ ] **ELOG-02**: Error logger has re-entrancy guard and buffered writes to prevent performance impact
+
+### Claude Code Hooks
+
+- [ ] **HOOK-01**: Pre-commit hook blocks commits when lint or test failures are detected (exit code 2)
+- [ ] **HOOK-02**: Test-on-save hook runs related tests when Claude Code edits a file
+- [ ] **HOOK-03**: Auto-format hook runs Biome format on TypeScript files after edits
+- [ ] **HOOK-04**: Hooks configured with appropriate timeouts (300s for cargo builds)
+
+### Testing MCP Server
+
+- [ ] **TMCP-01**: Testing MCP server discovers available test suites (Vitest + cargo test) and lists test files/modules
+- [ ] **TMCP-02**: Testing MCP server runs specified tests and returns structured results (pass/fail/error per test)
+- [ ] **TMCP-03**: Testing MCP server reads coverage reports and identifies uncovered files/functions
+- [ ] **TMCP-04**: Testing MCP server uses argument arrays for command execution (no shell string interpolation)
+
+## v1.6 Requirements (Complete)
 
 ### Hub Layout
 
@@ -102,12 +137,22 @@ Deferred to future releases. Tracked but not in current roadmap.
 - **PLAT-01**: Windows support
 - **PLAT-02**: Plugin marketplace with paid workflow plugins
 
+### Testing Enhancements
+
+- **TMCP-10**: Test stub generation from coverage gap analysis
+- **TMCP-11**: "Suggest what to test next" AI-powered recommendation
+
 ## Out of Scope
 
 Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
+| Frontend component tests (RTL) | UI verified via screenshots + user feedback, not automated component tests |
+| E2E tests (WebDriver/Playwright) | Too heavy for current stage; manual UAT sufficient |
+| Snapshot tests | Brittle, high maintenance for fast-moving UI |
+| Coverage percentage targets | Baselines yes, enforcement no — coverage gates create perverse incentives |
+| Husky/lint-staged | Claude Code hooks handle enforcement; git hooks add complexity |
 | Drag-to-resize drawer | Click toggle is sufficient; drag adds complexity without value |
 | Animation framework (framer-motion) | CSS transforms + tw-animate-css sufficient; 40KB+ overhead not justified |
 | Full autonomous rescheduling without confirmation | Users must approve schedule changes |
@@ -123,30 +168,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRAW-01 | Phase 31 | Complete |
-| DRAW-02 | Phase 31 | Complete |
-| DRAW-03 | Phase 31 | Complete |
-| HUB-01 | Phase 32 | Complete |
-| HUB-02 | Phase 32 | Complete |
-| HUB-03 | Phase 32 | Complete |
-| HUB-04 | Phase 32 | Complete |
-| HUB-05 | Phase 32 | Complete |
-| BRIEF-01 | Phase 33 | Complete |
-| BRIEF-02 | Phase 33 | Complete |
-| BRIEF-03 | Phase 33 | Complete |
-| BRIEF-04 | Phase 33 | Complete |
-| PROJ-01 | Phase 34 | Complete |
-| PROJ-02 | Phase 34 | Complete |
-| PROJ-03 | Phase 34 | Complete |
-| FIX-01 | Phase 35 | Complete |
-| FIX-02 | Phase 35 | Complete |
-| FIX-03 | Phase 35 | Complete |
+| LINT-01 | TBD | Pending |
+| LINT-02 | TBD | Pending |
+| LINT-03 | TBD | Pending |
+| LINT-04 | TBD | Pending |
+| TEST-01 | TBD | Pending |
+| TEST-02 | TBD | Pending |
+| TEST-03 | TBD | Pending |
+| TEST-04 | TBD | Pending |
+| ELOG-01 | TBD | Pending |
+| ELOG-02 | TBD | Pending |
+| HOOK-01 | TBD | Pending |
+| HOOK-02 | TBD | Pending |
+| HOOK-03 | TBD | Pending |
+| HOOK-04 | TBD | Pending |
+| TMCP-01 | TBD | Pending |
+| TMCP-02 | TBD | Pending |
+| TMCP-03 | TBD | Pending |
+| TMCP-04 | TBD | Pending |
 
 **Coverage:**
-- v1.6 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0
+- v1.7 requirements: 18 total
+- Mapped to phases: 0
+- Unmapped: 18 ⚠️
 
 ---
-*Requirements defined: 2026-04-04*
-*Last updated: 2026-04-04 after roadmap creation*
+*Requirements defined: 2026-04-05*
+*Last updated: 2026-04-05 after v1.7 requirements definition*
