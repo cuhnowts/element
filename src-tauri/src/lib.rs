@@ -219,6 +219,7 @@ pub fn run() {
             list_projects,
             get_project,
             update_project,
+            update_project_goal,
             delete_project,
             create_task,
             list_tasks,

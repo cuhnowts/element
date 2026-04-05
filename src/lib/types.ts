@@ -5,6 +5,7 @@ export interface Project {
   id: string;
   name: string;
   description: string;
+  goal: string;
   directoryPath: string | null;
   themeId: string | null;
   planningTier: string | null;

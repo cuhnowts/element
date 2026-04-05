@@ -8,6 +8,7 @@ pub struct Project {
     pub id: String,
     pub name: String,
     pub description: String,
+    pub goal: String,
     pub directory_path: Option<String>,
     pub theme_id: Option<String>,
     pub planning_tier: Option<String>,
@@ -29,14 +30,15 @@ impl Database {
         let description = input.description.unwrap_or_default();
 
         self.conn().execute(
-            "INSERT INTO projects (id, name, description, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-            rusqlite::params![id, input.name, description, now, now],
+            "INSERT INTO projects (id, name, description, goal, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![id, input.name, description, "", now, now],
         )?;
 
         Ok(Project {
             id,
             name: input.name,
             description,
+            goal: String::new(),
             directory_path: None,
             theme_id: None,
             planning_tier: None,
@@ -48,18 +50,19 @@ impl Database {
     pub fn list_projects(&self) -> Result<Vec<Project>, rusqlite::Error> {
         let mut stmt = self
             .conn()
-            .prepare("SELECT id, name, description, directory_path, theme_id, planning_tier, created_at, updated_at FROM projects ORDER BY created_at DESC")?;
+            .prepare("SELECT id, name, description, goal, directory_path, theme_id, planning_tier, created_at, updated_at FROM projects ORDER BY created_at DESC")?;
 
         let projects = stmt.query_map([], |row| {
             Ok(Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 description: row.get(2)?,
-                directory_path: row.get(3)?,
-                theme_id: row.get(4)?,
-                planning_tier: row.get(5)?,
-                created_at: row.get(6)?,
-                updated_at: row.get(7)?,
+                goal: row.get(3)?,
+                directory_path: row.get(4)?,
+                theme_id: row.get(5)?,
+                planning_tier: row.get(6)?,
+                created_at: row.get(7)?,
+                updated_at: row.get(8)?,
             })
         })?;
 
@@ -68,18 +71,19 @@ impl Database {
 
     pub fn get_project(&self, id: &str) -> Result<Project, rusqlite::Error> {
         self.conn().query_row(
-            "SELECT id, name, description, directory_path, theme_id, planning_tier, created_at, updated_at FROM projects WHERE id = ?1",
+            "SELECT id, name, description, goal, directory_path, theme_id, planning_tier, created_at, updated_at FROM projects WHERE id = ?1",
             rusqlite::params![id],
             |row| {
                 Ok(Project {
                     id: row.get(0)?,
                     name: row.get(1)?,
                     description: row.get(2)?,
-                    directory_path: row.get(3)?,
-                    theme_id: row.get(4)?,
-                    planning_tier: row.get(5)?,
-                    created_at: row.get(6)?,
-                    updated_at: row.get(7)?,
+                    goal: row.get(3)?,
+                    directory_path: row.get(4)?,
+                    theme_id: row.get(5)?,
+                    planning_tier: row.get(6)?,
+                    created_at: row.get(7)?,
+                    updated_at: row.get(8)?,
                 })
             },
         )
@@ -157,6 +161,15 @@ impl Database {
             rusqlite::params![id],
         )?;
         Ok(())
+    }
+
+    pub fn update_project_goal(&self, id: &str, goal: &str) -> Result<Project, rusqlite::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+        self.conn().execute(
+            "UPDATE projects SET goal = ?1, updated_at = ?2 WHERE id = ?3",
+            rusqlite::params![goal, now, id],
+        )?;
+        self.get_project(id)
     }
 }
 
@@ -286,6 +299,7 @@ mod tests {
             id: "test-id".into(),
             name: "Test".into(),
             description: "".into(),
+            goal: String::new(),
             directory_path: Some("/tmp/test".into()),
             theme_id: None,
             planning_tier: None,
@@ -372,5 +386,24 @@ mod tests {
         // Clear tier back to None
         let cleared = db.set_planning_tier(&project.id, None).unwrap();
         assert!(cleared.planning_tier.is_none());
+    }
+
+    #[test]
+    fn test_update_project_goal() {
+        let db = setup_test_db();
+        let project = db
+            .create_project(CreateProjectInput {
+                name: "Goal Test".into(),
+                description: None,
+            })
+            .unwrap();
+        assert_eq!(project.goal, "");
+
+        let updated = db.update_project_goal(&project.id, "Ship v2 by Q3").unwrap();
+        assert_eq!(updated.goal, "Ship v2 by Q3");
+
+        // Verify update_project does NOT clear goal
+        let after_name_update = db.update_project(&project.id, "New Name", "desc").unwrap();
+        assert_eq!(after_name_update.goal, "Ship v2 by Q3");
     }
 }

@@ -53,6 +53,22 @@ pub async fn update_project(
 }
 
 #[tauri::command]
+pub async fn update_project_goal(
+    app: AppHandle,
+    state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
+    project_id: String,
+    goal: String,
+) -> Result<Project, String> {
+    let db = state.lock().map_err(|e| e.to_string())?;
+    let project = db
+        .update_project_goal(&project_id, &goal)
+        .map_err(|e| e.to_string())?;
+    app.emit("project-updated", &project)
+        .map_err(|e| e.to_string())?;
+    Ok(project)
+}
+
+#[tauri::command]
 pub async fn delete_project(
     app: AppHandle,
     state: State<'_, std::sync::Arc<std::sync::Mutex<Database>>>,
