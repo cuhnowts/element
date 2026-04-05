@@ -136,7 +136,12 @@ Plans:
   2. Rust model tests use per-test in-memory SQLite isolation (`setup_test_db()` pattern) and pass reliably with default parallel thread count
   3. Tauri command integration tests using `tauri::test::mock_builder()` exist for core commands and pass
   4. Coverage baselines are documented for both suites (which modules are tested, which are not) so coverage gaps are visible
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 37-01-PLAN.md -- Vitest coverage config with @vitest/coverage-v8
+- [ ] 37-02-PLAN.md -- Shared setup_test_db() fixture and Rust test refactor
+- [ ] 37-03-PLAN.md -- Tauri command integration tests and COVERAGE.md baselines
 
 ### Phase 38: Error Logger
 **Goal**: Frontend errors are captured to a log file that Claude Code and MCP tools can read, providing observability without component tests
@@ -215,7 +220,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
 | 36. Linting Foundation | v1.7 | 0/3 | Planning | - |
-| 37. Test Infrastructure & Core Tests | v1.7 | 0/0 | Not started | - |
+| 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planning | - |
 | 38. Error Logger | v1.7 | 0/0 | Not started | - |
 | 39. Claude Code Hooks | v1.7 | 0/0 | Not started | - |
 | 40. Testing MCP Server | v1.7 | 0/0 | Not started | - |
