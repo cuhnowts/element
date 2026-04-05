@@ -149,7 +149,12 @@ Plans:
   1. User sees the project goal displayed as a prominent hero card above the phase list when opening a project
   2. User can set and edit the project goal directly in the project detail view without navigating elsewhere
   3. User can reach the workspace (directory + AI terminal) from the project detail in two clicks or fewer
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 34-01-PLAN.md -- Data layer: goal column migration, Rust model, Tauri command, TS types
+- [ ] 34-02-PLAN.md -- UI: GoalHeroCard, WorkspaceButton, ProjectDetail layout restructure
+
 **UI hint**: yes
 
 ### Phase 35: Bug Fixes & Polish
@@ -209,7 +214,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 31. Drawer Consolidation | v1.6 | 0/0 | Not started | - |
 | 32. Hub Layout Overhaul | v1.6 | 0/2 | Not started | - |
 | 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
-| 34. Goal-First Project Detail | v1.6 | 0/0 | Not started | - |
+| 34. Goal-First Project Detail | v1.6 | 0/2 | Not started | - |
 | 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
 
 ## Backlog
