@@ -16,6 +16,8 @@
     "global-shortcut:allow-unregister",
     "dialog:default",
     "pty:default",
-    "notification:default"
+    "notification:default",
+    "fs:default",
+    "fs:scope-appdata-recursive"
   ]
 }
