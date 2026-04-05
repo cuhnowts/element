@@ -13,6 +13,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.4 Daily Hub** -- Phases 22-25 (shipped 2026-04-03) -- [archive](milestones/v1.4-ROADMAP.md)
 - ✅ **v1.5 Time Bounded** -- Phases 26-30 (shipped 2026-04-05) -- [archive](milestones/v1.5-ROADMAP.md)
 - ✅ **v1.6 Clarity** -- Phases 31-35 (shipped 2026-04-05)
+- 🚧 **v1.7 Test Foundations** -- Phases 36-40 (in progress)
 
 ## Phases
 
@@ -83,112 +84,92 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.6 Clarity (In Progress)
+<details>
+<summary>v1.6 Clarity (Phases 31-35) -- SHIPPED 2026-04-05</summary>
 
-**Milestone Goal:** Strip the UI down to what matters -- goal-first projects, a hub that doesn't scroll sideways, and a briefing you actually want to read.
+- [x] Phase 31: Drawer Consolidation (2/2 plans) -- completed 2026-04-05
+- [x] Phase 32: Hub Layout Overhaul (2/2 plans) -- completed 2026-04-05
+- [x] Phase 33: Briefing Rework (4/4 plans) -- completed 2026-04-05
+- [x] Phase 34: Goal-First Project Detail (3/3 plans) -- completed 2026-04-05
+- [x] Phase 35: Bug Fixes & Polish (1/1 plans) -- completed 2026-04-05
+
+</details>
+
+### v1.7 Test Foundations (In Progress)
+
+**Milestone Goal:** Establish code quality infrastructure -- linting, backend test coverage, error logging, enforcement hooks, and a testing MCP server -- so Claude Code can autonomously verify its own work.
 
 **Phase Numbering:**
-- Integer phases (31, 32, 33...): Planned milestone work
-- Decimal phases (31.1, 31.2): Urgent insertions (marked with INSERTED)
+- Integer phases (36, 37, 38...): Planned milestone work
+- Decimal phases (36.1, 36.2): Urgent insertions (marked with INSERTED)
 
-- [x] **Phase 31: Drawer Consolidation** - Click-to-toggle drawer with AI panel as bottom drawer tab, right sidebar removed (completed 2026-04-05)
-- [x] **Phase 32: Hub Layout Overhaul** - Single center view with opt-in slide-in overlay panels replacing 3-column layout (completed 2026-04-05)
-- [x] **Phase 33: Briefing Rework** - On-demand generation with structured card-based sections (completed 2026-04-05)
-- [x] **Phase 34: Goal-First Project Detail** - Goal hero card above phases with streamlined workspace entry (completed 2026-04-05)
-- [x] **Phase 35: Bug Fixes & Polish** - Calendar Today label, deterministic overdue detection, minimizable workflows (completed 2026-04-05)
+- [ ] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts
+- [ ] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines
+- [ ] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC
+- [ ] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts
+- [ ] **Phase 40: Testing MCP Server** - Test lifecycle MCP server: discover, run, read results, check coverage gaps
 
 ## Phase Details
 
-### Phase 31: Drawer Consolidation
-**Goal**: Users interact with one unified bottom drawer that houses terminals, output, and AI -- no more right sidebar column
-**Depends on**: Nothing (first phase of v1.6; simplifies AppLayout for all subsequent changes)
-**Requirements**: DRAW-01, DRAW-02, DRAW-03
+### Phase 36: Linting Foundation
+**Goal**: The full codebase passes lint and format checks across both TypeScript and Rust with zero warnings and zero config errors
+**Depends on**: Nothing (first phase of v1.7; everything downstream needs clean lint baseline)
+**Requirements**: LINT-01, LINT-02, LINT-03, LINT-04
 **Success Criteria** (what must be TRUE):
-  1. User can click a tab bar or chevron to toggle the bottom drawer between fully collapsed and expanded states
-  2. User can switch to an "Element AI" tab in the bottom drawer and see agent activity and terminal output
-  3. The right sidebar agent panel is gone -- AppLayout renders only sidebar + center + bottom drawer
-  4. Agent lifecycle (queue watcher, auto-start) continues working regardless of whether the AI drawer tab is visible
-**Plans**: 2 plans
+  1. Running `biome check src/` completes with no config errors and no lint violations (Biome v2 schema migration complete)
+  2. Running `cargo clippy -- -D warnings` passes with zero warnings, including the `await_holding_lock` concurrency bug in calendar.rs fixed
+  3. Running `cargo fmt --check` passes with consistent formatting across all Rust source files
+  4. A single `npm run check:all` script runs both TS and Rust lint/format checks and reports pass/fail
+**Plans**: TBD
 
-Plans:
-- [x] 31-01-PLAN.md -- State layer: DrawerTab union, agent store refactor, lifecycle decoupling, keyboard shortcut rewire
-- [x] 31-02-PLAN.md -- UI: Element AI drawer pane, tab bar update, right sidebar removal, dead component cleanup
-
-**UI hint**: yes
-
-### Phase 32: Hub Layout Overhaul
-**Goal**: Users see a focused single-view hub with optional context panels that slide in on demand -- no forced horizontal scrolling
-**Depends on**: Phase 31
-**Requirements**: HUB-01, HUB-02, HUB-03, HUB-04, HUB-05
+### Phase 37: Test Infrastructure & Core Tests
+**Goal**: Both TypeScript and Rust test suites run reliably with coverage reporting, establishing the baseline that hooks and MCP tools will enforce
+**Depends on**: Phase 36 (tests must pass lint before test gates are meaningful)
+**Requirements**: TEST-01, TEST-02, TEST-03, TEST-04
 **Success Criteria** (what must be TRUE):
-  1. Opening the hub shows a single full-width center view (chat and briefing) with no horizontal scroll or column competition
-  2. User can toggle a Goals panel that slides in from the left via a toolbar button
-  3. User can toggle a Calendar panel that slides in from the right via a toolbar button
-  4. User can toggle a Briefing panel from the toolbar (or briefing is accessible inline in the center view)
-  5. Slide-in panels animate smoothly using CSS transforms with no layout jank or content reflow
-**Plans**: 2 plans
+  1. Running `npx vitest run --coverage` produces a coverage report for TypeScript utility functions with `@vitest/coverage-v8`
+  2. Rust model tests use per-test in-memory SQLite isolation (`setup_test_db()` pattern) and pass reliably with default parallel thread count
+  3. Tauri command integration tests using `tauri::test::mock_builder()` exist for core commands and pass
+  4. Coverage baselines are documented for both suites (which modules are tested, which are not) so coverage gaps are visible
+**Plans**: TBD
 
-Plans:
-- [x] 32-01-PLAN.md -- Store toggle state, SlideOverPanel component, HubToolbar with Calendar/Goals buttons
-- [x] 32-02-PLAN.md -- CommandHub center view, DayPulse, ActionButtons, JumpToTop, HubView rewrite
-
-**UI hint**: yes
-
-### Phase 33: Briefing Rework
-**Goal**: Users get a scannable, visually structured briefing they generate on demand -- not a wall of markdown auto-fired on load
-**Depends on**: Nothing (component-isolated, parallelizable with Phase 32)
-**Requirements**: BRIEF-01, BRIEF-02, BRIEF-03, BRIEF-04
+### Phase 38: Error Logger
+**Goal**: Frontend errors are captured to a log file that Claude Code and MCP tools can read, providing observability without component tests
+**Depends on**: Phase 36 (Rust command must pass lint; logger benefits from test infra but is not blocked by it)
+**Requirements**: ELOG-01, ELOG-02
 **Success Criteria** (what must be TRUE):
-  1. User sees a "Generate Briefing" button on hub load instead of an auto-triggered streaming briefing
-  2. Generated briefing displays distinct sections (summary, deadlines, blockers, wins) with clear hierarchy
-  3. Each briefing section renders as a visually distinct card -- not a single markdown block
-  4. Briefing and hub chat share one interface with shared conversation context
-**Plans**: 3 plans
+  1. A `console.error()` call in the frontend results in an entry appearing in `.element/errors.log` via Tauri IPC
+  2. An error inside the logging path itself does not freeze the app or cause infinite recursion (re-entrancy guard works)
+  3. Error writes are buffered (not per-call IPC) and do not cause observable UI lag during rapid error sequences
+**Plans**: TBD
 
-Plans:
-- [x] 33-01-PLAN.md -- Scoring engine (Rust) and TypeScript briefing types
-- [x] 33-02-PLAN.md -- Briefing command JSON output, store and stream hook update
-- [x] 33-03-PLAN.md -- HubCenterPanel rewrite, card components, ActionChipBar
-
-**UI hint**: yes
-
-### Phase 34: Goal-First Project Detail
-**Goal**: Users immediately see what a project is trying to achieve and can get into workspace flow with minimal clicks
-**Depends on**: Phase 31
-**Requirements**: PROJ-01, PROJ-02, PROJ-03
+### Phase 39: Claude Code Hooks
+**Goal**: Claude Code automatically enforces code quality -- commits are blocked on lint/test failures, edited files get auto-formatted, and related tests run on save
+**Depends on**: Phase 37 (hooks invoke lint and test commands that must be stable first)
+**Requirements**: HOOK-01, HOOK-02, HOOK-03, HOOK-04
 **Success Criteria** (what must be TRUE):
-  1. User sees the project goal displayed as a prominent hero card above the phase list when opening a project
-  2. User can set and edit the project goal directly in the project detail view without navigating elsewhere
-  3. User can reach the workspace (directory + AI terminal) from the project detail in two clicks or fewer
-**Plans**: 3 plans
+  1. When Claude Code attempts to commit code with a lint or test failure, the commit is blocked with a clear error message (exit code 2)
+  2. When Claude Code edits a file, related tests run automatically and results are visible
+  3. When Claude Code edits a TypeScript file, Biome auto-formats it after the edit completes
+  4. Hooks complete within their configured timeouts (300s for cargo builds on cold cache) without hanging
+**Plans**: TBD
 
-Plans:
-- [x] 34-00-PLAN.md -- Wave 0: test stubs for GoalHeroCard and WorkspaceButton (Nyquist compliance)
-- [x] 34-01-PLAN.md -- Data layer: goal column migration, Rust model, Tauri command, TS types
-- [x] 34-02-PLAN.md -- UI: GoalHeroCard, WorkspaceButton, ProjectDetail layout restructure
-
-**UI hint**: yes
-
-### Phase 35: Bug Fixes & Polish
-**Goal**: Three standalone issues are resolved -- calendar labeling, overdue detection, and workflows clutter
-**Depends on**: Nothing (independent of all other v1.6 phases)
-**Requirements**: FIX-01, FIX-02, FIX-03
+### Phase 40: Testing MCP Server
+**Goal**: Claude Code can discover, run, and analyze tests through MCP tools -- making it a self-directed test-writing agent
+**Depends on**: Phase 37 (MCP server wraps test commands that must produce reliable output)
+**Requirements**: TMCP-01, TMCP-02, TMCP-03, TMCP-04
 **Success Criteria** (what must be TRUE):
-  1. In calendar week view, only the actual current day shows the "Today" label -- other days show only their date
-  2. Overdue tasks are detected by a deterministic database query (due_date < today AND status != complete) with no LLM involvement
-  3. User can fully minimize the Workflows section when not actively using it, and it stays minimized across sessions
-**Plans**: 1 plan
-
-Plans:
-- [x] 35-01-PLAN.md -- Calendar today fix, overdue audit, and collapsible workflows
-
-**UI hint**: yes
+  1. Claude Code can call `discover_tests` and receive a structured list of available test suites, files, and modules for both Vitest and cargo test
+  2. Claude Code can call `run_tests` with a specific test name/file and receive structured results (pass/fail/error per test)
+  3. Claude Code can call `check_coverage_gaps` and receive a list of uncovered files/functions from coverage reports
+  4. All MCP server command execution uses argument arrays (no shell string interpolation) to prevent injection attacks
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 31 -> 32 -> 33 -> 34 -> 35
-Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
+Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
+Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -228,6 +209,11 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
+| 36. Linting Foundation | v1.7 | 0/0 | Not started | - |
+| 37. Test Infrastructure & Core Tests | v1.7 | 0/0 | Not started | - |
+| 38. Error Logger | v1.7 | 0/0 | Not started | - |
+| 39. Claude Code Hooks | v1.7 | 0/0 | Not started | - |
+| 40. Testing MCP Server | v1.7 | 0/0 | Not started | - |
 
 ## Backlog
 

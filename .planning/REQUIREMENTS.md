@@ -168,30 +168,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LINT-01 | TBD | Pending |
-| LINT-02 | TBD | Pending |
-| LINT-03 | TBD | Pending |
-| LINT-04 | TBD | Pending |
-| TEST-01 | TBD | Pending |
-| TEST-02 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| ELOG-01 | TBD | Pending |
-| ELOG-02 | TBD | Pending |
-| HOOK-01 | TBD | Pending |
-| HOOK-02 | TBD | Pending |
-| HOOK-03 | TBD | Pending |
-| HOOK-04 | TBD | Pending |
-| TMCP-01 | TBD | Pending |
-| TMCP-02 | TBD | Pending |
-| TMCP-03 | TBD | Pending |
-| TMCP-04 | TBD | Pending |
+| LINT-01 | Phase 36 | Pending |
+| LINT-02 | Phase 36 | Pending |
+| LINT-03 | Phase 36 | Pending |
+| LINT-04 | Phase 36 | Pending |
+| TEST-01 | Phase 37 | Pending |
+| TEST-02 | Phase 37 | Pending |
+| TEST-03 | Phase 37 | Pending |
+| TEST-04 | Phase 37 | Pending |
+| ELOG-01 | Phase 38 | Pending |
+| ELOG-02 | Phase 38 | Pending |
+| HOOK-01 | Phase 39 | Pending |
+| HOOK-02 | Phase 39 | Pending |
+| HOOK-03 | Phase 39 | Pending |
+| HOOK-04 | Phase 39 | Pending |
+| TMCP-01 | Phase 40 | Pending |
+| TMCP-02 | Phase 40 | Pending |
+| TMCP-03 | Phase 40 | Pending |
+| TMCP-04 | Phase 40 | Pending |
 
 **Coverage:**
 - v1.7 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-05*
-*Last updated: 2026-04-05 after v1.7 requirements definition*
+*Last updated: 2026-04-05 after roadmap creation*

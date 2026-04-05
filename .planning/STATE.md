@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Test Foundations
-status: Defining requirements
-stopped_at: null
-last_updated: "2026-04-05T14:00:00.000Z"
+status: Ready to plan
+stopped_at: Roadmap created for v1.7 Test Foundations
+last_updated: "2026-04-05T15:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -19,12 +19,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Defining requirements for v1.7 Test Foundations
+**Current focus:** Phase 36 - Linting Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
+Phase: 36 (1 of 5 in v1.7) (Linting Foundation)
+Plan: 0 of 0 in current phase
+Status: Ready to plan
+Last activity: 2026-04-05 -- Roadmap created for v1.7 Test Foundations
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -54,25 +58,10 @@ Plan: —
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.6 Roadmap]: Drawer consolidation first -- removing right sidebar simplifies AppLayout for all subsequent phases
-- [v1.6 Roadmap]: Phase 33 (Briefing) parallelizable with Phase 32 (Hub) -- no shared state
-- [Research]: tw-animate-css only new dependency; no JS animation framework warranted
-- [Research]: Zustand selector stability is top pitfall -- use module-level EMPTY constants
-- [Research]: Agent lifecycle must separate from panel visibility before UI relocation
-- [Phase 31]: Lifted agent command/args from useState to Zustand store for cross-component access
-- [Phase 31]: AgentPanel rendered unconditionally until Plan 02 removes it
-- [Phase 31]: Keep conditional rendering for agent sub-tabs inside display:block/none outer pane
-- [Phase 32]: Custom SlideOverPanel over shadcn Sheet to avoid Radix Dialog focus trap
-- [Phase 32]: CommandHub uses max-w-2xl centered layout; JumpToTop uses IntersectionObserver sentinel pattern; ActionButtons are placeholder skill triggers
-- [Phase 33]: Empty Rust test bodies (not todo!()) for Wave 0 stubs to avoid cargo test panics
-- [Phase 33-01]: compute_scores_for_date pattern for deterministic testing of date-dependent scoring logic
-- [Phase 33-01]: ProjectTag uses kebab-case serde for direct alignment with TypeScript BriefingTag union
-- [Phase 33-02]: Used CompletionResponse.content for full response instead of channel accumulation
-- [Phase 34]: Test-first stubs follow existing ProjectDetail.test.tsx mock patterns for Tauri API and store mocks
-- [Phase 35]: FIX-02 audit: all overdue paths are deterministic (date-utils isOverdue, inline parseISO) -- no code changes needed
-- [Phase 35]: Workflows default collapsed per D-09 to reduce sidebar clutter
-- [Phase 34]: Separate update_project_goal command instead of extending update_project -- prevents goal from being silently cleared by name/description saves
-- [Phase 34]: WorkspaceButton fires startFileWatcher as fire-and-forget to avoid blocking UI actions behind async await
+- [v1.7 Roadmap]: Biome replaces ESLint + Prettier entirely (already installed v2.4.7, needs schema migration)
+- [v1.7 Roadmap]: Testing MCP server is separate sidecar from existing mcp-server/ (different concerns, different security model)
+- [v1.7 Roadmap]: No frontend component tests -- UI verified via screenshots + user feedback
+- [v1.7 Roadmap]: Linting must be clean before test gates, tests must exist before hooks enforce them
 
 ### Pending Todos
 
@@ -80,19 +69,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None active.
-
-### v1.6 UAT Results (2026-04-05)
-
-All phases passed human UAT:
-- Phase 31: 5 passed, 1 blocked (fs permissions — pre-existing)
-- Phase 32: 4/4 passed (follow-up: panels should push, not overlay — backlog 999.10)
-- Phase 33: 6/6 passed
-- Phase 34: 3/3 passed (spec correction: workspace opens terminal only — backlog 999.11)
-- Phase 35: 2/2 passed
+- Biome schema mismatch (v1.9.4 in biome.json vs v2.4.7 installed) is Day 1 blocker -- `npx biome migrate` must be first action
+- clippy `await_holding_lock` in calendar.rs:762 is a real concurrency bug, not just style
+- Claude Code version must be v2.1.85+ for hooks `if` field support -- verify before Phase 39
 
 ## Session Continuity
 
 Last session: 2026-04-05
-Stopped at: Milestone v1.7 started — defining requirements
+Stopped at: Roadmap created for v1.7 Test Foundations
 Resume file: None
