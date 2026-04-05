@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { GoalHeroCard } from "../GoalHeroCard";
 
 // Mock Tauri to avoid runtime dependency
@@ -93,13 +93,13 @@ describe("GoalHeroCard", () => {
       const input = screen.getByRole("textbox", { name: "Project goal" });
       fireEvent.change(input, { target: { value: "Updated goal" } });
       fireEvent.blur(input);
-      vi.advanceTimersByTime(800);
-      await waitFor(() => {
-        expect(mockUpdateProjectGoal).toHaveBeenCalledWith(
-          "proj-1",
-          "Updated goal",
-        );
+      await act(async () => {
+        vi.advanceTimersByTime(800);
       });
+      expect(mockUpdateProjectGoal).toHaveBeenCalledWith(
+        "proj-1",
+        "Updated goal",
+      );
     });
   });
 });
