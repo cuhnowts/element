@@ -111,7 +111,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 **Plans**: 2 plans
 
 Plans:
-- [ ] 31-01-PLAN.md -- State layer: DrawerTab union, agent store refactor, lifecycle decoupling, keyboard shortcut rewire
+- [x] 31-01-PLAN.md -- State layer: DrawerTab union, agent store refactor, lifecycle decoupling, keyboard shortcut rewire
 - [ ] 31-02-PLAN.md -- UI: Element AI drawer pane, tab bar update, right sidebar removal, dead component cleanup
 
 **UI hint**: yes
@@ -129,7 +129,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 32-01-PLAN.md -- Store toggle state, SlideOverPanel component, HubToolbar with Calendar/Goals buttons
+- [x] 32-01-PLAN.md -- Store toggle state, SlideOverPanel component, HubToolbar with Calendar/Goals buttons
 - [ ] 32-02-PLAN.md -- CommandHub center view, DayPulse, ActionButtons, JumpToTop, HubView rewrite
 
 **UI hint**: yes
@@ -223,9 +223,9 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 | 28. Due Dates & Daily Planning | v1.5 | 3/3 | Complete | 2026-04-04 |
 | 29. Calendar MCP Tools | v1.5 | 2/2 | Complete | 2026-04-04 |
 | 30. Heartbeat & Schedule Negotiation | v1.5 | 3/3 | Complete | 2026-04-05 |
-| 31. Drawer Consolidation | v1.6 | 0/2 | Not started | - |
-| 32. Hub Layout Overhaul | v1.6 | 0/2 | Not started | - |
-| 33. Briefing Rework | v1.6 | 0/0 | Not started | - |
+| 31. Drawer Consolidation | v1.6 | 1/2 | In Progress|  |
+| 32. Hub Layout Overhaul | v1.6 | 1/2 | In Progress|  |
+| 33. Briefing Rework | v1.6 | 0/4 | Planned    |  |
 | 34. Goal-First Project Detail | v1.6 | 0/3 | Not started | - |
 | 35. Bug Fixes & Polish | v1.6 | 0/1 | Not started | - |
 
@@ -235,7 +235,7 @@ Note: Phase 33 (Briefing) is parallelizable with Phase 32 (Hub) if desired.
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 1/3 plans executed
+**Plans:** 0/4 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

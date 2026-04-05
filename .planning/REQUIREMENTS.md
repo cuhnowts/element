@@ -9,18 +9,18 @@ Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
 
 ### Hub Layout
 
-- [ ] **HUB-01**: User sees a single full-width center view when opening the hub (no horizontal scroll)
-- [ ] **HUB-02**: User can toggle a goals slide-in panel from the hub toolbar
-- [ ] **HUB-03**: User can toggle a calendar slide-in panel from the hub toolbar
-- [ ] **HUB-04**: User can toggle a briefing slide-in panel from the hub toolbar
-- [ ] **HUB-05**: Slide-in panels animate smoothly using CSS transforms (no layout jank)
+- [x] **HUB-01**: User sees a single full-width center view when opening the hub (no horizontal scroll)
+- [x] **HUB-02**: User can toggle a goals slide-in panel from the hub toolbar
+- [x] **HUB-03**: User can toggle a calendar slide-in panel from the hub toolbar
+- [x] **HUB-04**: User can toggle a briefing slide-in panel from the hub toolbar
+- [x] **HUB-05**: Slide-in panels animate smoothly using CSS transforms (no layout jank)
 
 ### Briefing
 
-- [ ] **BRIEF-01**: User sees a "Generate Briefing" button instead of auto-generated briefing on hub load
-- [ ] **BRIEF-02**: Generated briefing displays structured sections (summary, deadlines, blockers, wins)
-- [ ] **BRIEF-03**: Briefing sections render as visually distinct cards with clear hierarchy
-- [ ] **BRIEF-04**: Briefing and hub chat are consolidated into one interface with shared context
+- [x] **BRIEF-01**: User sees a "Generate Briefing" button instead of auto-generated briefing on hub load
+- [x] **BRIEF-02**: Generated briefing displays structured sections (summary, deadlines, blockers, wins)
+- [x] **BRIEF-03**: Briefing sections render as visually distinct cards with clear hierarchy
+- [x] **BRIEF-04**: Briefing and hub chat are consolidated into one interface with shared context
 
 ### Project Detail
 
@@ -30,9 +30,9 @@ Requirements for v1.6 Clarity milestone. Each maps to roadmap phases.
 
 ### Drawer
 
-- [ ] **DRAW-01**: User can click to toggle the bottom drawer between fully collapsed and expanded (~450px)
-- [ ] **DRAW-02**: Agent panel is accessible as an "Element AI" tab in the bottom drawer
-- [ ] **DRAW-03**: Right sidebar agent panel is removed from the app layout
+- [x] **DRAW-01**: User can click to toggle the bottom drawer between fully collapsed and expanded (~450px)
+- [x] **DRAW-02**: Agent panel is accessible as an "Element AI" tab in the bottom drawer
+- [x] **DRAW-03**: Right sidebar agent panel is removed from the app layout
 
 ### Bug Fixes
 
@@ -123,18 +123,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DRAW-01 | Phase 31 | Pending |
-| DRAW-02 | Phase 31 | Pending |
-| DRAW-03 | Phase 31 | Pending |
-| HUB-01 | Phase 32 | Pending |
-| HUB-02 | Phase 32 | Pending |
-| HUB-03 | Phase 32 | Pending |
-| HUB-04 | Phase 32 | Pending |
-| HUB-05 | Phase 32 | Pending |
-| BRIEF-01 | Phase 33 | Pending |
-| BRIEF-02 | Phase 33 | Pending |
-| BRIEF-03 | Phase 33 | Pending |
-| BRIEF-04 | Phase 33 | Pending |
+| DRAW-01 | Phase 31 | Complete |
+| DRAW-02 | Phase 31 | Complete |
+| DRAW-03 | Phase 31 | Complete |
+| HUB-01 | Phase 32 | Complete |
+| HUB-02 | Phase 32 | Complete |
+| HUB-03 | Phase 32 | Complete |
+| HUB-04 | Phase 32 | Complete |
+| HUB-05 | Phase 32 | Complete |
+| BRIEF-01 | Phase 33 | Complete |
+| BRIEF-02 | Phase 33 | Complete |
+| BRIEF-03 | Phase 33 | Complete |
+| BRIEF-04 | Phase 33 | Complete |
 | PROJ-01 | Phase 34 | Pending |
 | PROJ-02 | Phase 34 | Pending |
 | PROJ-03 | Phase 34 | Pending |

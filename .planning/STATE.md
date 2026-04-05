@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Clarity
-status: planning
-stopped_at: Completed 33-01-PLAN.md
-last_updated: "2026-04-05T12:05:15.000Z"
-last_activity: 2026-04-05 -- Completed 33-01 scoring engine and briefing types
+status: Executing Phase 33
+stopped_at: Completed Wave 1 (33-00, 33-01)
+last_updated: "2026-04-05T12:06:17.665Z"
+last_activity: 2026-04-05 -- Completed Wave 1 test stubs + scoring engine
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 12
-  completed_plans: 1
-  percent: 8
+  completed_plans: 2
+  percent: 16
 ---
 
 # Project State
@@ -21,16 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 31 - Drawer Consolidation
+**Current focus:** Phase 33 — briefing-rework
 
 ## Current Position
 
-Phase: 31 of 35 (Drawer Consolidation)
-Plan: 0 of 0 in current phase (plans TBD)
-Status: Ready to plan
-Last activity: 2026-04-04 -- v1.6 Clarity roadmap created
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 33 (briefing-rework) — EXECUTING
+Plan: 2 of 4 complete (Wave 1 done, Wave 2 next)
 
 ## Performance Metrics
 
@@ -64,6 +60,12 @@ Recent decisions affecting current work:
 - [Research]: tw-animate-css only new dependency; no JS animation framework warranted
 - [Research]: Zustand selector stability is top pitfall -- use module-level EMPTY constants
 - [Research]: Agent lifecycle must separate from panel visibility before UI relocation
+- [Phase 31]: Lifted agent command/args from useState to Zustand store for cross-component access
+- [Phase 31]: AgentPanel rendered unconditionally until Plan 02 removes it
+- [Phase 31]: Keep conditional rendering for agent sub-tabs inside display:block/none outer pane
+- [Phase 32]: Custom SlideOverPanel over shadcn Sheet to avoid Radix Dialog focus trap
+- [Phase 32]: CommandHub uses max-w-2xl centered layout; JumpToTop uses IntersectionObserver sentinel pattern; ActionButtons are placeholder skill triggers
+- [Phase 33]: Empty Rust test bodies (not todo!()) for Wave 0 stubs to avoid cargo test panics
 - [Phase 33-01]: compute_scores_for_date pattern for deterministic testing of date-dependent scoring logic
 - [Phase 33-01]: ProjectTag uses kebab-case serde for direct alignment with TypeScript BriefingTag union
 
@@ -78,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T03:28:08.090Z
-Stopped at: Phase 31 plans verified (2 plans, 2 waves)
-Resume file: .planning/phases/31-drawer-consolidation/31-01-PLAN.md
+Last session: 2026-04-05T12:06:17.662Z
+Stopped at: Completed Wave 1 (33-00, 33-01)
+Resume file: .planning/phases/33-briefing-rework/33-02-PLAN.md
