@@ -2,6 +2,7 @@ pub mod ai_commands;
 pub mod calendar_commands;
 pub mod cli_commands;
 pub mod credential_commands;
+pub mod error_log_commands;
 pub mod execution_commands;
 pub mod file_explorer_commands;
 pub mod heartbeat_commands;

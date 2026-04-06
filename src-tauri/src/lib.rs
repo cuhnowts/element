@@ -22,6 +22,7 @@ use commands::ai_commands::*;
 use commands::calendar_commands::*;
 use commands::cli_commands::*;
 use commands::credential_commands::*;
+use commands::error_log_commands::*;
 use commands::execution_commands::*;
 use commands::file_explorer_commands::*;
 use commands::heartbeat_commands::*;
@@ -67,9 +68,10 @@ pub fn run() {
             app.manage(Mutex::new(plugin_host));
 
             // Initialize credential manager
+            let secret_store = credentials::keychain::SqliteSecretStore::new(db_arc.clone());
             let cred_manager = credentials::CredentialManager::new(
                 db_arc,
-                Box::new(credentials::keychain::KeychainStore),
+                Box::new(secret_store),
             );
             app.manage(Mutex::new(cred_manager));
 
@@ -357,6 +359,7 @@ pub fn run() {
             set_heartbeat_config,
             trigger_heartbeat,
             get_heartbeat_status,
+            log_errors,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

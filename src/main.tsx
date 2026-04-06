@@ -1,6 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./app.css";
+import { initErrorLogger } from "./lib/errorLogger";
+
+initErrorLogger();
 
 // Check if this is the capture window
 const params = new URLSearchParams(window.location.search);
