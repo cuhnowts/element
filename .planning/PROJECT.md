@@ -51,6 +51,8 @@ v1.7 Phase 38 complete: Error logger — console.error interceptor with re-entra
 
 v1.7 Phase 40 complete: Testing MCP server — 3 MCP tools (discover_tests, run_tests, check_coverage_gaps) composing secure spawn-based runner and output parsers for Vitest JSON, cargo test text, and Istanbul coverage. 40 tests, stdio transport, esbuild bundle.
 
+v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome format + lint + test, exit 2 on failure), PostToolUse test-on-save (vitest for TS, cargo test for Rust), 300s timeouts, SKIP_HOOKS=1 bypass.
+
 ## Requirements
 
 ### Validated
@@ -206,4 +208,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-05 after milestone v1.7 Test Foundations started*
+*Last updated: 2026-04-06 after Phase 39 Claude Code Hooks completed*
