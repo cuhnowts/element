@@ -314,9 +314,10 @@ export function HubChat() {
   );
 
   // Intercept streaming chunks to detect tool_use events
-  const originalAppendChunk = useHubChatStore.getState().appendChunk;
+  const originalAppendChunkRef = useRef(useHubChatStore.getState().appendChunk);
   const chunkBufferRef = useRef("");
   useEffect(() => {
+    const originalAppendChunk = originalAppendChunkRef.current;
     useHubChatStore.setState({
       appendChunk: (chunk: string) => {
         const toolUse = tryParseToolUse(chunk);
@@ -353,7 +354,7 @@ export function HubChat() {
     return () => {
       useHubChatStore.setState({ appendChunk: originalAppendChunk });
     };
-  }, [handleToolUse, originalAppendChunk]);
+  }, [handleToolUse]);
 
   const handleApprove = useCallback(async () => {
     if (!pendingAction) return;
