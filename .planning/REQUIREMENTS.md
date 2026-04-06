@@ -74,28 +74,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUG-01 | TBD | Pending |
-| PLUG-02 | TBD | Pending |
-| PLUG-03 | TBD | Pending |
-| PLUG-04 | TBD | Pending |
-| PLUG-05 | TBD | Pending |
-| WIKI-01 | TBD | Pending |
-| WIKI-02 | TBD | Pending |
-| WIKI-03 | TBD | Pending |
-| WIKI-04 | TBD | Pending |
-| WIKI-05 | TBD | Pending |
-| WIKI-06 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| CHAT-03 | TBD | Pending |
-| MCP-01 | TBD | Pending |
-| MCP-02 | TBD | Pending |
+| PLUG-01 | Phase 41 | Pending |
+| PLUG-02 | Phase 41 | Pending |
+| PLUG-03 | Phase 41 | Pending |
+| PLUG-04 | Phase 41 | Pending |
+| PLUG-05 | Phase 41 | Pending |
+| WIKI-01 | Phase 42 | Pending |
+| WIKI-02 | Phase 42 | Pending |
+| WIKI-03 | Phase 42 | Pending |
+| WIKI-04 | Phase 42 | Pending |
+| WIKI-05 | Phase 42 | Pending |
+| WIKI-06 | Phase 42 | Pending |
+| CHAT-01 | Phase 43 | Pending |
+| CHAT-02 | Phase 43 | Pending |
+| CHAT-03 | Phase 43 | Pending |
+| MCP-01 | Phase 44 | Pending |
+| MCP-02 | Phase 44 | Pending |
 
 **Coverage:**
 - v1.8 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-06*
-*Last updated: 2026-04-06 after initial definition*
+*Last updated: 2026-04-06 after roadmap creation*

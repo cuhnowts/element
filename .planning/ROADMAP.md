@@ -13,7 +13,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.4 Daily Hub** -- Phases 22-25 (shipped 2026-04-03) -- [archive](milestones/v1.4-ROADMAP.md)
 - ✅ **v1.5 Time Bounded** -- Phases 26-30 (shipped 2026-04-05) -- [archive](milestones/v1.5-ROADMAP.md)
 - ✅ **v1.6 Clarity** -- Phases 31-35 (shipped 2026-04-05)
-- 🚧 **v1.7 Test Foundations** -- Phases 36-40 (in progress)
+- ✅ **v1.7 Test Foundations** -- Phases 36-40 (shipped 2026-04-06)
+- 🚧 **v1.8 Knowledge Engine** -- Phases 41-44 (in progress)
 
 ## Phases
 
@@ -95,102 +96,82 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.7 Test Foundations (In Progress)
+<details>
+<summary>v1.7 Test Foundations (Phases 36-40) -- SHIPPED 2026-04-06</summary>
 
-**Milestone Goal:** Establish code quality infrastructure -- linting, backend test coverage, error logging, enforcement hooks, and a testing MCP server -- so Claude Code can autonomously verify its own work.
+- [x] Phase 36: Linting Foundation (2/3 plans) -- completed 2026-04-05
+- [x] Phase 37: Test Infrastructure & Core Tests (3/3 plans) -- completed 2026-04-06
+- [x] Phase 38: Error Logger (2/2 plans) -- completed 2026-04-06
+- [x] Phase 39: Claude Code Hooks (1/1 plans) -- completed 2026-04-06
+- [x] Phase 40: Testing MCP Server (0/2 plans) -- completed 2026-04-06
+
+</details>
+
+### v1.8 Knowledge Engine (In Progress)
+
+**Milestone Goal:** Ship an LLM-compiled wiki plugin that gives the app persistent, compounding memory -- accessible through hub chat and MCP tools -- while evolving the plugin system to support skill registration and plugin-owned directories.
 
 **Phase Numbering:**
-- Integer phases (36, 37, 38...): Planned milestone work
-- Decimal phases (36.1, 36.2): Urgent insertions (marked with INSERTED)
+- Integer phases (41, 42, 43, 44): Planned milestone work
+- Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
-- [x] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts (completed 2026-04-05)
-- [x] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines (completed 2026-04-06)
-- [x] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC (completed 2026-04-06)
-- [x] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts (completed 2026-04-06)
-- [x] **Phase 40: Testing MCP Server** - Test lifecycle MCP server: discover, run, read results, check coverage gaps (completed 2026-04-06)
+- [ ] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement
+- [ ] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue
+- [ ] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat
+- [ ] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest
 
 ## Phase Details
 
-### Phase 36: Linting Foundation
-**Goal**: The full codebase passes lint and format checks across both TypeScript and Rust with zero warnings and zero config errors
-**Depends on**: Nothing (first phase of v1.7; everything downstream needs clean lint baseline)
-**Requirements**: LINT-01, LINT-02, LINT-03, LINT-04
+### Phase 41: Plugin Infrastructure Evolution
+**Goal**: Plugins can declare skills, MCP tools, and owned directories in their manifest, with the host creating directories, routing skill invocations, and enforcing namespace uniqueness
+**Depends on**: Phase 40 (v1.7 complete; plugin system exists from v1.0 Phase 4)
+**Requirements**: PLUG-01, PLUG-02, PLUG-03, PLUG-04, PLUG-05
 **Success Criteria** (what must be TRUE):
-  1. Running `biome check src/` completes with no config errors and no lint violations (Biome v2 schema migration complete)
-  2. Running `cargo clippy -- -D warnings` passes with zero warnings, including the `await_holding_lock` concurrency bug in calendar.rs fixed
-  3. Running `cargo fmt --check` passes with consistent formatting across all Rust source files
-  4. A single `npm run check:all` script runs both TS and Rust lint/format checks and reports pass/fail
-**Plans**: 3 plans
+  1. A plugin manifest with `skills`, `mcp_tools`, and `owned_directories` fields parses correctly, and existing plugin.json files without these fields continue to parse unchanged
+  2. When a plugin with an `owned_directories` declaration is enabled, the declared directory is created on the filesystem; when disabled, the directory is preserved but the plugin no longer manages it
+  3. Calling `dispatch_plugin_skill` with a valid skill name routes to the correct plugin handler and returns a result to the caller
+  4. Enabling two plugins that declare the same skill name produces an explicit error at load time rather than silent wrong behavior
+  5. Disabling a plugin removes all its registered skills and MCP tools from the runtime registries without requiring an app restart
+**Plans**: TBD
 
-Plans:
-- [x] 36-01-PLAN.md -- Biome v2 migration and TypeScript lint violations
-- [x] 36-02-PLAN.md -- Clippy warnings, rustfmt, and await_holding_lock fix
-- [ ] 36-03-PLAN.md -- Unified check:all script
-
-### Phase 37: Test Infrastructure & Core Tests
-**Goal**: Both TypeScript and Rust test suites run reliably with coverage reporting, establishing the baseline that hooks and MCP tools will enforce
-**Depends on**: Phase 36 (tests must pass lint before test gates are meaningful)
-**Requirements**: TEST-01, TEST-02, TEST-03, TEST-04
+### Phase 42: Knowledge Engine Core
+**Goal**: Users can ingest raw source documents into a three-layer wiki and query compiled knowledge, with all mutations serialized for concurrency safety and source hashes tracking staleness
+**Depends on**: Phase 41 (knowledge engine registers as a plugin using the skill/directory infrastructure)
+**Requirements**: WIKI-01, WIKI-02, WIKI-03, WIKI-04, WIKI-05, WIKI-06
 **Success Criteria** (what must be TRUE):
-  1. Running `npx vitest run --coverage` produces a coverage report for TypeScript utility functions with `@vitest/coverage-v8`
-  2. Rust model tests use per-test in-memory SQLite isolation (`setup_test_db()` pattern) and pass reliably with default parallel thread count
-  3. Tauri command integration tests using `tauri::test::mock_builder()` exist for core commands and pass
-  4. Coverage baselines are documented for both suites (which modules are tested, which are not) so coverage gaps are visible
-**Plans**: 3 plans
+  1. User can provide a raw source document and the system produces compiled wiki article(s) in `.knowledge/wiki/`, updates `.knowledge/index.md`, and stores the raw source in `.knowledge/raw/`
+  2. User can ask a question and receive a synthesized answer that cites specific wiki articles, with the answer drawn from index.md lookup and relevant page retrieval
+  3. Running lint identifies at least one category of issue (thin articles, broken wikilinks, stale sources, contradictions, or missing concepts) when such issues exist in the wiki
+  4. Two simultaneous wiki operations do not corrupt `.knowledge/index.md` -- the second operation queues behind the first
+  5. A wiki article's YAML frontmatter contains the content hash of its source(s), and re-ingesting an unchanged source is detected as a no-op
+**Plans**: TBD
 
-Plans:
-- [x] 37-01-PLAN.md -- Vitest coverage config with @vitest/coverage-v8
-- [x] 37-02-PLAN.md -- Shared setup_test_db() fixture and Rust test refactor
-- [x] 37-03-PLAN.md -- Tauri command integration tests and COVERAGE.md baselines
-
-### Phase 38: Error Logger
-**Goal**: Frontend errors are captured to a log file that Claude Code and MCP tools can read, providing observability without component tests
-**Depends on**: Phase 36 (Rust command must pass lint; logger benefits from test infra but is not blocked by it)
-**Requirements**: ELOG-01, ELOG-02
+### Phase 43: Hub Chat Wiki Integration
+**Goal**: Users can ingest, query, lint, and manage the wiki entirely through hub chat commands, with plugin-contributed skills loaded dynamically alongside built-in actions
+**Depends on**: Phase 41 (dynamic skill loading), Phase 42 (wiki operations to expose)
+**Requirements**: CHAT-01, CHAT-02, CHAT-03
 **Success Criteria** (what must be TRUE):
-  1. A `console.error()` call in the frontend results in an entry appearing in `.element/errors.log` via Tauri IPC
-  2. An error inside the logging path itself does not freeze the app or cause infinite recursion (re-entrancy guard works)
-  3. Error writes are buffered (not per-call IPC) and do not cause observable UI lag during rapid error sequences
-**Plans**: 2 plans
+  1. Plugin-contributed skills appear in hub chat's available tools without code changes to HubChat.tsx -- they load dynamically from the plugin registry on mount
+  2. User can type a wiki query in hub chat and receive a synthesized answer inline, and can trigger an ingest by providing a file path or pasting content
+  3. Hub chat's system prompt includes only tools relevant to the current user intent rather than every registered tool, keeping prompt size manageable as plugins grow
+**Plans**: TBD
+**UI hint**: yes
 
-Plans:
-- [x] 38-01-PLAN.md -- TypeScript error logger module with TDD (interceptor, re-entrancy guard, buffer)
-- [x] 38-02-PLAN.md -- Rust backend command, registration, and main.tsx wiring
-
-### Phase 39: Claude Code Hooks
-**Goal**: Claude Code automatically enforces code quality -- commits are blocked on lint/test failures, edited files get auto-formatted, and related tests run on save
-**Depends on**: Phase 37 (hooks invoke lint and test commands that must be stable first)
-**Requirements**: HOOK-01, HOOK-02, HOOK-03, HOOK-04
+### Phase 44: MCP Server Wiki Tools
+**Goal**: External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server
+**Depends on**: Phase 42 (wiki engine must be functional for MCP to wrap)
+**Requirements**: MCP-01, MCP-02
 **Success Criteria** (what must be TRUE):
-  1. When Claude Code attempts to commit code with a lint or test failure, the commit is blocked with a clear error message (exit code 2)
-  2. When Claude Code edits a file, related tests run automatically and results are visible
-  3. When Claude Code commits TypeScript files, Biome auto-formats them before the commit completes
-  4. Hooks complete within their configured timeouts (300s for cargo builds on cold cache) without hanging
-**Plans**: 1 plan
-
-Plans:
-- [x] 39-01-PLAN.md -- Pre-commit gate, test-on-save, and auto-format hooks configuration
-
-### Phase 40: Testing MCP Server
-**Goal**: Claude Code can discover, run, and analyze tests through MCP tools -- making it a self-directed test-writing agent
-**Depends on**: Phase 37 (MCP server wraps test commands that must produce reliable output)
-**Requirements**: TMCP-01, TMCP-02, TMCP-03, TMCP-04
-**Success Criteria** (what must be TRUE):
-  1. Claude Code can call `discover_tests` and receive a structured list of available test suites, files, and modules for both Vitest and cargo test
-  2. Claude Code can call `run_tests` with a specific test name/file and receive structured results (pass/fail/error per test)
-  3. Claude Code can call `check_coverage_gaps` and receive a list of uncovered files/functions from coverage reports
-  4. All MCP server command execution uses argument arrays (no shell string interpolation) to prevent injection attacks
-**Plans**: 2 plans
-
-Plans:
-- [x] 40-01-PLAN.md -- Project scaffold, types, secure runner, and output parsers
-- [x] 40-02-PLAN.md -- Tool handlers, MCP server wiring, and build
+  1. An external agent calling `wiki_query` through the MCP server receives raw wiki article content (not LLM-synthesized) that it can reason over itself
+  2. An external agent calling `wiki_ingest` through the MCP server triggers an ingest operation via the agent queue, and receives an acknowledgment that the operation was accepted
+  3. MCP wiki tools are registered dynamically from the knowledge plugin's manifest rather than hardcoded in the MCP server source
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 36 -> 37 -> 38 -> 39 -> 40
-Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired.
+Phases execute in numeric order: 41 -> 42 -> 43 -> 44
+Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43 if desired.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -230,11 +211,15 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 33. Briefing Rework | v1.6 | 4/4 | Complete | 2026-04-05 |
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
-| 36. Linting Foundation | v1.7 | 2/3 | Complete    | 2026-04-05 |
-| 37. Test Infrastructure & Core Tests | v1.7 | 3/3 | Complete    | 2026-04-06 |
-| 38. Error Logger | v1.7 | 2/2 | Complete    | 2026-04-06 |
-| 39. Claude Code Hooks | v1.7 | 1/1 | Complete    | 2026-04-06 |
-| 40. Testing MCP Server | v1.7 | 0/2 | Complete    | 2026-04-06 |
+| 36. Linting Foundation | v1.7 | 2/3 | Complete | 2026-04-05 |
+| 37. Test Infrastructure & Core Tests | v1.7 | 3/3 | Complete | 2026-04-06 |
+| 38. Error Logger | v1.7 | 2/2 | Complete | 2026-04-06 |
+| 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
+| 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
+| 41. Plugin Infrastructure Evolution | v1.8 | 0/0 | Not started | - |
+| 42. Knowledge Engine Core | v1.8 | 0/0 | Not started | - |
+| 43. Hub Chat Wiki Integration | v1.8 | 0/0 | Not started | - |
+| 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
 
 ## Backlog
 
