@@ -104,8 +104,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Decimal phases (36.1, 36.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts (completed 2026-04-05)
-- [ ] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines
-- [ ] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC
+- [x] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines (completed 2026-04-06)
+- [x] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC (completed 2026-04-06)
 - [ ] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts
 - [ ] **Phase 40: Testing MCP Server** - Test lifecycle MCP server: discover, run, read results, check coverage gaps
 
@@ -139,9 +139,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 37-01-PLAN.md -- Vitest coverage config with @vitest/coverage-v8
-- [ ] 37-02-PLAN.md -- Shared setup_test_db() fixture and Rust test refactor
-- [ ] 37-03-PLAN.md -- Tauri command integration tests and COVERAGE.md baselines
+- [x] 37-01-PLAN.md -- Vitest coverage config with @vitest/coverage-v8
+- [x] 37-02-PLAN.md -- Shared setup_test_db() fixture and Rust test refactor
+- [x] 37-03-PLAN.md -- Tauri command integration tests and COVERAGE.md baselines
 
 ### Phase 38: Error Logger
 **Goal**: Frontend errors are captured to a log file that Claude Code and MCP tools can read, providing observability without component tests
@@ -154,8 +154,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 38-01-PLAN.md -- TypeScript error logger module with TDD (interceptor, re-entrancy guard, buffer)
-- [ ] 38-02-PLAN.md -- Rust backend command, registration, and main.tsx wiring
+- [x] 38-01-PLAN.md -- TypeScript error logger module with TDD (interceptor, re-entrancy guard, buffer)
+- [x] 38-02-PLAN.md -- Rust backend command, registration, and main.tsx wiring
 
 ### Phase 39: Claude Code Hooks
 **Goal**: Claude Code automatically enforces code quality -- commits are blocked on lint/test failures, edited files get auto-formatted, and related tests run on save
@@ -231,8 +231,8 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 34. Goal-First Project Detail | v1.6 | 3/3 | Complete | 2026-04-05 |
 | 35. Bug Fixes & Polish | v1.6 | 1/1 | Complete | 2026-04-05 |
 | 36. Linting Foundation | v1.7 | 2/3 | Complete    | 2026-04-05 |
-| 37. Test Infrastructure & Core Tests | v1.7 | 0/3 | Planned    |  |
-| 38. Error Logger | v1.7 | 0/2 | Planning | - |
+| 37. Test Infrastructure & Core Tests | v1.7 | 3/3 | Complete   | 2026-04-06 |
+| 38. Error Logger | v1.7 | 2/2 | Complete    | 2026-04-06 |
 | 39. Claude Code Hooks | v1.7 | 0/1 | Planning | - |
 | 40. Testing MCP Server | v1.7 | 0/2 | Planning | - |
 
@@ -242,7 +242,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

@@ -9,15 +9,15 @@ Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
 
 ### Linting
 
-- [ ] **LINT-01**: Biome schema migrated from v1.9.4 to v2.x and `biome check` passes on full codebase
-- [ ] **LINT-02**: Biome rules incrementally tightened with project-specific TypeScript/React rules enforced
-- [ ] **LINT-03**: All clippy warnings resolved including `await_holding_lock` concurrency bug in calendar.rs
-- [ ] **LINT-04**: rustfmt enforced across all Rust source files with consistent formatting config
+- [x] **LINT-01**: Biome schema migrated from v1.9.4 to v2.x and `biome check` passes on full codebase
+- [x] **LINT-02**: Biome rules incrementally tightened with project-specific TypeScript/React rules enforced
+- [x] **LINT-03**: All clippy warnings resolved including `await_holding_lock` concurrency bug in calendar.rs
+- [x] **LINT-04**: rustfmt enforced across all Rust source files with consistent formatting config
 
 ### Backend Testing
 
-- [ ] **TEST-01**: Vitest configured with coverage reporting (`@vitest/coverage-v8`) for TypeScript utility functions
-- [ ] **TEST-02**: Rust model tests expanded with per-test SQLite isolation using established `setup_test_db()` pattern
+- [x] **TEST-01**: Vitest configured with coverage reporting (`@vitest/coverage-v8`) for TypeScript utility functions
+- [x] **TEST-02**: Rust model tests expanded with per-test SQLite isolation using established `setup_test_db()` pattern
 - [ ] **TEST-03**: Tauri command integration tests using `tauri::test::mock_builder()` for core commands
 - [ ] **TEST-04**: Coverage baselines established for both Vitest and cargo test suites
 
@@ -168,12 +168,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LINT-01 | Phase 36 | Pending |
-| LINT-02 | Phase 36 | Pending |
-| LINT-03 | Phase 36 | Pending |
-| LINT-04 | Phase 36 | Pending |
-| TEST-01 | Phase 37 | Pending |
-| TEST-02 | Phase 37 | Pending |
+| LINT-01 | Phase 36 | Complete |
+| LINT-02 | Phase 36 | Complete |
+| LINT-03 | Phase 36 | Complete |
+| LINT-04 | Phase 36 | Complete |
+| TEST-01 | Phase 37 | Complete |
+| TEST-02 | Phase 37 | Complete |
 | TEST-03 | Phase 37 | Pending |
 | TEST-04 | Phase 37 | Pending |
 | ELOG-01 | Phase 38 | Pending |
