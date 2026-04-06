@@ -32,7 +32,7 @@ impl AiGateway {
         // Store API key in OS keychain if provided
         let credential_key = if let Some(ref api_key) = input.api_key {
             let cred_key = credentials::credential_key_for_provider(&id);
-            credentials::store_api_key(&cred_key, api_key)?;
+            credentials::store_api_key(db, &cred_key, api_key)?;
             Some(cred_key)
         } else {
             None
@@ -108,7 +108,7 @@ impl AiGateway {
 
         // Delete API key from OS keychain if present
         if let Some(ref cred_key) = config.credential_key {
-            credentials::delete_api_key(cred_key)?;
+            credentials::delete_api_key(db, cred_key)?;
         }
 
         db.conn()
@@ -139,7 +139,7 @@ impl AiGateway {
     pub fn get_default_provider(&self, db: &Database) -> Result<Box<dyn AiProvider>, AiError> {
         // Try API provider first, fall back to CLI tool
         match self.get_default_config(db) {
-            Ok(config) => self.build_provider(&config),
+            Ok(config) => self.build_provider(db, &config),
             Err(_) => self.get_cli_provider(db),
         }
     }
@@ -185,18 +185,19 @@ impl AiGateway {
 
     pub fn build_provider(
         &self,
+        db: &Database,
         config: &AiProviderConfig,
     ) -> Result<Box<dyn AiProvider>, AiError> {
         match config.provider_type {
             ProviderType::Anthropic => {
-                let api_key = self.get_api_key_for_config(config)?;
+                let api_key = self.get_api_key_for_config(db, config)?;
                 Ok(Box::new(AnthropicProvider::new(
                     api_key,
                     config.model.clone(),
                 )))
             }
             ProviderType::Openai => {
-                let api_key = self.get_api_key_for_config(config)?;
+                let api_key = self.get_api_key_for_config(db, config)?;
                 Ok(Box::new(OpenAiProvider::new(api_key, config.model.clone())))
             }
             ProviderType::Ollama => Ok(Box::new(OllamaProvider::new(
@@ -207,7 +208,7 @@ impl AiGateway {
                 let api_key = config
                     .credential_key
                     .as_ref()
-                    .and_then(|ck| credentials::get_api_key(ck).ok().flatten());
+                    .and_then(|ck| credentials::get_api_key(db, ck).ok().flatten());
                 Ok(Box::new(OpenAiCompatProvider::new(
                     config
                         .base_url
@@ -257,13 +258,13 @@ impl AiGateway {
         .map_err(|_| format!("Provider not found: {}", id))
     }
 
-    fn get_api_key_for_config(&self, config: &AiProviderConfig) -> Result<String, AiError> {
+    fn get_api_key_for_config(&self, db: &Database, config: &AiProviderConfig) -> Result<String, AiError> {
         let cred_key = config
             .credential_key
             .as_ref()
             .ok_or_else(|| AiError::Credential("No credential key configured".to_string()))?;
 
-        credentials::get_api_key(cred_key)
+        credentials::get_api_key(db, cred_key)
             .map_err(AiError::Credential)?
             .ok_or_else(|| AiError::Credential("API key not found".to_string()))
     }
