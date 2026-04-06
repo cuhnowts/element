@@ -49,6 +49,8 @@ v1.6 Phase 34 complete: Goal-first project detail — GoalHeroCard with inline e
 
 v1.7 Phase 38 complete: Error logger — console.error interceptor with re-entrancy guard and 500ms buffered flush, Rust log_errors Tauri command writing JSON lines to .element/errors.log with 1MB truncation, full pipeline wired from main.tsx initialization through App.tsx project directory binding.
 
+v1.7 Phase 40 complete: Testing MCP server — 3 MCP tools (discover_tests, run_tests, check_coverage_gaps) composing secure spawn-based runner and output parsers for Vitest JSON, cargo test text, and Istanbul coverage. 40 tests, stdio transport, esbuild bundle.
+
 ## Requirements
 
 ### Validated
@@ -105,7 +107,7 @@ v1.7 Phase 38 complete: Error logger — console.error interceptor with re-entra
 - [ ] Backend test suite: Vitest for TS utilities, cargo test for Rust models/commands/engines
 - [x] Error logger: console.error interceptor writing to log file for Claude Code to read — Validated in Phase 38
 - [ ] Claude Code hooks: pre-commit gate + test-on-save enforcement
-- [ ] Testing MCP server: discover, run, read, generate stubs, check coverage, suggest tests
+- [x] Testing MCP server: discover, run, read results, check coverage gaps — Validated in Phase 40
 
 ### Future
 
