@@ -1,235 +1,197 @@
 # Project Research Summary
 
-**Project:** Element v1.7 — Test Foundations
-**Domain:** Code quality infrastructure for Tauri 2.x desktop app (TypeScript/React + Rust)
-**Researched:** 2026-04-05
+**Project:** Element v1.8 — Knowledge Engine + Plugin Skill/MCP Registration
+**Domain:** LLM-compiled wiki plugin for Tauri 2.x desktop app with plugin extensibility infrastructure
+**Researched:** 2026-04-06
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Element v1.7 is a quality infrastructure retrofit, not a greenfield setup. The codebase already has Biome 2.4.7, Vitest 4.1.0, 38 Rust test modules, and a working MCP sidecar pattern — the research consistently found that the project description overstates how much needs to be installed and understates how much needs to be configured and enforced. The recommended approach is: migrate Biome to v2 schema, tighten lint rules incrementally, expand existing test suites with isolation-safe patterns, add a lightweight error logger, wire Claude Code hooks for automated enforcement, and cap the work with a new Testing MCP server that makes Claude Code a self-directed test-writing agent.
+v1.8 is an infrastructure milestone dressed as a feature. The user-visible deliverable is a knowledge wiki — ingest raw sources, query compiled knowledge, lint for staleness — but the underlying engineering challenge is evolving the plugin system to support declarative skill and MCP tool registration. The Karpathy LLM-wiki pattern is well-validated: three-layer filesystem structure (raw/, wiki/, index.md), LLM-as-compiler rather than search engine, no vector database until 500+ articles. Element's competitive edge is integration depth — the wiki is not a standalone CLI but memory for the entire orchestration platform, flowing into hub chat, briefings, research agents, and Claude Code via MCP.
 
-The primary risk is the "lint avalanche" problem: enabling enforcement on an unlinted 105K-line codebase in one step produces hundreds of blocking errors and developer frustration. Biome's schema mismatch (`biome.json` references v1.9.4 while v2.4.7 is installed) is a known breakage that will stop Day 1 progress cold if not addressed first. The Rust side has a real concurrency bug (`await_holding_lock` in `calendar.rs:762`) hiding behind 70 accumulated clippy warnings — this is not cosmetic and must be treated as a bug fix embedded in the linting phase. Both require careful sequencing: fix existing violations before enabling enforcement gates, not the other way around.
+The recommended approach is fully additive: zero new Cargo crates, zero new npm packages. The existing stack (Tauri 2.x, tokio, serde, reqwest, MCP SDK, Zustand) handles everything. The core architectural change is evolving the static `ACTION_REGISTRY` array and the hardcoded MCP server tool list into dynamic registries that merge plugin-declared skills and tools at runtime. A single `dispatch_plugin_skill` Tauri command routes all plugin skill invocations, avoiding one command per skill. The knowledge engine itself ships as a fifth core plugin alongside shell, http, filesystem, and calendar.
 
-The architecture is layered and dependency-ordered: linting must be clean before tests are gated, tests must exist before pre-commit hooks can enforce them, and the Testing MCP server is the capstone that wraps the entire quality ecosystem. The existing MCP sidecar pattern (stdio transport, esbuild bundling, `@modelcontextprotocol/sdk`) is a proven template that de-risks the Testing MCP server substantially. Security must be designed in from the start — the MCP server executes shell commands and needs argument array sanitization and allowlist-only command execution to prevent injection attacks documented in 2025-2026 MCP CVEs.
+The top risks are correctness risks, not technology risks. Concurrent wiki file access can silently corrupt index.md — the only navigation mechanism. Stale wiki content (sources updated after compilation) is worse than no wiki because the LLM trusts compiled knowledge and propagates errors downstream. Skill namespace collisions between plugins produce silent wrong behavior. All three must be designed out in Phase 1, before wiki operations ship. A known security hole (`PathBuf::from("/")` in plugin_commands.rs granting unbounded filesystem access) must be closed as part of the plugin infrastructure work.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The project already has the correct tools installed. The work is configuration, enforcement, and one new server — not installation. Biome 2.4.7 replaces ESLint + Prettier entirely (10-25x faster, single config, 85%+ rule parity). Vitest 4.1.0 is installed with jsdom and Testing Library. Clippy and rustfmt ship with Rust 1.94.0. The only genuinely new addition is `@vitest/coverage-v8` (must match Vitest major version) and the `testing-mcp-server/` directory following the existing MCP sidecar pattern.
+No new dependencies are required. The existing stack handles all v1.8 needs. The work is extending existing Rust structs (PluginManifest with `#[serde(default)]` fields), making TypeScript registries dynamic (actionRegistry.ts `loadDynamicTools()`), and adding a small set of new Rust files (~7 new files, ~9 modified files). This is a structural refactor that enables the plugin extensibility vision without changing any technology choices.
 
 **Core technologies:**
-- **Biome 2.4.7** (installed): TS/React linting + formatting — needs `npx biome migrate` to fix schema, then rule tightening
-- **Vitest 4.1.0** (installed): TS unit tests — needs coverage config (`@vitest/coverage-v8`) and additional test scripts
-- **clippy 0.1.94** (installed): Rust linting — needs `clippy.toml` config and existing 70 warnings cleared before enforcing `-D warnings`
-- **rustfmt 1.8.0** (installed): Rust formatting — needs `rustfmt.toml` with project style preferences
-- **@vitest/coverage-v8** (new): V8-native coverage reporting — zero instrumentation overhead, required for MCP coverage gap tool; must match Vitest major version
-- **testing-mcp-server/** (new): Test lifecycle MCP server — stdio transport, esbuild bundled, same pattern as existing `mcp-server/`
-- **Claude Code hooks** (new): `.claude/settings.json` with `PreToolUse` commit gate and `PostToolUse` auto-format
-- **Error logger** (new): `src/lib/errorLogger.ts` + `error_commands.rs` — console.error intercept via Tauri IPC → append-only log file
-
-**What NOT to add:** ESLint, Prettier, Jest, Playwright, Cypress, husky, lint-staged, tarpaulin, `tauri-plugin-log`. All either replaced by existing tools or out of scope.
+- `tokio::fs` (existing): All `.knowledge/` file I/O — async reads/writes, no new crates needed
+- `serde` + `serde_json` (existing): PluginManifest extensions — `#[serde(default)]` ensures existing plugin.json files parse unchanged
+- `reqwest` via AiGateway (existing): LLM API calls for ingest/compile/lint — already wired, no changes
+- `@modelcontextprotocol/sdk` (existing): Dynamic MCP tool registration — merge plugin tools into existing ListToolsRequestSchema handler
+- `node:fs` in mcp-server (existing): Plugin manifest discovery at startup — MCP server reads plugin.json files directly
 
 ### Expected Features
 
-**Must have (table stakes):**
-- Biome v2 schema migration + incremental rule tightening — foundation for all lint enforcement
-- `cargo clippy -- -D warnings` passing — including fixing real `await_holding_lock` concurrency bug in `calendar.rs:762`
-- `rustfmt.toml` with project style, `cargo fmt --check` passing
-- Vitest expansion: ~15 high-value utility/store/hook tests (pure TS logic; no new component tests)
-- Rust test expansion: model unit tests, DB layer tests with per-test in-memory SQLite isolation
-- `console.error` interceptor writing to `.element/errors.log` with re-entrancy guard and buffered writes
-- Claude Code `PreToolUse` pre-commit gate (lint + test, exit 2 to block, 300s timeout)
-- Claude Code `PostToolUse` auto-format on Edit/Write (Biome, non-blocking)
+**Must have (table stakes — v1.8 launch):**
+- Plugin-owned directories — filesystem contract between plugin and host; foundation for everything else
+- Plugin skill registration — extends action registry; makes hub chat extensible by plugins
+- Plugin MCP tool registration — extends MCP server; makes external agents extensible
+- Three-layer `.knowledge/` directory structure — raw/, wiki/, schema.md, index.md, log.md
+- Ingest operation — raw source in, compiled wiki articles out, index.md updated, log.md appended
+- Query operation — index.md scan, relevant page retrieval, LLM synthesis, hub chat response
+- Index operation — rebuild index.md from current wiki/ contents (recovery and manual trigger)
+- Lint operation — five checks: thin articles, missing concepts, broken wikilinks, duplicates, new article suggestions
+- Hub chat integration — all four operations accessible as hub chat skills
 
-**Should have (differentiators that make Claude Code a test-writing agent):**
-- Testing MCP server: `discover_tests`, `run_tests`, `read_results`, `generate_stubs`, `check_coverage_gaps`
-- Error log MCP tool (`read_frontend_errors`) exposed via existing `mcp-server/`
-- Test-on-save hook (runs only related tests, not full suite, on every file edit)
-- Coverage gap detector (structural: "which modules have zero tests" — not line percentages)
+**Should have (add after core loop validated — v1.8.x):**
+- Query-to-wiki filing — save valuable query answers as new wiki pages
+- Batch ingest — multiple sources, compile once (more token-efficient for bulk imports)
+- Wiki-powered briefings and research agents — the compounding flywheel, deferred until ~20 articles exist
+- Lint scheduling — periodic lint runs via existing cron/workflow system
 
-**Defer to v2+:**
-- Agent-based Stop hook for test verification before task completion
-- Post-compact context re-injection hook
-- Rust command handler tests using Tauri mock runtime (high complexity, low urgency)
-- E2E tests (Playwright/WebDriver) — Tauri desktop testing is high-friction, low ROI vs. screenshot verification
+**Defer (v2+):**
+- Vector search layer — only when wiki exceeds ~500 articles
+- Per-project wiki partitions — at 36+ month scale with dozens of projects
+- Plugin marketplace skill registration — requires marketplace infrastructure first
 
 ### Architecture Approach
 
-The architecture is four stacked layers (linting, testing, error logging, hooks) with a Testing MCP server as the capstone. Each layer depends on the previous being stable. The two linting systems (Biome for TS/React, clippy+rustfmt for Rust) are parallel within the first layer. The error logger is an independent layer that feeds into the existing MCP server via a new `read_frontend_errors` tool. The Testing MCP server is a separate sidecar process from the existing `mcp-server/` — different concerns (app entity management vs. test lifecycle), different data sources (SQLite DB vs. filesystem/process output), and different security implications (read-only vs. command-executing).
+The design principle is "plugin-registered skills, unified registry." Plugins declare capabilities in plugin.json (skills[], mcp_tools[], owned_directories[]). At load time, the host creates declared directories, the action registry merges plugin skills, and the MCP server incorporates plugin MCP tools. All plugin skill invocations route through a single `dispatch_plugin_skill` Tauri command to a SkillRouter, which delegates to the owning plugin's handler. Hub chat wiki_query calls LLM for synthesis; MCP wiki_query returns raw content (external agents reason themselves). Write operations from MCP go through the existing `.element/agent-queue/` pattern to prevent concurrent file corruption. The Rust backend is the source of truth for plugin state — the frontend queries backend on mount rather than managing its own plugin state.
 
 **Major components:**
-1. **Biome config** (modified) — TS/React linting + formatting, incrementally tightened from `recommended` baseline
-2. **clippy.toml + rustfmt.toml** (new) — Rust linting + formatting with project-specific configuration
-3. **Vitest test suite** (expanded) — utilities, stores, non-UI hooks; `@tauri-apps/api/mocks` for IPC mocking
-4. **cargo test suite** (expanded) — models, DB layer, engine logic; per-test in-memory SQLite via `Connection::open_in_memory()` + migrations
-5. **Error logger** (new) — `errorLogger.ts` monkey-patch + `error_commands.rs` Rust command + `.element/errors.log`
-6. **Claude Code hooks** (new) — `.claude/settings.json` for commit gate and auto-format
-7. **Testing MCP server** (new) — `testing-mcp-server/`, stdio transport, spawns vitest/cargo test as child processes with argument arrays
+1. **PluginManifest** (extend existing) — add `skills`, `mcp_tools`, `owned_directories` fields with `#[serde(default)]`; add `#[serde(other)]` Unknown variant to PluginCapability enum
+2. **SkillRouter** (new Rust module) — central dispatch mapping skill names to plugin handlers; exposes `dispatch_plugin_skill` and `list_plugin_skills` Tauri commands
+3. **DirectoryManager** (new Rust, small) — creates plugin-owned directories on activation; scopes filesystem access to declared paths (fixes existing security hole)
+4. **KnowledgePlugin** (new core Rust plugin) — implements wiki_ingest, wiki_query, wiki_lint, wiki_status via AiGateway; registered alongside shell/http/filesystem/calendar
+5. **Dynamic ActionRegistry** (extend TypeScript) — `loadDynamicTools()` merges static ACTION_REGISTRY + plugin skills on HubChat mount
+6. **MCP Server plugin-tools.ts** (new TypeScript module) — loads plugin manifests at MCP server startup, registers mcp_tools dynamically in ListToolsRequestSchema handler
 
 ### Critical Pitfalls
 
-1. **Biome schema mismatch blocks Day 1** — `biome.json` references v1.9.4 schema with v2.4.7 installed; `biome check` exits with a config error, not lint results. Run `npx biome migrate` as the literal first action.
-2. **Lint avalanche on 105K LOC** — enabling all recommended rules at once produces 500+ violations. Fix formatting first (`biome format --write`), then enable lint rules in batches of 3-5 with `// biome-ignore` suppressions plus a ratchet-down plan for existing code.
-3. **clippy `await_holding_lock` is a real concurrency bug** — not just style. 70 accumulated warnings include a `MutexGuard` held across `.await` in `calendar.rs:762` that can deadlock under contention. Auto-fix 30 trivial warnings, manually fix the rest, treat the lock issue as a bug fix.
-4. **Rust tests sharing SQLite cause flaky parallel failures** — `cargo test` runs parallel by default. Every test function needs its own `Connection::open_in_memory()` + migration run. The `tempfile` crate is already in dev-dependencies. Never share a DB handle between tests.
-5. **console.error infinite recursion** — if the IPC write fails and triggers `console.error`, the interceptor calls itself. Must include re-entrancy guard (`isLogging` flag) and fire-and-forget IPC (`.catch(() => {})`) in the initial implementation. Buffer writes (flush every 1-2s), not per-error IPC calls.
-6. **MCP server command injection** — use `spawn('cargo', ['test', testName])` argument arrays, never `exec(\`cargo test ${testName}\`)` template literals. Allowlist the exact commands the server can run. Validate test names against `^[a-zA-Z0-9_:]+$`.
-7. **Hook timeout on cold cache** — first `cargo test` run compiles the crate (60-90s). Set hook timeout to 300s minimum. Consider gating pre-commit on lint only (fast, ~5s) and running full test suite as on-demand trigger.
+1. **Concurrent wiki file access corrupts index.md** — Multiple Tauri commands writing index.md simultaneously silently corrupts the only navigation mechanism. Prevention: serialize all mutation operations through a `tokio::mpsc` channel; atomic writes via `.tmp` then `rename()`; MCP server has read-only access to `.knowledge/`, writes go through `.element/agent-queue/`. Must be designed in Phase 1 before any wiki operations exist.
+
+2. **Plugin manifest backward compatibility** — Strict `PluginCapability` enum without `#[serde(other)]` breaks existing plugins when new capability variants are added. Prevention: add `Unknown` catch-all variant; `#[serde(default)]` on all new manifest fields; version the manifest schema. Must be solved before any manifest extension ships.
+
+3. **Stale wiki content poisons downstream consumers** — Sources updated after compilation create confidently-wrong knowledge. Prevention: store content hashes of raw sources in wiki article frontmatter; lint checks hash drift; log.md records which raw files contributed to each article. Source tracking is the integrity mechanism, not an enhancement.
+
+4. **Skill namespace collisions cause silent wrong behavior** — Two plugins registering the same skill name means the wrong plugin handles the call. Prevention: namespace all skills by plugin name (`knowledge.query`, `calendar.search`); reserve `core.*` namespace for built-ins; validate uniqueness at load time with explicit error on collision.
+
+5. **Hot-reload ghost skills from missing lifecycle hooks** — Plugin reload via file watcher updates PluginRegistry but leaves stale skills registered. Ghost tools cause LLM tool-call errors. Prevention: add `on_load`/`on_unload`/`on_reload` lifecycle hooks; `deregister_by_plugin()` atomically removes all registrations before re-registering new version; emit `skills-changed` event to frontend.
 
 ## Implications for Roadmap
 
-Based on the dependency graph surfaced across all four research files, a 5-phase structure is recommended. Phases are sequential — each phase produces prerequisites consumed by the next.
+Based on the dependency graph from FEATURES.md and the build order from ARCHITECTURE.md, five phases emerge. The ordering is non-negotiable — each phase is a hard dependency for the next.
 
-### Phase 1: Linting Foundation
+### Phase 1: Plugin Infrastructure Evolution
 
-**Rationale:** Everything downstream (hooks, tests, MCP server) needs a clean lint baseline. The Biome schema mismatch and 70 clippy warnings must be resolved before any enforcement gates can fire. The `await_holding_lock` bug fix belongs here as it surfaces via clippy.
+**Rationale:** Every other feature depends on the plugin manifest knowing about skills, MCP tools, and owned directories. SkillRouter and DirectoryManager must exist before the knowledge engine can register anything. Pitfalls 2, 4, and 9 (manifest compat, namespace collisions, ghost skills) must be solved here before they become structural debt. The filesystem security hole must be fixed alongside the new scoping work.
 
-**Delivers:** Green `biome check src/` (no config errors, no violations), green `cargo clippy -- -D warnings`, `cargo fmt --check` passing, unified `lint:all` / `format:all` / `check` scripts in `package.json`
+**Delivers:** Backward-compatible PluginManifest extension (three new fields, `#[serde(default)]`, `Unknown` capability variant); DirectoryManager (creates declared dirs, scopes fs access to declared paths); SkillRouter with `dispatch_plugin_skill` and `list_plugin_skills` Tauri commands; plugin lifecycle hooks (on_load/on_unload/on_reload); skill namespace enforcement with collision detection.
 
-**Key actions:**
-- Run `npx biome migrate` (first action, non-negotiable)
-- Fix formatting via `biome format --write src/` (mechanical, safe, commit separately)
-- Enable lint rules in batches of 3-5, fix violations, commit per batch
-- Run `cargo clippy --fix --lib -p element` to auto-fix 30 trivial warnings
-- Manually fix remaining ~40 warnings, treating `await_holding_lock` as a bug fix
-- Create `rustfmt.toml` and `src-tauri/clippy.toml`
-- Update `package.json` with `lint:all`, `format:all`, `check:all` scripts
+**Addresses features:** Plugin-owned directories, plugin skill registration, plugin MCP tool registration
 
-**Avoids:** Pitfalls 1 (schema mismatch), 2 (lint avalanche), 3 (clippy noise + real concurrency bug)
+**Avoids pitfalls:** #2 (manifest compat), #4 (namespace collision), #6 (filesystem permission scope — fix `PathBuf::from("/")` hole), #9 (ghost skills on hot-reload)
 
-**Research flag:** Standard patterns — no additional research needed
+### Phase 2: Knowledge Engine Core Plugin
 
-### Phase 2: Test Infrastructure + Core Tests
+**Rationale:** With plugin infrastructure in place, the knowledge engine registers as a core plugin. The three-layer directory structure, all four operations, and the concurrent-access serialization pattern all live here. Source hash tracking must be built into ingest from day one, not retrofitted — it is the fundamental integrity mechanism.
 
-**Rationale:** Pre-commit test gates require a test suite that passes reliably. Isolation patterns must be established before test count grows. Focus on pure logic tests (utilities, stores, models) — not component tests or Tauri command handler tests.
+**Delivers:** `src-tauri/src/plugins/core/knowledge.rs` with wiki_ingest, wiki_query, wiki_lint, wiki_status; three-layer `.knowledge/` directory created on activation; default schema.md; `tokio::mpsc` operation queue for serialized mutations; source hash tracking in wiki article YAML frontmatter; input validation for raw sources (file size, content type, binary detection); log.md with rotation policy.
 
-**Delivers:** Vitest tests for ~15 high-value utilities/stores/hooks; Rust model + DB layer tests with isolated SQLite; `@vitest/coverage-v8` coverage config; `test:all` script passing reliably with default parallelism
+**Addresses features:** Three-layer directory structure, ingest, query, index, lint, schema.md, log.md
 
-**Key actions:**
-- Add `@vitest/coverage-v8` to devDeps; add coverage config block to `vite.config.ts` (exclude `src/components/**`)
-- Verify `src/__tests__/setup.ts` has correct `mockIPC` and `window.__TAURI_INTERNALS__` setup
-- Write Vitest tests: `date-utils`, `shellAllowlist`, `actionRegistry`, `utils` (utilities); key Zustand stores; `useAgentLifecycle`, `useAgentQueue`, `useAgentMcp` (non-UI hooks)
-- Establish and document `setup_test_db()` fixture pattern as the canonical approach for all Rust tests
-- Write cargo tests: model unit tests (pure logic), DB layer tests (SQL correctness + migration validation)
-- Verify `cargo test` passes consistently with default thread count (not just `--test-threads=1`)
+**Avoids pitfalls:** #1 (concurrent file access via operation queue + atomic writes), #3 (stale content via source hashing), #8 (silent ingest failures via pre-validation), #10 (log.md growth via rotation), #11 (schema.md as injection vector — user-only edits at MVP), #12 (cross-project leakage via project tags in frontmatter)
 
-**Avoids:** Pitfalls 4 (SQLite isolation), 5 (Tauri mock crashes in jsdom)
+### Phase 3: Hub Chat Integration
 
-**Research flag:** Standard patterns — Tauri mock APIs and in-memory SQLite test patterns are officially documented and already present in 38 codebase files
+**Rationale:** Hub chat is the primary user interface for all wiki operations. Dynamic tool loading must replace the static ACTION_REGISTRY reference in HubChat.tsx. This phase delivers the end-to-end "user asks a question → LLM calls wiki_query → answer returned" flow that validates the core loop.
 
-### Phase 3: Error Logger
+**Delivers:** `loadDynamicTools()` in actionRegistry.ts; HubChat.tsx using dynamic tool list on mount; `useActionDispatch` routing plugin skills through `dispatch_plugin_skill`; end-to-end hub chat wiki query and ingest flows working.
 
-**Rationale:** Independent of the test framework but benefits from lint/test infra being proven first (the Rust command needs to pass lint and have a test). Must be completed before the MCP tool that reads the log. Re-entrancy and buffering must be in the initial implementation.
+**Addresses features:** Hub chat integration, all four operations accessible as hub chat skills
 
-**Delivers:** `src/lib/errorLogger.ts` with re-entrancy guard + 1-2s buffered flush; `error_commands.rs` Rust IPC command; `.element/errors.log` append-only log; guard against logger/Vitest interference
+**Avoids pitfalls:** #7 (system prompt bloat — implement tool filtering by intent, cap max tool count per request at ~20)
 
-**Key actions:**
-- Create `error_commands.rs` with `log_frontend_error` Tauri command (append to `$APP_DATA/errors.log`)
-- Register command in `src-tauri/src/lib.rs`
-- Create `src/lib/errorLogger.ts` with: `isLogging` re-entrancy flag, error buffer flushed via `setInterval`, fire-and-forget `invoke().catch(() => {})`
-- Add `import.meta.env.MODE === 'test'` guard so logger is disabled in Vitest runs
-- Call `installErrorLogger()` in `src/main.tsx` before React renders
-- Add `.element/errors.log` and `coverage/` to `.gitignore`
-- Verify: error inside logging path doesn't freeze app; Vitest suite still passes with module present
+### Phase 4: MCP Server Integration
 
-**Avoids:** Pitfall 7 (infinite recursion), logger+test interference integration gotcha
+**Rationale:** MCP integration depends on Phase 2 (knowledge plugin working) but is lower user priority than hub chat. External agents (Claude Code) gain wiki access here. MCP wiki_query returns raw content rather than LLM-synthesized answers — external agents reason over content themselves.
 
-**Research flag:** Standard patterns — no additional research needed
+**Delivers:** `mcp-server/src/tools/plugin-tools.ts` with dynamic manifest loading at startup; wiki_query (read-only, returns raw page content); wiki_ingest via agent-queue (prevents concurrent writes to `.knowledge/`); plugin tool registration in MCP server's ListToolsRequestSchema handler.
 
-### Phase 4: Claude Code Hooks
+**Addresses features:** Plugin MCP tool registration, external agent wiki access
 
-**Rationale:** Hooks invoke the tools configured in Phases 1-2. Must come after lint and test infrastructure are proven passing. Misconfigured hooks that invoke broken scripts block all commits with no recourse.
+**Avoids pitfalls:** #1 (concurrent file access via read-only MCP + agent-queue writes), #5 (index.md abstraction layer — query interface designed for future vector swap)
 
-**Delivers:** `.claude/settings.json` with `PreToolUse` commit gate and `PostToolUse` auto-format; `.claude/hooks/pre-commit-gate.sh`; verified behavior on cold cache and warm cache
+### Phase 5: Post-Validation Enhancements
 
-**Key actions:**
-- Verify Claude Code version is v2.1.85+ (required for `if` field in hooks)
-- Verify `jq` is installed (`brew install jq` if not)
-- Create `.claude/settings.json` with `PreToolUse` hook (matcher: Bash, `if: "Bash(git commit*)"`, runs `check:all`, timeout 300s, exit 2 to block with stderr reason)
-- Create `PostToolUse` hook (matcher: `Edit|Write`, reads `tool_input.file_path` via jq, runs `biome check --write` on changed TS/TSX files, exit 0 always)
-- Test: commit with failing lint → blocked with clear message; commit with passing suite → proceeds; first commit after `cargo clean` → completes within timeout
+**Rationale:** Only build these after the core loop (ingest → query → lint) is proven working with real content. Query-to-wiki filing and batch ingest are low-cost additions that compound the wiki's value. Wiki-powered briefings and research agents require the wiki to have enough content (~20+ articles) to be useful.
 
-**Avoids:** Pitfall 8 (hook timeout), integration gotcha (broken biome config silently failing in hook)
+**Delivers:** Query-to-wiki filing (option to save query answers as wiki pages); batch ingest (compile once for multiple sources); briefing integration with wiki summaries; research agent wiki-first lookup before web search.
 
-**Research flag:** Standard patterns — Claude Code hooks documentation is HIGH confidence official source
-
-### Phase 5: Testing MCP Server (Capstone)
-
-**Rationale:** Wraps the entire quality ecosystem. Depends on both test frameworks being stable and returning reliable JSON output. Security must be designed in from the start — this server executes shell commands and exposes test lifecycle tools to an AI client.
-
-**Delivers:** `testing-mcp-server/` with `discover_tests`, `run_tests`, `read_results`, `generate_stubs`, `check_coverage_gaps` tools; `read_frontend_errors` tool in existing `mcp-server/`; Claude Code configured with both MCP servers
-
-**Key actions:**
-- Scaffold `testing-mcp-server/` following existing `mcp-server/` pattern (same SDK version, same build, stdio transport, esbuild bundling)
-- Implement all tools using `child_process.spawn` with argument arrays — never template literal strings
-- Validate test name inputs against `^[a-zA-Z0-9_:]+$`; resolve and verify file paths stay within project root; reject `..` path segments
-- Parse Vitest `--reporter=json` output and `cargo test --message-format=json` output into structured `{ passed, failed, failures: [{ name, error, file, line }] }` results
-- Cache last run results to files for `read_results` tool (avoids re-running tests to get previous output)
-- Add `read_frontend_errors` tool to existing `mcp-server/` (reads `.element/errors.log`, handles partial lines gracefully)
-- Register `element-testing` server in Claude Code MCP config alongside existing `element` server
-
-**Avoids:** Pitfall 6 (command injection), path traversal security mistake
-
-**Research flag:** Security review needed — MCP command injection is a documented CVE class (CVE-2025-53109/53110). Input sanitization and command allowlist logic should be reviewed carefully before shipping. Consider a targeted security review of the `runner.ts` module that spawns processes.
+**Addresses features:** Query-to-wiki filing, batch ingest, wiki-powered briefings/research agents (v1.8.x)
 
 ### Phase Ordering Rationale
 
-- **Linting before everything:** The Biome schema bug is a Day 1 blocker. Hooks, tests, and MCP server all benefit from or require clean lint. This cannot be deferred.
-- **Tests before hooks:** Pre-commit test gates on a suite that doesn't exist or has flaky failures make hooks an obstacle. Tests must be stable before they are enforced.
-- **Error logger after lint/tests:** The Rust command needs to pass lint and ideally have a test. The logger is otherwise independent — it could be Phase 2 but Phase 3 is natural given the Rust command dependency.
-- **Hooks after tools they invoke are proven:** This is the critical sequencing principle. A hook invoking a broken `check:all` script blocks all commits with no clear error. Lint and test infra must be fully working before hooks activate.
-- **Testing MCP last:** It wraps the entire ecosystem, depends on test commands returning reliable JSON, and has the most security complexity. It deserves its own phase with focused attention.
+- Plugin infrastructure (Phase 1) is a strict prerequisite — the knowledge engine cannot declare directories or register skills without SkillRouter, DirectoryManager, and lifecycle hooks existing.
+- Knowledge engine (Phase 2) must be functional and tested before any UI or MCP integration — there is nothing to wire up otherwise.
+- Hub chat (Phase 3) and MCP (Phase 4) can be parallelized if staffing allows, but hub chat is higher user priority and should ship first to validate the core loop.
+- Post-validation enhancements (Phase 5) are explicitly gated on real-world usage showing ingest → query → lint works end-to-end.
+- Pitfalls #1, #2, #4, and #9 are Phase 1 concerns. Implementing the knowledge engine before solving them creates structural issues that are expensive to retroactively fix.
 
 ### Research Flags
 
-**Phases needing deeper research during planning:**
-- **Phase 5 (Testing MCP server):** The security model for command execution needs explicit design review before implementation. MCP injection CVEs are documented (2025-2026) and this server is command-executing by design. The argument validation, allowlist, and path containment logic should be specified in detail during phase planning.
+Phases with well-documented patterns (skip additional research — research is complete):
+- **Phase 1:** Plugin manifest extension patterns fully analyzed from codebase. SkillRouter architecture specified in ARCHITECTURE.md. All integration points traced.
+- **Phase 2:** Karpathy pattern well-documented across multiple sources. All four operations fully specified. AiGateway integration pattern already exists.
+- **Phase 3:** Hub chat data flow fully mapped. actionRegistry.ts change is mechanical and specified precisely.
+- **Phase 4:** MCP server architecture understood. Agent-queue pattern is existing infrastructure.
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Linting):** Official Biome v2 migration guide covers the schema fix precisely. Clippy/rustfmt configuration is standard Rust toolchain usage with well-known patterns.
-- **Phase 2 (Tests):** Tauri mock API patterns are officially documented. The in-memory SQLite test pattern already exists in 38 files in this codebase — it just needs standardization.
-- **Phase 3 (Error logger):** Single Tauri IPC command + frontend monkey-patch. The architecture is minimal and patterns are well-understood.
-- **Phase 4 (Hooks):** Claude Code hooks documentation is HIGH confidence official source with precise exit code semantics and `if` field syntax.
+Phases that may need targeted investigation during implementation:
+- **Phase 2 (LLM prompt design):** The exact prompt engineering for ingest (multi-file wiki updates, cross-reference maintenance, deduplication) is not specified. This is a tuning concern, not an architecture concern, but expect iteration on prompt structure.
+- **Phase 5 (briefing integration):** How wiki summaries slot into the briefing generation pipeline needs investigation when that phase begins. Defer until core loop is validated.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Directly verified against codebase: `package.json`, `Cargo.toml`, `biome.json`, `vite.config.ts`, `mcp-server/`. Biome v2 and Vitest v4 confirmed installed. No guesswork. |
-| Features | HIGH | Official Tauri 2, Claude Code, and Vitest docs. Feature scope is bounded by existing codebase state. Anti-features rationale is concrete (existing tool coverage, UI volatility). |
-| Architecture | HIGH | Based on existing `mcp-server/` as a proven template. Error logger is minimal (single IPC command). Testing MCP follows identical structure with added security constraints. |
-| Pitfalls | HIGH | Verified against actual codebase state — Biome schema mismatch confirmed in `biome.json` (v1.9.4 schema, v2.4.7 package), 70 clippy warnings confirmed, `await_holding_lock` location confirmed at `calendar.rs:762`. Not theoretical. |
+| Stack | HIGH | Full codebase analysis of all integration points; zero new dependencies confirmed by direct inspection of Cargo.toml and package.json; all extension points identified |
+| Features | HIGH | Karpathy pattern documented across multiple sources; MVP scope is tight and matches SEED-001; existing codebase confirms all integration points (actionRegistry.ts, mcp-server/index.ts) |
+| Architecture | HIGH | Based on direct codebase analysis of manifest.rs, actionRegistry.ts, HubChat.tsx, mcp-server/index.ts; all data flows traced end-to-end; no speculative components |
+| Pitfalls | HIGH | Critical pitfalls verified against actual code — `PathBuf::from("/")` hole found by direct inspection of plugin_commands.rs line 201; PluginCapability enum strict variant list confirmed in manifest.rs; hot-reload lifecycle gap confirmed in mod.rs |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Biome 2.x rule coverage for project-specific needs:** If a specific lint pattern from typescript-eslint is required that Biome doesn't implement, there is no fallback without adding ESLint (which is explicitly not recommended). Assess needed rules during Phase 1 — if a critical rule is missing, escalate before Phase 4 hooks are wired.
-- **`cargo test --message-format=json` edge cases:** Documented but behavior on panics, compilation errors, and test timeouts may produce non-JSON output mixed in the stream. Validate the parser handles these cases during Phase 5 implementation.
-- **Claude Code version requirement for hooks `if` field:** Requires v2.1.85+. Verify the installed version before Phase 4. If below this version, all Bash commands will trigger the pre-commit hook rather than only `git commit` commands — highly disruptive.
-- **`await_holding_lock` fix scope:** The pitfalls research identifies `calendar.rs:762` specifically, but switching to `tokio::sync::Mutex` may have ripple effects across the codebase. Full scope will become clear during Phase 1 implementation. Budget extra time if the lock pattern is used in multiple files.
+- **LLM prompt design for wiki operations:** Research specifies WHAT each operation does but not the exact prompt structure. Ingest is particularly complex — the prompt must handle updating existing pages, maintaining cross-references, and deduplicating against existing content. Design and test prompts during Phase 2 implementation; budget time for iteration.
+- **Operation queue latency:** The serialized mutation queue is the correct pattern, but its impact on ingest latency for large sources (>50KB) is unknown. Monitor during Phase 2 and add Tauri event progress emissions (`emit("knowledge-progress", ...)`) if needed to avoid UI appearing frozen.
+- **index.md size budget:** The 2K token budget assumes one-line entries per article. The exact format determines how many articles fit before hitting the scaling ceiling. Define the format precisely in schema.md during Phase 2 and validate at 50-article scale before shipping.
+- **MCP write acknowledgment semantics:** The agent-queue pattern for MCP wiki_ingest returns an acknowledgment immediately while the Rust backend processes asynchronously. Whether Claude Code can work with async acknowledgment (fire-and-forget) or needs to poll for a result needs validation during Phase 4.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Official Claude Code Hooks Guide (`code.claude.com/docs/en/hooks-guide`) — hook event types, exit codes, `if` field syntax, stdin JSON format
-- Official Tauri 2 Testing Docs (`v2.tauri.app/develop/tests/`) — mock runtime, `@tauri-apps/api/mocks`, `mockIPC` pattern
-- Official Vitest 4 Docs (`vitest.dev`) — JSON reporter, coverage provider config, `vitest related`
-- Official Biome v2 Migration Guide (`biomejs.dev/guides/upgrade-to-biome-v2/`) — schema migration, breaking changes, `biome migrate` command
-- Direct codebase inspection — `package.json`, `Cargo.toml`, `biome.json`, `vite.config.ts`, `src/__tests__/setup.ts`, `mcp-server/`, 38 Rust `#[cfg(test)]` modules confirmed
+
+- Codebase analysis: `src-tauri/src/plugins/manifest.rs`, `registry.rs`, `core/mod.rs`, `plugin_commands.rs` — plugin system current state, including `PathBuf::from("/")` security hole
+- Codebase analysis: `src/lib/actionRegistry.ts`, `src/hooks/useActionDispatch.ts`, `src/components/hub/HubChat.tsx` — hub chat tool dispatch flow, static ACTION_REGISTRY
+- Codebase analysis: `mcp-server/src/index.ts` — 23 hardcoded tools, stdio transport, switch dispatch pattern
+- Codebase analysis: `src-tauri/Cargo.toml`, `package.json`, `mcp-server/package.json` — confirmed zero new dependencies needed
+- SEED-001-knowledge-engine.md — three-layer architecture, operations, MVP scope, no-vectorization decision
+- PROJECT.md — v1.8 milestone scope and active requirements
 
 ### Secondary (MEDIUM confidence)
-- Biome v2 vs ESLint comparison (Mar 2026) — performance benchmarks, rule parity assessment
-- Community Claude Code hooks examples (brethorsting.com, pixelmojo.io) — practical pre-commit and post-edit patterns
-- Vitest Tauri setup community blog (yonatankra.com) — jsdom + `__TAURI_INTERNALS__` setup details
-- MCP security CVE analysis (practical-devsecops.com, cymulate.com) — CVE-2025-53109/53110 command injection patterns
-- Progressive lint adoption patterns (mainmatter.com) — incremental rule enablement strategy
+
+- [Karpathy LLM Wiki Gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — authoritative architecture pattern, index.md design, lint concept
+- [VentureBeat: Karpathy LLM Knowledge Base Architecture](https://venturebeat.com/data/karpathy-shares-llm-knowledge-base-architecture-that-bypasses-rag-with-an) — scaling limits at ~100-200 articles
+- [DAIR.AI: LLM Knowledge Bases](https://academy.dair.ai/blog/llm-knowledge-bases-karpathy) — operation details and compilation patterns
+- [rvk7895/llm-knowledge-bases](https://github.com/rvk7895/llm-knowledge-bases) — Claude Code implementation reference for comparison
+- [The Claude Customization Stack](https://www.ado.im/posts/claude-customization-stack-mcp-skills-plugins/) — skills/MCP/plugin architecture patterns
+- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) — tool registration, output schemas, authentication
+- [Multi-Agent System Reliability: Failure Patterns](https://www.getmaxim.ai/articles/multi-agent-system-reliability-failure-patterns-root-causes-and-production-validation-strategies/) — concurrent state modification, serialization patterns
 
 ### Tertiary (LOW confidence)
-- MCP market test runner reference — existing test MCP tool designs used for tool naming inspiration only; implementation details not relied upon
+
+- [LogRocket: The LLM Context Problem in 2026](https://blog.logrocket.com/llm-context-problem/) — context poisoning, staleness at 100K+ tokens
+- [DEV Community: Compile Your Knowledge](https://dev.to/rotiferdev/compile-your-knowledge-dont-search-it-what-llm-knowledge-bases-reveal-about-agent-memory-32pg) — source provenance, content hashing for staleness detection
+- [ArjanCodes: Plugin Architecture Best Practices](https://arjancodes.com/blog/best-practices-for-decoupling-software-using-plugins/) — lifecycle management, registration patterns
+- [Elastic: Current State of MCP](https://www.elastic.co/search-labs/blog/mcp-current-state) — over-permissioning risks, authentication gaps
 
 ---
-*Research completed: 2026-04-05*
+*Research completed: 2026-04-06*
 *Ready for roadmap: yes*
