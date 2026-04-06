@@ -1,36 +1,38 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: Test Foundations
-status: v1.7 milestone complete
-stopped_at: Completed 39-01-PLAN.md
-last_updated: "2026-04-06T11:22:41.730Z"
+milestone: v1.8
+milestone_name: Knowledge Engine
+status: Defining requirements
+stopped_at: null
+last_updated: "2026-04-06T12:00:00.000Z"
 progress:
-  total_phases: 13
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-05)
+See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 39 — claude-code-hooks
+**Current focus:** Defining requirements for v1.8 Knowledge Engine
 
 ## Current Position
 
-Phase: 40
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-06 — Milestone v1.8 started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 72+ (v1.0-v1.6)
+- Total plans completed: 83+ (v1.0-v1.7)
 - Average duration: carried from previous milestones
 - Total execution time: carried from previous milestones
 
@@ -42,7 +44,8 @@ Plan: Not started
 - v1.3: 5 phases in 2 days
 - v1.4: 4 phases in 2 days
 - v1.5: 7 phases in 2 days
-- v1.6: 5 phases in 1 day (12 plans, UAT passed 2026-04-05)
+- v1.6: 5 phases in 1 day
+- v1.7: 5 phases in 1 day
 - Trend: Accelerating
 
 *Updated after each plan completion*
@@ -54,18 +57,12 @@ Plan: Not started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v1.7 Roadmap]: Biome replaces ESLint + Prettier entirely (already installed v2.4.7, needs schema migration)
-- [v1.7 Roadmap]: Testing MCP server is separate sidecar from existing mcp-server/ (different concerns, different security model)
-- [v1.7 Roadmap]: No frontend component tests -- UI verified via screenshots + user feedback
-- [v1.7 Roadmap]: Linting must be clean before test gates, tests must exist before hooks enforce them
-- [Phase 36]: Used #[allow(dead_code)] with comments for Tauri macro-registered items rather than removing them
-- [Phase 36]: Fixed gateway.rs credential API argument mismatches from parallel agent changes (async-aware Mutex pattern)
-- [Phase 36]: Converted visual-only labels to spans, added semantic roles, scoped biome.json to TS/TSX
-- [Phase 37-01]: Added reportOnFailure: true to vitest coverage config for reliable downstream consumption
-- [Phase 36]: Used bash background processes for parallel TS+Rust checks in check:all script
-- [Phase 37]: Shared test fixture pattern: setup_test_db() in test_fixtures/mod.rs with raw Connection variant for non-Database consumers
-- [Phase 39-claude-code-hooks]: Stack-scoped pre-commit: cargo commands skipped when no .rs files staged
-- [Phase 39-claude-code-hooks]: PostToolUse always exits 0 -- test results on stderr, not exit codes
+- [v1.8 Milestone]: Wiki/knowledge engine built as a plugin, not core — someone might want a different memory approach
+- [v1.8 Milestone]: Plugin system evolves to support MCP tool registration, skill registration, and plugin-owned directories
+- [v1.8 Milestone]: Hub chat is the only UI for wiki — no dedicated wiki panel or slide-over
+- [v1.8 Milestone]: LLM-maintained index.md as search engine, no vectorization at MVP
+- [v1.8 Milestone]: Global .knowledge/ directory, not per-project
+- [v1.8 Milestone]: No consumer rewiring — briefings, context manifest, etc. stay as-is
 
 ### Pending Todos
 
@@ -73,13 +70,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Biome schema mismatch (v1.9.4 in biome.json vs v2.4.7 installed) is Day 1 blocker -- `npx biome migrate` must be first action
-- clippy `await_holding_lock` in calendar.rs:762 is a real concurrency bug, not just style
-- Claude Code version must be v2.1.85+ for hooks `if` field support -- verify before Phase 39
-- **BLOCKER (Phase 39):** Bash and Write tool permissions denied during execute-phase. Cannot create `.claude/hooks/pre-commit.sh`, `.claude/hooks/test-on-save.sh`, or `.claude/settings.json`. The manager must grant file creation permissions (Bash + Write tools) and re-run `/gsd:execute-phase 39`. All plan content is ready -- only tool permissions are blocking.
+None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T10:37:04.937Z
-Stopped at: Completed 39-01-PLAN.md
+Last session: 2026-04-06
+Stopped at: Milestone initialization
 Resume file: None

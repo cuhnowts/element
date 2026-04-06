@@ -8,16 +8,16 @@ Element is a desktop project management platform with an AI-first approach — i
 
 The AI agent must reliably orchestrate project work — planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
 
-## Current Milestone: v1.7 Test Foundations
+## Current Milestone: v1.8 Knowledge Engine
 
-**Goal:** Establish code quality infrastructure — linting across the stack, backend test coverage, error logging for frontend observability, enforcement hooks, and a testing MCP server — so Claude Code can autonomously verify its own work.
+**Goal:** Ship an LLM-compiled wiki plugin that gives the app persistent, compounding memory — accessible through hub chat and MCP tools — while evolving the plugin system to support skill registration and plugin-owned directories.
 
 **Target features:**
-- Linting: ESLint + Prettier for TypeScript/React, clippy + rustfmt for Rust — all greenfield
-- Backend test suite: Vitest for TS utility functions, cargo test for Rust models/commands/engines — no frontend component tests (UI verified via screenshots + feedback)
-- Error logger: console.error interceptor writing to log file that Claude Code can read — frontend observability without component tests
-- Claude Code hooks: pre-commit gate (block on lint/test failures) + test-on-save (run related tests when files change)
-- Testing MCP server: generic MCP server for full test lifecycle — discover, run, read results, generate stubs, check coverage gaps, suggest what to test. Tool-agnostic but Claude Code is primary consumer.
+- Plugin evolution: Plugins can register MCP tools + named skills (hub chat commands), and declare owned directories (e.g. `.knowledge/`)
+- Knowledge engine plugin: Three-layer system (raw sources → LLM-compiled wiki → schema rules) with ingest, query, lint, and index operations
+- Hub chat integration: Wiki queried and managed through hub chat — no separate UI view
+- LLM-maintained index: index.md as the search engine (~2K tokens), no vectorization at MVP
+- Global scope: Single `.knowledge/` directory across all projects, managed by the plugin
 
 ## Current State
 
@@ -105,11 +105,12 @@ v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome 
 
 ### Active
 
-- [ ] Linting: ESLint + Prettier for TypeScript/React, clippy + rustfmt for Rust
-- [ ] Backend test suite: Vitest for TS utilities, cargo test for Rust models/commands/engines
-- [x] Error logger: console.error interceptor writing to log file for Claude Code to read — Validated in Phase 38
-- [ ] Claude Code hooks: pre-commit gate + test-on-save enforcement
-- [x] Testing MCP server: discover, run, read results, check coverage gaps — Validated in Phase 40
+- [ ] Plugin MCP tool registration: Plugins can register MCP tools callable by hub chat and external agents
+- [ ] Plugin skill registration: Plugins can register named skills (slash-command-like) that appear in hub chat
+- [ ] Plugin-owned directories: Plugins can declare and manage filesystem locations (e.g. `.knowledge/`)
+- [ ] Knowledge engine plugin: Three-layer wiki system (raw/, wiki/, schema.md) with ingest, query, lint, index operations
+- [ ] LLM-maintained index: index.md as search engine, no vectorization at MVP
+- [ ] Hub chat wiki integration: Wiki queried and managed through hub chat commands
 
 ### Future
 
@@ -208,4 +209,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after v1.7 Test Foundations milestone completed*
+*Last updated: 2026-04-06 — Milestone v1.8 Knowledge Engine started*
