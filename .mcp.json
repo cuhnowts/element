@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "testing": {
+      "command": "node",
+      "args": ["testing-mcp-server/dist/index.js", "."]
+    }
+  }
+}

@@ -43,7 +43,7 @@ describe("handleDiscoverTests", () => {
 
     expect(mockRunCommand).toHaveBeenCalledWith(
       "npx",
-      ["vitest", "list", "--reporter=json"],
+      ["vitest", "list"],
       "/project",
     );
   });
@@ -123,7 +123,7 @@ describe("handleDiscoverTests", () => {
 
     expect(mockRunCommand).toHaveBeenCalledWith(
       "npx",
-      ["vitest", "list", "--reporter=json", "math.test.ts"],
+      ["vitest", "list", "math.test.ts"],
       "/project",
     );
   });

@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { runCommand } from "../runner.js";
 import { parseVitestOutput } from "../parsers/vitest-parser.js";
 import { parseCargoTestOutput } from "../parsers/cargo-parser.js";
@@ -37,10 +39,15 @@ export async function handleRunTests(
       }
     }
   } else {
-    // cargo
+    // cargo — resolve to src-tauri/ if Cargo.toml isn't at root
+    const cargoCwd = existsSync(join(projectRoot, "Cargo.toml"))
+      ? projectRoot
+      : existsSync(join(projectRoot, "src-tauri", "Cargo.toml"))
+        ? join(projectRoot, "src-tauri")
+        : projectRoot;
     const cargoArgs = ["test"];
     if (args.testName) cargoArgs.push(args.testName);
-    const result = await runCommand("cargo", cargoArgs, projectRoot, timeoutMs);
+    const result = await runCommand("cargo", cargoArgs, cargoCwd, timeoutMs);
     results = parseCargoTestOutput(result.stdout, result.stderr, result.exitCode);
   }
 
