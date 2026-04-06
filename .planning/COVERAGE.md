@@ -96,11 +96,37 @@ Parseable by Phase 40 MCP server.
 | schedule_commands.rs | May be testable in future |
 | workflow_commands.rs | May be testable in future |
 
-### Other Tested Modules
+### Plugins (src-tauri/src/plugins/)
 
 | File | #[test] count | Status |
 |------|---------------|--------|
+| plugins/mod.rs | 6 | Covered |
+| plugins/registry.rs | 5 | Covered |
+| plugins/manifest.rs | 6 | Covered |
+| plugins/core/mod.rs | 6 | Covered |
+| plugins/core/http.rs | 5 | Covered |
 | plugins/core/calendar.rs | 28 | Covered |
+
+### Heartbeat (src-tauri/src/heartbeat/)
+
+| File | #[test] count | Status |
+|------|---------------|--------|
+| heartbeat/mod.rs | 6 | Covered |
+| heartbeat/risk.rs | 10 | Covered |
+| heartbeat/summary.rs | 6 | Covered |
+
+### Engine (src-tauri/src/engine/)
+
+| File | #[test] count | Status |
+|------|---------------|--------|
+| engine/executor.rs | 4 | Covered |
+
+### Credentials (src-tauri/src/credentials/)
+
+| File | #[test] count | Status |
+|------|---------------|--------|
+| credentials/mod.rs | 6 | Covered |
+| credentials/keychain.rs | 4 | Covered |
 
 ## Summary
 
@@ -110,5 +136,8 @@ Parseable by Phase 40 MCP server.
 | Rust models | 12 | 1 (notification.rs) | 133 |
 | Rust scheduling | 2 | 0 | 18 |
 | Rust commands | 9 | 12 | 33 |
-| Rust other | 1 (calendar.rs) | — | 28 |
-| **Total** | **29** | **16** | **233** |
+| Rust plugins | 6 | 0 | 56 |
+| Rust heartbeat | 3 | 0 | 22 |
+| Rust engine | 1 | 0 | 4 |
+| Rust credentials | 2 | 0 | 10 |
+| **Total** | **40** | **16** | **297** |
