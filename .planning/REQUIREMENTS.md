@@ -18,13 +18,13 @@ Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
 
 - [x] **TEST-01**: Vitest configured with coverage reporting (`@vitest/coverage-v8`) for TypeScript utility functions
 - [x] **TEST-02**: Rust model tests expanded with per-test SQLite isolation using established `setup_test_db()` pattern
-- [ ] **TEST-03**: Tauri command integration tests using `tauri::test::mock_builder()` for core commands
-- [ ] **TEST-04**: Coverage baselines established for both Vitest and cargo test suites
+- [x] **TEST-03**: Tauri command integration tests using `tauri::test::mock_builder()` for core commands
+- [x] **TEST-04**: Coverage baselines established for both Vitest and cargo test suites
 
 ### Error Logger
 
-- [ ] **ELOG-01**: Console.error interceptor captures frontend errors and writes to `.element/errors.log` via Tauri IPC
-- [ ] **ELOG-02**: Error logger has re-entrancy guard and buffered writes to prevent performance impact
+- [x] **ELOG-01**: Console.error interceptor captures frontend errors and writes to `.element/errors.log` via Tauri IPC
+- [x] **ELOG-02**: Error logger has re-entrancy guard and buffered writes to prevent performance impact
 
 ### Claude Code Hooks
 
