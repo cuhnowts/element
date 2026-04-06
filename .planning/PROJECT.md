@@ -47,6 +47,8 @@ v1.6 Phase 35 complete: Bug fixes & polish — calendar "Today" highlight uses l
 
 v1.6 Phase 34 complete: Goal-first project detail — GoalHeroCard with inline editing and auto-save, WorkspaceButton replacing separate Open AI + Directory Link, ProjectDetail restructured to goal-first layout with details accordion.
 
+v1.7 Phase 38 complete: Error logger — console.error interceptor with re-entrancy guard and 500ms buffered flush, Rust log_errors Tauri command writing JSON lines to .element/errors.log with 1MB truncation, full pipeline wired from main.tsx initialization through App.tsx project directory binding.
+
 ## Requirements
 
 ### Validated
@@ -101,7 +103,7 @@ v1.6 Phase 34 complete: Goal-first project detail — GoalHeroCard with inline e
 
 - [ ] Linting: ESLint + Prettier for TypeScript/React, clippy + rustfmt for Rust
 - [ ] Backend test suite: Vitest for TS utilities, cargo test for Rust models/commands/engines
-- [ ] Error logger: console.error interceptor writing to log file for Claude Code to read
+- [x] Error logger: console.error interceptor writing to log file for Claude Code to read — Validated in Phase 38
 - [ ] Claude Code hooks: pre-commit gate + test-on-save enforcement
 - [ ] Testing MCP server: discover, run, read, generate stubs, check coverage, suggest tests
 
