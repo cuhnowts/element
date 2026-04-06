@@ -116,3 +116,63 @@ pub async fn set_task_phase(
     app.emit("task-updated", &task).map_err(|e| e.to_string())?;
     Ok(task)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::project::CreateProjectInput;
+    use crate::test_fixtures::setup_test_db;
+    use std::sync::{Arc, Mutex};
+
+    fn setup_managed_db() -> Arc<Mutex<Database>> {
+        Arc::new(Mutex::new(setup_test_db()))
+    }
+
+    #[test]
+    fn test_create_phase_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a project first (phases belong to projects)
+        let project = db
+            .create_project(CreateProjectInput {
+                name: "Phase Test Project".into(),
+                description: None,
+            })
+            .unwrap();
+
+        // Create phase via the same DB path the command uses
+        let input = CreatePhaseInput {
+            project_id: project.id.clone(),
+            name: "Phase 1".into(),
+        };
+        let phase = db.create_phase(input).unwrap();
+        assert_eq!(phase.name, "Phase 1");
+        assert_eq!(phase.project_id, project.id);
+        assert!(!phase.id.is_empty());
+    }
+
+    #[test]
+    fn test_list_phases_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a project and phase
+        let project = db
+            .create_project(CreateProjectInput {
+                name: "Phases List Project".into(),
+                description: None,
+            })
+            .unwrap();
+        db.create_phase(CreatePhaseInput {
+            project_id: project.id.clone(),
+            name: "Listed Phase".into(),
+        })
+        .unwrap();
+
+        // Verify list returns it
+        let phases = db.list_phases(&project.id).unwrap();
+        assert_eq!(phases.len(), 1);
+        assert_eq!(phases[0].name, "Listed Phase");
+    }
+}

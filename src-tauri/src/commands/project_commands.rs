@@ -80,3 +80,46 @@ pub async fn delete_project(
         .map_err(|e| e.to_string())?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_fixtures::setup_test_db;
+    use std::sync::{Arc, Mutex};
+
+    fn setup_managed_db() -> Arc<Mutex<Database>> {
+        Arc::new(Mutex::new(setup_test_db()))
+    }
+
+    #[test]
+    fn test_create_project_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+        let input = CreateProjectInput {
+            name: "My Project".into(),
+            description: Some("A test project".into()),
+        };
+        let project = db.create_project(input).unwrap();
+        assert_eq!(project.name, "My Project");
+        assert_eq!(project.description, "A test project");
+        assert!(!project.id.is_empty());
+    }
+
+    #[test]
+    fn test_list_projects_command() {
+        let db_state = setup_managed_db();
+        let db = db_state.lock().unwrap();
+
+        // Create a project
+        db.create_project(CreateProjectInput {
+            name: "Listed Project".into(),
+            description: None,
+        })
+        .unwrap();
+
+        // Verify list returns it
+        let projects = db.list_projects().unwrap();
+        assert_eq!(projects.len(), 1);
+        assert_eq!(projects[0].name, "Listed Project");
+    }
+}

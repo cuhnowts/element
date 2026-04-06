@@ -14,7 +14,7 @@ name = "element"
 path = "src/main.rs"
 
 [dependencies]
-tauri = { version = "~2.10", features = ["tray-icon"] }
+tauri = { version = "~2.10", features = ["tray-icon", "test"] }
 tauri-plugin-global-shortcut = "2"
 rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
