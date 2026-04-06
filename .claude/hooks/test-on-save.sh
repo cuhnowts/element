@@ -20,10 +20,10 @@ fi
 # Route by file extension: run related test suite
 case "$FILE_PATH" in
   *.ts|*.tsx)
-    npx vitest run --reporter=dot 2>&1 >&2 || true
+    npx vitest run --reporter=dot >&2 2>&1 || true
     ;;
   *.rs)
-    cargo test --manifest-path "${CLAUDE_PROJECT_DIR:-.}/src-tauri/Cargo.toml" 2>&1 >&2 || true
+    cargo test --manifest-path "${CLAUDE_PROJECT_DIR:-.}/src-tauri/Cargo.toml" >&2 2>&1 || true
     ;;
   *)
     # Non-code files (CSS, JSON, MD, etc.) -- skip silently

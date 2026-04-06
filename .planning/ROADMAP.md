@@ -164,7 +164,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. When Claude Code attempts to commit code with a lint or test failure, the commit is blocked with a clear error message (exit code 2)
   2. When Claude Code edits a file, related tests run automatically and results are visible
-  3. When Claude Code edits a TypeScript file, Biome auto-formats it after the edit completes
+  3. When Claude Code commits TypeScript files, Biome auto-formats them before the commit completes
   4. Hooks complete within their configured timeouts (300s for cargo builds on cold cache) without hanging
 **Plans**: 1 plan
 
@@ -233,7 +233,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 36. Linting Foundation | v1.7 | 2/3 | Complete    | 2026-04-05 |
 | 37. Test Infrastructure & Core Tests | v1.7 | 3/3 | Complete    | 2026-04-06 |
 | 38. Error Logger | v1.7 | 2/2 | Complete    | 2026-04-06 |
-| 39. Claude Code Hooks | v1.7 | 1/1 | Complete   | 2026-04-06 |
+| 39. Claude Code Hooks | v1.7 | 1/1 | Complete    | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete    | 2026-04-06 |
 
 ## Backlog

@@ -30,7 +30,7 @@ Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
 
 - [x] **HOOK-01**: Pre-commit hook blocks commits when lint or test failures are detected (exit code 2)
 - [x] **HOOK-02**: Test-on-save hook runs related tests when Claude Code edits a file
-- [x] **HOOK-03**: Auto-format hook runs Biome format on TypeScript files after edits
+- [x] **HOOK-03**: Pre-commit hook runs Biome format on staged TypeScript files before commit
 - [x] **HOOK-04**: Hooks configured with appropriate timeouts (300s for cargo builds)
 
 ### Testing MCP Server
