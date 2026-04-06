@@ -35,10 +35,10 @@ Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
 
 ### Testing MCP Server
 
-- [ ] **TMCP-01**: Testing MCP server discovers available test suites (Vitest + cargo test) and lists test files/modules
-- [ ] **TMCP-02**: Testing MCP server runs specified tests and returns structured results (pass/fail/error per test)
-- [ ] **TMCP-03**: Testing MCP server reads coverage reports and identifies uncovered files/functions
-- [ ] **TMCP-04**: Testing MCP server uses argument arrays for command execution (no shell string interpolation)
+- [x] **TMCP-01**: Testing MCP server discovers available test suites (Vitest + cargo test) and lists test files/modules
+- [x] **TMCP-02**: Testing MCP server runs specified tests and returns structured results (pass/fail/error per test)
+- [x] **TMCP-03**: Testing MCP server reads coverage reports and identifies uncovered files/functions
+- [x] **TMCP-04**: Testing MCP server uses argument arrays for command execution (no shell string interpolation)
 
 ## v1.6 Requirements (Complete)
 
@@ -182,10 +182,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HOOK-02 | Phase 39 | Pending |
 | HOOK-03 | Phase 39 | Pending |
 | HOOK-04 | Phase 39 | Pending |
-| TMCP-01 | Phase 40 | Pending |
-| TMCP-02 | Phase 40 | Pending |
-| TMCP-03 | Phase 40 | Pending |
-| TMCP-04 | Phase 40 | Pending |
+| TMCP-01 | Phase 40 | Complete |
+| TMCP-02 | Phase 40 | Complete |
+| TMCP-03 | Phase 40 | Complete |
+| TMCP-04 | Phase 40 | Complete |
 
 **Coverage:**
 - v1.7 requirements: 18 total
