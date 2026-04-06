@@ -106,7 +106,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 36: Linting Foundation** - Biome v2 migration, clippy warnings resolved, rustfmt enforced, unified lint scripts (completed 2026-04-05)
 - [x] **Phase 37: Test Infrastructure & Core Tests** - Vitest coverage config, Rust test expansion with SQLite isolation, coverage baselines (completed 2026-04-06)
 - [x] **Phase 38: Error Logger** - Console.error interceptor with re-entrancy guard writing to log file via Tauri IPC (completed 2026-04-06)
-- [ ] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts
+- [x] **Phase 39: Claude Code Hooks** - Pre-commit gate, test-on-save, auto-format hooks with appropriate timeouts (completed 2026-04-06)
 - [x] **Phase 40: Testing MCP Server** - Test lifecycle MCP server: discover, run, read results, check coverage gaps (completed 2026-04-06)
 
 ## Phase Details
@@ -169,7 +169,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 39-01-PLAN.md -- Pre-commit gate, test-on-save, and auto-format hooks configuration
+- [x] 39-01-PLAN.md -- Pre-commit gate, test-on-save, and auto-format hooks configuration
 
 ### Phase 40: Testing MCP Server
 **Goal**: Claude Code can discover, run, and analyze tests through MCP tools -- making it a self-directed test-writing agent
@@ -233,7 +233,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 | 36. Linting Foundation | v1.7 | 2/3 | Complete    | 2026-04-05 |
 | 37. Test Infrastructure & Core Tests | v1.7 | 3/3 | Complete    | 2026-04-06 |
 | 38. Error Logger | v1.7 | 2/2 | Complete    | 2026-04-06 |
-| 39. Claude Code Hooks | v1.7 | 0/1 | Planning | - |
+| 39. Claude Code Hooks | v1.7 | 1/1 | Complete   | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete    | 2026-04-06 |
 
 ## Backlog
@@ -242,7 +242,7 @@ Note: Phase 38 (Error Logger) is parallelizable with Phase 37 (Tests) if desired
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/2 plans complete
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)

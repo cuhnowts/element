@@ -28,10 +28,10 @@ Requirements for v1.7 Test Foundations milestone. Each maps to roadmap phases.
 
 ### Claude Code Hooks
 
-- [ ] **HOOK-01**: Pre-commit hook blocks commits when lint or test failures are detected (exit code 2)
-- [ ] **HOOK-02**: Test-on-save hook runs related tests when Claude Code edits a file
-- [ ] **HOOK-03**: Auto-format hook runs Biome format on TypeScript files after edits
-- [ ] **HOOK-04**: Hooks configured with appropriate timeouts (300s for cargo builds)
+- [x] **HOOK-01**: Pre-commit hook blocks commits when lint or test failures are detected (exit code 2)
+- [x] **HOOK-02**: Test-on-save hook runs related tests when Claude Code edits a file
+- [x] **HOOK-03**: Auto-format hook runs Biome format on TypeScript files after edits
+- [x] **HOOK-04**: Hooks configured with appropriate timeouts (300s for cargo builds)
 
 ### Testing MCP Server
 
@@ -178,10 +178,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 37 | Pending |
 | ELOG-01 | Phase 38 | Pending |
 | ELOG-02 | Phase 38 | Pending |
-| HOOK-01 | Phase 39 | Pending |
-| HOOK-02 | Phase 39 | Pending |
-| HOOK-03 | Phase 39 | Pending |
-| HOOK-04 | Phase 39 | Pending |
+| HOOK-01 | Phase 39 | Complete |
+| HOOK-02 | Phase 39 | Complete |
+| HOOK-03 | Phase 39 | Complete |
+| HOOK-04 | Phase 39 | Complete |
 | TMCP-01 | Phase 40 | Complete |
 | TMCP-02 | Phase 40 | Complete |
 | TMCP-03 | Phase 40 | Complete |
