@@ -21,7 +21,7 @@ The AI agent must reliably orchestrate project work — planning, executing, and
 
 ## Current State
 
-**Shipped:** v1.5 Time Bounded (2026-04-05)
+**Shipped:** v1.7 Test Foundations (2026-04-06)
 **Codebase:** ~170K LOC across 200+ files (Rust + TypeScript)
 **Tech stack:** Tauri 2.x, React 19, SQLite, Zustand, shadcn/ui, Tailwind CSS, xterm.js, tauri-plugin-pty, reqwest, tokio, keyring
 
@@ -208,4 +208,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 after Phase 39 Claude Code Hooks completed*
+*Last updated: 2026-04-06 after v1.7 Test Foundations milestone completed*

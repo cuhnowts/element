@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.7 Test Foundations (Shipped: 2026-04-06)
+
+**Phases completed:** 9 phases, 11 plans, 12 tasks
+
+**Key accomplishments:**
+
+- Migrated Biome from v1.9.4 to v2.4.7 schema and resolved all 651 lint/format violations to achieve zero-error baseline
+- Zero clippy warnings with -D warnings and consistent rustfmt formatting across 62 Rust files, plus async mutex fix for calendar.rs concurrency bug
+- Single npm run check:all command running Biome and clippy+rustfmt in parallel with unified pass/fail reporting
+- Vitest coverage-v8 configured for src/lib/ utilities with text and json-summary reporters
+- Shared setup_test_db() extracted to test_fixtures, 12 duplicate functions removed, failing onboarding tier invariant test fixed -- 284 tests passing
+- Tauri command integration tests for 4 CRUD command files using mock_builder, plus COVERAGE.md documenting 297 Rust tests and Vitest coverage across both suites
+- Pre-commit gate blocking on lint/test failures with auto-formatting, plus test-on-save feedback after every file edit
+
+---
+
 ## v1.5 Time Bounded (Shipped: 2026-04-05)
 
 **Phases completed:** 7 phases, 13 plans, 24 tasks
