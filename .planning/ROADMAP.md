@@ -150,7 +150,12 @@ Plans:
   3. Running lint identifies at least one category of issue (thin articles, broken wikilinks, stale sources, contradictions, or missing concepts) when such issues exist in the wiki
   4. Two simultaneous wiki operations do not corrupt `.knowledge/index.md` -- the second operation queues behind the first
   5. A wiki article's YAML frontmatter contains the content hash of its source(s), and re-ingesting an unchanged source is detected as a no-op
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 42-01-PLAN.md — Types, frontmatter, index module, KnowledgeEngine struct with mutex
+- [ ] 42-02-PLAN.md — Ingest pipeline and query pipeline with LLM compilation and synthesis
+- [ ] 42-03-PLAN.md — Lint pipeline (5 categories) and Tauri command wiring
 
 ### Phase 43: Hub Chat Wiki Integration
 **Goal**: Users can ingest, query, lint, and manage the wiki entirely through hub chat commands, with plugin-contributed skills loaded dynamically alongside built-in actions
@@ -191,6 +196,7 @@ Plans:
   3. Vitest tests cover dynamic tool loading in hub chat, plugin skill registry merge, and tool filtering logic
   4. MCP server tests cover wiki_query and wiki_ingest tool handlers with expected input/output contracts
 **Plans**: TBD
+
 
 ## Progress
 
@@ -242,7 +248,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 0/3 | Not started | - |
-| 42. Knowledge Engine Core | v1.8 | 0/0 | Not started | - |
+| 42. Knowledge Engine Core | v1.8 | 0/3 | Not started | - |
 | 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
 | 45. Test Suite | v1.8 | 0/0 | Not started | - |
