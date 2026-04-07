@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Knowledge Engine
 status: planning
-stopped_at: Phase 44 context gathered
-last_updated: "2026-04-07T00:19:33.145Z"
+stopped_at: Phase 43 UI-SPEC approved
+last_updated: "2026-04-07T00:22:55.469Z"
 last_activity: 2026-04-06 -- v1.8 roadmap created, v1.7 shipped
 progress:
   total_phases: 13
@@ -79,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T00:19:33.142Z
-Stopped at: Phase 44 context gathered
-Resume file: .planning/phases/44-mcp-server-wiki-tools/44-CONTEXT.md
+Last session: 2026-04-07T00:22:55.466Z
+Stopped at: Phase 43 UI-SPEC approved
+Resume file: .planning/phases/43-hub-chat-wiki-integration/43-UI-SPEC.md
