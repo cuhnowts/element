@@ -155,9 +155,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   1. Plugin-contributed skills appear in hub chat's available tools without code changes to HubChat.tsx -- they load dynamically from the plugin registry on mount
   2. User can type a wiki query in hub chat and receive a synthesized answer inline, and can trigger an ingest by providing a file path or pasting content
   3. Hub chat's system prompt includes only tools relevant to the current user intent rather than every registered tool, keeping prompt size manageable as plugins grow
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
 
+Plans:
+- [ ] 43-01-PLAN.md — Plugin tool registry, usePluginTools hook, ActionConfirmCard wiki entries
+- [ ] 43-02-PLAN.md — HubChat dynamic prompt assembly, merged tool loading, plugin dispatch routing
 ### Phase 44: MCP Server Wiki Tools
 **Goal**: External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server
 **Depends on**: Phase 42 (wiki engine must be functional for MCP to wrap)
@@ -234,7 +237,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 0/0 | Not started | - |
 | 42. Knowledge Engine Core | v1.8 | 0/0 | Not started | - |
-| 43. Hub Chat Wiki Integration | v1.8 | 0/0 | Not started | - |
+| 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
 | 45. Test Suite | v1.8 | 0/0 | Not started | - |
 
