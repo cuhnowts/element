@@ -8,7 +8,7 @@
 
 Comprehensive unit test coverage for all v1.8 features — plugin infrastructure, wiki engine, hub chat integration, and MCP tools. The goal is ensuring hooks catch regressions going forward.
 
-**Key reframe:** Tests should primarily be written alongside features in Phases 41-44 (per user preference). Phase 45 exists as a gap-fill and cross-cutting integration test phase — not the sole location for all tests.
+**Note:** Phases 41-44 were planned before the "tests alongside features" rule was established. Phase 45 is the retroactive catch-up — it provides comprehensive test coverage for all v1.8 features. Future milestones will include tests within each feature phase.
 
 </domain>
 
@@ -16,7 +16,7 @@ Comprehensive unit test coverage for all v1.8 features — plugin infrastructure
 ## Implementation Decisions
 
 ### Test Timing Strategy
-- **D-01:** Each feature phase (41-44) MUST include unit tests for the code it introduces. Phase 45 covers cross-phase integration tests and any coverage gaps identified after all features land.
+- **D-01:** Phase 45 is the sole test phase for v1.8 — it covers all unit and integration tests for Phases 41-44, which were planned without tests baked in. This is a one-time catch-up; future milestones will include tests in each feature phase.
 - **D-02:** User does not have testing expertise — tests should be straightforward, well-commented, and follow existing patterns in the codebase.
 
 ### Rust Test Boundaries
