@@ -37,9 +37,9 @@ Requirements for v1.8 Knowledge Engine. Each maps to roadmap phases.
 
 ### Test Suite
 
-- [ ] **TEST-01**: Rust unit tests cover plugin manifest parsing, directory manager lifecycle, and skill dispatch routing
+- [x] **TEST-01**: Rust unit tests cover plugin manifest parsing, directory manager lifecycle, and skill dispatch routing
 - [ ] **TEST-02**: Rust integration tests cover wiki operations (ingest, query, lint, operation queue serialization)
-- [ ] **TEST-03**: Vitest tests cover dynamic tool loading, plugin skill registry merge, and tool filtering logic
+- [x] **TEST-03**: Vitest tests cover dynamic tool loading, plugin skill registry merge, and tool filtering logic
 - [ ] **TEST-04**: MCP server tests cover wiki_query and wiki_ingest tool handlers with expected contracts
 
 ## Future Requirements
@@ -97,9 +97,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-03 | Phase 43 | Complete |
 | MCP-01 | Phase 44 | Complete |
 | MCP-02 | Phase 44 | Complete |
-| TEST-01 | Phase 45 | Pending |
+| TEST-01 | Phase 45 | Complete |
 | TEST-02 | Phase 45 | Pending |
-| TEST-03 | Phase 45 | Pending |
+| TEST-03 | Phase 45 | Complete |
 | TEST-04 | Phase 45 | Pending |
 
 **Coverage:**
