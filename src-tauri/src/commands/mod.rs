@@ -7,6 +7,7 @@ pub mod execution_commands;
 pub mod file_explorer_commands;
 pub mod heartbeat_commands;
 pub mod hub_chat_commands;
+pub mod knowledge_commands;
 pub mod manifest_commands;
 pub mod notification_commands;
 pub mod onboarding_commands;

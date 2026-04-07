@@ -28,6 +28,7 @@ use commands::execution_commands::*;
 use commands::file_explorer_commands::*;
 use commands::heartbeat_commands::*;
 use commands::hub_chat_commands::*;
+use commands::knowledge_commands::*;
 use commands::manifest_commands::*;
 use commands::notification_commands::*;
 use commands::onboarding_commands::*;
@@ -371,6 +372,10 @@ pub fn run() {
             trigger_heartbeat,
             get_heartbeat_status,
             log_errors,
+            knowledge_ingest,
+            knowledge_ingest_text,
+            knowledge_query,
+            knowledge_lint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
