@@ -53,6 +53,8 @@ v1.7 Phase 40 complete: Testing MCP server — 3 MCP tools (discover_tests, run_
 
 v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome format + lint + test, exit 2 on failure), PostToolUse test-on-save (vitest for TS, cargo test for Rust), 300s timeouts, SKIP_HOOKS=1 bypass.
 
+v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.json manifests for namespace-prefixed MCP tool definitions, wiki_query handler returns raw article content from .knowledge/, wiki_ingest handler queues operations via agent-queue/. Dynamic import() dispatch in MCP server index.ts. 19 new tests, 67 total passing.
+
 ## Requirements
 
 ### Validated
@@ -105,7 +107,7 @@ v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome 
 
 ### Active
 
-- [ ] Plugin MCP tool registration: Plugins can register MCP tools callable by hub chat and external agents
+- [x] Plugin MCP tool registration: Plugins can register MCP tools callable by hub chat and external agents — Validated in Phase 44: MCP Server Wiki Tools
 - [ ] Plugin skill registration: Plugins can register named skills (slash-command-like) that appear in hub chat
 - [ ] Plugin-owned directories: Plugins can declare and manage filesystem locations (e.g. `.knowledge/`)
 - [ ] Knowledge engine plugin: Three-layer wiki system (raw/, wiki/, schema.md) with ingest, query, lint, index operations
@@ -209,4 +211,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-06 — Milestone v1.8 Knowledge Engine started*
+*Last updated: 2026-04-07 — Phase 44 MCP Server Wiki Tools complete*
