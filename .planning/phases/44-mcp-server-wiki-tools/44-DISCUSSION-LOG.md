@@ -1,158 +1,146 @@
 # Phase 44: MCP Server Wiki Tools - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
-> Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
+> Decisions are captured in CONTEXT.md -- this log preserves the alternatives considered.
 
 **Date:** 2026-04-06
 **Phase:** 44-mcp-server-wiki-tools
-**Areas discussed:** Query tool design, Ingest tool design, Dynamic registration, Error & access model
+**Areas discussed:** Dynamic tool registration, Query response shape, Ingest flow & acknowledgment, Error & edge cases
 
 ---
 
-## Query Tool Design
+## Dynamic Tool Registration
 
-### How should wiki_query find relevant articles?
+### How should plugin-contributed MCP tools be loaded?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Natural language query | Agent sends a question/topic string. MCP server reads index.md, identifies relevant articles, returns content. | ✓ |
-| Direct article path | Agent requests a specific wiki article by path. Simpler but requires knowing article names. | |
-| Both modes | Support both natural-language lookup and direct path retrieval. | |
+| Plugin manifest read at startup | MCP server reads manifests on startup, merges declared mcp_tools. Restart required for changes. | ✓ |
+| DB-driven registry | Plugins register tools in SQLite. MCP server queries DB on each ListTools call. Hot-reloadable. | |
+| Hybrid -- manifest + file watch | Read manifests at startup, watch for changes and hot-reload. | |
 
-**User's choice:** Natural language query
+**User's choice:** Plugin manifest read at startup
 **Notes:** None
+
+### Should existing hardcoded tools be migrated to the manifest system?
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Plugin tools only | Keep existing hardcoded. Only plugin-contributed tools from manifests. | ✓ |
+| Migrate all tools | Move all existing tools into manifest format. Bigger refactor. | |
+
+**User's choice:** Plugin tools only
+**Notes:** None
+
+### Where should MCP tool handler code live for plugin-contributed tools?
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| In the plugin directory | Each plugin provides handler module. MCP server dynamically imports based on manifest path. | ✓ |
+| In mcp-server/src/tools/ | Wiki handlers alongside existing tools. Manifest only declares schema. | |
+| You decide | Claude's discretion. | |
+
+**User's choice:** In the plugin directory
+**Notes:** None
+
+---
+
+## Query Response Shape
 
 ### What should wiki_query return?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Raw markdown of matched articles | Return full markdown content of relevant articles. | |
-| Structured JSON with metadata | Articles wrapped in JSON with title, path, source_hash, last_updated. | |
-| Index + content | Return index.md first, then content of matched articles. | |
+| Matched articles in full | Search index.md, return full markdown of matches. | |
+| Index excerpt + summaries | Return index entries with summaries. Agent requests full articles separately. | |
+| Paginated results | First N articles with cursor. | |
 
-**User's choice:** Other — clarified that there should be a layer of compaction and summarization from raw before entering the wiki (Karpathy-style). Query returns compiled wiki articles, not raw source docs.
-**Notes:** "No there should be a layer of compaction and summarization from raw before entering into the wiki. This is how karpathy did it"
+**User's choice:** Other -- clarified that wiki articles ARE summaries (compiled from raw). Return full articles with file paths. Summaries + file paths.
+**Notes:** "The articles are already summaries! Full articles of summaries of the raw."
 
-### Should wiki_query return just matching article content, or also include index.md?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Matching articles only | Return compiled wiki articles relevant to the query. Token-efficient. | ✓ |
-| Index + matching articles | Include index.md alongside matched content. | |
-| You decide | Claude's discretion. | |
-
-**User's choice:** Matching articles only
-
-### Should there be a separate tool to browse the wiki index?
+### How should the query search work?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Yes, wiki_index tool | Separate tool returns index.md contents. Agent can browse first, then query. | ✓ |
-| No, just wiki_query | Keep to one query tool. Broad queries serve as index browsing. | |
+| Index.md scan | Search index.md for relevant entries, return full wiki articles for matches. | ✓ |
+| Pass through to Phase 42 query engine | Thin wrapper forwarding to whatever query logic Phase 42 builds. | |
 | You decide | Claude's discretion. | |
 
-**User's choice:** Yes, wiki_index tool
+**User's choice:** Index.md scan
+**Notes:** None
 
 ---
 
-## Ingest Tool Design
+## Ingest Flow & Acknowledgment
 
-### What should wiki_ingest accept as input?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Raw text content | Agent passes document content directly as string. Wiki engine compiles it. | ✓ |
-| File path on disk | Agent provides path to a file. MCP server reads it. | |
-| Both text and path | Accept either raw text or file path. | |
-
-**User's choice:** Raw text content
-
-### How should the ingest acknowledgment work?
+### Should wiki_ingest be fire-and-forget or wait for completion?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Async job accepted | Returns immediately with 'operation accepted'. Ingest runs through agent queue. | ✓ |
-| Sync with result | Wait for ingest to complete, return compiled article paths. | |
-| Async with poll tool | Return job ID, add wiki_job_status tool for checking. | |
-
-**User's choice:** Async job accepted
-
-### Should wiki_ingest require a source title/label?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Required title parameter | Agent must provide human-readable title for the source. | ✓ |
-| Optional title | Title optional, auto-generated if omitted. | |
+| Fire-and-forget with ack | Queue operation, return immediately with operation ID + "accepted". | ✓ |
+| Synchronous -- wait for completion | Block until ingest completes. Simpler but slow. | |
 | You decide | Claude's discretion. | |
 
-**User's choice:** Required title parameter
+**User's choice:** Fire-and-forget with ack
+**Notes:** None
+
+### What should the agent provide to wiki_ingest?
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| File path only | Agent provides path to raw source file. Keeps payloads small. | ✓ |
+| Raw content inline | Agent sends document content directly. | |
+| Either -- path or content | Accept both forms. | |
+
+**User's choice:** File path only
+**Notes:** None
 
 ---
 
-## Dynamic Registration
+## Error & Edge Cases
 
-### How should the MCP server discover plugin-declared tools?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Read plugin manifests at startup | Scan plugin directories for mcp_tools declarations. Existing hardcoded tools stay. | ✓ |
-| Tauri backend feeds tool list | MCP server asks Tauri backend via DB/IPC for registered plugin tools. | |
-| You decide | Claude's discretion. | |
-
-**User's choice:** Read plugin manifests at startup
-
-### Should existing hardcoded MCP tools be migrated?
+### What happens when wiki doesn't exist (no .knowledge/ directory)?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| No, just wiki tools dynamic | Existing tools stay hardcoded. Only wiki tools use dynamic registration. | ✓ |
-| Yes, migrate all tools | Convert all existing tools to manifest-based system. | |
+| Clear error message | Return MCP error: "Wiki not initialized. Enable the knowledge plugin first." | ✓ |
+| Auto-initialize empty wiki | Create .knowledge/ structure on first call. | |
 | You decide | Claude's discretion. | |
 
-**User's choice:** No, just wiki tools dynamic
+**User's choice:** Clear error message
+**Notes:** None
 
-### How should dynamic tools call wiki operations?
+### When a query finds no matching articles?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Direct filesystem access | MCP server reads .knowledge/ directly. For ingest, writes to agent queue table. | ✓ |
-| IPC to Tauri backend | MCP server sends commands to Tauri app via IPC/socket. | |
+| Empty results array | Return success with empty list. Standard pattern. | |
+| Specific 'no results' message | Return text message like "No wiki articles matched your query." | ✓ |
 | You decide | Claude's discretion. | |
 
-**User's choice:** Direct filesystem access
+**User's choice:** Specific 'no results' message
+**Notes:** None
 
----
-
-## Error & Access Model
-
-### What should wiki_query return when wiki is empty or no matches?
+### When wiki_ingest gets a bad file path?
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Clear message, no error | Return success with descriptive message. Agent decides what to do. | ✓ |
-| Error response | Return MCP error. Forces agent to handle as exception. | |
+| Fail immediately | Validate path exists before queuing. Return synchronous error. | ✓ |
+| Queue and fail later | Accept optimistically, worker discovers bad path. | |
 | You decide | Claude's discretion. | |
 
-**User's choice:** Clear message, no error
-
-### Should wiki MCP tools have access restrictions?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| No restrictions | Same access model as existing MCP tools. Simple. | ✓ |
-| Read-only by default | wiki_query always available, wiki_ingest requires explicit capability. | |
-| You decide | Claude's discretion. | |
-
-**User's choice:** No restrictions
+**User's choice:** Fail immediately
+**Notes:** None
 
 ---
 
 ## Claude's Discretion
 
-- Manifest-to-tool-schema parsing implementation details
-- Internal structure of dynamic tool router alongside hardcoded tools
-- Agent queue table schema for async ingest
+- MCP tool input schema design (parameter names, types, descriptions)
+- Exact format of the acknowledgment response for wiki_ingest
+- How to discover plugin manifest locations at startup
+- Internal structure of the dynamic tool router alongside hardcoded tools
 
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+None -- discussion stayed within phase scope

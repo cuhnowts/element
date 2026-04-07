@@ -6,36 +6,37 @@
 <domain>
 ## Phase Boundary
 
-External agents (Claude Code) can query the wiki for compiled knowledge retrieval and trigger ingest operations through the MCP server. Three tools: `wiki_query`, `wiki_index`, `wiki_ingest`. Wiki tools are registered dynamically from the knowledge plugin's manifest, not hardcoded.
+External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server. Two new MCP tools: `wiki_query` and `wiki_ingest`. Tools are registered dynamically from the knowledge plugin's manifest, not hardcoded.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Query Tool Design
-- **D-01:** `wiki_query` accepts a natural language query string. MCP server reads index.md, identifies relevant compiled wiki articles, returns their content. Returns compiled/compacted articles (not raw source documents) — the wiki layer already does LLM summarization from raw sources (Karpathy-style compaction).
-- **D-02:** `wiki_query` returns only matching article content — focused and token-efficient. No index bundled in response.
-- **D-03:** Separate `wiki_index` tool returns index.md contents so agents can browse the full knowledge map before querying specific topics.
+### Dynamic Tool Registration
+- **D-01:** Plugin-contributed MCP tools are loaded by reading plugin manifests at startup. MCP server restart required for changes.
+- **D-02:** Existing hardcoded tools stay as-is. Only plugin-contributed tools (like wiki) come from manifests. No migration of existing tools.
+- **D-03:** Handler code for plugin-contributed MCP tools lives in the plugin directory (e.g., `plugins/knowledge/mcp-handlers.ts`). MCP server dynamically imports the handler based on the path declared in the manifest.
 
-### Ingest Tool Design
-- **D-04:** `wiki_ingest` accepts raw text content as a string parameter (not file paths). The wiki engine compiles it into articles.
-- **D-05:** Ingest is async — returns immediately with "operation accepted" status. Actual compilation runs through the agent queue (Phase 42 WIKI-05 serialization). Agent doesn't wait for LLM processing.
-- **D-06:** `wiki_ingest` requires a `title` parameter — human-readable label for the source (e.g., "React 19 migration notes"). Used for tracking in raw source metadata.
+### Query Response Shape
+- **D-04:** `wiki_query` scans `index.md` for relevant entries, then returns the full wiki articles for matches. Wiki articles ARE the summaries (compiled from raw sources) -- they are returned in full, not truncated or re-summarized.
+- **D-05:** Each returned article includes its file path for reference.
+- **D-06:** When no articles match, return a specific text message ("No wiki articles matched your query") rather than an empty array.
 
-### Dynamic Registration
-- **D-07:** MCP server reads plugin manifests at startup to discover `mcp_tools` declarations. Loads tool schemas from manifest, routes calls to appropriate handlers. Existing hardcoded tools stay as-is.
-- **D-08:** Only wiki tools use the dynamic registration path in this phase. Migration of existing hardcoded tools to the manifest system is a future concern.
-- **D-09:** Dynamic tools execute via direct filesystem access — MCP server reads `.knowledge/` directory directly (already has SQLite access). For ingest, writes to an agent queue table that the Tauri backend picks up.
+### Ingest Flow & Acknowledgment
+- **D-07:** `wiki_ingest` is fire-and-forget. Tool accepts the request, queues it via the agent queue (Phase 42), and returns an immediate acknowledgment with operation ID + "accepted" status.
+- **D-08:** Agent provides a file path to the raw source document (not inline content). Wiki engine reads the file from disk.
+- **D-09:** File path is validated before queuing -- return synchronous error for bad/unreadable paths.
 
-### Error & Access Model
-- **D-10:** Empty wiki or no matches returns success with a clear message (e.g., "No wiki articles found" or "Wiki is empty — ingest documents first"). Not an MCP error.
-- **D-11:** No access restrictions on wiki tools — same model as existing MCP tools. If an agent can connect, it can use all tools including wiki.
+### Error Handling
+- **D-10:** When wiki doesn't exist (no `.knowledge/` directory), return a clear MCP error: "Wiki not initialized. Enable the knowledge plugin first."
+- **D-11:** `wiki_ingest` validates the file path exists and is readable BEFORE queuing. Returns synchronous error for bad paths so the agent knows immediately.
 
 ### Claude's Discretion
-- Implementation details of manifest-to-tool-schema parsing
+- MCP tool input schema design (parameter names, types, descriptions)
+- Exact format of the acknowledgment response for `wiki_ingest`
+- How to discover plugin manifest locations at startup (convention-based path vs config)
 - Internal structure of the dynamic tool router alongside hardcoded tools
-- Agent queue table schema for async ingest (coordinate with Phase 42 design)
 
 </decisions>
 
@@ -45,18 +46,18 @@ External agents (Claude Code) can query the wiki for compiled knowledge retrieva
 **Downstream agents MUST read these before planning or implementing.**
 
 ### MCP Server
-- `mcp-server/src/index.ts` — Current tool registration pattern (hardcoded), server setup, stdio transport
-- `mcp-server/src/tools/` — Existing tool handler patterns (project, phase, task, calendar, orchestration, write)
-- `mcp-server/package.json` — Dependencies including @modelcontextprotocol/sdk ^1.28.0
-
-### Plugin System
-- `src-tauri/src/plugins/manifest.rs` — Current plugin manifest struct (Phase 41 will add mcp_tools field)
-- `src-tauri/src/plugins/registry.rs` — Plugin registry for runtime state
-- `src-tauri/src/commands/plugin_commands.rs` — Plugin Tauri commands
+- `mcp-server/src/index.ts` -- Current MCP server entry point with hardcoded tool registration and dispatch
+- `mcp-server/src/tools/` -- Existing tool handler modules (pattern reference for new wiki tools)
+- `mcp-server/src/db.ts` -- Database connection used by existing tools
 
 ### Requirements
-- `.planning/REQUIREMENTS.md` — MCP-01 (read-only query), MCP-02 (queue-based ingest)
-- `.planning/ROADMAP.md` — Phase 44 success criteria (3 criteria)
+- `.planning/REQUIREMENTS.md` -- MCP-01 (read-only query), MCP-02 (queue-based ingest)
+
+### Dependent Phases
+- `.planning/ROADMAP.md` Phase 41 -- Plugin manifest extensions (skills, mcp_tools, owned_directories)
+- `.planning/ROADMAP.md` Phase 42 -- Knowledge engine core (wiki operations, operation queue, .knowledge/ structure)
+
+No external specs -- requirements fully captured in decisions above.
 
 </canonical_refs>
 
@@ -64,35 +65,36 @@ External agents (Claude Code) can query the wiki for compiled knowledge retrieva
 ## Existing Code Insights
 
 ### Reusable Assets
-- `mcp-server/src/db.ts` — SQLite database connection (better-sqlite3), reuse for agent queue table access
-- `mcp-server/src/tools/*.ts` — Established handler pattern: export functions that take parsed params and return MCP tool results
-- `@modelcontextprotocol/sdk` — Already set up with Server, StdioServerTransport, CallToolRequestSchema
+- `@modelcontextprotocol/sdk` -- Already installed and configured in mcp-server/
+- `mcp-server/src/db.ts` -- SQLite database connection (may be needed for queue interaction)
+- Existing tool handler pattern in `mcp-server/src/tools/*.ts` -- Each exports handler functions taking (db, args) or (db, dbPath, args)
 
 ### Established Patterns
-- Tool registration: `ListToolsRequestSchema` handler returns tool schemas, `CallToolRequestSchema` handler routes by tool name
-- All tool handlers follow `handle{Action}(params)` naming convention
-- Tests use vitest with mock DB setup (`__tests__/`)
+- MCP tools are defined as objects with `name`, `description`, `inputSchema` in the ListTools handler
+- Tool dispatch is a switch-case in CallTools handler calling imported handler functions
+- All handlers return `{ content: [{ type: "text", text: JSON.stringify(...) }] }` format
+- Error responses use `isError: true` flag
 
 ### Integration Points
-- `mcp-server/src/index.ts` — Tool router switch statement needs extension point for dynamic tools
-- `.knowledge/` directory — Wiki articles and index.md read by query tools
-- Agent queue table in SQLite — Ingest writes here, Tauri backend processes
-- Plugin manifest files — Read at startup for mcp_tools declarations
+- ListToolsRequestSchema handler in `index.ts` -- needs to merge plugin-contributed tools alongside hardcoded ones
+- CallToolRequestSchema handler in `index.ts` -- needs dynamic dispatch for plugin tools (not just switch-case)
+- Plugin manifest system (Phase 41) -- MCP server reads `mcp_tools` declarations from manifests
+- Agent queue (Phase 42) -- `wiki_ingest` submits operations to the queue
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- Wiki compilation follows Karpathy-style approach: raw sources are compacted/summarized by LLM before entering the wiki. Query returns this compiled knowledge, not raw dumps.
-- Three-tool surface area: `wiki_index` (browse), `wiki_query` (search), `wiki_ingest` (add) — clean separation of concerns.
+- Wiki articles are already summaries (compiled from raw sources) -- return them in full, not truncated or re-summarized
+- File path input only for ingest -- keeps MCP payloads small and avoids encoding issues
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+None -- discussion stayed within phase scope
 
 </deferred>
 
