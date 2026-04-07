@@ -35,6 +35,13 @@ Requirements for v1.8 Knowledge Engine. Each maps to roadmap phases.
 - [ ] **MCP-01**: External agents can query the wiki through MCP server tools (read-only)
 - [ ] **MCP-02**: External agents can trigger wiki ingest through MCP server via the agent queue
 
+### Test Suite
+
+- [ ] **TEST-01**: Rust unit tests cover plugin manifest parsing, directory manager lifecycle, and skill dispatch routing
+- [ ] **TEST-02**: Rust integration tests cover wiki operations (ingest, query, lint, operation queue serialization)
+- [ ] **TEST-03**: Vitest tests cover dynamic tool loading, plugin skill registry merge, and tool filtering logic
+- [ ] **TEST-04**: MCP server tests cover wiki_query and wiki_ingest tool handlers with expected contracts
+
 ## Future Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -90,10 +97,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-03 | Phase 43 | Pending |
 | MCP-01 | Phase 44 | Pending |
 | MCP-02 | Phase 44 | Pending |
+| TEST-01 | Phase 45 | Pending |
+| TEST-02 | Phase 45 | Pending |
+| TEST-03 | Phase 45 | Pending |
+| TEST-04 | Phase 45 | Pending |
 
 **Coverage:**
-- v1.8 requirements: 16 total
-- Mapped to phases: 16
+- v1.8 requirements: 20 total
+- Mapped to phases: 20
 - Unmapped: 0
 
 ---

@@ -119,6 +119,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [ ] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue
 - [ ] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat
 - [ ] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest
+- [ ] **Phase 45: Test Suite** - Comprehensive tests for plugin infrastructure, wiki engine, hub chat integration, and MCP tools
 
 ## Phase Details
 
@@ -167,11 +168,22 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   3. MCP wiki tools are registered dynamically from the knowledge plugin's manifest rather than hardcoded in the MCP server source
 **Plans**: TBD
 
+### Phase 45: Test Suite
+**Goal**: Comprehensive test coverage for all v1.8 features — plugin infrastructure, wiki engine, hub chat integration, and MCP tools — ensuring hooks catch regressions going forward
+**Depends on**: Phase 41, 42, 43, 44 (all feature phases complete)
+**Requirements**: TEST-01, TEST-02, TEST-03, TEST-04
+**Success Criteria** (what must be TRUE):
+  1. Rust unit tests cover plugin manifest parsing (new fields, backward compat, namespace collision detection), directory manager lifecycle, and skill dispatch routing
+  2. Rust integration tests cover wiki operations (ingest produces articles + index, query retrieves relevant content, lint detects issues, operation queue serializes concurrent requests)
+  3. Vitest tests cover dynamic tool loading in hub chat, plugin skill registry merge, and tool filtering logic
+  4. MCP server tests cover wiki_query and wiki_ingest tool handlers with expected input/output contracts
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 41 -> 42 -> 43 -> 44
-Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43 if desired.
+Phases execute in numeric order: 41 -> 42 -> 43 -> 44 -> 45
+Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43 if desired. Phase 45 runs after all feature phases.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -220,6 +232,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 42. Knowledge Engine Core | v1.8 | 0/0 | Not started | - |
 | 43. Hub Chat Wiki Integration | v1.8 | 0/0 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
+| 45. Test Suite | v1.8 | 0/0 | Not started | - |
 
 ## Backlog
 
