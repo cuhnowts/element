@@ -7,8 +7,9 @@ pub mod registry;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
-use manifest::{load_plugin_manifest, PluginError};
-use registry::{LoadedPlugin, PluginRegistry, PluginStatus};
+use manifest::{load_plugin_manifest, McpToolDefinition, PluginError, PluginManifest};
+use registry::{LoadedPlugin, McpToolRegistry, PluginRegistry, PluginStatus, SkillRegistry};
+use directory::DirectoryManager;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,20 +19,43 @@ pub struct PluginLoadResult {
     pub error: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginSkillInfo {
+    pub prefixed_name: String,
+    pub plugin_name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+    pub output_schema: serde_json::Value,
+    pub destructive: bool,
+}
+
 pub struct PluginHost {
     plugins_dir: PathBuf,
     registry: Arc<RwLock<PluginRegistry>>,
+    skill_registry: Arc<RwLock<SkillRegistry>>,
+    mcp_tool_registry: Arc<RwLock<McpToolRegistry>>,
+    directory_manager: Arc<RwLock<DirectoryManager>>,
+    db_path: Option<PathBuf>,
     #[allow(dead_code)]
     watcher: Option<notify_debouncer_mini::Debouncer<notify::RecommendedWatcher>>,
 }
 
 impl PluginHost {
-    pub fn new(plugins_dir: PathBuf) -> Self {
+    pub fn new(plugins_dir: PathBuf, app_data_dir: PathBuf) -> Self {
         Self {
             plugins_dir,
             registry: Arc::new(RwLock::new(PluginRegistry::new())),
+            skill_registry: Arc::new(RwLock::new(SkillRegistry::new())),
+            mcp_tool_registry: Arc::new(RwLock::new(McpToolRegistry::new())),
+            directory_manager: Arc::new(RwLock::new(DirectoryManager::new(app_data_dir, None))),
+            db_path: None,
             watcher: None,
         }
+    }
+
+    pub fn set_db_path(&mut self, path: PathBuf) {
+        self.db_path = Some(path);
     }
 
     pub fn scan_and_load(&self) -> Vec<PluginLoadResult> {
@@ -212,18 +236,143 @@ impl PluginHost {
             .write()
             .map_err(|e| PluginError::LoadError(e.to_string()))?;
 
-        if reg.get(name).is_none() {
-            return Err(PluginError::NotFound(name.to_string()));
-        }
+        let plugin = reg.get(name).ok_or_else(|| PluginError::NotFound(name.to_string()))?;
+        let manifest = plugin.manifest.clone();
 
-        let status = if enabled {
-            PluginStatus::Active
+        if enabled {
+            // Execute on_enable lifecycle hooks
+            self.execute_lifecycle_hooks(name, &manifest, true)?;
+
+            // Register skills in SkillRegistry
+            if !manifest.skills.is_empty() {
+                let mut skill_reg = self.skill_registry.write()
+                    .map_err(|e| PluginError::LoadError(e.to_string()))?;
+                skill_reg.register_plugin_skills(name, &manifest.skills)
+                    .map_err(PluginError::LoadError)?;
+            }
+
+            // Register MCP tools and sync to DB
+            if !manifest.mcp_tools.is_empty() {
+                let mut mcp_reg = self.mcp_tool_registry.write()
+                    .map_err(|e| PluginError::LoadError(e.to_string()))?;
+                mcp_reg.register_plugin_tools(name, &manifest.mcp_tools)
+                    .map_err(PluginError::LoadError)?;
+                self.sync_mcp_tools_to_db(name, &manifest.mcp_tools, true);
+            }
+
+            reg.set_status(name, PluginStatus::Active, None);
         } else {
-            PluginStatus::Disabled
-        };
+            // Unregister skills
+            {
+                let mut skill_reg = self.skill_registry.write()
+                    .map_err(|e| PluginError::LoadError(e.to_string()))?;
+                skill_reg.unregister_plugin(name);
+            }
 
-        reg.set_status(name, status, None);
+            // Unregister MCP tools
+            {
+                let mut mcp_reg = self.mcp_tool_registry.write()
+                    .map_err(|e| PluginError::LoadError(e.to_string()))?;
+                mcp_reg.unregister_plugin(name);
+            }
+            self.sync_mcp_tools_to_db(name, &[], false);
+
+            // Execute on_disable lifecycle hooks
+            self.execute_lifecycle_hooks(name, &manifest, false)?;
+
+            reg.set_status(name, PluginStatus::Disabled, None);
+        }
         Ok(())
+    }
+
+    pub fn dispatch_skill(&self, prefixed_name: &str, input: serde_json::Value) -> Result<serde_json::Value, String> {
+        let skill_reg = self.skill_registry.read().map_err(|e| e.to_string())?;
+        let skill = skill_reg.get(prefixed_name)
+            .ok_or_else(|| format!("Skill '{}' failed to execute. The plugin may need to be re-enabled.", prefixed_name))?;
+        // Return dispatch confirmation — actual plugin execution in Phase 42+
+        Ok(serde_json::json!({
+            "skill": prefixed_name,
+            "status": "dispatched",
+            "input": input,
+            "description": skill.description,
+        }))
+    }
+
+    pub fn list_skills(&self) -> Vec<PluginSkillInfo> {
+        let skill_reg = self.skill_registry.read().unwrap_or_else(|e| e.into_inner());
+        skill_reg.list().iter().map(|(prefixed_name, skill)| {
+            let plugin_name = prefixed_name.split(':').next().unwrap_or("").to_string();
+            PluginSkillInfo {
+                prefixed_name: prefixed_name.to_string(),
+                plugin_name,
+                description: skill.description.clone(),
+                input_schema: skill.input_schema.clone(),
+                output_schema: skill.output_schema.clone(),
+                destructive: skill.destructive,
+            }
+        }).collect()
+    }
+
+    pub fn purge_directory(&self, plugin_name: &str, dir_path: &str) -> Result<(), String> {
+        let reg = self.registry.read().map_err(|e| e.to_string())?;
+        let plugin = reg.get(plugin_name)
+            .ok_or_else(|| format!("Plugin not found: {}", plugin_name))?;
+        let dir = plugin.manifest.owned_directories.iter()
+            .find(|d| d.path == dir_path)
+            .ok_or_else(|| format!("Directory '{}' not declared by plugin '{}'", dir_path, plugin_name))?;
+        let dir_mgr = self.directory_manager.read().map_err(|e| e.to_string())?;
+        dir_mgr.purge_directory(dir)
+    }
+
+    fn execute_lifecycle_hooks(&self, plugin_name: &str, manifest: &PluginManifest, enabling: bool) -> Result<(), PluginError> {
+        let hooks = if enabling { &manifest.on_enable } else { &manifest.on_disable };
+        for hook in hooks {
+            match hook.as_str() {
+                "create_dirs" => {
+                    if enabling {
+                        let dir_mgr = self.directory_manager.read()
+                            .map_err(|e| PluginError::LoadError(e.to_string()))?;
+                        for dir in &manifest.owned_directories {
+                            dir_mgr.create_directory(dir)
+                                .map_err(PluginError::LoadError)?;
+                        }
+                    }
+                }
+                "register_schema" => {
+                    // Placeholder for future schema registration
+                }
+                "unregister" => {
+                    // Skills/MCP tools already handled in set_enabled
+                }
+                unknown => {
+                    eprintln!("Unknown lifecycle hook '{}' for plugin '{}'", unknown, plugin_name);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn sync_mcp_tools_to_db(&self, plugin_name: &str, tools: &[McpToolDefinition], enabling: bool) {
+        let Some(db_path) = &self.db_path else { return; };
+        let Ok(conn) = rusqlite::Connection::open(db_path) else { return; };
+
+        // Remove existing entries for this plugin
+        let _ = conn.execute(
+            "DELETE FROM plugin_mcp_tools WHERE plugin_name = ?1",
+            rusqlite::params![plugin_name],
+        );
+
+        if enabling {
+            for tool in tools {
+                let prefixed = format!("{}:{}", plugin_name, tool.name);
+                let schema_str = serde_json::to_string(&tool.input_schema)
+                    .unwrap_or_else(|_| "{}".to_string());
+                let _ = conn.execute(
+                    "INSERT OR REPLACE INTO plugin_mcp_tools (prefixed_name, plugin_name, description, input_schema, enabled) VALUES (?1, ?2, ?3, ?4, 1)",
+                    rusqlite::params![prefixed, plugin_name, tool.description, schema_str],
+                );
+            }
+        }
     }
 
     pub fn list_plugins(&self) -> Vec<LoadedPlugin> {
@@ -275,7 +424,7 @@ mod tests {
     #[test]
     fn test_scan_and_load_finds_valid_plugins() {
         let dir = create_test_plugins_dir();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         let results = host.scan_and_load();
 
         let valid: Vec<_> = results.iter().filter(|r| r.success).collect();
@@ -286,7 +435,7 @@ mod tests {
     #[test]
     fn test_scan_and_load_records_errors() {
         let dir = create_test_plugins_dir();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         let results = host.scan_and_load();
 
         let errors: Vec<_> = results.iter().filter(|r| !r.success).collect();
@@ -296,7 +445,7 @@ mod tests {
     #[test]
     fn test_get_plugin() {
         let dir = create_test_plugins_dir();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         host.scan_and_load();
 
         assert!(host.get_plugin("valid-plugin").is_some());
@@ -306,7 +455,7 @@ mod tests {
     #[test]
     fn test_set_enabled() {
         let dir = create_test_plugins_dir();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         host.scan_and_load();
 
         host.set_enabled("valid-plugin", false).unwrap();
@@ -321,7 +470,7 @@ mod tests {
     #[test]
     fn test_set_enabled_nonexistent_returns_error() {
         let dir = tempfile::tempdir().unwrap();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         let result = host.set_enabled("nonexistent", true);
         assert!(result.is_err());
     }
@@ -329,7 +478,7 @@ mod tests {
     #[test]
     fn test_list_plugins() {
         let dir = create_test_plugins_dir();
-        let host = PluginHost::new(dir.path().to_path_buf());
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
         host.scan_and_load();
 
         let all = host.list_plugins();

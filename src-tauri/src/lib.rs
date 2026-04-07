@@ -60,7 +60,9 @@ pub fn run() {
             let plugins_dir = app_data_dir.join("plugins");
             std::fs::create_dir_all(&plugins_dir)?;
 
-            let mut plugin_host = plugins::PluginHost::new(plugins_dir);
+            let db_file_path = app_data_dir.join("element.db");
+            let mut plugin_host = plugins::PluginHost::new(plugins_dir, app_data_dir.clone());
+            plugin_host.set_db_path(db_file_path);
             plugin_host.scan_and_load();
             if let Err(e) = plugin_host.start_watching() {
                 eprintln!("Failed to start plugin watcher: {}", e);
@@ -272,6 +274,9 @@ pub fn run() {
             reload_plugin,
             scan_plugins,
             open_plugins_directory,
+            dispatch_plugin_skill,
+            list_plugin_skills,
+            purge_plugin_directory,
             execute_step,
             list_credentials,
             create_credential,
