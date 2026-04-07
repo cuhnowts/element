@@ -326,3 +326,12 @@ Plans:
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
+
+### Phase 999.9: Business Workflow Templates (BACKLOG)
+
+**Goal:** GSD-like discuss→plan→execute pattern adapted for non-engineering work (budget reviews, project proposals, vendor evaluations). Simpler structure than GSD but same orchestration model. AI breaks business tasks into steps, executes what it can (pull data, draft content, schedule meetings), surfaces decisions for human input. Leverages existing workflow engine and hub chat skills infrastructure.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
