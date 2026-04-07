@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use super::manifest::PluginManifest;
+use super::manifest::{McpToolDefinition, PluginManifest, SkillDefinition};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
@@ -61,10 +61,102 @@ impl PluginRegistry {
     }
 }
 
+pub struct SkillRegistry {
+    skills: HashMap<String, (String, SkillDefinition)>,
+}
+
+impl SkillRegistry {
+    pub fn new() -> Self {
+        Self {
+            skills: HashMap::new(),
+        }
+    }
+
+    pub fn register_plugin_skills(
+        &mut self,
+        plugin_name: &str,
+        skills: &[SkillDefinition],
+    ) -> Result<(), String> {
+        for skill in skills {
+            let prefixed = format!("{}:{}", plugin_name, skill.name);
+            if self.skills.contains_key(&prefixed) {
+                return Err(format!(
+                    "Plugin conflict: skill name '{}' is already registered",
+                    prefixed
+                ));
+            }
+            self.skills
+                .insert(prefixed, (plugin_name.to_string(), skill.clone()));
+        }
+        Ok(())
+    }
+
+    pub fn unregister_plugin(&mut self, plugin_name: &str) {
+        self.skills.retain(|_, (owner, _)| owner != plugin_name);
+    }
+
+    pub fn get(&self, prefixed_name: &str) -> Option<&SkillDefinition> {
+        self.skills.get(prefixed_name).map(|(_, def)| def)
+    }
+
+    pub fn list(&self) -> Vec<(&str, &SkillDefinition)> {
+        self.skills
+            .iter()
+            .map(|(k, (_, v))| (k.as_str(), v))
+            .collect()
+    }
+}
+
+pub struct McpToolRegistry {
+    tools: HashMap<String, (String, McpToolDefinition)>,
+}
+
+impl McpToolRegistry {
+    pub fn new() -> Self {
+        Self {
+            tools: HashMap::new(),
+        }
+    }
+
+    pub fn register_plugin_tools(
+        &mut self,
+        plugin_name: &str,
+        tools: &[McpToolDefinition],
+    ) -> Result<(), String> {
+        for tool in tools {
+            let prefixed = format!("{}:{}", plugin_name, tool.name);
+            if self.tools.contains_key(&prefixed) {
+                return Err(format!(
+                    "Plugin conflict: tool name '{}' is already registered",
+                    prefixed
+                ));
+            }
+            self.tools
+                .insert(prefixed, (plugin_name.to_string(), tool.clone()));
+        }
+        Ok(())
+    }
+
+    pub fn unregister_plugin(&mut self, plugin_name: &str) {
+        self.tools.retain(|_, (owner, _)| owner != plugin_name);
+    }
+
+    pub fn get(&self, prefixed_name: &str) -> Option<&McpToolDefinition> {
+        self.tools.get(prefixed_name).map(|(_, def)| def)
+    }
+
+    pub fn list(&self) -> Vec<(&str, &McpToolDefinition)> {
+        self.tools
+            .iter()
+            .map(|(k, (_, v))| (k.as_str(), v))
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plugins::manifest::PluginManifest;
+    use crate::plugins::manifest::{McpToolDefinition, PluginManifest, SkillDefinition};
 
     fn make_plugin(name: &str) -> LoadedPlugin {
         LoadedPlugin {
@@ -78,6 +170,12 @@ mod tests {
                 credentials: vec![],
                 entry: None,
                 step_types: vec![],
+                manifest_version: None,
+                skills: vec![],
+                mcp_tools: vec![],
+                owned_directories: vec![],
+                on_enable: vec![],
+                on_disable: vec![],
             },
             status: PluginStatus::Active,
             error_message: None,
@@ -133,5 +231,116 @@ mod tests {
         let mut reg = PluginRegistry::new();
         let updated = reg.set_status("nonexistent", PluginStatus::Active, None);
         assert!(!updated);
+    }
+
+    fn make_skill(name: &str) -> SkillDefinition {
+        SkillDefinition {
+            name: name.to_string(),
+            description: format!("{} skill", name),
+            input_schema: serde_json::Value::Null,
+            output_schema: serde_json::Value::Null,
+            destructive: false,
+        }
+    }
+
+    fn make_mcp_tool(name: &str) -> McpToolDefinition {
+        McpToolDefinition {
+            name: name.to_string(),
+            description: format!("{} tool", name),
+            input_schema: serde_json::Value::Null,
+        }
+    }
+
+    #[test]
+    fn test_skill_registry_register_and_get() {
+        let mut reg = SkillRegistry::new();
+        let skills = vec![make_skill("ingest"), make_skill("query")];
+        reg.register_plugin_skills("knowledge", &skills).unwrap();
+
+        assert!(reg.get("knowledge:ingest").is_some());
+        assert_eq!(reg.get("knowledge:ingest").unwrap().name, "ingest");
+        assert!(reg.get("knowledge:query").is_some());
+        assert!(reg.get("unknown:ingest").is_none());
+    }
+
+    #[test]
+    fn test_skill_registry_duplicate_returns_err() {
+        let mut reg = SkillRegistry::new();
+        let skills = vec![make_skill("ingest")];
+        reg.register_plugin_skills("knowledge", &skills).unwrap();
+
+        let result = reg.register_plugin_skills("knowledge", &skills);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Plugin conflict: skill name"));
+    }
+
+    #[test]
+    fn test_skill_registry_unregister_plugin() {
+        let mut reg = SkillRegistry::new();
+        reg.register_plugin_skills("knowledge", &[make_skill("ingest")])
+            .unwrap();
+        reg.register_plugin_skills("wiki", &[make_skill("search")])
+            .unwrap();
+
+        reg.unregister_plugin("knowledge");
+        assert!(reg.get("knowledge:ingest").is_none());
+        assert!(reg.get("wiki:search").is_some());
+    }
+
+    #[test]
+    fn test_skill_registry_list() {
+        let mut reg = SkillRegistry::new();
+        reg.register_plugin_skills("a", &[make_skill("x")])
+            .unwrap();
+        reg.register_plugin_skills("b", &[make_skill("y")])
+            .unwrap();
+        assert_eq!(reg.list().len(), 2);
+    }
+
+    #[test]
+    fn test_skill_registry_same_local_name_different_plugins() {
+        let mut reg = SkillRegistry::new();
+        reg.register_plugin_skills("plugin-a", &[make_skill("ingest")])
+            .unwrap();
+        let result = reg.register_plugin_skills("plugin-b", &[make_skill("ingest")]);
+        assert!(result.is_ok());
+        assert!(reg.get("plugin-a:ingest").is_some());
+        assert!(reg.get("plugin-b:ingest").is_some());
+    }
+
+    #[test]
+    fn test_mcp_tool_registry_register_and_get() {
+        let mut reg = McpToolRegistry::new();
+        let tools = vec![make_mcp_tool("search")];
+        reg.register_plugin_tools("wiki", &tools).unwrap();
+
+        assert!(reg.get("wiki:search").is_some());
+        assert_eq!(reg.get("wiki:search").unwrap().name, "search");
+    }
+
+    #[test]
+    fn test_mcp_tool_registry_duplicate_returns_err() {
+        let mut reg = McpToolRegistry::new();
+        let tools = vec![make_mcp_tool("search")];
+        reg.register_plugin_tools("wiki", &tools).unwrap();
+
+        let result = reg.register_plugin_tools("wiki", &tools);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Plugin conflict: tool name"));
+    }
+
+    #[test]
+    fn test_mcp_tool_registry_unregister_and_list() {
+        let mut reg = McpToolRegistry::new();
+        reg.register_plugin_tools("a", &[make_mcp_tool("x")])
+            .unwrap();
+        reg.register_plugin_tools("b", &[make_mcp_tool("y")])
+            .unwrap();
+        assert_eq!(reg.list().len(), 2);
+
+        reg.unregister_plugin("a");
+        assert_eq!(reg.list().len(), 1);
+        assert!(reg.get("a:x").is_none());
+        assert!(reg.get("b:y").is_some());
     }
 }
