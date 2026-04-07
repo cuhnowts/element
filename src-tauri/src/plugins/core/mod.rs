@@ -41,6 +41,12 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
                 }
             }),
         }],
+        manifest_version: None,
+        skills: vec![],
+        mcp_tools: vec![],
+        owned_directories: vec![],
+        on_enable: vec![],
+        on_disable: vec![],
     };
 
     // HTTP plugin manifest
@@ -79,6 +85,12 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
                 }
             }),
         }],
+        manifest_version: None,
+        skills: vec![],
+        mcp_tools: vec![],
+        owned_directories: vec![],
+        on_enable: vec![],
+        on_disable: vec![],
     };
 
     // Filesystem plugin manifest
@@ -113,6 +125,12 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
                 ]
             }),
         }],
+        manifest_version: None,
+        skills: vec![],
+        mcp_tools: vec![],
+        owned_directories: vec![],
+        on_enable: vec![],
+        on_disable: vec![],
     };
 
     let now = chrono::Utc::now().to_rfc3339();
@@ -159,6 +177,12 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
             input_schema: serde_json::json!({}),
             output_schema: serde_json::json!({}),
         }],
+        manifest_version: None,
+        skills: vec![],
+        mcp_tools: vec![],
+        owned_directories: vec![],
+        on_enable: vec![],
+        on_disable: vec![],
     };
 
     registry.register(LoadedPlugin {

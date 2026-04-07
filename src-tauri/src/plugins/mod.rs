@@ -1,5 +1,6 @@
 pub mod api;
 pub mod core;
+pub mod directory;
 pub mod manifest;
 pub mod registry;
 
@@ -99,6 +100,12 @@ impl PluginHost {
                                     credentials: vec![],
                                     entry: None,
                                     step_types: vec![],
+                                    manifest_version: None,
+                                    skills: vec![],
+                                    mcp_tools: vec![],
+                                    owned_directories: vec![],
+                                    on_enable: vec![],
+                                    on_disable: vec![],
                                 },
                                 status: PluginStatus::Error,
                                 error_message: Some(error_msg.clone()),
