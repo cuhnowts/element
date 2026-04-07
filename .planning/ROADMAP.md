@@ -133,7 +133,12 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   3. Calling `dispatch_plugin_skill` with a valid skill name routes to the correct plugin handler and returns a result to the caller
   4. Enabling two plugins that declare the same skill name produces an explicit error at load time rather than silent wrong behavior
   5. Disabling a plugin removes all its registered skills and MCP tools from the runtime registries without requiring an app restart
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 41-01-PLAN.md — Manifest v2 schema, SkillRegistry, McpToolRegistry, DirectoryManager
+- [ ] 41-02-PLAN.md — PluginHost lifecycle wiring, skill dispatch, DB migration, Tauri commands
+- [ ] 41-03-PLAN.md — Frontend types, Tauri API bindings, Zustand skill store, PathBuf security fix
 
 ### Phase 42: Knowledge Engine Core
 **Goal**: Users can ingest raw source documents into a three-layer wiki and query compiled knowledge, with all mutations serialized for concurrency safety and source hashes tracking staleness
@@ -161,6 +166,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 Plans:
 - [ ] 43-01-PLAN.md — Plugin tool registry, usePluginTools hook, ActionConfirmCard wiki entries
 - [ ] 43-02-PLAN.md — HubChat dynamic prompt assembly, merged tool loading, plugin dispatch routing
+
 ### Phase 44: MCP Server Wiki Tools
 **Goal**: External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server
 **Depends on**: Phase 42 (wiki engine must be functional for MCP to wrap)
@@ -235,7 +241,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 38. Error Logger | v1.7 | 2/2 | Complete | 2026-04-06 |
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
-| 41. Plugin Infrastructure Evolution | v1.8 | 0/0 | Not started | - |
+| 41. Plugin Infrastructure Evolution | v1.8 | 0/3 | Not started | - |
 | 42. Knowledge Engine Core | v1.8 | 0/0 | Not started | - |
 | 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
