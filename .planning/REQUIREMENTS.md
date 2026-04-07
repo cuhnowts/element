@@ -26,9 +26,9 @@ Requirements for v1.8 Knowledge Engine. Each maps to roadmap phases.
 
 ### Hub Chat Integration
 
-- [ ] **CHAT-01**: Plugin-contributed skills are dynamically loaded into hub chat's tool registry alongside built-in actions
-- [ ] **CHAT-02**: User can ingest documents and query the wiki through hub chat commands
-- [ ] **CHAT-03**: Hub chat filters available tools contextually to prevent system prompt bloat as plugins grow
+- [x] **CHAT-01**: Plugin-contributed skills are dynamically loaded into hub chat's tool registry alongside built-in actions
+- [x] **CHAT-02**: User can ingest documents and query the wiki through hub chat commands
+- [x] **CHAT-03**: Hub chat filters available tools contextually to prevent system prompt bloat as plugins grow
 
 ### MCP Server Integration
 
@@ -92,9 +92,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WIKI-04 | Phase 42 | Pending |
 | WIKI-05 | Phase 42 | Pending |
 | WIKI-06 | Phase 42 | Pending |
-| CHAT-01 | Phase 43 | Pending |
-| CHAT-02 | Phase 43 | Pending |
-| CHAT-03 | Phase 43 | Pending |
+| CHAT-01 | Phase 43 | Complete |
+| CHAT-02 | Phase 43 | Complete |
+| CHAT-03 | Phase 43 | Complete |
 | MCP-01 | Phase 44 | Complete |
 | MCP-02 | Phase 44 | Complete |
 | TEST-01 | Phase 45 | Pending |
