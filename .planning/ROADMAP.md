@@ -117,8 +117,8 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 - [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
 - [x] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue (completed 2026-04-07)
-- [ ] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat
-- [ ] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest
+- [x] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat (completed 2026-04-07)
+- [x] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest (completed 2026-04-07)
 - [ ] **Phase 45: Test Suite** - Comprehensive tests for plugin infrastructure, wiki engine, hub chat integration, and MCP tools
 
 ## Phase Details
@@ -169,8 +169,8 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 43-01-PLAN.md — Plugin tool registry, usePluginTools hook, ActionConfirmCard wiki entries
-- [ ] 43-02-PLAN.md — HubChat dynamic prompt assembly, merged tool loading, plugin dispatch routing
+- [x] 43-01-PLAN.md — Plugin tool registry, usePluginTools hook, ActionConfirmCard wiki entries
+- [x] 43-02-PLAN.md — HubChat dynamic prompt assembly, merged tool loading, plugin dispatch routing
 
 ### Phase 44: MCP Server Wiki Tools
 **Goal**: External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server
@@ -183,8 +183,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 44-01-PLAN.md — Plugin loader module + wiki tool handlers with tests
-- [ ] 44-02-PLAN.md — Wire plugin tools into MCP server index.ts + build verification
+- [x] 44-01-PLAN.md — Plugin loader module + wiki tool handlers with tests
+- [x] 44-02-PLAN.md — Wire plugin tools into MCP server index.ts + build verification
 
 ### Phase 45: Test Suite
 **Goal**: Comprehensive test coverage for all v1.8 features — plugin infrastructure, wiki engine, hub chat integration, and MCP tools — ensuring hooks catch regressions going forward
@@ -249,8 +249,8 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete   | 2026-04-07 |
 | 42. Knowledge Engine Core | v1.8 | 0/3 | Complete    | 2026-04-07 |
-| 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
-| 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
+| 43. Hub Chat Wiki Integration | v1.8 | 2/2 | Complete   | 2026-04-07 |
+| 44. MCP Server Wiki Tools | v1.8 | 2/2 | Complete    | 2026-04-07 |
 | 45. Test Suite | v1.8 | 0/0 | Not started | - |
 
 ## Backlog
@@ -259,7 +259,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 3/3 plans complete
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
