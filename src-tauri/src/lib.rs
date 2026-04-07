@@ -13,6 +13,7 @@ mod db;
 mod engine;
 mod heartbeat;
 mod models;
+mod knowledge;
 mod plugins;
 mod scheduling;
 #[cfg(test)]
@@ -68,6 +69,11 @@ pub fn run() {
                 eprintln!("Failed to start plugin watcher: {}", e);
             }
             app.manage(Mutex::new(plugin_host));
+
+            // Initialize knowledge engine
+            let knowledge_dir = app_data_dir.join(".knowledge");
+            let knowledge_engine = knowledge::KnowledgeEngine::new(knowledge_dir);
+            app.manage(knowledge_engine);
 
             // Initialize credential manager
             let secret_store = credentials::keychain::SqliteSecretStore::new(db_arc.clone());
