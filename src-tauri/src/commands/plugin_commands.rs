@@ -223,9 +223,9 @@ pub async fn execute_step(
         "file-operation" => {
             let fs_input: FsStepInput =
                 serde_json::from_value(input).map_err(|e| format!("Invalid FS input: {}", e))?;
-            // For core filesystem plugin, allow all paths by default
-            // In production, this would be scoped by plugin configuration
-            let plugin = FilesystemPlugin::new(vec![std::path::PathBuf::from("/")]);
+            // Scope filesystem operations to current working directory
+            let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+            let plugin = FilesystemPlugin::new(vec![cwd]);
             let output = plugin.execute(fs_input).await.map_err(|e| e.to_string())?;
             serde_json::to_value(output).map_err(|e| e.to_string())
         }
