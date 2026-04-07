@@ -5,7 +5,9 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
+import { dirname, join } from "node:path";
 import { db, dbPath } from "./db.js";
+import { loadPluginTools, type PluginMcpTool } from "./plugin-loader.js";
 import { handleListProjects, handleGetProjectDetail } from "./tools/project-tools.js";
 import { handleListPhases, handleGetPhaseStatus } from "./tools/phase-tools.js";
 import { handleListTasks } from "./tools/task-tools.js";
@@ -38,6 +40,15 @@ const server = new Server(
   { name: "element-mcp", version: "1.0.0" },
   { capabilities: { tools: {} } }
 );
+
+// Load plugin-contributed MCP tools from manifests
+const pluginsDir = join(dirname(dbPath), "plugins");
+const pluginTools: PluginMcpTool[] = loadPluginTools(pluginsDir);
+if (pluginTools.length > 0) {
+  console.error(
+    `Loaded ${pluginTools.length} plugin tool(s): ${pluginTools.map((t) => t.name).join(", ")}`
+  );
+}
 
 // --- List Tools ---
 
@@ -380,6 +391,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["blockId"],
       },
     },
+
+    // Plugin-contributed tools (dynamically loaded from manifests)
+    ...pluginTools.map((t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema,
+    })),
   ],
 }));
 
@@ -558,13 +576,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         args as { blockId: string }
       );
 
-    default:
+    default: {
+      // Try plugin tools before returning unknown error
+      const pluginTool = pluginTools.find((t) => t.name === name);
+      if (pluginTool) {
+        try {
+          const mod = await import(pluginTool.handlerModule);
+          const handler = mod[pluginTool.handlerFunction];
+          if (typeof handler !== "function") {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Error: Handler "${pluginTool.handlerFunction}" not found in plugin module`,
+                },
+              ],
+              isError: true,
+            };
+          }
+          return handler(dbPath, args);
+        } catch (err) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Error: Failed to load plugin handler: ${err instanceof Error ? err.message : String(err)}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+
       return {
         content: [
           { type: "text" as const, text: `Error: Unknown tool "${name}"` },
         ],
         isError: true,
       };
+    }
   }
 });
 

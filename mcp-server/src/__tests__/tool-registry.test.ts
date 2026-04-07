@@ -428,3 +428,21 @@ describe("MCP Tool Registry", () => {
     expect(required).toContain("priority");
   });
 });
+
+describe("Plugin Tool Namespace Safety", () => {
+  it("no hardcoded tool name contains a colon", () => {
+    for (const tool of EXPECTED_TOOLS) {
+      expect(tool.name).not.toContain(":");
+    }
+  });
+
+  it("plugin tools would be namespaced with colon separator", () => {
+    // Plugin tools use "pluginName:toolName" format
+    // This test documents the convention that prevents collisions
+    const examplePluginToolName = "knowledge:wiki_query";
+    expect(examplePluginToolName).toContain(":");
+    expect(EXPECTED_TOOLS.map((t) => t.name)).not.toContain(
+      examplePluginToolName
+    );
+  });
+});
