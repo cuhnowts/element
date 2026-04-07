@@ -6,7 +6,7 @@ use crate::plugins::core::http::{HttpPlugin, HttpStepInput};
 use crate::plugins::core::shell::{ShellPlugin, ShellStepInput};
 use crate::plugins::manifest::PluginCapability;
 use crate::plugins::registry::{LoadedPlugin, PluginStatus};
-use crate::plugins::PluginHost;
+use crate::plugins::{PluginHost, PluginSkillInfo};
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -168,6 +168,34 @@ pub async fn open_plugins_directory(
 ) -> Result<String, String> {
     let host = state.lock().map_err(|e| e.to_string())?;
     Ok(host.plugins_dir().to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn dispatch_plugin_skill(
+    state: State<'_, std::sync::Mutex<PluginHost>>,
+    skill_name: String,
+    input: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let host = state.lock().map_err(|e| e.to_string())?;
+    host.dispatch_skill(&skill_name, input)
+}
+
+#[tauri::command]
+pub async fn list_plugin_skills(
+    state: State<'_, std::sync::Mutex<PluginHost>>,
+) -> Result<Vec<PluginSkillInfo>, String> {
+    let host = state.lock().map_err(|e| e.to_string())?;
+    Ok(host.list_skills())
+}
+
+#[tauri::command]
+pub async fn purge_plugin_directory(
+    state: State<'_, std::sync::Mutex<PluginHost>>,
+    plugin_name: String,
+    directory_path: String,
+) -> Result<(), String> {
+    let host = state.lock().map_err(|e| e.to_string())?;
+    host.purge_directory(&plugin_name, &directory_path)
 }
 
 #[tauri::command]
