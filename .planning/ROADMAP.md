@@ -249,7 +249,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete   | 2026-04-07 |
 | 42. Knowledge Engine Core | v1.8 | 0/3 | Complete    | 2026-04-07 |
-| 43. Hub Chat Wiki Integration | v1.8 | 2/2 | Complete   | 2026-04-07 |
+| 43. Hub Chat Wiki Integration | v1.8 | 2/2 | Complete    | 2026-04-07 |
 | 44. MCP Server Wiki Tools | v1.8 | 2/2 | Complete    | 2026-04-07 |
 | 45. Test Suite | v1.8 | 0/0 | Not started | - |
 
