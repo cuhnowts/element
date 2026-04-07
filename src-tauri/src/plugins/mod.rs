@@ -485,4 +485,217 @@ mod tests {
         // valid-plugin + invalid-plugin (loaded as error)
         assert!(all.len() >= 1);
     }
+
+    // --- Phase 45 skill lifecycle, dispatch, and collision tests ---
+
+    fn create_skill_plugin(dir: &std::path::Path, name: &str, skills_json: &str) {
+        let plugin_dir = dir.join(name);
+        fs::create_dir_all(&plugin_dir).unwrap();
+        fs::write(
+            plugin_dir.join("plugin.json"),
+            format!(
+                r#"{{
+                    "name": "{}",
+                    "version": "1.0.0",
+                    "display_name": "Test",
+                    "description": "Test plugin",
+                    "manifest_version": 2,
+                    "skills": {}
+                }}"#,
+                name, skills_json
+            ),
+        )
+        .unwrap();
+    }
+
+    fn create_skill_plugin_with_hooks(
+        dir: &std::path::Path,
+        name: &str,
+        skills_json: &str,
+        on_enable: &str,
+        owned_dirs: &str,
+    ) {
+        let plugin_dir = dir.join(name);
+        fs::create_dir_all(&plugin_dir).unwrap();
+        fs::write(
+            plugin_dir.join("plugin.json"),
+            format!(
+                r#"{{
+                    "name": "{}",
+                    "version": "1.0.0",
+                    "display_name": "Test",
+                    "description": "Test plugin",
+                    "manifest_version": 2,
+                    "skills": {},
+                    "on_enable": {},
+                    "owned_directories": {}
+                }}"#,
+                name, skills_json, on_enable, owned_dirs
+            ),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_enable_plugin_registers_skills() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin(
+            dir.path(),
+            "skill-plugin",
+            r#"[
+                {"name": "ingest", "description": "Ingest data", "destructive": true},
+                {"name": "query", "description": "Query data"}
+            ]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+
+        host.set_enabled("skill-plugin", true).unwrap();
+
+        let skills = host.list_skills();
+        assert_eq!(skills.len(), 2);
+        let names: Vec<&str> = skills.iter().map(|s| s.prefixed_name.as_str()).collect();
+        assert!(names.contains(&"skill-plugin:ingest"));
+        assert!(names.contains(&"skill-plugin:query"));
+    }
+
+    #[test]
+    fn test_disable_plugin_unregisters_skills() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin(
+            dir.path(),
+            "skill-plugin",
+            r#"[{"name": "ingest", "description": "Ingest data"}]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+
+        host.set_enabled("skill-plugin", true).unwrap();
+        assert_eq!(host.list_skills().len(), 1);
+
+        host.set_enabled("skill-plugin", false).unwrap();
+        assert_eq!(host.list_skills().len(), 0);
+    }
+
+    #[test]
+    fn test_list_skills_returns_correct_fields() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin(
+            dir.path(),
+            "field-plugin",
+            r#"[{
+                "name": "do-thing",
+                "description": "Test skill",
+                "input_schema": {"type": "object"},
+                "destructive": true
+            }]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+        host.set_enabled("field-plugin", true).unwrap();
+
+        let skills = host.list_skills();
+        assert_eq!(skills.len(), 1);
+        let skill = &skills[0];
+        assert_eq!(skill.prefixed_name, "field-plugin:do-thing");
+        assert_eq!(skill.plugin_name, "field-plugin");
+        assert_eq!(skill.description, "Test skill");
+        assert!(skill.destructive);
+        assert_eq!(skill.input_schema, serde_json::json!({"type": "object"}));
+    }
+
+    #[test]
+    fn test_dispatch_skill_routes_to_registered() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin(
+            dir.path(),
+            "dispatch-plugin",
+            r#"[{"name": "query", "description": "Query data"}]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+        host.set_enabled("dispatch-plugin", true).unwrap();
+
+        let result = host.dispatch_skill(
+            "dispatch-plugin:query",
+            serde_json::json!({"q": "test"}),
+        );
+        assert!(result.is_ok());
+        let val = result.unwrap();
+        assert_eq!(val["status"], "dispatched");
+        assert_eq!(val["skill"], "dispatch-plugin:query");
+    }
+
+    #[test]
+    fn test_dispatch_skill_errors_for_unregistered() {
+        let dir = tempfile::tempdir().unwrap();
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+
+        let result = host.dispatch_skill("nonexistent:skill", serde_json::json!({}));
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(err.contains("failed to execute"), "Error was: {}", err);
+    }
+
+    #[test]
+    fn test_namespace_collision_prevented() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin(
+            dir.path(),
+            "plugin-a",
+            r#"[{"name": "ingest", "description": "A ingest"}]"#,
+        );
+        create_skill_plugin(
+            dir.path(),
+            "plugin-b",
+            r#"[{"name": "ingest", "description": "B ingest"}]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+        host.set_enabled("plugin-a", true).unwrap();
+        host.set_enabled("plugin-b", true).unwrap();
+
+        let skills = host.list_skills();
+        assert_eq!(skills.len(), 2);
+        let names: Vec<&str> = skills.iter().map(|s| s.prefixed_name.as_str()).collect();
+        assert!(names.contains(&"plugin-a:ingest"));
+        assert!(names.contains(&"plugin-b:ingest"));
+
+        assert!(host.dispatch_skill("plugin-a:ingest", serde_json::json!({})).is_ok());
+        assert!(host.dispatch_skill("plugin-b:ingest", serde_json::json!({})).is_ok());
+    }
+
+    #[test]
+    fn test_enable_with_create_dirs_hook() {
+        let dir = tempfile::tempdir().unwrap();
+        let app_data_dir = tempfile::tempdir().unwrap();
+        create_skill_plugin_with_hooks(
+            dir.path(),
+            "dir-plugin",
+            r#"[]"#,
+            r#"["create_dirs"]"#,
+            r#"[{"path": ".test-data", "scope": "global", "description": "test"}]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), app_data_dir.path().to_path_buf());
+        host.scan_and_load();
+        host.set_enabled("dir-plugin", true).unwrap();
+
+        assert!(app_data_dir.path().join(".test-data").exists());
+    }
+
+    #[test]
+    fn test_enable_with_unknown_hook_does_not_error() {
+        let dir = tempfile::tempdir().unwrap();
+        create_skill_plugin_with_hooks(
+            dir.path(),
+            "unknown-hook-plugin",
+            r#"[]"#,
+            r#"["unknown_hook"]"#,
+            r#"[]"#,
+        );
+        let host = PluginHost::new(dir.path().to_path_buf(), dir.path().to_path_buf());
+        host.scan_and_load();
+        let result = host.set_enabled("unknown-hook-plugin", true);
+        assert!(result.is_ok());
+    }
 }
