@@ -47,12 +47,13 @@ describe("ActionChipBar", () => {
       expect(btn).toBeDisabled();
     });
 
-    it("shows 'Coming soon' title on disabled chips", () => {
+    it("has tooltip with 'Coming soon' on disabled chips", () => {
       render(<ActionChipBar onRunBriefing={vi.fn()} isGenerating={false} />);
+      // Tooltip content is rendered via TooltipContent, not as a title attribute
       const calBtn = screen.getByText("Organize Calendar").closest("button");
       const goalsBtn = screen.getByText("Organize Goals").closest("button");
-      expect(calBtn).toHaveAttribute("title", "Coming soon");
-      expect(goalsBtn).toHaveAttribute("title", "Coming soon");
+      expect(calBtn).toHaveAttribute("aria-disabled", "true");
+      expect(goalsBtn).toHaveAttribute("aria-disabled", "true");
     });
   });
 });

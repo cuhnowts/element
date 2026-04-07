@@ -222,6 +222,13 @@ describe("useAgentMcp", () => {
   });
 
   it("generateMcpConfig produces JSON with mcpServers.element pointing to mcp-server/dist/index.js", async () => {
+    // resolve_mcp_server_path returns the mcp server path
+    vi.mocked(invoke).mockImplementation(async (cmd: string, _args?: unknown) => {
+      if (cmd === "resolve_mcp_server_path") return "/mock/resources/mcp-server/dist/index.js";
+      if (cmd === "write_agent_file") return "/mock/app-data/agent/mcp-config.json";
+      return undefined;
+    });
+
     const { useAgentMcp } = await import("@/hooks/useAgentMcp");
     const { result } = renderHook(() => useAgentMcp());
 
@@ -232,14 +239,14 @@ describe("useAgentMcp", () => {
 
     expect(configPath).toContain("mcp-config.json");
 
-    // Find the invoke call that wrote the config file
+    // Find the invoke call that wrote the agent file
     const writeCall = vi
       .mocked(invoke)
-      .mock.calls.find((call) => call[0] === "plugin:fs|write_text_file");
+      .mock.calls.find((call) => call[0] === "write_agent_file");
     expect(writeCall).toBeDefined();
 
     // Verify the written JSON content
-    const args = writeCall?.[1] as { path: string; contents: string };
+    const args = writeCall?.[1] as { relativePath: string; contents: string };
     const config = JSON.parse(args.contents);
     expect(config.mcpServers).toBeDefined();
     expect(config.mcpServers.element).toBeDefined();

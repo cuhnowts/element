@@ -42,29 +42,29 @@ describe("timeToPixelOffset", () => {
     expect(timeToPixelOffset(540, 540)).toBe(0); // 9:00 with grid at 9:00
   });
 
-  it("returns 48 for 1 hour after grid start", () => {
-    // 1 hour = 60 min, (60/30) * 24 = 48
-    expect(timeToPixelOffset(600, 540)).toBe(48);
+  it("returns 96 for 1 hour after grid start", () => {
+    // 1 hour = 60 min, (60/30) * 48 = 96
+    expect(timeToPixelOffset(600, 540)).toBe(96);
   });
 
-  it("returns 24 for 30 minutes after grid start", () => {
-    expect(timeToPixelOffset(570, 540)).toBe(24);
+  it("returns 48 for 30 minutes after grid start", () => {
+    expect(timeToPixelOffset(570, 540)).toBe(48);
   });
 
   it("returns negative offset for times before grid start", () => {
-    expect(timeToPixelOffset(510, 540)).toBe(-24);
+    expect(timeToPixelOffset(510, 540)).toBe(-48);
   });
 });
 
 describe("eventHeight", () => {
-  it("returns 48 for 1-hour event", () => {
-    // 60 min / 30 min * 24px = 48px
-    expect(eventHeight(540, 600)).toBe(48);
+  it("returns 96 for 1-hour event", () => {
+    // 60 min / 30 min * 48px = 96px
+    expect(eventHeight(540, 600)).toBe(96);
   });
 
-  it("clamps to EVENT_MIN_HEIGHT for short events", () => {
-    // 15 min / 30 min * 24px = 12px, clamped to 20
-    expect(eventHeight(540, 555)).toBe(EVENT_MIN_HEIGHT);
+  it("returns 24 for short events (above EVENT_MIN_HEIGHT)", () => {
+    // 15 min / 30 min * 48px = 24px, which is > EVENT_MIN_HEIGHT (20)
+    expect(eventHeight(540, 555)).toBe(24);
   });
 
   it("returns correct height for 30-minute event", () => {
@@ -72,7 +72,7 @@ describe("eventHeight", () => {
   });
 
   it("returns correct height for 2-hour event", () => {
-    expect(eventHeight(540, 660)).toBe(96);
+    expect(eventHeight(540, 660)).toBe(192);
   });
 });
 

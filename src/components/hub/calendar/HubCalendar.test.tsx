@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Mock Tauri invoke to prevent runtime errors (must return Promises)
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn().mockResolvedValue([]),
+}));
+
 // --- Store mocks ---
 
 const mockSelectTask = vi.fn();
@@ -55,6 +60,16 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn().mockResolvedValue(vi.fn()),
 }));
 
+// Mock useCalendarEvents for controllable loading state
+const mockUseCalendarEvents = vi.fn().mockReturnValue({
+  events: [],
+  allDayEvents: [],
+  isLoading: false,
+});
+vi.mock("./useCalendarEvents", () => ({
+  useCalendarEvents: (...args: unknown[]) => mockUseCalendarEvents(...args),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   storeState = { ...defaultStoreState };
@@ -62,7 +77,7 @@ beforeEach(() => {
 
 describe("HubCalendar", () => {
   describe("Empty state", () => {
-    it("renders 'No events today' when no events and schedule is loaded", async () => {
+    it("renders empty state message when no events and schedule is loaded", async () => {
       storeState = {
         ...defaultStoreState,
         calendarEvents: [],
@@ -73,17 +88,19 @@ describe("HubCalendar", () => {
       const { CalendarDayGrid } = await import("./CalendarDayGrid");
       render(<CalendarDayGrid dateStr={storeState.hubSelectedDate as string} />);
 
-      expect(screen.getByText("No events today")).toBeInTheDocument();
+      // Text is "No events today" or "No events" depending on isToday check
+      expect(screen.getByText(/No events/)).toBeInTheDocument();
       expect(screen.getByText(/Your calendar is clear/)).toBeInTheDocument();
     });
   });
 
   describe("Loading state", () => {
-    it("renders skeleton elements when isScheduleLoading is true", async () => {
-      storeState = {
-        ...defaultStoreState,
-        isScheduleLoading: true,
-      };
+    it("renders skeleton elements when useCalendarEvents reports loading", async () => {
+      mockUseCalendarEvents.mockReturnValue({
+        events: [],
+        allDayEvents: [],
+        isLoading: true,
+      });
 
       const { CalendarDayGrid } = await import("./CalendarDayGrid");
       render(<CalendarDayGrid dateStr={storeState.hubSelectedDate as string} />);
@@ -160,9 +177,7 @@ describe("HubCalendar", () => {
         />,
       );
 
-      const block = screen.getByRole("button", {
-        name: /Implement feature/,
-      });
+      const block = screen.getByLabelText(/Implement feature/);
       fireEvent.click(block);
 
       expect(mockSelectTask).toHaveBeenCalledWith("test-123");
@@ -194,9 +209,7 @@ describe("HubCalendar", () => {
         />,
       );
 
-      const block = screen.getByRole("button", {
-        name: /Team Standup/,
-      });
+      const block = screen.getByLabelText(/Team Standup/);
       fireEvent.click(block);
 
       expect(mockSelectTask).not.toHaveBeenCalled();

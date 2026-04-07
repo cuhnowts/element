@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleCheckCoverageGaps } from "../tools/coverage-gaps.js";
 
-vi.mock("node:fs/promises", () => ({
-  readFile: vi.fn(),
+const { mockReadFile } = vi.hoisted(() => ({
+  mockReadFile: vi.fn(),
 }));
 
-import { readFile } from "node:fs/promises";
-
-const mockReadFile = vi.mocked(readFile);
+vi.mock("node:fs/promises", () => ({
+  default: { readFile: mockReadFile },
+  readFile: mockReadFile,
+}));
 
 const COVERAGE_JSON = JSON.stringify({
   "/project/src/math.ts": {

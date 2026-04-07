@@ -92,7 +92,7 @@ describe("BriefingProjectCard", () => {
       render(<BriefingProjectCard project={baseProject} onNavigate={onNavigate} />);
       // Click the card header (project name area)
       await user.click(screen.getByText("Test Project"));
-      expect(onNavigate).toHaveBeenCalledWith(42);
+      expect(onNavigate).toHaveBeenCalledWith("abc-123");
     });
 
     it("does not call onNavigate when projectId is undefined", async () => {

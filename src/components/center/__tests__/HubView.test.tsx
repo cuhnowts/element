@@ -6,7 +6,7 @@ import { HubView } from "../HubView";
 
 // Mock Tauri invoke to prevent runtime errors
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
+  invoke: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock heavy child components to isolate HubView layout testing
@@ -14,8 +14,8 @@ vi.mock("@/components/hub/HubToolbar", () => ({
   HubToolbar: () => <div data-testid="hub-toolbar">HubToolbar</div>,
 }));
 
-vi.mock("@/components/hub/CommandHub", () => ({
-  CommandHub: () => <div data-testid="command-hub">CommandHub</div>,
+vi.mock("@/components/hub/HubCenterPanel", () => ({
+  HubCenterPanel: () => <div data-testid="command-hub">HubCenterPanel</div>,
 }));
 
 vi.mock("@/components/hub/calendar/HubCalendar", () => ({

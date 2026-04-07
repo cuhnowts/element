@@ -23,8 +23,9 @@ describe("actionRegistry", () => {
       }
     });
 
-    it("contains all D-11 actions", () => {
+    it("contains all registered actions", () => {
       const names = ACTION_REGISTRY.map((a) => a.name);
+      expect(names).toContain("search_tasks");
       expect(names).toContain("create_task");
       expect(names).toContain("update_task");
       expect(names).toContain("update_task_status");
@@ -35,7 +36,12 @@ describe("actionRegistry", () => {
       expect(names).toContain("create_file");
       expect(names).toContain("execute_shell");
       expect(names).toContain("reschedule_day");
-      expect(names).toHaveLength(11);
+      expect(names).toContain("list_calendar_events");
+      expect(names).toContain("get_available_slots");
+      expect(names).toContain("create_work_block");
+      expect(names).toContain("move_work_block");
+      expect(names).toContain("delete_work_block");
+      expect(names).toHaveLength(16);
     });
 
     it("all delete_* actions have destructive: true (per D-12)", () => {
