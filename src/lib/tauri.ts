@@ -11,6 +11,7 @@ import type {
   Notification,
   Phase,
   PluginInfo,
+  PluginSkillInfo,
   Project,
   Tag,
   Task,
@@ -90,6 +91,13 @@ export const api = {
   reloadPlugin: (name: string) => invoke<PluginInfo>("reload_plugin", { name }),
   scanPlugins: () => invoke<PluginInfo[]>("scan_plugins"),
   openPluginsDirectory: () => invoke<string>("open_plugins_directory"),
+
+  // Plugin Skills
+  listPluginSkills: () => invoke<PluginSkillInfo[]>("list_plugin_skills"),
+  dispatchPluginSkill: (skillName: string, input: Record<string, unknown>) =>
+    invoke<Record<string, unknown>>("dispatch_plugin_skill", { skillName, input }),
+  purgePluginDirectory: (pluginName: string, directoryPath: string) =>
+    invoke<void>("purge_plugin_directory", { pluginName, directoryPath }),
 
   // Credentials
   listCredentials: () => invoke<Credential[]>("list_credentials"),

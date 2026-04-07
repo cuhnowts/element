@@ -111,6 +111,15 @@ export interface StepTypeInfo {
   description: string;
 }
 
+export interface PluginSkillInfo {
+  prefixedName: string;
+  pluginName: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  outputSchema: Record<string, unknown>;
+  destructive: boolean;
+}
+
 // Credential types
 export type CredentialType = "api_key" | "token" | "secret" | "oauth_token";
 
