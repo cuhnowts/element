@@ -19,6 +19,59 @@ pub struct PluginManifest {
     pub entry: Option<String>,
     #[serde(default)]
     pub step_types: Vec<StepTypeDefinition>,
+    // v2 fields
+    #[serde(default)]
+    pub manifest_version: Option<u32>,
+    #[serde(default)]
+    pub skills: Vec<SkillDefinition>,
+    #[serde(default)]
+    pub mcp_tools: Vec<McpToolDefinition>,
+    #[serde(default)]
+    pub owned_directories: Vec<OwnedDirectory>,
+    #[serde(default)]
+    pub on_enable: Vec<String>,
+    #[serde(default)]
+    pub on_disable: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SkillDefinition {
+    pub name: String,
+    pub description: String,
+    #[serde(default)]
+    pub input_schema: serde_json::Value,
+    #[serde(default)]
+    pub output_schema: serde_json::Value,
+    #[serde(default)]
+    pub destructive: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct McpToolDefinition {
+    pub name: String,
+    pub description: String,
+    #[serde(default)]
+    pub input_schema: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum DirectoryScope {
+    Global,
+    Project,
+}
+
+impl Default for DirectoryScope {
+    fn default() -> Self {
+        DirectoryScope::Global
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct OwnedDirectory {
+    pub path: String,
+    pub scope: DirectoryScope,
+    pub description: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -224,5 +277,145 @@ mod tests {
         let dir = create_temp_plugin("{ not valid json }");
         let result = load_plugin_manifest(dir.path());
         assert!(matches!(result, Err(PluginError::InvalidManifest(_))));
+    }
+
+    #[test]
+    fn test_v1_manifest_parses_with_v2_struct() {
+        let json = r#"{
+            "name": "legacy-plugin",
+            "version": "1.0.0",
+            "display_name": "Legacy",
+            "description": "No v2 fields"
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert_eq!(manifest.manifest_version, None);
+        assert!(manifest.skills.is_empty());
+        assert!(manifest.mcp_tools.is_empty());
+        assert!(manifest.owned_directories.is_empty());
+        assert!(manifest.on_enable.is_empty());
+        assert!(manifest.on_disable.is_empty());
+    }
+
+    #[test]
+    fn test_v2_manifest_with_skills() {
+        let json = r#"{
+            "name": "skill-plugin",
+            "version": "2.0.0",
+            "display_name": "Skill Plugin",
+            "description": "Has skills",
+            "manifest_version": 2,
+            "skills": [
+                {
+                    "name": "ingest",
+                    "description": "Ingest data",
+                    "input_schema": {"type": "object"},
+                    "output_schema": {"type": "string"},
+                    "destructive": true
+                },
+                {
+                    "name": "query",
+                    "description": "Query data"
+                }
+            ]
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert_eq!(manifest.manifest_version, Some(2));
+        assert_eq!(manifest.skills.len(), 2);
+        assert_eq!(manifest.skills[0].name, "ingest");
+        assert!(manifest.skills[0].destructive);
+        assert_eq!(manifest.skills[1].name, "query");
+    }
+
+    #[test]
+    fn test_v2_manifest_with_mcp_tools() {
+        let json = r#"{
+            "name": "mcp-plugin",
+            "version": "2.0.0",
+            "display_name": "MCP Plugin",
+            "description": "Has MCP tools",
+            "mcp_tools": [
+                {
+                    "name": "search",
+                    "description": "Search things",
+                    "input_schema": {"type": "object"}
+                }
+            ]
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert_eq!(manifest.mcp_tools.len(), 1);
+        assert_eq!(manifest.mcp_tools[0].name, "search");
+    }
+
+    #[test]
+    fn test_v2_manifest_with_owned_directories() {
+        let json = r#"{
+            "name": "dir-plugin",
+            "version": "2.0.0",
+            "display_name": "Dir Plugin",
+            "description": "Has directories",
+            "owned_directories": [
+                {
+                    "path": ".knowledge",
+                    "scope": "global",
+                    "description": "Knowledge store"
+                },
+                {
+                    "path": ".cache",
+                    "scope": "project",
+                    "description": "Project cache"
+                }
+            ]
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert_eq!(manifest.owned_directories.len(), 2);
+        assert_eq!(manifest.owned_directories[0].scope, super::DirectoryScope::Global);
+        assert_eq!(manifest.owned_directories[1].scope, super::DirectoryScope::Project);
+    }
+
+    #[test]
+    fn test_v2_manifest_with_lifecycle_hooks() {
+        let json = r#"{
+            "name": "hook-plugin",
+            "version": "2.0.0",
+            "display_name": "Hook Plugin",
+            "description": "Has hooks",
+            "on_enable": ["create_directories", "register_skills"],
+            "on_disable": ["cleanup"]
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert_eq!(manifest.on_enable, vec!["create_directories", "register_skills"]);
+        assert_eq!(manifest.on_disable, vec!["cleanup"]);
+    }
+
+    #[test]
+    fn test_destructive_flag_defaults_false() {
+        let json = r#"{
+            "name": "default-destructive",
+            "version": "1.0.0",
+            "display_name": "Test",
+            "description": "Test",
+            "skills": [{"name": "safe", "description": "A safe skill"}]
+        }"#;
+        let dir = create_temp_plugin(json);
+        let manifest = load_plugin_manifest(dir.path()).unwrap();
+        assert!(!manifest.skills[0].destructive);
+    }
+
+    #[test]
+    fn test_directory_scope_serialization() {
+        let global = super::DirectoryScope::Global;
+        let project = super::DirectoryScope::Project;
+        assert_eq!(serde_json::to_string(&global).unwrap(), "\"global\"");
+        assert_eq!(serde_json::to_string(&project).unwrap(), "\"project\"");
+
+        let g: super::DirectoryScope = serde_json::from_str("\"global\"").unwrap();
+        let p: super::DirectoryScope = serde_json::from_str("\"project\"").unwrap();
+        assert_eq!(g, super::DirectoryScope::Global);
+        assert_eq!(p, super::DirectoryScope::Project);
     }
 }
