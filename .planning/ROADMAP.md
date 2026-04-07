@@ -115,7 +115,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Integer phases (41, 42, 43, 44): Planned milestone work
 - Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement
+- [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
 - [ ] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue
 - [ ] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat
 - [ ] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest
@@ -138,7 +138,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 Plans:
 - [x] 41-01-PLAN.md — Manifest v2 schema, SkillRegistry, McpToolRegistry, DirectoryManager
 - [x] 41-02-PLAN.md — PluginHost lifecycle wiring, skill dispatch, DB migration, Tauri commands
-- [ ] 41-03-PLAN.md — Frontend types, Tauri API bindings, Zustand skill store, PathBuf security fix
+- [x] 41-03-PLAN.md — Frontend types, Tauri API bindings, Zustand skill store, PathBuf security fix
 
 ### Phase 42: Knowledge Engine Core
 **Goal**: Users can ingest raw source documents into a three-layer wiki and query compiled knowledge, with all mutations serialized for concurrency safety and source hashes tracking staleness
@@ -247,7 +247,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 38. Error Logger | v1.7 | 2/2 | Complete | 2026-04-06 |
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
-| 41. Plugin Infrastructure Evolution | v1.8 | 2/3 | In Progress|  |
+| 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete   | 2026-04-07 |
 | 42. Knowledge Engine Core | v1.8 | 0/3 | Not started | - |
 | 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
@@ -259,7 +259,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
