@@ -55,6 +55,8 @@ v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome 
 
 v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.json manifests for namespace-prefixed MCP tool definitions, wiki_query handler returns raw article content from .knowledge/, wiki_ingest handler queues operations via agent-queue/. Dynamic import() dispatch in MCP server index.ts. 19 new tests, 67 total passing.
 
+v1.8 Phase 43 complete: Hub Chat Wiki Integration — plugin tool registry (pluginToolRegistry.ts) with PluginToolDefinition type and dispatch, usePluginTools hook for mount-time skill loading, ActionConfirmCard wiki entries (BookPlus icon, "Add to Wiki"), HubChat refactored with dynamic system prompt generation from both ACTION_REGISTRY and plugin tools, plugin dispatch routing with confirmation for destructive and LLM feedback for read-only tools.
+
 ## Requirements
 
 ### Validated
@@ -108,11 +110,11 @@ v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.jso
 ### Active
 
 - [x] Plugin MCP tool registration: Plugins can register MCP tools callable by hub chat and external agents — Validated in Phase 44: MCP Server Wiki Tools
-- [ ] Plugin skill registration: Plugins can register named skills (slash-command-like) that appear in hub chat
+- [x] Plugin skill registration: Plugins can register named skills (slash-command-like) that appear in hub chat — Validated in Phase 43: Hub Chat Wiki Integration
 - [ ] Plugin-owned directories: Plugins can declare and manage filesystem locations (e.g. `.knowledge/`)
 - [ ] Knowledge engine plugin: Three-layer wiki system (raw/, wiki/, schema.md) with ingest, query, lint, index operations
 - [ ] LLM-maintained index: index.md as search engine, no vectorization at MVP
-- [ ] Hub chat wiki integration: Wiki queried and managed through hub chat commands
+- [x] Hub chat wiki integration: Wiki queried and managed through hub chat commands — Validated in Phase 43: Hub Chat Wiki Integration
 
 ### Future
 
@@ -211,4 +213,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 — Phase 44 MCP Server Wiki Tools complete*
+*Last updated: 2026-04-07 — Phase 43 Hub Chat Wiki Integration complete*
