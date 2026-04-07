@@ -1,4 +1,5 @@
 import {
+  BookPlus,
   CircleCheck,
   FilePlus,
   FolderPlus,
@@ -25,6 +26,7 @@ const ACTION_ICON_MAP: Record<string, LucideIcon> = {
   create_theme: Palette,
   create_file: FilePlus,
   execute_shell: Terminal,
+  "knowledge:ingest": BookPlus,
 };
 
 const ACTION_TITLE_MAP: Record<string, string> = {
@@ -37,6 +39,7 @@ const ACTION_TITLE_MAP: Record<string, string> = {
   create_theme: "Create Theme",
   create_file: "Create File",
   execute_shell: "Run Command",
+  "knowledge:ingest": "Add to Wiki",
 };
 
 const REJECT_LABEL_MAP: Record<string, string> = {
@@ -49,6 +52,7 @@ const REJECT_LABEL_MAP: Record<string, string> = {
   create_theme: "Don't Create",
   create_file: "Don't Create",
   execute_shell: "Don't Run",
+  "knowledge:ingest": "Don't Add",
 };
 
 function getBodyText(actionName: string, input: Record<string, unknown>): string {
@@ -63,6 +67,8 @@ function getBodyText(actionName: string, input: Record<string, unknown>): string
       return `Run \`${input.command ?? ""}\` in project directory?`;
     case "create_file":
       return `Create file \`${input.path ?? ""}\`?`;
+    case "knowledge:ingest":
+      return "Add this content to the wiki? A new article will be created in .knowledge/wiki/.";
     default:
       return `Execute ${actionName}?`;
   }
