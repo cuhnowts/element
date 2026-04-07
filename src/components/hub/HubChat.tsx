@@ -11,7 +11,9 @@ import {
   useActionDispatch,
 } from "@/hooks/useActionDispatch";
 import { useHubChatStream } from "@/hooks/useHubChatStream";
-import { getToolDefinitions } from "@/lib/actionRegistry";
+import { usePluginTools } from "@/hooks/usePluginTools";
+import { ACTION_REGISTRY, type ActionDefinition, getToolDefinitions } from "@/lib/actionRegistry";
+import type { PluginToolDefinition } from "@/lib/pluginToolRegistry";
 import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
 import { useHubChatStore } from "@/stores/useHubChatStore";
 import { ActionConfirmCard } from "./ActionConfirmCard";
@@ -94,8 +96,7 @@ interface ActionResult {
   message: string;
 }
 
-function buildSystemPrompt(manifest: string): string {
-  return `You are Element — a desktop project management app's built-in orchestrator.
+const SYSTEM_PREAMBLE = `You are Element — a desktop project management app's built-in orchestrator.
 You ARE the app. When the user talks to you, they are talking to Element itself.
 Never reference your own code, backend, database, or implementation. You are seamless.
 Never suggest running sqlite3, querying a database, or reading source code. You don't have those.
@@ -103,50 +104,9 @@ You only have the tools listed below — nothing else.
 
 Your job: help the user manage their work — create tasks, update progress, organize projects,
 and answer questions about their current state. You already know everything about their projects
-because you have their current status below.
+because you have their current status below.`;
 
-## Current Project Status
-
-${manifest || "(No projects yet)"}
-
-## Taking Actions
-
-When the user asks you to DO something, respond with BOTH a brief confirmation AND an action block.
-
-Output the action block on its own line in exactly this format:
-ACTION:{"name":"<tool_name>","input":{<parameters>}}
-
-You may output multiple ACTION blocks if needed (e.g., search then act on results).
-
-### Available Tools
-
-**Lookup (use before update/delete):**
-- search_tasks: Find tasks by title. Input: {"query":"search term"}. Returns task IDs and details. ALWAYS use this before updating or deleting a task.
-
-**Task Management:**
-- create_task: Create a task. Input: {"title":"...","projectId":"...","description":"...","priority":"low|medium|high|urgent","phaseId":"..."}. Only title required. Omit projectId for standalone chores.
-- update_task: Update a task. Input: {"taskId":"...","title":"...","description":"...","priority":"..."}. taskId required.
-- update_task_status: Mark a task done, in progress, etc. Input: {"taskId":"...","status":"todo|in_progress|done|cancelled"}. Both required.
-- delete_task: Permanently delete a task. Input: {"taskId":"..."}. ONLY use when user explicitly says "delete" or "remove permanently."
-
-**Project/Theme Management:**
-- create_project: Create a project. Input: {"name":"...","description":"..."}. Name required.
-- create_theme: Create a theme category. Input: {"name":"...","color":"..."}. Both required.
-
-**Calendar & Scheduling:**
-- list_calendar_events: List meetings for a date range. Input: {"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}. Returns event titles, times, locations. Use this to check what meetings exist before scheduling work.
-- get_available_slots: Find open time slots for a day. Input: {"date":"YYYY-MM-DD"}. Returns gaps between meetings.
-- create_work_block: Block time on the calendar. Input: {"date":"YYYY-MM-DD","startTime":"HH:MM","endTime":"HH:MM","title":"..."}. taskId optional. Use 24-hour time format.
-- move_work_block: Move an existing work block. Input: {"blockId":"...","newDate":"YYYY-MM-DD","newStartTime":"HH:MM","newEndTime":"HH:MM"}.
-- delete_work_block: Remove a work block. Input: {"blockId":"..."}.
-- reschedule_day: Regenerate today's schedule after changes. Input: {"reason":"brief description"}.
-
-**Shell Commands:**
-- execute_shell: Run a shell command and return the output. Input: {"command":"..."}. Allowlisted commands only (git, npm, ls, cat, etc). ALWAYS use this tool when the user asks to run a command — never answer from memory.
-
-## Behavior Rules
-
-**Identity:**
+const BEHAVIOR_RULES = `**Identity:**
 - You are Element. Say "I" when referring to what the app can do.
 - Never mention tools, JSON, ACTION blocks, databases, APIs, or implementation details.
 - Never suggest workarounds like "you could run sqlite3" or "check the backend code."
@@ -178,6 +138,135 @@ When the user says they lost time (e.g., "I lost 2 hours", "meeting ran over"), 
 
 **Rescheduling Tool:**
 - reschedule_day: Regenerate today's schedule with adjusted parameters. Input: {"reason":"brief description of change"}. Returns an updated task list for the day.`;
+
+function formatToolsSection(
+  builtinActions: ActionDefinition[],
+  pluginTools: PluginToolDefinition[],
+): string {
+  const lines: string[] = [];
+
+  const lookupTools = builtinActions.filter((a) => a.name === "search_tasks");
+  const taskTools = builtinActions.filter((a) =>
+    ["create_task", "update_task", "update_task_status", "delete_task"].includes(a.name),
+  );
+  const projectTools = builtinActions.filter((a) =>
+    ["create_project", "create_theme", "update_phase_status"].includes(a.name),
+  );
+  const calendarTools = builtinActions.filter((a) =>
+    [
+      "list_calendar_events",
+      "get_available_slots",
+      "create_work_block",
+      "move_work_block",
+      "delete_work_block",
+      "reschedule_day",
+    ].includes(a.name),
+  );
+  const shellTools = builtinActions.filter((a) => a.name === "execute_shell");
+  const fileTools = builtinActions.filter((a) => a.name === "create_file");
+
+  const formatOne = (a: ActionDefinition): string => {
+    const schema = a.inputSchema as {
+      properties?: Record<string, { type?: string; description?: string; enum?: string[] }>;
+      required?: string[];
+    };
+    const params = schema.properties
+      ? Object.entries(schema.properties)
+          .map(([k, v]) => `"${k}":"${v.description || v.type || "string"}"`)
+          .join(",")
+      : "";
+    const required = schema.required ? ` Required: ${schema.required.join(", ")}.` : "";
+    return `- ${a.name}: ${a.description} Input: {${params}}.${required}`;
+  };
+
+  if (lookupTools.length) {
+    lines.push("**Lookup (use before update/delete):**");
+    lines.push(...lookupTools.map(formatOne));
+    lines.push("");
+  }
+  if (taskTools.length) {
+    lines.push("**Task Management:**");
+    lines.push(...taskTools.map(formatOne));
+    lines.push("");
+  }
+  if (projectTools.length) {
+    lines.push("**Project/Theme Management:**");
+    lines.push(...projectTools.map(formatOne));
+    lines.push("");
+  }
+  if (calendarTools.length) {
+    lines.push("**Calendar & Scheduling:**");
+    lines.push(...calendarTools.map(formatOne));
+    lines.push("");
+  }
+  if (fileTools.length) {
+    lines.push("**File Management:**");
+    lines.push(...fileTools.map(formatOne));
+    lines.push("");
+  }
+  if (shellTools.length) {
+    lines.push("**Shell Commands:**");
+    lines.push(...shellTools.map(formatOne));
+    lines.push("");
+  }
+
+  // Plugin tools grouped by plugin name (per D-03, include all)
+  if (pluginTools.length > 0) {
+    const byPlugin = new Map<string, PluginToolDefinition[]>();
+    for (const pt of pluginTools) {
+      const existing = byPlugin.get(pt.plugin_name) ?? [];
+      existing.push(pt);
+      byPlugin.set(pt.plugin_name, existing);
+    }
+    for (const [pluginName, tools] of byPlugin) {
+      const label = pluginName.charAt(0).toUpperCase() + pluginName.slice(1);
+      lines.push(`**${label} Plugin:**`);
+      for (const t of tools) {
+        const schema = t.input_schema as {
+          properties?: Record<string, { type?: string; description?: string }>;
+          required?: string[];
+        };
+        const params = schema.properties
+          ? Object.entries(schema.properties)
+              .map(([k, v]) => `"${k}":"${v.description || v.type || "string"}"`)
+              .join(",")
+          : "";
+        lines.push(`- ${t.name}: ${t.description} Input: {${params}}.`);
+      }
+      lines.push("");
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function buildSystemPrompt(
+  manifest: string,
+  builtinActions: ActionDefinition[],
+  pluginTools: PluginToolDefinition[],
+): string {
+  const toolsSection = formatToolsSection(builtinActions, pluginTools);
+  return `${SYSTEM_PREAMBLE}
+
+## Current Project Status
+
+${manifest || "(No projects yet)"}
+
+## Taking Actions
+
+When the user asks you to DO something, respond with BOTH a brief confirmation AND an action block.
+
+Output the action block on its own line in exactly this format:
+ACTION:{"name":"<tool_name>","input":{<parameters>}}
+
+You may output multiple ACTION blocks if needed (e.g., search then act on results).
+
+### Available Tools
+
+${toolsSection}
+## Behavior Rules
+
+${BEHAVIOR_RULES}`;
 }
 
 export function HubChat() {
@@ -205,6 +294,13 @@ export function HubChat() {
   }, []);
 
   const { dispatch, checkDestructive, createPendingAction } = useActionDispatch();
+  const {
+    pluginTools,
+    dispatch: dispatchPlugin,
+    isPluginTool,
+    isPluginToolDestructive,
+    getToolDefs: getPluginToolDefs,
+  } = usePluginTools();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dispatchedActionsRef = useRef<Set<string>>(new Set());
@@ -274,12 +370,17 @@ export function HubChat() {
 
       startStreaming();
       try {
-        await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
+        const allTools = [...getToolDefinitions(), ...getPluginToolDefs()];
+        await hubChatSend(
+          chatMessages,
+          buildSystemPrompt(manifest, ACTION_REGISTRY, pluginTools),
+          allTools,
+        );
       } catch (err) {
         useHubChatStore.getState().setError(String(err));
       }
     },
-    [manifest, startStreaming],
+    [manifest, startStreaming, pluginTools, getPluginToolDefs],
   );
 
   const handleToolUse = useCallback(
@@ -288,6 +389,45 @@ export function HubChat() {
       if (dispatchedActionsRef.current.has(dedupeKey)) return;
       dispatchedActionsRef.current.add(dedupeKey);
 
+      // Plugin tool dispatch path (per D-01: separate from built-in actions)
+      if (isPluginTool(toolUse.name)) {
+        if (isPluginToolDestructive(toolUse.name)) {
+          // Destructive plugin tools show confirmation (per D-08: ingest = confirm)
+          const pending: PendingAction = {
+            toolUseId: toolUse.id,
+            actionName: toolUse.name,
+            input: toolUse.input,
+            destructive: true,
+          };
+          setPendingAction(pending);
+          setConfirmResolved(null);
+        } else {
+          // Non-destructive plugin tools auto-execute (per D-08: query/lint = auto)
+          const result = await dispatchPlugin(toolUse.name, toolUse.input);
+          const actionResult: ActionResult = {
+            id: toolUse.id,
+            success: result.success,
+            message: result.success
+              ? `${toolUse.name} completed successfully`
+              : `${toolUse.name} failed: ${result.error}`,
+          };
+          setActionResults((prev) => [...prev, actionResult]);
+
+          // Feed result back to LLM for synthesis (per D-07: wiki query needs this
+          // so the LLM can provide a natural language answer with citations)
+          if (feedbackRoundRef.current < 2) {
+            feedbackRoundRef.current++;
+            await sendToolResult(toolUse.id, {
+              success: result.success,
+              data: result.data,
+              error: result.error,
+            });
+          }
+        }
+        return;
+      }
+
+      // Existing built-in action dispatch path (unchanged)
       if (checkDestructive(toolUse.name)) {
         const pending = createPendingAction(toolUse.id, toolUse.name, toolUse.input);
         setPendingAction(pending);
@@ -310,7 +450,15 @@ export function HubChat() {
         }
       }
     },
-    [checkDestructive, createPendingAction, dispatch, sendToolResult],
+    [
+      checkDestructive,
+      createPendingAction,
+      dispatch,
+      dispatchPlugin,
+      isPluginTool,
+      isPluginToolDestructive,
+      sendToolResult,
+    ],
   );
 
   // Intercept streaming chunks to detect tool_use events
@@ -360,7 +508,15 @@ export function HubChat() {
     if (!pendingAction) return;
     setConfirmResolved("approved");
 
-    const result = await dispatch(pendingAction.actionName, pendingAction.input);
+    let result: DispatchResult;
+    if (isPluginTool(pendingAction.actionName)) {
+      // Plugin tool approval (e.g., knowledge:ingest confirmation)
+      result = await dispatchPlugin(pendingAction.actionName, pendingAction.input);
+    } else {
+      // Built-in action approval (existing path)
+      result = await dispatch(pendingAction.actionName, pendingAction.input);
+    }
+
     const actionResult: ActionResult = {
       id: pendingAction.toolUseId,
       success: result.success,
@@ -374,7 +530,7 @@ export function HubChat() {
     await sendToolResult(pendingAction.toolUseId, result);
     setPendingAction(null);
     setConfirmResolved(null);
-  }, [pendingAction, dispatch, sendToolResult]);
+  }, [pendingAction, dispatch, dispatchPlugin, isPluginTool, sendToolResult]);
 
   const handleReject = useCallback(async () => {
     if (!pendingAction) return;
@@ -409,7 +565,12 @@ export function HubChat() {
 
     startStreaming();
     try {
-      await hubChatSend(chatMessages, buildSystemPrompt(manifest), getToolDefinitions());
+      const allTools = [...getToolDefinitions(), ...getPluginToolDefs()];
+      await hubChatSend(
+        chatMessages,
+        buildSystemPrompt(manifest, ACTION_REGISTRY, pluginTools),
+        allTools,
+      );
     } catch (err) {
       useHubChatStore.getState().setError(String(err));
     }
