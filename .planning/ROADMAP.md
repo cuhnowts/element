@@ -166,7 +166,11 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
   1. An external agent calling `wiki_query` through the MCP server receives raw wiki article content (not LLM-synthesized) that it can reason over itself
   2. An external agent calling `wiki_ingest` through the MCP server triggers an ingest operation via the agent queue, and receives an acknowledgment that the operation was accepted
   3. MCP wiki tools are registered dynamically from the knowledge plugin's manifest rather than hardcoded in the MCP server source
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 44-01-PLAN.md — Plugin loader module + wiki tool handlers with tests
+- [ ] 44-02-PLAN.md — Wire plugin tools into MCP server index.ts + build verification
 
 ### Phase 45: Test Suite
 **Goal**: Comprehensive test coverage for all v1.8 features — plugin infrastructure, wiki engine, hub chat integration, and MCP tools — ensuring hooks catch regressions going forward
