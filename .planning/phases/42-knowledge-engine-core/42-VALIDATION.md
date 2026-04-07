@@ -38,14 +38,14 @@ created: 2026-04-06
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 42-01-01 | 01 | 1 | WIKI-01 | unit | `cd src-tauri && cargo test knowledge::ingest::tests` | ❌ W0 | ⬜ pending |
-| 42-01-02 | 01 | 1 | WIKI-03 | unit | `cd src-tauri && cargo test knowledge::index::tests` | ❌ W0 | ⬜ pending |
-| 42-01-03 | 01 | 1 | WIKI-06 | unit | `cd src-tauri && cargo test knowledge::ingest::tests::test_noop_reingest` | ❌ W0 | ⬜ pending |
-| 42-02-01 | 02 | 1 | WIKI-02 | unit | `cd src-tauri && cargo test knowledge::query::tests` | ❌ W0 | ⬜ pending |
-| 42-03-01 | 03 | 2 | WIKI-04 | unit | `cd src-tauri && cargo test knowledge::lint::tests` | ❌ W0 | ⬜ pending |
-| 42-04-01 | 04 | 1 | WIKI-05 | unit | `cd src-tauri && cargo test knowledge::tests::test_concurrent` | ❌ W0 | ⬜ pending |
+| 42-01-01 | 01 | 1 | WIKI-01 | unit | `cd src-tauri && cargo test knowledge::ingest::tests` | W0 | pending |
+| 42-01-02 | 01 | 1 | WIKI-03 | unit | `cd src-tauri && cargo test knowledge::index::tests` | W0 | pending |
+| 42-01-03 | 01 | 1 | WIKI-06 | unit | `cd src-tauri && cargo test knowledge::ingest::tests::test_noop_reingest` | W0 | pending |
+| 42-02-01 | 02 | 2 | WIKI-02 | unit | `cd src-tauri && cargo test knowledge::query::tests` | W0 | pending |
+| 42-03-01 | 03 | 3 | WIKI-04 | unit | `cd src-tauri && cargo test knowledge::lint::tests` | W0 | pending |
+| 42-03-02 | 03 | 3 | WIKI-05 | unit | `cd src-tauri && cargo test knowledge::tests::test_concurrent` | W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
@@ -79,7 +79,7 @@ created: 2026-04-06
 1. **Mock the AiProvider trait** — `MockProvider` returns canned responses for unit tests
 2. **Test file I/O independently** — frontmatter parsing, index updating, hash computation are deterministic
 3. **Test pipeline orchestration** — verify ingest calls provider, writes files, updates index in correct order
-4. **Concurrency test** — spawn multiple ingest tasks, verify no file corruption
+4. **Concurrency test** — spawn multiple ingest tasks, verify no file corruption (Plan 03, Task 2)
 
 ---
 
