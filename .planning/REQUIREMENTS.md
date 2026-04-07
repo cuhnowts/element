@@ -32,8 +32,8 @@ Requirements for v1.8 Knowledge Engine. Each maps to roadmap phases.
 
 ### MCP Server Integration
 
-- [ ] **MCP-01**: External agents can query the wiki through MCP server tools (read-only)
-- [ ] **MCP-02**: External agents can trigger wiki ingest through MCP server via the agent queue
+- [x] **MCP-01**: External agents can query the wiki through MCP server tools (read-only)
+- [x] **MCP-02**: External agents can trigger wiki ingest through MCP server via the agent queue
 
 ### Test Suite
 
@@ -95,8 +95,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAT-01 | Phase 43 | Pending |
 | CHAT-02 | Phase 43 | Pending |
 | CHAT-03 | Phase 43 | Pending |
-| MCP-01 | Phase 44 | Pending |
-| MCP-02 | Phase 44 | Pending |
+| MCP-01 | Phase 44 | Complete |
+| MCP-02 | Phase 44 | Complete |
 | TEST-01 | Phase 45 | Pending |
 | TEST-02 | Phase 45 | Pending |
 | TEST-03 | Phase 45 | Pending |
