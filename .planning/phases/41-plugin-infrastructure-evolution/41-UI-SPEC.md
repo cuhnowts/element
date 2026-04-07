@@ -63,9 +63,10 @@ Exceptions: none -- Phase 41 introduces no new visual layouts.
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 14px | 400 | 1.5 |
-| Label | 12px | 500 | 1.4 |
+| Body / Label | 14px / 12px | 400 | 1.5 / 1.4 |
 | Heading | 18px | 600 | 1.2 |
+
+Two weights only: 400 (regular) for body and label text, 600 (semibold) for headings. Labels use smaller size at regular weight for visual differentiation without adding a third weight.
 
 Source: app.css body rule (14px / 1.5 / Inter). Label and heading inferred from existing component patterns. Phase 41 introduces no new typographic elements.
 
