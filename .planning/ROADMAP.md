@@ -116,7 +116,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
-- [ ] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue
+- [x] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue (completed 2026-04-07)
 - [ ] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat
 - [ ] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest
 - [ ] **Phase 45: Test Suite** - Comprehensive tests for plugin infrastructure, wiki engine, hub chat integration, and MCP tools
@@ -248,7 +248,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete   | 2026-04-07 |
-| 42. Knowledge Engine Core | v1.8 | 0/3 | Not started | - |
+| 42. Knowledge Engine Core | v1.8 | 0/3 | Complete    | 2026-04-07 |
 | 43. Hub Chat Wiki Integration | v1.8 | 0/2 | Not started | - |
 | 44. MCP Server Wiki Tools | v1.8 | 0/0 | Not started | - |
 | 45. Test Suite | v1.8 | 0/0 | Not started | - |
