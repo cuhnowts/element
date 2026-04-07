@@ -1,5 +1,9 @@
 pub mod frontmatter;
 pub mod index;
+pub mod ingest;
+pub mod query;
+#[cfg(test)]
+pub(crate) mod test_helpers;
 pub mod types;
 
 use std::path::{Path, PathBuf};
@@ -41,18 +45,20 @@ impl KnowledgeEngine {
 
     pub async fn ingest(
         &self,
-        _source: SourceInput,
-        _provider: &dyn AiProvider,
+        source: SourceInput,
+        provider: &dyn AiProvider,
     ) -> Result<IngestResult, KnowledgeError> {
-        todo!()
+        let _guard = self.write_lock.lock().await; // WIKI-05: serialize writes
+        ingest::ingest_source(&self.knowledge_dir, &source, provider).await
     }
 
     pub async fn query(
         &self,
-        _question: &str,
-        _provider: &dyn AiProvider,
+        question: &str,
+        provider: &dyn AiProvider,
     ) -> Result<QueryResult, KnowledgeError> {
-        todo!()
+        // No lock needed -- read-only operation (per D-12)
+        query::query_wiki(&self.knowledge_dir, question, provider).await
     }
 
     pub async fn lint(
