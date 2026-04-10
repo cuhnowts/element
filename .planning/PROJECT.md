@@ -59,6 +59,8 @@ v1.8 Phase 44 complete: MCP Plugin Tool Bridge — DB-based plugin-tools.ts read
 
 v1.8 Phase 43 complete: Hub Chat Wiki Integration — plugin tool registry (pluginToolRegistry.ts) with PluginToolDefinition type and dispatch, usePluginTools hook for mount-time skill loading, ActionConfirmCard wiki entries (BookPlus icon, "Add to Wiki"), HubChat refactored with dynamic system prompt generation from both ACTION_REGISTRY and plugin tools, plugin dispatch routing with confirmation for destructive and LLM feedback for read-only tools.
 
+v1.8 Phase 46 complete: Bug Fixes — TaskDetail.tsx black screen crash fixed (error recovery on loadTaskDetail/fetchExecutionHistory, null coalescing on description/context, optional chaining on tags), CalendarAccounts and PhaseRow modal overlays now dismissable via Escape key (useRef + useEffect auto-focus + tabIndex on backdrop div).
+
 ## Requirements
 
 ### Validated
@@ -215,4 +217,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 — Phase 43 Hub Chat Wiki Integration complete*
+*Last updated: 2026-04-10 — Phase 46 Bug Fixes complete*
