@@ -55,7 +55,7 @@ v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome 
 
 v1.8 Phase 42 complete: Knowledge Engine Core — SkillHandler trait and SkillHandlerRegistry for dynamic plugin skill dispatch, KnowledgeSkillHandler wrapping KnowledgeEngine (ingest/query/lint), "core-knowledge" registered as core plugin with 3 skills, 2 MCP tools, 1 owned directory (.knowledge/), enable/disable lifecycle hooks, dispatch_plugin_skill wired to registry, 4 hardcoded knowledge Tauri commands removed.
 
-v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.json manifests for namespace-prefixed MCP tool definitions, wiki_query handler returns raw article content from .knowledge/, wiki_ingest handler queues operations via agent-queue/. Dynamic import() dispatch in MCP server index.ts. 19 new tests, 67 total passing.
+v1.8 Phase 44 complete: MCP Plugin Tool Bridge — DB-based plugin-tools.ts reads plugin_mcp_tools SQLite table for tool discovery, CORE_HANDLERS map dispatches core-knowledge:wiki_query and wiki_ingest to built-in handlers, dynamic import fallback for user plugins. Wired into index.ts ListTools/CallTools. Old filesystem plugin-loader.ts deleted. 11 new tests, 69 total passing.
 
 v1.8 Phase 43 complete: Hub Chat Wiki Integration — plugin tool registry (pluginToolRegistry.ts) with PluginToolDefinition type and dispatch, usePluginTools hook for mount-time skill loading, ActionConfirmCard wiki entries (BookPlus icon, "Add to Wiki"), HubChat refactored with dynamic system prompt generation from both ACTION_REGISTRY and plugin tools, plugin dispatch routing with confirmation for destructive and LLM feedback for read-only tools.
 
@@ -215,4 +215,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 — Phase 42 Knowledge Engine Core complete*
+*Last updated: 2026-04-10 — Phase 44 MCP Plugin Tool Bridge complete*
