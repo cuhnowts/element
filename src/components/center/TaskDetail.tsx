@@ -126,8 +126,12 @@ export function TaskDetail() {
   };
 
   const handleDelete = async () => {
-    await deleteTask(selectedTask.id);
-    selectWorkspaceTask(null);
+    try {
+      await deleteTask(selectedTask.id);
+      selectWorkspaceTask(null);
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+    }
   };
 
   // Get steps from latest execution record

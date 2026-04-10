@@ -103,6 +103,7 @@ export const createTaskSlice: StateCreator<AppStore, [], [], TaskSlice> = (set, 
     await api.deleteTask(taskId);
     set((s) => ({
       tasks: s.tasks.filter((t) => t.id !== taskId),
+      standaloneTasks: s.standaloneTasks.filter((t) => t.id !== taskId),
       selectedTaskId: s.selectedTaskId === taskId ? null : s.selectedTaskId,
       selectedTask: s.selectedTask?.id === taskId ? null : s.selectedTask,
     }));

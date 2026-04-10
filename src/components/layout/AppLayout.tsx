@@ -44,6 +44,7 @@ export function AppLayout() {
   const pendingApprovalCount = useAgentStore((s) => s.pendingApprovalCount);
   const drawerOpen = useWorkspaceStore((s) => s.drawerOpen);
   const drawerHeight = useWorkspaceStore((s) => s.drawerHeight);
+  const setDrawerHeight = useWorkspaceStore((s) => s.setDrawerHeight);
   const activeDrawerTab = useWorkspaceStore((s) => s.activeDrawerTab);
   const setActiveDrawerTab = useWorkspaceStore((s) => s.setActiveDrawerTab);
   const openDrawerToTab = useWorkspaceStore((s) => s.openDrawerToTab);
@@ -83,13 +84,15 @@ export function AppLayout() {
         : "text-muted-foreground hover:text-foreground"
     }`;
 
+  // IMPORTANT: react-resizable-panels v4 treats bare numbers as PIXELS, not percentages.
+  // All size values (defaultSize, minSize, maxSize, resize()) MUST use "N%" string format.
+  // Passing a bare number like 80 means 80px, which converts to ~11% of the group height.
   useEffect(() => {
     const panel = drawerPanelRef.current;
     if (!panel) return;
     if (drawerOpen) {
-      // expand() first to exit collapsed state, then resize to desired height
       panel.expand();
-      panel.resize(Math.max(drawerHeight, 40));
+      panel.resize(`${Math.max(drawerHeight, 40)}%`);
     } else {
       panel.collapse();
     }
@@ -127,10 +130,14 @@ export function AppLayout() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    if (deleteTarget.type === "project") {
-      await deleteProject(deleteTarget.id);
-    } else {
-      await deleteTask(deleteTarget.id);
+    try {
+      if (deleteTarget.type === "project") {
+        await deleteProject(deleteTarget.id);
+      } else {
+        await deleteTask(deleteTarget.id);
+      }
+    } catch (err) {
+      console.error("Failed to delete:", err);
     }
     closeDeleteConfirm();
   };
@@ -151,7 +158,8 @@ export function AppLayout() {
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
             <ResizablePanelGroup direction="vertical" className="flex-1">
-              <ResizablePanel defaultSize={drawerOpen ? 100 - drawerHeight : 100} minSize={30}>
+              {/* Sizes MUST be "N%" strings — bare numbers are pixels in react-resizable-panels v4 */}
+              <ResizablePanel defaultSize={`${drawerOpen ? 100 - drawerHeight : 100}%`} minSize="20%">
                 <CenterPanel />
               </ResizablePanel>
 
@@ -200,15 +208,17 @@ export function AppLayout() {
               </ResizableHandle>
 
               <ResizablePanel
-                defaultSize={drawerOpen ? drawerHeight : 0}
-                minSize={0}
-                maxSize={80}
+                defaultSize={`${drawerOpen ? drawerHeight : 0}%`}
+                minSize="0%"
+                maxSize="80%"
                 collapsible
                 panelRef={drawerPanelRef}
                 onResize={(size) => {
-                  const collapsed = size.asPercentage === 0;
+                  const pct = size.asPercentage;
+                  const collapsed = pct === 0;
                   if (collapsed && drawerOpen) toggleDrawer();
                   if (!collapsed && !drawerOpen) toggleDrawer();
+                  if (!collapsed && pct !== drawerHeight) setDrawerHeight(pct);
                 }}
               >
                 <OutputDrawer />

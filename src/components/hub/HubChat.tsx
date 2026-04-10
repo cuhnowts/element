@@ -13,6 +13,7 @@ import {
 import { useHubChatStream } from "@/hooks/useHubChatStream";
 import { usePluginTools } from "@/hooks/usePluginTools";
 import { ACTION_REGISTRY, getToolDefinitions } from "@/lib/actionRegistry";
+import { getPluginToolDefinitions } from "@/lib/pluginToolRegistry";
 import { buildSystemPrompt } from "./buildSystemPrompt";
 import { hubChatSend, hubChatStop } from "@/lib/tauri-commands";
 import { useHubChatStore } from "@/stores/useHubChatStore";
@@ -122,7 +123,6 @@ export function HubChat() {
 
   const { dispatch, checkDestructive, createPendingAction } = useActionDispatch();
   const {
-    pluginTools,
     dispatch: dispatchPlugin,
     isPluginTool,
     isPluginToolDestructive,
@@ -197,17 +197,18 @@ export function HubChat() {
 
       startStreaming();
       try {
+        const freshPluginTools = await getPluginToolDefinitions();
         const allTools = [...getToolDefinitions(), ...getPluginToolDefs()];
         await hubChatSend(
           chatMessages,
-          buildSystemPrompt(manifest, ACTION_REGISTRY, pluginTools),
+          buildSystemPrompt(manifest, ACTION_REGISTRY, freshPluginTools),
           allTools,
         );
       } catch (err) {
         useHubChatStore.getState().setError(String(err));
       }
     },
-    [manifest, startStreaming, pluginTools, getPluginToolDefs],
+    [manifest, startStreaming, getPluginToolDefs],
   );
 
   const handleToolUse = useCallback(
@@ -392,10 +393,12 @@ export function HubChat() {
 
     startStreaming();
     try {
+      // Fetch plugin tools fresh to avoid stale state from async hook loading
+      const freshPluginTools = await getPluginToolDefinitions();
       const allTools = [...getToolDefinitions(), ...getPluginToolDefs()];
       await hubChatSend(
         chatMessages,
-        buildSystemPrompt(manifest, ACTION_REGISTRY, pluginTools),
+        buildSystemPrompt(manifest, ACTION_REGISTRY, freshPluginTools),
         allTools,
       );
     } catch (err) {

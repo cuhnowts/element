@@ -1,3 +1,4 @@
+import { homeDir } from "@tauri-apps/api/path";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
@@ -26,7 +27,14 @@ export function useTerminal(
 
   // Terminal creation effect
   useEffect(() => {
-    if (!containerRef.current || !cwd) return;
+    const container = containerRef.current;
+    if (!container || !cwd) return;
+
+    let cancelled = false;
+    const initTerminal = async () => {
+    const fallbackDir = await homeDir().catch(() => "/tmp");
+
+    if (cancelled) return;
 
     const term = new Terminal({
       cursorBlink: true,
@@ -62,7 +70,7 @@ export function useTerminal(
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
 
-    term.open(containerRef.current);
+    term.open(container);
 
     // Load WebGL addon for GPU-accelerated rendering (falls back to canvas/DOM on failure)
     try {
@@ -80,12 +88,18 @@ export function useTerminal(
       ? [initialCommand.command, ...initialCommand.args].join(" ")
       : null;
 
+    // Try spawning with cwd, fall back to home directory if it fails (e.g. dir was deleted)
+    const spawnWithCwd = (dir: string) =>
+      spawn("/bin/zsh", ["-l"], { cols: term.cols, rows: term.rows, cwd: dir });
+
     try {
-      const pty = spawn("/bin/zsh", ["-l"], {
-        cols: term.cols,
-        rows: term.rows,
-        cwd,
-      });
+      let pty: ReturnType<typeof spawn>;
+      try {
+        pty = spawnWithCwd(cwd);
+      } catch {
+        pty = spawnWithCwd(fallbackDir);
+        term.write(`\x1b[33mDirectory not found: ${cwd}\r\nFalling back to ${fallbackDir}\x1b[0m\r\n`);
+      }
 
       // Bidirectional data flow
       let commandSent = false;
@@ -106,15 +120,16 @@ export function useTerminal(
         }, 500);
       }
 
-      // Handle exit
+      // Handle exit — only show message for unexpected exits, not user-initiated ones
       pty.onExit(({ exitCode }: { exitCode: number }) => {
-        term.write(`\r\nProcess exited with code ${exitCode}\r\n`);
+        if (exitCode !== 0) {
+          term.write(`\r\nProcess exited with code ${exitCode}\r\n`);
+        }
       });
 
       ptyRef.current = pty;
 
       // Resize observer
-      const container = containerRef.current;
       const resizeObserver = new ResizeObserver(() => {
         fitAddon.fit();
         pty.resize(term.cols, term.rows);
@@ -132,9 +147,13 @@ export function useTerminal(
 
     termRef.current = term;
     fitRef.current = fitAddon;
+    }; // end initTerminal
+
+    initTerminal();
 
     // Cleanup
     return () => {
+      cancelled = true;
       observerRef.current?.disconnect();
       ptyRef.current?.kill();
       termRef.current?.dispose();

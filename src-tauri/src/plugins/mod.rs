@@ -67,6 +67,27 @@ impl PluginHost {
             core::register_core_plugins(&mut reg);
         }
 
+        // Auto-register skills and MCP tools for all active core plugins
+        if let Ok(reg) = self.registry.read() {
+            for plugin in reg.list() {
+                if !matches!(plugin.status, PluginStatus::Active) {
+                    continue;
+                }
+                let name = &plugin.manifest.name;
+                if !plugin.manifest.skills.is_empty() {
+                    if let Ok(mut skill_reg) = self.skill_registry.write() {
+                        let _ = skill_reg.register_plugin_skills(name, &plugin.manifest.skills);
+                    }
+                }
+                if !plugin.manifest.mcp_tools.is_empty() {
+                    if let Ok(mut mcp_reg) = self.mcp_tool_registry.write() {
+                        let _ = mcp_reg.register_plugin_tools(name, &plugin.manifest.mcp_tools);
+                    }
+                    self.sync_mcp_tools_to_db(name, &plugin.manifest.mcp_tools, true);
+                }
+            }
+        }
+
         let entries = match std::fs::read_dir(&self.plugins_dir) {
             Ok(entries) => entries,
             Err(e) => {

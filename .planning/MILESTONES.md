@@ -1,5 +1,20 @@
 # Milestones
 
+## v1.8 Plugin-First Knowledge (Shipped: 2026-04-10)
+
+**Phases completed:** 11 phases, 9 plans, 14 tasks
+
+**Key accomplishments:**
+
+- SkillHandler trait with async dispatch, KnowledgeSkillHandler wrapping KnowledgeEngine, core-knowledge plugin with 3 skills/2 MCP tools, hardcoded knowledge commands removed
+- Fixed PluginToolDefinition camelCase serialization mismatch, dispatch stringify bug, extracted buildSystemPrompt, and added 24 tests across 4 files covering plugin tool loading, dispatch routing, and dynamic prompt assembly
+- DB-based plugin tool discovery from plugin_mcp_tools table with dual dispatch routing core-knowledge wiki tools to built-in handlers
+- 8 unit tests for PluginHost covering skill registration/unregistration, dispatch routing, list_skills field verification, lifecycle hooks, and namespace collision prevention
+- 25 frontend tests for pluginToolRegistry (6), usePluginTools hook (6), and useHubChatStore (13) covering dynamic tool loading, plugin skill dispatch, and chat store lifecycle
+- Defensive null handling in TaskDetail to prevent black screen crash, and auto-focus backdrop pattern for Escape-key dismissal on CalendarAccounts and PhaseRow modals
+
+---
+
 ## v1.7 Test Foundations (Shipped: 2026-04-06)
 
 **Phases completed:** 9 phases, 11 plans, 12 tasks

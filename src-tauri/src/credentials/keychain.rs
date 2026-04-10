@@ -1,42 +1,59 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+
+use crate::db::connection::Database;
 
 /// Trait for abstracting secret storage.
-/// KeychainStore uses the OS keychain; InMemoryStore is for tests.
+/// SqliteSecretStore uses the app database; InMemoryStore is for tests.
 pub trait SecretStore: Send + Sync {
     fn set_secret(&self, id: &str, value: &str) -> Result<(), String>;
     fn get_secret(&self, id: &str) -> Result<String, String>;
     fn delete_secret(&self, id: &str) -> Result<(), String>;
 }
 
-/// Stores secrets in the OS keychain via the keyring crate.
-pub struct KeychainStore;
+/// Stores secrets in the SQLite database (secrets table).
+pub struct SqliteSecretStore {
+    db: Arc<Mutex<Database>>,
+}
 
-const SERVICE_NAME: &str = "com.element.app";
+impl SqliteSecretStore {
+    pub fn new(db: Arc<Mutex<Database>>) -> Self {
+        Self { db }
+    }
+}
 
-impl SecretStore for KeychainStore {
+impl SecretStore for SqliteSecretStore {
     fn set_secret(&self, id: &str, value: &str) -> Result<(), String> {
-        let entry =
-            keyring::Entry::new(SERVICE_NAME, id).map_err(|e| format!("Keyring error: {}", e))?;
-        entry
-            .set_password(value)
-            .map_err(|e| format!("Failed to store secret: {}", e))
+        let db = self.db.lock().map_err(|e| e.to_string())?;
+        db.conn()
+            .execute(
+                "INSERT INTO secrets (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2",
+                rusqlite::params![id, value],
+            )
+            .map_err(|e| format!("Failed to store secret: {}", e))?;
+        Ok(())
     }
 
     fn get_secret(&self, id: &str) -> Result<String, String> {
-        let entry =
-            keyring::Entry::new(SERVICE_NAME, id).map_err(|e| format!("Keyring error: {}", e))?;
-        entry
-            .get_password()
-            .map_err(|e| format!("Failed to retrieve secret: {}", e))
+        let db = self.db.lock().map_err(|e| e.to_string())?;
+        db.conn()
+            .query_row(
+                "SELECT value FROM secrets WHERE key = ?1",
+                rusqlite::params![id],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Secret not found: {}", e))
     }
 
     fn delete_secret(&self, id: &str) -> Result<(), String> {
-        let entry =
-            keyring::Entry::new(SERVICE_NAME, id).map_err(|e| format!("Keyring error: {}", e))?;
-        entry
-            .delete_credential()
-            .map_err(|e| format!("Failed to delete secret: {}", e))
+        let db = self.db.lock().map_err(|e| e.to_string())?;
+        db.conn()
+            .execute(
+                "DELETE FROM secrets WHERE key = ?1",
+                rusqlite::params![id],
+            )
+            .map_err(|e| format!("Failed to delete secret: {}", e))?;
+        Ok(())
     }
 }
 

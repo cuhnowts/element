@@ -68,5 +68,10 @@ pub fn run_migrations(conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.pragma_update(None, "user_version", 13)?;
     }
 
+    if version < 14 {
+        conn.execute_batch(include_str!("sql/014_secrets.sql"))?;
+        conn.pragma_update(None, "user_version", 14)?;
+    }
+
     Ok(())
 }

@@ -105,7 +105,7 @@ pub async fn generate_risk_summary(risks: &[DeadlineRisk], db: Arc<Mutex<Databas
             configs.and_then(|list| {
                 list.into_iter()
                     .find(|c| c.id == id)
-                    .and_then(|config| gateway.build_provider(&config).ok())
+                    .and_then(|config| gateway.build_provider(&db_guard, &config).ok())
             })
         } else {
             None

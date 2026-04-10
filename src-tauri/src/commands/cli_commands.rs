@@ -105,35 +105,58 @@ pub fn write_agent_file(
 /// In production, uses the Tauri resource bundle.
 #[tauri::command]
 pub fn resolve_mcp_server_path(app: AppHandle) -> Result<String, String> {
-    // Try Tauri resource resolution first (production builds)
+    // Try Tauri resource resolution first (production builds).
+    // In production, node_modules is bundled alongside dist/.
+    // In dev, the resource path points to target/debug/ which lacks node_modules,
+    // so we only use it if node_modules exists there too.
     if let Ok(resource_path) = app.path().resolve(
         "mcp-server/dist/index.js",
         tauri::path::BaseDirectory::Resource,
     ) {
         if resource_path.exists() {
-            return resource_path
-                .to_str()
-                .map(|s| s.to_string())
-                .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+            let has_modules = resource_path.parent()
+                .and_then(|p| p.parent())
+                .map(|p| p.join("node_modules").exists())
+                .unwrap_or(false);
+            if has_modules {
+                return resource_path
+                    .to_str()
+                    .map(|s| s.to_string())
+                    .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+            }
         }
     }
 
-    // Dev mode fallback: walk up from the executable to find the project root
+    // Dev mode fallback: walk up from the executable to find the project root.
+    // Prefer the path that has node_modules (native addons like better-sqlite3
+    // can't be bundled, so they must be resolvable at runtime).
     if let Ok(exe) = std::env::current_exe() {
-        // In dev, exe is at src-tauri/target/debug/element
-        // Project root is 3 levels up, then mcp-server/dist/index.js
         let mut dir = exe.parent().map(|p| p.to_path_buf());
+        let mut fallback: Option<std::path::PathBuf> = None;
         for _ in 0..5 {
             if let Some(ref d) = dir {
                 let candidate = d.join("mcp-server/dist/index.js");
                 if candidate.exists() {
-                    return candidate
-                        .to_str()
-                        .map(|s| s.to_string())
-                        .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+                    let has_modules = d.join("mcp-server/node_modules").exists();
+                    if has_modules {
+                        return candidate
+                            .to_str()
+                            .map(|s| s.to_string())
+                            .ok_or_else(|| "Path contains invalid UTF-8".to_string());
+                    }
+                    if fallback.is_none() {
+                        fallback = Some(candidate);
+                    }
                 }
                 dir = d.parent().map(|p| p.to_path_buf());
             }
+        }
+        // Use fallback (without node_modules) if nothing better found
+        if let Some(fb) = fallback {
+            return fb
+                .to_str()
+                .map(|s| s.to_string())
+                .ok_or_else(|| "Path contains invalid UTF-8".to_string());
         }
     }
 

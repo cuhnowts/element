@@ -26,7 +26,6 @@ tokio-cron-scheduler = { version = "0.15", features = ["signal"] }
 cron = "0.15"
 regex = "1"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
-keyring = { version = "3.6", features = ["apple-native", "windows-native", "sync-secret-service"] }
 notify = { version = "8", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.7"
 jsonschema = "0.28"

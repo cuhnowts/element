@@ -2,7 +2,7 @@
 ALTER TABLE tasks ADD COLUMN estimated_minutes INTEGER;
 
 -- AI provider configuration
--- API keys stored in OS keychain (per user decision), credential_key references the keychain entry name
+-- API keys stored in SQLite secrets table, credential_key references the secrets entry name
 CREATE TABLE IF NOT EXISTS ai_providers (
     id TEXT PRIMARY KEY,
     provider_type TEXT NOT NULL

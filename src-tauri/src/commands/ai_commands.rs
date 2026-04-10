@@ -60,13 +60,11 @@ pub async fn test_provider_connection(
     db_state: State<'_, Arc<Mutex<Database>>>,
     gateway: State<'_, AiGateway>,
 ) -> Result<bool, String> {
-    // Extract config while holding the lock, then drop it
-    let config = {
+    let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        gateway.test_connection(&db, &id)?
+        let config = gateway.test_connection(&db, &id)?;
+        gateway.build_provider(&db, &config).map_err(|e| e.to_string())?
     };
-
-    let provider = gateway.build_provider(&config).map_err(|e| e.to_string())?;
 
     provider.test_connection().await.map_err(|e| e.to_string())
 }
@@ -77,13 +75,11 @@ pub async fn list_provider_models(
     db_state: State<'_, Arc<Mutex<Database>>>,
     gateway: State<'_, AiGateway>,
 ) -> Result<Vec<ModelInfo>, String> {
-    // Extract config while holding the lock, then drop it
-    let config = {
+    let provider = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
-        gateway.list_models_for_provider(&db, &id)?
+        let config = gateway.list_models_for_provider(&db, &id)?;
+        gateway.build_provider(&db, &config).map_err(|e| e.to_string())?
     };
-
-    let provider = gateway.build_provider(&config).map_err(|e| e.to_string())?;
 
     provider.list_models().await.map_err(|e| e.to_string())
 }
@@ -95,21 +91,21 @@ pub async fn ai_assist_task(
     db_state: State<'_, Arc<Mutex<Database>>>,
     gateway: State<'_, AiGateway>,
 ) -> Result<(), String> {
-    // Extract task and provider config synchronously, then drop the lock
-    let (task, project_name, provider_config) = {
+    let (task, project_name, provider) = {
         let db = db_state.lock().map_err(|e| e.to_string())?;
         let task = db.get_task(&task_id).map_err(|e| e.to_string())?;
         let project_name = task
             .project_id
             .as_deref()
             .and_then(|pid| db.get_project(pid).map(|p| p.name).ok());
-        let config = gateway.get_default_config(&db).map_err(|e| e.to_string())?;
-        (task, project_name, config)
+        let config = gateway
+            .get_default_config(&db)
+            .map_err(|e| e.to_string())?;
+        let provider = gateway
+            .build_provider(&db, &config)
+            .map_err(|e| e.to_string())?;
+        (task, project_name, provider)
     };
-
-    let provider = gateway
-        .build_provider(&provider_config)
-        .map_err(|e| e.to_string())?;
 
     let request = prompts::build_scaffold_request(
         &task.title,
