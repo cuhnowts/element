@@ -143,22 +143,6 @@ element/
 
 ---
 
-## Version History
-
-| Version | Name | Highlights |
-|---------|------|------------|
-| **v1.8** | Plugin-First Knowledge | Plugin skill/MCP registration, knowledge wiki engine, hub chat plugin dispatch |
-| **v1.7** | Test Foundations | Biome v2 migration, 297 Rust tests, pre-commit hooks, testing MCP server |
-| **v1.6** | Hub Redesign | Single-column hub, slide-over panels, goal-first project detail |
-| **v1.5** | Time Bounded | Google Calendar sync, day/week view, scheduling engine, due dates |
-| **v1.4** | Daily Hub | Goals tree, AI briefing, hub chat, bot skills, MCP write tools |
-| **v1.3** | Foundation & Execution | Multi-terminal, notifications, MCP server, agent lifecycle |
-| **v1.2** | Intelligent Planning | Tiered AI planning, .planning/ sync, adaptive context builder |
-| **v1.1** | Project Manager | Themes, phases, file explorer, terminal, AI onboarding |
-| **v1.0** | MVP | Task/project CRUD, workflows, scheduling, plugin system, 4 AI providers |
-
----
-
 ## License
 
 Open source core. See [LICENSE](LICENSE) for details.

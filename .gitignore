@@ -21,3 +21,13 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Planning artifacts
+.planning/
+
+# Claude Code
+.claude/
+
+# App data
+.element/
+*.db
