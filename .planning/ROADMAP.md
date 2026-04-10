@@ -151,7 +151,11 @@ Plans:
   3. The plugin's skill handlers are invoked through dispatch_plugin_skill, not dedicated Tauri commands
   4. The underlying Rust knowledge engine code can be reused, but wired as a plugin implementation, not core
   5. Swapping in a different knowledge/memory plugin requires only dropping in a new plugin — no core code changes
-**Plans**: TBD (previous plans invalid — need replanning)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 42-01-PLAN.md — SkillHandler trait, SkillContext, handler registry, KnowledgeSkillHandler, core-knowledge manifest
+- [ ] 42-02-PLAN.md — Wire handler at startup, update dispatch_plugin_skill, remove hardcoded knowledge commands
 
 ### Phase 43: Hub Chat Plugin Skill Dispatch (REWORK)
 **Goal**: Hub chat dynamically discovers and surfaces ANY plugin's skills through prompt injection timing — not just wiki, any plugin. User interacts with plugin capabilities naturally through chat.
@@ -244,7 +248,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete | 2026-04-07 |
-| 42. Knowledge Plugin Implementation | v1.8 | 0/0 | Rework | - |
+| 42. Knowledge Plugin Implementation | v1.8 | 0/2 | Planned | - |
 | 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/0 | Rework | - |
 | 44. MCP Plugin Tool Bridge | v1.8 | 0/0 | Rework | - |
 | 45. Test Suite | v1.8 | 0/0 | Partial | - |
