@@ -3,7 +3,7 @@ phase: 42
 slug: knowledge-engine-core
 status: draft
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-04-10
 ---
 
@@ -38,12 +38,12 @@ created: 2026-04-10
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 42-01-01 | 01 | 1 | WIKI-01 | unit | `cd src-tauri && cargo test knowledge::ingest::tests -x` | ❌ W0 | ⬜ pending |
-| 42-01-02 | 01 | 1 | WIKI-02 | unit | `cd src-tauri && cargo test knowledge::query::tests -x` | ❌ W0 | ⬜ pending |
-| 42-01-03 | 01 | 1 | WIKI-03 | unit | `cd src-tauri && cargo test knowledge::index::tests -x` | ❌ W0 | ⬜ pending |
-| 42-01-04 | 01 | 1 | WIKI-04 | unit | `cd src-tauri && cargo test knowledge::lint::tests -x` | ❌ W0 | ⬜ pending |
-| 42-01-05 | 01 | 1 | WIKI-05 | unit | `cd src-tauri && cargo test knowledge::tests::test_concurrent -x` | ❌ W0 | ⬜ pending |
-| 42-01-06 | 01 | 1 | WIKI-06 | unit | `cd src-tauri && cargo test knowledge::ingest::tests::test_noop_reingest -x` | ❌ W0 | ⬜ pending |
+| 42-01-01 | 01 | 1 | WIKI-01 | unit | `cd src-tauri && cargo test knowledge::ingest::tests -x` | ✅ | ⬜ pending |
+| 42-01-02 | 01 | 1 | WIKI-02 | unit | `cd src-tauri && cargo test knowledge::query::tests -x` | ✅ | ⬜ pending |
+| 42-01-03 | 01 | 1 | WIKI-03 | unit | `cd src-tauri && cargo test knowledge::index::tests -x` | ✅ | ⬜ pending |
+| 42-01-04 | 01 | 1 | WIKI-04 | unit | `cd src-tauri && cargo test knowledge::lint::tests -x` | ✅ | ⬜ pending |
+| 42-01-05 | 01 | 1 | WIKI-05 | unit | `cd src-tauri && cargo test knowledge::tests::test_concurrent -x` | ✅ | ⬜ pending |
+| 42-01-06 | 01 | 1 | WIKI-06 | unit | `cd src-tauri && cargo test knowledge::ingest::tests::test_noop_reingest -x` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,13 +51,14 @@ created: 2026-04-10
 
 ## Wave 0 Requirements
 
-- [ ] `src-tauri/src/knowledge/mod.rs` — KnowledgeEngine struct with tests
-- [ ] `src-tauri/src/knowledge/ingest.rs` — ingest pipeline with tests
-- [ ] `src-tauri/src/knowledge/query.rs` — query pipeline with tests
-- [ ] `src-tauri/src/knowledge/lint.rs` — lint categories with tests
-- [ ] `src-tauri/src/knowledge/frontmatter.rs` — parse/serialize with tests
-- [ ] `src-tauri/src/knowledge/index.rs` — index operations with tests
-- [ ] `src-tauri/src/knowledge/types.rs` — shared types
+Existing infrastructure covers all phase requirements. Knowledge module files exist from prior Phase 42 work:
+- [x] `src-tauri/src/knowledge/mod.rs` — KnowledgeEngine struct with tests
+- [x] `src-tauri/src/knowledge/ingest.rs` — ingest pipeline with tests
+- [x] `src-tauri/src/knowledge/query.rs` — query pipeline with tests
+- [x] `src-tauri/src/knowledge/lint.rs` — lint categories with tests
+- [x] `src-tauri/src/knowledge/frontmatter.rs` — parse/serialize with tests
+- [x] `src-tauri/src/knowledge/index.rs` — index operations with tests
+- [x] `src-tauri/src/knowledge/types.rs` — shared types
 
 ---
 
