@@ -1,5 +1,5 @@
 import { AlertCircle, Loader2, RefreshCw, Unlink } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/stores";
 
@@ -43,10 +43,17 @@ export function CalendarAccounts() {
     email: string;
   } | null>(null);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCalendarAccounts();
   }, [fetchCalendarAccounts]);
+
+  useEffect(() => {
+    if (disconnectTarget && backdropRef.current) {
+      backdropRef.current.focus();
+    }
+  }, [disconnectTarget]);
 
   const handleSync = async (accountId: string) => {
     setSyncingAccountId(accountId);
@@ -247,9 +254,11 @@ export function CalendarAccounts() {
       {/* Disconnect confirmation dialog */}
       {disconnectTarget && (
         <div
+          ref={backdropRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setDisconnectTarget(null)}
           onKeyDown={(e) => { if (e.key === "Escape") setDisconnectTarget(null); }}
+          tabIndex={-1}
           role="dialog"
         >
           {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stop propagation to backdrop */}

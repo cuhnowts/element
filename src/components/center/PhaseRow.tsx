@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, GripVertical, Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -48,6 +48,13 @@ export function PhaseRow({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const deleteBackdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showDeleteConfirm && deleteBackdropRef.current) {
+      deleteBackdropRef.current.focus();
+    }
+  }, [showDeleteConfirm]);
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: phase.id,
@@ -220,9 +227,11 @@ export function PhaseRow({
 
       {showDeleteConfirm && (
         <div
+          ref={deleteBackdropRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={() => setShowDeleteConfirm(false)}
           onKeyDown={(e) => { if (e.key === "Escape") setShowDeleteConfirm(false); }}
+          tabIndex={-1}
           role="dialog"
         >
           {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stop propagation to backdrop */}
