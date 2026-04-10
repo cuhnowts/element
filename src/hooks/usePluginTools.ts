@@ -36,13 +36,13 @@ export function usePluginTools() {
 
   // Plugin tools use colon-separated namespace: "knowledge:query"
   const isPluginTool = useCallback(
-    (name: string): boolean => pluginTools.some((t) => t.name === name),
+    (name: string): boolean => pluginTools.some((t) => t.prefixedName === name),
     [pluginTools],
   );
 
   const isPluginToolDestructive = useCallback(
     (name: string): boolean =>
-      pluginTools.find((t) => t.name === name)?.destructive ?? false,
+      pluginTools.find((t) => t.prefixedName === name)?.destructive ?? false,
     [pluginTools],
   );
 
@@ -50,9 +50,9 @@ export function usePluginTools() {
   const getToolDefs = useCallback(
     (): { name: string; description: string; input_schema: Record<string, unknown> }[] =>
       pluginTools.map((pt) => ({
-        name: pt.name,
+        name: pt.prefixedName,
         description: pt.description,
-        input_schema: pt.input_schema,
+        input_schema: pt.inputSchema,
       })),
     [pluginTools],
   );

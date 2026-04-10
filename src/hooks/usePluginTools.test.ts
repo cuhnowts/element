@@ -17,18 +17,20 @@ const mockDispatch = vi.mocked(dispatchPluginSkill);
 
 const sampleTools = [
   {
-    name: "knowledge:ingest",
+    prefixedName: "knowledge:ingest",
     description: "Ingest data",
-    input_schema: { type: "object" } as Record<string, unknown>,
+    inputSchema: { type: "object" } as Record<string, unknown>,
     destructive: true,
-    plugin_name: "knowledge",
+    pluginName: "knowledge",
+    outputSchema: {} as Record<string, unknown>,
   },
   {
-    name: "knowledge:query",
+    prefixedName: "knowledge:query",
     description: "Query data",
-    input_schema: { type: "object" } as Record<string, unknown>,
+    inputSchema: { type: "object" } as Record<string, unknown>,
     destructive: false,
-    plugin_name: "knowledge",
+    pluginName: "knowledge",
+    outputSchema: {} as Record<string, unknown>,
   },
 ];
 
@@ -77,9 +79,9 @@ describe("usePluginTools", () => {
       description: "Ingest data",
       input_schema: { type: "object" },
     });
-    // Should NOT have destructive or plugin_name
+    // Should NOT have destructive or pluginName
     expect(defs[0]).not.toHaveProperty("destructive");
-    expect(defs[0]).not.toHaveProperty("plugin_name");
+    expect(defs[0]).not.toHaveProperty("pluginName");
   });
 
   it("dispatch delegates to dispatchPluginSkill", async () => {

@@ -214,15 +214,15 @@ function formatToolsSection(
   if (pluginTools.length > 0) {
     const byPlugin = new Map<string, PluginToolDefinition[]>();
     for (const pt of pluginTools) {
-      const existing = byPlugin.get(pt.plugin_name) ?? [];
+      const existing = byPlugin.get(pt.pluginName) ?? [];
       existing.push(pt);
-      byPlugin.set(pt.plugin_name, existing);
+      byPlugin.set(pt.pluginName, existing);
     }
     for (const [pluginName, tools] of byPlugin) {
       const label = pluginName.charAt(0).toUpperCase() + pluginName.slice(1);
       lines.push(`**${label} Plugin:**`);
       for (const t of tools) {
-        const schema = t.input_schema as {
+        const schema = t.inputSchema as {
           properties?: Record<string, { type?: string; description?: string }>;
           required?: string[];
         };
@@ -231,7 +231,7 @@ function formatToolsSection(
               .map(([k, v]) => `"${k}":"${v.description || v.type || "string"}"`)
               .join(",")
           : "";
-        lines.push(`- ${t.name}: ${t.description} Input: {${params}}.`);
+        lines.push(`- ${t.prefixedName}: ${t.description} Input: {${params}}.`);
       }
       lines.push("");
     }

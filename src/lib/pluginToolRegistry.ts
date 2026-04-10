@@ -5,16 +5,18 @@
 import { invoke } from "@tauri-apps/api/core";
 
 export interface PluginToolDefinition {
-  /** Namespaced skill name, e.g. "knowledge:ingest" */
-  name: string;
+  /** Namespaced skill name, e.g. "knowledge:ingest". Serialized as prefixedName from Rust. */
+  prefixedName: string;
   /** Human-readable description for LLM */
   description: string;
-  /** JSON Schema for tool input */
-  input_schema: Record<string, unknown>;
+  /** JSON Schema for tool input. Serialized as inputSchema from Rust. */
+  inputSchema: Record<string, unknown>;
   /** Whether this skill requires confirmation (writes to filesystem) */
   destructive: boolean;
-  /** Plugin that owns this skill */
-  plugin_name: string;
+  /** Plugin that owns this skill. Serialized as pluginName from Rust. */
+  pluginName: string;
+  /** Output schema (not used in frontend but included for type completeness) */
+  outputSchema: Record<string, unknown>;
 }
 
 /**
@@ -41,7 +43,7 @@ export async function dispatchPluginSkill(
   try {
     const result = await invoke("dispatch_plugin_skill", {
       skillName,
-      input: JSON.stringify(input),
+      input,
     });
     return { success: true, data: result };
   } catch (err) {
