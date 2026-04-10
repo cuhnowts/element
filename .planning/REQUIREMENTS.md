@@ -17,12 +17,12 @@ Requirements for v1.8 Knowledge Engine. Each maps to roadmap phases.
 
 ### Knowledge Engine
 
-- [ ] **WIKI-01**: User can ingest a raw source document into the wiki, producing compiled wiki articles with cross-references and an updated index
-- [ ] **WIKI-02**: User can query the wiki and receive a synthesized answer drawn from relevant wiki articles
-- [ ] **WIKI-03**: LLM-maintained index.md is updated on every ingest, serving as the search engine for query operations
-- [ ] **WIKI-04**: User can run a lint operation that identifies contradictions, stale claims, and orphan pages in the wiki
-- [ ] **WIKI-05**: Wiki operations are serialized through an operation queue preventing concurrent file corruption
-- [ ] **WIKI-06**: Wiki articles track source hashes to detect when compiled knowledge is stale relative to raw sources
+- [x] **WIKI-01**: User can ingest a raw source document into the wiki, producing compiled wiki articles with cross-references and an updated index
+- [x] **WIKI-02**: User can query the wiki and receive a synthesized answer drawn from relevant wiki articles
+- [x] **WIKI-03**: LLM-maintained index.md is updated on every ingest, serving as the search engine for query operations
+- [x] **WIKI-04**: User can run a lint operation that identifies contradictions, stale claims, and orphan pages in the wiki
+- [x] **WIKI-05**: Wiki operations are serialized through an operation queue preventing concurrent file corruption
+- [x] **WIKI-06**: Wiki articles track source hashes to detect when compiled knowledge is stale relative to raw sources
 
 ### Hub Chat Integration
 
@@ -86,12 +86,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-03 | Phase 41 | Pending |
 | PLUG-04 | Phase 41 | Pending |
 | PLUG-05 | Phase 41 | Pending |
-| WIKI-01 | Phase 42 | Pending |
-| WIKI-02 | Phase 42 | Pending |
-| WIKI-03 | Phase 42 | Pending |
-| WIKI-04 | Phase 42 | Pending |
-| WIKI-05 | Phase 42 | Pending |
-| WIKI-06 | Phase 42 | Pending |
+| WIKI-01 | Phase 42 | Complete |
+| WIKI-02 | Phase 42 | Complete |
+| WIKI-03 | Phase 42 | Complete |
+| WIKI-04 | Phase 42 | Complete |
+| WIKI-05 | Phase 42 | Complete |
+| WIKI-06 | Phase 42 | Complete |
 | CHAT-01 | Phase 43 | Complete |
 | CHAT-02 | Phase 43 | Complete |
 | CHAT-03 | Phase 43 | Complete |
