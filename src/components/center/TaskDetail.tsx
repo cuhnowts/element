@@ -65,17 +65,21 @@ export function TaskDetail() {
   // Load task when selected (without clearing project context)
   useEffect(() => {
     if (selectedTaskId) {
-      loadTaskDetail(selectedTaskId);
-      fetchExecutionHistory(selectedTaskId);
+      loadTaskDetail(selectedTaskId).catch(() => {
+        selectWorkspaceTask(null);
+      });
+      fetchExecutionHistory(selectedTaskId).catch(() => {
+        // Non-critical, silently ignore
+      });
     }
-  }, [selectedTaskId, loadTaskDetail, fetchExecutionHistory]);
+  }, [selectedTaskId, loadTaskDetail, fetchExecutionHistory, selectWorkspaceTask]);
 
   // Sync local state when task loads
   useEffect(() => {
     if (selectedTask) {
       setTitle(selectedTask.title);
-      setDescription(selectedTask.description);
-      setContext(selectedTask.context);
+      setDescription(selectedTask.description ?? "");
+      setContext(selectedTask.context ?? "");
     }
   }, [selectedTask?.id, selectedTask?.context, selectedTask?.description, selectedTask]); // Only reset on task change, not every update
 
@@ -248,7 +252,7 @@ export function TaskDetail() {
           <AccordionTrigger className="py-3 text-sm">Tags</AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
             <div className="flex flex-wrap items-center gap-1">
-              {selectedTask.tags.map((tag) => (
+              {selectedTask.tags?.map((tag) => (
                 <Badge key={tag.id} variant="secondary" className="gap-1 pr-1">
                   {tag.name}
                   <button
