@@ -6,6 +6,7 @@ use crate::plugins::core::http::{HttpPlugin, HttpStepInput};
 use crate::plugins::core::shell::{ShellPlugin, ShellStepInput};
 use crate::plugins::manifest::PluginCapability;
 use crate::plugins::registry::{LoadedPlugin, PluginStatus};
+use crate::plugins::skill_handler::SkillHandlerRegistry;
 use crate::plugins::{PluginHost, PluginSkillInfo};
 
 #[derive(Debug, Serialize, Clone)]
@@ -172,12 +173,28 @@ pub async fn open_plugins_directory(
 
 #[tauri::command]
 pub async fn dispatch_plugin_skill(
-    state: State<'_, std::sync::Mutex<PluginHost>>,
+    plugin_host: State<'_, std::sync::Mutex<PluginHost>>,
+    handler_registry: State<'_, SkillHandlerRegistry>,
     skill_name: String,
     input: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-    let host = state.lock().map_err(|e| e.to_string())?;
-    host.dispatch_skill(&skill_name, input)
+    // Step 1: Verify skill exists in PluginHost (sync, fast)
+    {
+        let host = plugin_host.lock().map_err(|e| e.to_string())?;
+        let skills = host.list_skills();
+        skills
+            .iter()
+            .find(|s| s.prefixed_name == skill_name)
+            .ok_or_else(|| {
+                format!(
+                    "Skill '{}' not found. The plugin may need to be enabled.",
+                    skill_name
+                )
+            })?;
+    } // Drop PluginHost lock before async work
+
+    // Step 2: Dispatch to handler (async, may be slow for LLM calls)
+    handler_registry.dispatch(&skill_name, input).await
 }
 
 #[tauri::command]

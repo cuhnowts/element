@@ -28,7 +28,8 @@ use commands::execution_commands::*;
 use commands::file_explorer_commands::*;
 use commands::heartbeat_commands::*;
 use commands::hub_chat_commands::*;
-use commands::knowledge_commands::*;
+// Knowledge commands removed in Phase 42 rework.
+// All knowledge operations now route through dispatch_plugin_skill.
 use commands::manifest_commands::*;
 use commands::notification_commands::*;
 use commands::onboarding_commands::*;
@@ -71,10 +72,19 @@ pub fn run() {
             }
             app.manage(Mutex::new(plugin_host));
 
-            // Initialize knowledge engine
+            // Initialize knowledge engine as Arc (owned by SkillHandlerRegistry)
             let knowledge_dir = app_data_dir.join(".knowledge");
-            let knowledge_engine = knowledge::KnowledgeEngine::new(knowledge_dir);
-            app.manage(knowledge_engine);
+            let knowledge_engine = std::sync::Arc::new(knowledge::KnowledgeEngine::new(knowledge_dir));
+
+            // Create SkillHandlerRegistry and register knowledge handler
+            let mut handler_registry = plugins::skill_handler::SkillHandlerRegistry::new();
+            let knowledge_handler = plugins::core::knowledge::KnowledgeSkillHandler::new(
+                knowledge_engine.clone(),
+                db_arc.clone(),
+                std::sync::Arc::new(ai::gateway::AiGateway::new()),
+            );
+            handler_registry.register("core-knowledge", std::sync::Arc::new(knowledge_handler));
+            app.manage(handler_registry);
 
             // Initialize credential manager
             let secret_store = credentials::keychain::SqliteSecretStore::new(db_arc.clone());
@@ -372,10 +382,6 @@ pub fn run() {
             trigger_heartbeat,
             get_heartbeat_status,
             log_errors,
-            knowledge_ingest,
-            knowledge_ingest_text,
-            knowledge_query,
-            knowledge_lint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
