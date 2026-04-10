@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Plugin-First Knowledge
 status: Ready to plan
-stopped_at: Phase 46 context gathered
-last_updated: "2026-04-10T20:00:39.123Z"
+stopped_at: Completed 46-01-PLAN.md
+last_updated: "2026-04-10T20:28:21.671Z"
 progress:
   total_phases: 15
-  completed_phases: 5
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 6
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 44 — mcp-server-wiki-tools
+**Current focus:** Phase 46 — bug-fixes
 
 ## Current Position
 
-Phase: 44
+Phase: 999.4
 Plan: Not started
 
 ## Rework Context (2026-04-10)
@@ -78,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 43]: Keep buildSystemPrompt as separate exported module for testability
 - [Phase 43]: Test HubChat dispatch routing via appendChunk interception rather than pure function extraction
 - [Phase 44]: Core plugins use CORE_HANDLERS map for direct dispatch; user plugins use plugin.json + dynamic import
+- [Phase 46]: Used .catch() on async store calls in useEffect for crash recovery instead of try/catch blocks
 
 ### Pending Todos
 
@@ -91,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T20:00:39.119Z
-Stopped at: Phase 46 context gathered
-Resume file: .planning/phases/46-bug-fixes/46-CONTEXT.md
+Last session: 2026-04-10T20:25:53.636Z
+Stopped at: Completed 46-01-PLAN.md
+Resume file: None

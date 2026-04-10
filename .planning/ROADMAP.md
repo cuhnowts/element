@@ -120,7 +120,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - [x] **Phase 43: Hub Chat Plugin Skill Dispatch** - REWORK: Hub chat dynamically loads plugin skills via prompt injection timing, not hardcoded tool wiring. Any plugin's skills appear in chat automatically. (completed 2026-04-10)
 - [x] **Phase 44: MCP Plugin Tool Bridge** - REWORK: MCP server loads tools from plugin manifests dynamically. No hardcoded wiki tools in MCP source. (completed 2026-04-10)
 - [x] **Phase 45: Test Suite** - Tests for plugin infrastructure (completed 2026-04-07, tests for 42-44 need update after rework)
-- [ ] **Phase 46: Bug Fixes** - Fix black screen (TaskDetail null access), modal overlay traps (CalendarAccounts, PhaseRow)
+- [x] **Phase 46: Bug Fixes** - Fix black screen (TaskDetail null access), modal overlay traps (CalendarAccounts, PhaseRow) (completed 2026-04-10)
 
 ## Phase Details
 
@@ -260,7 +260,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/1 | Complete    | 2026-04-10 |
 | 44. MCP Plugin Tool Bridge | v1.8 | 0/1 | Complete    | 2026-04-10 |
 | 45. Test Suite | v1.8 | 0/0 | Partial | - |
-| 46. Bug Fixes | v1.8 | 0/1 | Ready | - |
+| 46. Bug Fixes | v1.8 | 0/1 | Complete    | 2026-04-10 |
 
 ## Backlog
 
