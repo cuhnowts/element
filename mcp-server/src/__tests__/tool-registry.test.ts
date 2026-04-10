@@ -338,7 +338,8 @@ const EXPECTED_TOOLS = [
 ];
 
 describe("MCP Tool Registry", () => {
-  it("registers exactly 23 tools", () => {
+  it("registers 23 hardcoded tools", () => {
+    // Plugin tools are dynamic (from DB) and tested in plugin-tools.test.ts
     expect(EXPECTED_TOOLS).toHaveLength(23);
   });
 
@@ -437,9 +438,10 @@ describe("Plugin Tool Namespace Safety", () => {
   });
 
   it("plugin tools would be namespaced with colon separator", () => {
-    // Plugin tools use "pluginName:toolName" format
+    // Plugin tools use "pluginName:toolName" format (e.g. "core-knowledge:wiki_query")
     // This test documents the convention that prevents collisions
-    const examplePluginToolName = "knowledge:wiki_query";
+    // Plugin tool discovery and dispatch tested in plugin-tools.test.ts
+    const examplePluginToolName = "core-knowledge:wiki_query";
     expect(examplePluginToolName).toContain(":");
     expect(EXPECTED_TOOLS.map((t) => t.name)).not.toContain(
       examplePluginToolName
