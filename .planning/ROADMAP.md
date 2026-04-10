@@ -14,7 +14,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - ✅ **v1.5 Time Bounded** -- Phases 26-30 (shipped 2026-04-05) -- [archive](milestones/v1.5-ROADMAP.md)
 - ✅ **v1.6 Clarity** -- Phases 31-35 (shipped 2026-04-05)
 - ✅ **v1.7 Test Foundations** -- Phases 36-40 (shipped 2026-04-06)
-- 🚧 **v1.8 Knowledge Engine** -- Phases 41-44 (in progress)
+- 🚧 **v1.8 Plugin-First Knowledge** -- Phases 41-46 (in progress, 42-44 rework)
 
 ## Phases
 
@@ -107,19 +107,20 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 
 </details>
 
-### v1.8 Knowledge Engine (In Progress)
+### v1.8 Plugin-First Knowledge (In Progress)
 
-**Milestone Goal:** Ship an LLM-compiled wiki plugin that gives the app persistent, compounding memory -- accessible through hub chat and MCP tools -- while evolving the plugin system to support skill registration and plugin-owned directories.
+**Milestone Goal:** Ship a knowledge/wiki capability as a **drop-in plugin** -- not hardcoded core -- proving the plugin architecture can host AI-powered features that surface through hub chat prompt injection and MCP tools. The backend stays nimble: swapping in a different memory system should be as easy as dropping in a new plugin, not a rewrite.
 
 **Phase Numbering:**
-- Integer phases (41, 42, 43, 44): Planned milestone work
+- Integer phases (41-46): Planned milestone work
 - Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
-- [x] **Phase 42: Knowledge Engine Core** - Three-layer wiki plugin with ingest, query, lint, index operations and concurrency-safe operation queue (completed 2026-04-07)
-- [x] **Phase 43: Hub Chat Wiki Integration** - Dynamic tool loading, plugin skill dispatch, and end-to-end wiki commands in hub chat (completed 2026-04-07)
-- [x] **Phase 44: MCP Server Wiki Tools** - External agent wiki access via MCP tools with read-only query and queue-based ingest (completed 2026-04-07)
-- [x] **Phase 45: Test Suite** - Comprehensive tests for plugin infrastructure, wiki engine, hub chat integration, and MCP tools (completed 2026-04-07)
+- [ ] **Phase 42: Knowledge Plugin Implementation** - REWORK: Knowledge engine as a drop-in plugin using Phase 41 infrastructure, not hardcoded Tauri commands. Plugin declares skills and directories in manifest, surfaces through prompt injection.
+- [ ] **Phase 43: Hub Chat Plugin Skill Dispatch** - REWORK: Hub chat dynamically loads plugin skills via prompt injection timing, not hardcoded tool wiring. Any plugin's skills appear in chat automatically.
+- [ ] **Phase 44: MCP Plugin Tool Bridge** - REWORK: MCP server loads tools from plugin manifests dynamically. No hardcoded wiki tools in MCP source.
+- [x] **Phase 45: Test Suite** - Tests for plugin infrastructure (completed 2026-04-07, tests for 42-44 need update after rework)
+- [ ] **Phase 46: Bug Fixes** - Fix black screen (TaskDetail null access), modal overlay traps (CalendarAccounts, PhaseRow)
 
 ## Phase Details
 
@@ -140,62 +141,57 @@ Plans:
 - [x] 41-02-PLAN.md — PluginHost lifecycle wiring, skill dispatch, DB migration, Tauri commands
 - [x] 41-03-PLAN.md — Frontend types, Tauri API bindings, Zustand skill store, PathBuf security fix
 
-### Phase 42: Knowledge Engine Core
-**Goal**: Users can ingest raw source documents into a three-layer wiki and query compiled knowledge, with all mutations serialized for concurrency safety and source hashes tracking staleness
-**Depends on**: Phase 41 (knowledge engine registers as a plugin using the skill/directory infrastructure)
+### Phase 42: Knowledge Plugin Implementation (REWORK)
+**Goal**: Knowledge/wiki engine implemented as a drop-in plugin using Phase 41's infrastructure — declares skills and directories in its manifest, registers through PluginHost, and surfaces through prompt injection. No hardcoded Tauri commands.
+**Depends on**: Phase 41 (plugin infrastructure with skill registration, directory management)
 **Requirements**: WIKI-01, WIKI-02, WIKI-03, WIKI-04, WIKI-05, WIKI-06
 **Success Criteria** (what must be TRUE):
-  1. User can provide a raw source document and the system produces compiled wiki article(s) in `.knowledge/wiki/`, updates `.knowledge/index.md`, and stores the raw source in `.knowledge/raw/`
-  2. User can ask a question and receive a synthesized answer that cites specific wiki articles, with the answer drawn from index.md lookup and relevant page retrieval
-  3. Running lint identifies at least one category of issue (thin articles, broken wikilinks, stale sources, contradictions, or missing concepts) when such issues exist in the wiki
-  4. Two simultaneous wiki operations do not corrupt `.knowledge/index.md` -- the second operation queues behind the first
-  5. A wiki article's YAML frontmatter contains the content hash of its source(s), and re-ingesting an unchanged source is detected as a no-op
-**Plans**: 3 plans
+  1. Knowledge engine is a plugin with a manifest declaring skills (ingest, query, lint) and owned directories (.knowledge/)
+  2. Enabling the plugin registers its skills in the SkillRegistry and creates its directories; disabling removes them
+  3. The plugin's skill handlers are invoked through dispatch_plugin_skill, not dedicated Tauri commands
+  4. The underlying Rust knowledge engine code can be reused, but wired as a plugin implementation, not core
+  5. Swapping in a different knowledge/memory plugin requires only dropping in a new plugin — no core code changes
+**Plans**: TBD (previous plans invalid — need replanning)
 
-Plans:
-- [ ] 42-01-PLAN.md — Types, frontmatter, index module, KnowledgeEngine struct with mutex
-- [ ] 42-02-PLAN.md — Ingest pipeline and query pipeline with LLM compilation and synthesis
-- [ ] 42-03-PLAN.md — Lint pipeline (5 categories) and Tauri command wiring
-
-### Phase 43: Hub Chat Wiki Integration
-**Goal**: Users can ingest, query, lint, and manage the wiki entirely through hub chat commands, with plugin-contributed skills loaded dynamically alongside built-in actions
-**Depends on**: Phase 41 (dynamic skill loading), Phase 42 (wiki operations to expose)
+### Phase 43: Hub Chat Plugin Skill Dispatch (REWORK)
+**Goal**: Hub chat dynamically discovers and surfaces ANY plugin's skills through prompt injection timing — not just wiki, any plugin. User interacts with plugin capabilities naturally through chat.
+**Depends on**: Phase 41 (plugin skill registry), Phase 42 (knowledge plugin as proof)
 **Requirements**: CHAT-01, CHAT-02, CHAT-03
 **Success Criteria** (what must be TRUE):
-  1. Plugin-contributed skills appear in hub chat's available tools without code changes to HubChat.tsx -- they load dynamically from the plugin registry on mount
-  2. User can type a wiki query in hub chat and receive a synthesized answer inline, and can trigger an ingest by providing a file path or pasting content
-  3. Hub chat's system prompt includes only tools relevant to the current user intent rather than every registered tool, keeping prompt size manageable as plugins grow
-**Plans**: 2 plans
+  1. Plugin skills appear in hub chat's system prompt automatically via prompt injection — zero code changes to HubChat.tsx when adding new plugins
+  2. User asks hub chat to do something a plugin can handle, and the AI routes to the correct plugin skill
+  3. Confirmation cards work generically for any plugin's destructive skills, not just wiki-specific entries
+**Plans**: TBD (previous plans partially reusable — dynamic prompt assembly is correct pattern, but hardcoded wiki entries need removal)
 **UI hint**: yes
 
-Plans:
-- [x] 43-01-PLAN.md — Plugin tool registry, usePluginTools hook, ActionConfirmCard wiki entries
-- [x] 43-02-PLAN.md — HubChat dynamic prompt assembly, merged tool loading, plugin dispatch routing
-
-### Phase 44: MCP Server Wiki Tools
-**Goal**: External agents (Claude Code) can query the wiki for read-only knowledge retrieval and trigger ingest operations through the MCP server
-**Depends on**: Phase 42 (wiki engine must be functional for MCP to wrap)
+### Phase 44: MCP Plugin Tool Bridge (REWORK)
+**Goal**: MCP server dynamically loads tools from plugin manifests — any plugin's MCP tools appear in ListTools/CallTools without MCP source changes
+**Depends on**: Phase 41 (plugin manifests with mcp_tools), Phase 42 (knowledge plugin as proof)
 **Requirements**: MCP-01, MCP-02
 **Success Criteria** (what must be TRUE):
-  1. An external agent calling `wiki_query` through the MCP server receives raw wiki article content (not LLM-synthesized) that it can reason over itself
-  2. An external agent calling `wiki_ingest` through the MCP server triggers an ingest operation via the agent queue, and receives an acknowledgment that the operation was accepted
-  3. MCP wiki tools are registered dynamically from the knowledge plugin's manifest rather than hardcoded in the MCP server source
-**Plans**: 2 plans
-
-Plans:
-- [x] 44-01-PLAN.md — Plugin loader module + wiki tool handlers with tests
-- [x] 44-02-PLAN.md — Wire plugin tools into MCP server index.ts + build verification
+  1. MCP server reads plugin manifests and exposes their declared mcp_tools dynamically
+  2. Adding a new plugin with mcp_tools requires zero changes to MCP server source
+  3. Plugin tool handlers are resolved and dispatched at runtime from the manifest
+**Plans**: TBD (previous plugin-loader.ts pattern is correct, but needs to be generic not wiki-specific)
 
 ### Phase 45: Test Suite
-**Goal**: Comprehensive test coverage for all v1.8 features — plugin infrastructure, wiki engine, hub chat integration, and MCP tools — ensuring hooks catch regressions going forward
-**Depends on**: Phase 41, 42, 43, 44 (all feature phases complete)
+**Goal**: Comprehensive test coverage for v1.8 features — plugin infrastructure and plugin-based knowledge engine
+**Depends on**: Phase 41, 42, 43, 44
 **Requirements**: TEST-01, TEST-02, TEST-03, TEST-04
 **Success Criteria** (what must be TRUE):
-  1. Rust unit tests cover plugin manifest parsing (new fields, backward compat, namespace collision detection), directory manager lifecycle, and skill dispatch routing
-  2. Rust integration tests cover wiki operations (ingest produces articles + index, query retrieves relevant content, lint detects issues, operation queue serializes concurrent requests)
-  3. Vitest tests cover dynamic tool loading in hub chat, plugin skill registry merge, and tool filtering logic
-  4. MCP server tests cover wiki_query and wiki_ingest tool handlers with expected input/output contracts
-**Plans**: TBD
+  1. Rust unit tests cover plugin manifest parsing, directory manager lifecycle, and skill dispatch routing
+  2. Tests verify knowledge engine works as a plugin (enable → skills registered, disable → skills removed)
+  3. Vitest tests cover dynamic plugin skill loading in hub chat and generic confirmation cards
+  4. MCP server tests cover dynamic plugin tool loading and dispatch
+**Plans**: TBD (Phase 45 tests for 41 are valid; tests for 42-44 need rewrite after rework)
+
+### Phase 46: Bug Fixes
+**Goal**: Fix UAT-discovered bugs from Phase 41 testing
+**Depends on**: None (independent fixes)
+**Success Criteria** (what must be TRUE):
+  1. Clicking a chore/task no longer causes a black screen (TaskDetail.tsx null access fixed)
+  2. Modal overlays in CalendarAccounts and PhaseRow can be dismissed by clicking backdrop or pressing Escape
+**Plans**: 1 plan (fixes already implemented, need commit)
 
 
 ## Progress
@@ -247,11 +243,12 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 38. Error Logger | v1.7 | 2/2 | Complete | 2026-04-06 |
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
-| 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete   | 2026-04-07 |
-| 42. Knowledge Engine Core | v1.8 | 0/3 | Complete    | 2026-04-07 |
-| 43. Hub Chat Wiki Integration | v1.8 | 2/2 | Complete    | 2026-04-07 |
-| 44. MCP Server Wiki Tools | v1.8 | 2/2 | Complete    | 2026-04-07 |
-| 45. Test Suite | v1.8 | 2/2 | Complete   | 2026-04-07 |
+| 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete | 2026-04-07 |
+| 42. Knowledge Plugin Implementation | v1.8 | 0/0 | Rework | - |
+| 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/0 | Rework | - |
+| 44. MCP Plugin Tool Bridge | v1.8 | 0/0 | Rework | - |
+| 45. Test Suite | v1.8 | 0/0 | Partial | - |
+| 46. Bug Fixes | v1.8 | 0/1 | Ready | - |
 
 ## Backlog
 
