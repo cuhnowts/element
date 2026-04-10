@@ -1,9 +1,13 @@
 pub mod calendar;
 pub mod filesystem;
 pub mod http;
+pub mod knowledge;
 pub mod shell;
 
-use crate::plugins::manifest::{PluginCapability, PluginManifest, StepTypeDefinition};
+use crate::plugins::manifest::{
+    DirectoryScope, McpToolDefinition, OwnedDirectory, PluginCapability, PluginManifest,
+    SkillDefinition, StepTypeDefinition,
+};
 use crate::plugins::registry::{LoadedPlugin, PluginRegistry, PluginStatus};
 use std::path::PathBuf;
 
@@ -189,8 +193,122 @@ pub fn register_core_plugins(registry: &mut PluginRegistry) {
         manifest: calendar_manifest,
         status: PluginStatus::Active,
         error_message: None,
-        loaded_at: now,
+        loaded_at: now.clone(),
         plugin_path: PathBuf::from("core://calendar"),
+    });
+
+    // Knowledge engine plugin manifest (v2 with skills, MCP tools, owned directories)
+    let knowledge_manifest = PluginManifest {
+        name: "core-knowledge".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        display_name: "Knowledge Engine".to_string(),
+        description: "AI-powered wiki with ingest, query, and lint operations".to_string(),
+        author: Some("Element".to_string()),
+        capabilities: vec![PluginCapability::FsRead, PluginCapability::FsWrite],
+        credentials: vec![],
+        entry: None,
+        step_types: vec![],
+        manifest_version: Some(2),
+        skills: vec![
+            SkillDefinition {
+                name: "ingest".to_string(),
+                description: "Ingest a raw source document into the wiki, producing a compiled article with cross-references and an updated index".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "source_path": { "type": "string", "description": "File path or URL to ingest" },
+                        "name": { "type": "string", "description": "Name for text content (alternative to source_path)" },
+                        "content": { "type": "string", "description": "Raw text content (used with name)" }
+                    }
+                }),
+                output_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "slug": { "type": "string" },
+                        "title": { "type": "string" },
+                        "source_hash": { "type": "string" },
+                        "was_noop": { "type": "boolean" },
+                        "article_path": { "type": "string" }
+                    }
+                }),
+                destructive: true,
+            },
+            SkillDefinition {
+                name: "query".to_string(),
+                description: "Query the wiki and receive a synthesized answer drawn from relevant articles".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "question": { "type": "string", "description": "The question to answer from wiki knowledge" }
+                    },
+                    "required": ["question"]
+                }),
+                output_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "answer": { "type": "string" },
+                        "sources": { "type": "array" }
+                    }
+                }),
+                destructive: false,
+            },
+            SkillDefinition {
+                name: "lint".to_string(),
+                description: "Run quality checks on the wiki: stale sources, broken links, thin articles, orphans, contradictions".to_string(),
+                input_schema: serde_json::json!({}),
+                output_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "timestamp": { "type": "string" },
+                        "article_count": { "type": "integer" },
+                        "issues": { "type": "array" },
+                        "summary": { "type": "object" }
+                    }
+                }),
+                destructive: false,
+            },
+        ],
+        mcp_tools: vec![
+            McpToolDefinition {
+                name: "wiki_query".to_string(),
+                description: "Query the knowledge wiki for synthesized answers".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "question": { "type": "string" }
+                    },
+                    "required": ["question"]
+                }),
+            },
+            McpToolDefinition {
+                name: "wiki_ingest".to_string(),
+                description: "Ingest a document into the knowledge wiki".to_string(),
+                input_schema: serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "source_path": { "type": "string" }
+                    },
+                    "required": ["source_path"]
+                }),
+            },
+        ],
+        owned_directories: vec![
+            OwnedDirectory {
+                path: ".knowledge".to_string(),
+                scope: DirectoryScope::Global,
+                description: "Knowledge wiki storage (raw sources, compiled articles, index)".to_string(),
+            },
+        ],
+        on_enable: vec!["create_dirs".to_string()],
+        on_disable: vec!["unregister".to_string()],
+    };
+
+    registry.register(LoadedPlugin {
+        manifest: knowledge_manifest,
+        status: PluginStatus::Active,
+        error_message: None,
+        loaded_at: now,
+        plugin_path: PathBuf::from("core://knowledge"),
     });
 }
 
@@ -199,17 +317,126 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_register_core_plugins_adds_four() {
+    fn test_register_core_plugins_adds_five() {
         let mut registry = PluginRegistry::new();
         register_core_plugins(&mut registry);
 
         let plugins = registry.list();
-        assert_eq!(plugins.len(), 4);
+        assert_eq!(plugins.len(), 5);
 
         assert!(registry.get("core-shell").is_some());
         assert!(registry.get("core-http").is_some());
         assert!(registry.get("core-filesystem").is_some());
         assert!(registry.get("core-calendar").is_some());
+        assert!(registry.get("core-knowledge").is_some());
+    }
+
+    #[test]
+    fn test_knowledge_plugin_manifest_has_skills() {
+        let mut registry = PluginRegistry::new();
+        register_core_plugins(&mut registry);
+
+        let knowledge = registry.get("core-knowledge").unwrap();
+        assert_eq!(knowledge.manifest.skills.len(), 3);
+
+        let skill_names: Vec<&str> = knowledge
+            .manifest
+            .skills
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect();
+        assert!(skill_names.contains(&"ingest"));
+        assert!(skill_names.contains(&"query"));
+        assert!(skill_names.contains(&"lint"));
+
+        // Verify destructive flags
+        let ingest = knowledge.manifest.skills.iter().find(|s| s.name == "ingest").unwrap();
+        assert!(ingest.destructive);
+        let query = knowledge.manifest.skills.iter().find(|s| s.name == "query").unwrap();
+        assert!(!query.destructive);
+    }
+
+    #[test]
+    fn test_knowledge_plugin_manifest_has_mcp_tools() {
+        let mut registry = PluginRegistry::new();
+        register_core_plugins(&mut registry);
+
+        let knowledge = registry.get("core-knowledge").unwrap();
+        assert_eq!(knowledge.manifest.mcp_tools.len(), 2);
+
+        let tool_names: Vec<&str> = knowledge
+            .manifest
+            .mcp_tools
+            .iter()
+            .map(|t| t.name.as_str())
+            .collect();
+        assert!(tool_names.contains(&"wiki_query"));
+        assert!(tool_names.contains(&"wiki_ingest"));
+    }
+
+    #[test]
+    fn test_knowledge_plugin_manifest_has_owned_directory() {
+        let mut registry = PluginRegistry::new();
+        register_core_plugins(&mut registry);
+
+        let knowledge = registry.get("core-knowledge").unwrap();
+        assert_eq!(knowledge.manifest.owned_directories.len(), 1);
+        assert_eq!(knowledge.manifest.owned_directories[0].path, ".knowledge");
+        assert_eq!(
+            knowledge.manifest.owned_directories[0].scope,
+            crate::plugins::manifest::DirectoryScope::Global
+        );
+    }
+
+    #[test]
+    fn test_knowledge_plugin_enable_disable_lifecycle() {
+        use crate::plugins::PluginHost;
+
+        let plugins_dir = tempfile::tempdir().unwrap();
+        let app_data_dir = tempfile::tempdir().unwrap();
+        let host = PluginHost::new(
+            plugins_dir.path().to_path_buf(),
+            app_data_dir.path().to_path_buf(),
+        );
+
+        // Scan loads core plugins including core-knowledge
+        host.scan_and_load();
+
+        // Enable core-knowledge: should register skills and create .knowledge/ dir
+        host.set_enabled("core-knowledge", true).unwrap();
+
+        let skills = host.list_skills();
+        let knowledge_skills: Vec<_> = skills
+            .iter()
+            .filter(|s| s.prefixed_name.starts_with("core-knowledge:"))
+            .collect();
+        assert_eq!(
+            knowledge_skills.len(),
+            3,
+            "Expected 3 knowledge skills after enable, got {}",
+            knowledge_skills.len()
+        );
+
+        // Verify .knowledge/ directory was created (on_enable: ["create_dirs"])
+        assert!(
+            app_data_dir.path().join(".knowledge").exists(),
+            ".knowledge directory should be created on enable"
+        );
+
+        // Disable core-knowledge: should remove skills from registry
+        host.set_enabled("core-knowledge", false).unwrap();
+
+        let skills_after = host.list_skills();
+        let knowledge_skills_after: Vec<_> = skills_after
+            .iter()
+            .filter(|s| s.prefixed_name.starts_with("core-knowledge:"))
+            .collect();
+        assert_eq!(
+            knowledge_skills_after.len(),
+            0,
+            "Expected 0 knowledge skills after disable, got {}",
+            knowledge_skills_after.len()
+        );
     }
 
     #[test]

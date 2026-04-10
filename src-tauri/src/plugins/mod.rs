@@ -3,6 +3,7 @@ pub mod core;
 pub mod directory;
 pub mod manifest;
 pub mod registry;
+pub mod skill_handler;
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
