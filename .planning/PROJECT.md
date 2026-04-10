@@ -53,6 +53,8 @@ v1.7 Phase 40 complete: Testing MCP server — 3 MCP tools (discover_tests, run_
 
 v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome format + lint + test, exit 2 on failure), PostToolUse test-on-save (vitest for TS, cargo test for Rust), 300s timeouts, SKIP_HOOKS=1 bypass.
 
+v1.8 Phase 42 complete: Knowledge engine as drop-in plugin — SkillHandler trait with SkillContext, handler registry, KnowledgeSkillHandler implementing wiki CRUD operations, core-knowledge manifest, dispatch_plugin_skill wiring, hardcoded knowledge commands removed.
+
 v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.json manifests for namespace-prefixed MCP tool definitions, wiki_query handler returns raw article content from .knowledge/, wiki_ingest handler queues operations via agent-queue/. Dynamic import() dispatch in MCP server index.ts. 19 new tests, 67 total passing.
 
 v1.8 Phase 43 complete: Hub Chat Wiki Integration — plugin tool registry (pluginToolRegistry.ts) with PluginToolDefinition type and dispatch, usePluginTools hook for mount-time skill loading, ActionConfirmCard wiki entries (BookPlus icon, "Add to Wiki"), HubChat refactored with dynamic system prompt generation from both ACTION_REGISTRY and plugin tools, plugin dispatch routing with confirmation for destructive and LLM feedback for read-only tools.
@@ -213,4 +215,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 — Phase 43 Hub Chat Wiki Integration complete*
+*Last updated: 2026-04-10 — Phase 42 Knowledge Engine Core complete*
