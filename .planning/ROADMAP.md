@@ -200,7 +200,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Clicking a chore/task no longer causes a black screen (TaskDetail.tsx null access fixed)
   2. Modal overlays in CalendarAccounts and PhaseRow can be dismissed by clicking backdrop or pressing Escape
-**Plans**: 1 plan (fixes already implemented, need commit)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 46-01-PLAN.md — Fix TaskDetail null crash and modal dismiss behavior
 
 
 ## Progress
