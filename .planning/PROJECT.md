@@ -53,7 +53,7 @@ v1.7 Phase 40 complete: Testing MCP server — 3 MCP tools (discover_tests, run_
 
 v1.7 Phase 39 complete: Claude Code hooks — PreToolUse pre-commit gate (biome format + lint + test, exit 2 on failure), PostToolUse test-on-save (vitest for TS, cargo test for Rust), 300s timeouts, SKIP_HOOKS=1 bypass.
 
-v1.8 Phase 42 REWORK: Code audit found knowledge engine was hardcoded (4 direct Tauri commands), not routed through plugin dispatch. dispatch_plugin_skill is a stub. Phases 42-43 need replanning to make knowledge a true drop-in plugin.
+v1.8 Phase 42 complete: Knowledge Engine Core — SkillHandler trait and SkillHandlerRegistry for dynamic plugin skill dispatch, KnowledgeSkillHandler wrapping KnowledgeEngine (ingest/query/lint), "core-knowledge" registered as core plugin with 3 skills, 2 MCP tools, 1 owned directory (.knowledge/), enable/disable lifecycle hooks, dispatch_plugin_skill wired to registry, 4 hardcoded knowledge Tauri commands removed.
 
 v1.8 Phase 44 complete: MCP Server Wiki Tools — plugin loader reads plugin.json manifests for namespace-prefixed MCP tool definitions, wiki_query handler returns raw article content from .knowledge/, wiki_ingest handler queues operations via agent-queue/. Dynamic import() dispatch in MCP server index.ts. 19 new tests, 67 total passing.
 
