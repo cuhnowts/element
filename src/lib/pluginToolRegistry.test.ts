@@ -18,11 +18,12 @@ describe("pluginToolRegistry", () => {
     it("returns plugin tool definitions from backend", async () => {
       const mockTools = [
         {
-          name: "knowledge:ingest",
+          prefixedName: "knowledge:ingest",
           description: "Ingest",
-          input_schema: { type: "object" },
+          inputSchema: { type: "object" },
           destructive: true,
-          plugin_name: "knowledge",
+          pluginName: "knowledge",
+          outputSchema: {},
         },
       ];
       mockInvoke.mockResolvedValue(mockTools);
@@ -62,13 +63,13 @@ describe("pluginToolRegistry", () => {
       expect(result.error).toContain("Plugin disabled");
     });
 
-    it("passes skillName and stringified input to invoke", async () => {
+    it("passes skillName and raw input object to invoke (not stringified)", async () => {
       mockInvoke.mockResolvedValue({});
 
       await dispatchPluginSkill("knowledge:ingest", { path: "/file" });
       expect(mockInvoke).toHaveBeenCalledWith("dispatch_plugin_skill", {
         skillName: "knowledge:ingest",
-        input: '{"path":"/file"}',
+        input: { path: "/file" },
       });
     });
   });

@@ -10,7 +10,7 @@ import {
   getPluginToolDefinitions,
   dispatchPluginSkill,
 } from "@/lib/pluginToolRegistry";
-import { usePluginTools } from "./usePluginTools";
+import { usePluginTools } from "../usePluginTools";
 
 const mockGetDefs = vi.mocked(getPluginToolDefinitions);
 const mockDispatch = vi.mocked(dispatchPluginSkill);
@@ -49,25 +49,41 @@ describe("usePluginTools", () => {
     expect(mockGetDefs).toHaveBeenCalledTimes(1);
   });
 
-  it("isPluginTool returns true for loaded plugin tool names", async () => {
+  it("isPluginTool returns true for matching prefixedName", async () => {
     const { result } = renderHook(() => usePluginTools());
 
     await waitFor(() => expect(result.current.isLoaded).toBe(true));
 
     expect(result.current.isPluginTool("knowledge:query")).toBe(true);
-    expect(result.current.isPluginTool("create_task")).toBe(false);
+    expect(result.current.isPluginTool("knowledge:ingest")).toBe(true);
   });
 
-  it("isPluginToolDestructive returns correct value", async () => {
+  it("isPluginTool returns false for unknown tool", async () => {
+    const { result } = renderHook(() => usePluginTools());
+
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(result.current.isPluginTool("create_task")).toBe(false);
+    expect(result.current.isPluginTool("unknown:tool")).toBe(false);
+  });
+
+  it("isPluginToolDestructive returns true for destructive tool", async () => {
     const { result } = renderHook(() => usePluginTools());
 
     await waitFor(() => expect(result.current.isLoaded).toBe(true));
 
     expect(result.current.isPluginToolDestructive("knowledge:ingest")).toBe(true);
+  });
+
+  it("isPluginToolDestructive returns false for non-destructive tool", async () => {
+    const { result } = renderHook(() => usePluginTools());
+
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
     expect(result.current.isPluginToolDestructive("knowledge:query")).toBe(false);
   });
 
-  it("getToolDefs converts to LLM format", async () => {
+  it("getToolDefs maps to LLM tool format with name and input_schema", async () => {
     const { result } = renderHook(() => usePluginTools());
 
     await waitFor(() => expect(result.current.isLoaded).toBe(true));
@@ -84,14 +100,14 @@ describe("usePluginTools", () => {
     expect(defs[0]).not.toHaveProperty("pluginName");
   });
 
-  it("dispatch delegates to dispatchPluginSkill", async () => {
+  it("dispatch calls dispatchPluginSkill", async () => {
     mockDispatch.mockResolvedValue({ success: true });
     const { result } = renderHook(() => usePluginTools());
 
     await waitFor(() => expect(result.current.isLoaded).toBe(true));
 
-    await result.current.dispatch("knowledge:ingest", { path: "/" });
-    expect(mockDispatch).toHaveBeenCalledWith("knowledge:ingest", { path: "/" });
+    await result.current.dispatch("knowledge:query", { question: "test" });
+    expect(mockDispatch).toHaveBeenCalledWith("knowledge:query", { question: "test" });
   });
 
   it("returns empty array and isLoaded false initially", () => {
