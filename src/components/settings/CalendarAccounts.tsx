@@ -246,8 +246,14 @@ export function CalendarAccounts() {
 
       {/* Disconnect confirmation dialog */}
       {disconnectTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setDisconnectTarget(null)}
+          onKeyDown={(e) => { if (e.key === "Escape") setDisconnectTarget(null); }}
+          role="dialog"
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stop propagation to backdrop */}
+          <div className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold">Disconnect Calendar</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               This will remove the connection to {disconnectTarget.email}. Calendar events from this

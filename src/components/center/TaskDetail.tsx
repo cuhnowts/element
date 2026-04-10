@@ -77,7 +77,7 @@ export function TaskDetail() {
       setDescription(selectedTask.description);
       setContext(selectedTask.context);
     }
-  }, [selectedTask?.id, selectedTask.context, selectedTask.description, selectedTask]); // Only reset on task change, not every update
+  }, [selectedTask?.id, selectedTask?.context, selectedTask?.description, selectedTask]); // Only reset on task change, not every update
 
   if (!selectedTaskId) return null;
 

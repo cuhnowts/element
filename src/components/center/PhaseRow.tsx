@@ -219,8 +219,14 @@ export function PhaseRow({
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-popover rounded-lg p-6 max-w-sm shadow-lg space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowDeleteConfirm(false)}
+          onKeyDown={(e) => { if (e.key === "Escape") setShowDeleteConfirm(false); }}
+          role="dialog"
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: stop propagation to backdrop */}
+          <div className="bg-popover rounded-lg p-6 max-w-sm shadow-lg space-y-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold">Delete Phase</h3>
             <p className="text-sm text-muted-foreground">
               {total === 0
