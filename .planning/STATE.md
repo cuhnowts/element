@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Plugin-First Knowledge
-status: Rework — replanning phases 42-44
-stopped_at: Audit found knowledge engine hardcoded, not plugin-based. Phases 42-43 invalid, need replan.
-last_updated: "2026-04-10T13:15:30.446Z"
+status: Ready to plan
+stopped_at: Completed 42-01-PLAN.md
+last_updated: "2026-04-10T18:40:16.049Z"
 progress:
   total_phases: 15
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 12
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,16 +19,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 42 (REWORK) — knowledge engine must route through plugin dispatch, not hardcoded commands
+**Current focus:** Phase 42 — knowledge-engine-core
 
 ## Current Position
 
-Phase: 42 (needs replan)
-Plan: None — prior plans archived as invalid
+Phase: 43
+Plan: Not started
 
 ## Rework Context (2026-04-10)
 
 Code audit found Phase 42-43 execution was invalid:
+
 - `dispatch_plugin_skill()` is a stub returning `{"status": "dispatched"}` — never executes handlers
 - Knowledge has 4 hardcoded Tauri commands bypassing plugin system entirely
 - `KnowledgeEngine` initialized directly in lib.rs, not through PluginHost
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [v1.8 Roadmap]: Operation queue via tokio::mpsc for wiki concurrency safety
 - [v1.8 Roadmap]: Source hash tracking in wiki article frontmatter from day one
 - [v1.8 Roadmap]: Hub chat is the wiki interface -- no separate wiki browser UI
+- [Phase 42]: KnowledgeSkillHandler gets own AiGateway instance (stateless) rather than sharing via Arc to avoid breaking existing command signatures
+- [Phase 42]: Two-step dispatch: verify skill in PluginHost (sync), drop lock, then dispatch to SkillHandlerRegistry (async)
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-07T00:40:13.456Z
-Stopped at: Phase 43 plans verified
-Resume file: .planning/phases/43-hub-chat-wiki-integration/43-01-PLAN.md
+Last session: 2026-04-10T18:35:57.745Z
+Stopped at: Completed 42-01-PLAN.md
+Resume file: None
