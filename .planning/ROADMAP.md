@@ -116,7 +116,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
-- [x] **Phase 42: Knowledge Plugin Implementation** - REWORK: Knowledge engine as a drop-in plugin using Phase 41 infrastructure, not hardcoded Tauri commands. Plugin declares skills and directories in manifest, surfaces through prompt injection. (completed 2026-04-10)
+- [ ] **Phase 42: Knowledge Plugin Implementation** - REWORK: Knowledge engine as a drop-in plugin using Phase 41 infrastructure, not hardcoded Tauri commands. Plugin declares skills and directories in manifest, surfaces through prompt injection. (completed 2026-04-10)
 - [ ] **Phase 43: Hub Chat Plugin Skill Dispatch** - REWORK: Hub chat dynamically loads plugin skills via prompt injection timing, not hardcoded tool wiring. Any plugin's skills appear in chat automatically.
 - [ ] **Phase 44: MCP Plugin Tool Bridge** - REWORK: MCP server loads tools from plugin manifests dynamically. No hardcoded wiki tools in MCP source.
 - [x] **Phase 45: Test Suite** - Tests for plugin infrastructure (completed 2026-04-07, tests for 42-44 need update after rework)
@@ -154,8 +154,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [x] 42-01-PLAN.md — SkillHandler trait, SkillContext, handler registry, KnowledgeSkillHandler, core-knowledge manifest
-- [x] 42-02-PLAN.md — Wire handler at startup, update dispatch_plugin_skill, remove hardcoded knowledge commands
+Plans: TBD (previous execution was invalid — knowledge engine was built as hardcoded module, not as a plugin through PluginHost. dispatch_plugin_skill is a stub. Needs full replan.)
 
 ### Phase 43: Hub Chat Plugin Skill Dispatch (REWORK)
 **Goal**: Hub chat dynamically discovers and surfaces ANY plugin's skills through prompt injection timing — not just wiki, any plugin. User interacts with plugin capabilities naturally through chat.
@@ -248,7 +247,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 39. Claude Code Hooks | v1.7 | 1/1 | Complete | 2026-04-06 |
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete | 2026-04-07 |
-| 42. Knowledge Plugin Implementation | v1.8 | 3/2 | Complete    | 2026-04-10 |
+| 42. Knowledge Plugin Implementation | v1.8 | 0/0 | Rework | - |
 | 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/0 | Rework | - |
 | 44. MCP Plugin Tool Bridge | v1.8 | 0/0 | Rework | - |
 | 45. Test Suite | v1.8 | 0/0 | Partial | - |

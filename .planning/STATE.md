@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Plugin-First Knowledge
-status: Ready to plan
-stopped_at: Phase 43 plans verified
+status: Rework — replanning phases 42-44
+stopped_at: Audit found knowledge engine hardcoded, not plugin-based. Phases 42-43 invalid, need replan.
 last_updated: "2026-04-10T13:15:30.446Z"
 progress:
   total_phases: 15
@@ -19,12 +19,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** The AI agent must reliably orchestrate project work -- planning, executing, and monitoring across all projects so the user focuses on decisions, not mechanics.
-**Current focus:** Phase 42 — knowledge-engine-core
+**Current focus:** Phase 42 (REWORK) — knowledge engine must route through plugin dispatch, not hardcoded commands
 
 ## Current Position
 
-Phase: 43
-Plan: Not started
+Phase: 42 (needs replan)
+Plan: None — prior plans archived as invalid
+
+## Rework Context (2026-04-10)
+
+Code audit found Phase 42-43 execution was invalid:
+- `dispatch_plugin_skill()` is a stub returning `{"status": "dispatched"}` — never executes handlers
+- Knowledge has 4 hardcoded Tauri commands bypassing plugin system entirely
+- `KnowledgeEngine` initialized directly in lib.rs, not through PluginHost
+- No SkillHandler trait or handler execution path exists
+- Frontend plugin wiring (Phase 43) works but depends on backend dispatch actually working
+
+Replan order: 42 (backend dispatch + knowledge as plugin) → 43 (generify confirmation cards) → 44 (MCP bridge)
+Prior artifacts archived to `_invalid_prior_execution/` in each phase directory.
 
 ## Performance Metrics
 
