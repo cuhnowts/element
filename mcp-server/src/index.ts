@@ -7,7 +7,7 @@ import {
 
 import { dirname, join } from "node:path";
 import { db, dbPath } from "./db.js";
-import { loadPluginTools, type PluginMcpTool } from "./plugin-loader.js";
+import { loadPluginToolsFromDb, dispatchPluginTool, type PluginToolDef } from "./plugin-tools.js";
 import { handleListProjects, handleGetProjectDetail } from "./tools/project-tools.js";
 import { handleListPhases, handleGetPhaseStatus } from "./tools/phase-tools.js";
 import { handleListTasks } from "./tools/task-tools.js";
@@ -41,12 +41,12 @@ const server = new Server(
   { capabilities: { tools: {} } }
 );
 
-// Load plugin-contributed MCP tools from manifests
+// Load plugin-contributed MCP tools from DB
 const pluginsDir = join(dirname(dbPath), "plugins");
-const pluginTools: PluginMcpTool[] = loadPluginTools(pluginsDir);
+const pluginTools: PluginToolDef[] = loadPluginToolsFromDb(db);
 if (pluginTools.length > 0) {
   console.error(
-    `Loaded ${pluginTools.length} plugin tool(s): ${pluginTools.map((t) => t.name).join(", ")}`
+    `Loaded ${pluginTools.length} plugin tool(s): ${pluginTools.map((t) => t.prefixedName).join(", ")}`
   );
 }
 
@@ -392,9 +392,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
 
-    // Plugin-contributed tools (dynamically loaded from manifests)
+    // Plugin-contributed tools (dynamically loaded from DB)
     ...pluginTools.map((t) => ({
-      name: t.name,
+      name: t.prefixedName,
       description: t.description,
       inputSchema: t.inputSchema,
     })),
@@ -577,43 +577,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       );
 
     default: {
-      // Try plugin tools before returning unknown error
-      const pluginTool = pluginTools.find((t) => t.name === name);
+      const pluginTool = pluginTools.find((t) => t.prefixedName === name);
       if (pluginTool) {
         try {
-          const mod = await import(pluginTool.handlerModule);
-          const handler = mod[pluginTool.handlerFunction];
-          if (typeof handler !== "function") {
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: `Error: Handler "${pluginTool.handlerFunction}" not found in plugin module`,
-                },
-              ],
-              isError: true,
-            };
-          }
-          return handler(dbPath, args);
+          return await dispatchPluginTool(
+            pluginTool.prefixedName,
+            dbPath,
+            pluginsDir,
+            args as Record<string, unknown>,
+          );
         } catch (err) {
           return {
-            content: [
-              {
-                type: "text" as const,
-                text: `Error: Failed to load plugin handler: ${err instanceof Error ? err.message : String(err)}`,
-              },
-            ],
+            content: [{ type: "text" as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
             isError: true,
           };
         }
       }
-
-      return {
-        content: [
-          { type: "text" as const, text: `Error: Unknown tool "${name}"` },
-        ],
-        isError: true,
-      };
+      return { content: [{ type: "text" as const, text: `Error: Unknown tool "${name}"` }], isError: true };
     }
   }
 });
