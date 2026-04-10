@@ -116,7 +116,7 @@ Element is a desktop task orchestration platform built with Tauri 2.x (Rust) + R
 - Decimal phases (41.1, 41.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 41: Plugin Infrastructure Evolution** - Manifest extensions, skill router, directory manager, lifecycle hooks, namespace enforcement (completed 2026-04-07)
-- [x] **Phase 42: Knowledge Plugin Implementation** - REWORK: Knowledge engine as a drop-in plugin using Phase 41 infrastructure, not hardcoded Tauri commands. Plugin declares skills and directories in manifest, surfaces through prompt injection. (completed 2026-04-10) (completed 2026-04-10)
+- [x] **Phase 42: Knowledge Plugin Implementation** - REWORK: Knowledge engine as a drop-in plugin using Phase 41 infrastructure, not hardcoded Tauri commands. Plugin declares skills and directories in manifest, surfaces through prompt injection. (completed 2026-04-10)
 - [ ] **Phase 43: Hub Chat Plugin Skill Dispatch** - REWORK: Hub chat dynamically loads plugin skills via prompt injection timing, not hardcoded tool wiring. Any plugin's skills appear in chat automatically.
 - [ ] **Phase 44: MCP Plugin Tool Bridge** - REWORK: MCP server loads tools from plugin manifests dynamically. No hardcoded wiki tools in MCP source.
 - [x] **Phase 45: Test Suite** - Tests for plugin infrastructure (completed 2026-04-07, tests for 42-44 need update after rework)
@@ -178,7 +178,10 @@ Plans:
   1. MCP server reads plugin manifests and exposes their declared mcp_tools dynamically
   2. Adding a new plugin with mcp_tools requires zero changes to MCP server source
   3. Plugin tool handlers are resolved and dispatched at runtime from the manifest
-**Plans**: TBD (previous plugin-loader.ts pattern is correct, but needs to be generic not wiki-specific)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 44-01-PLAN.md — DB-based plugin tool discovery, dual dispatch (core handlers + dynamic import), wire into index.ts
 
 ### Phase 45: Test Suite
 **Goal**: Comprehensive test coverage for v1.8 features — plugin infrastructure and plugin-based knowledge engine
@@ -252,7 +255,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete | 2026-04-07 |
 | 42. Knowledge Plugin Implementation | v1.8 | 0/1 | Complete    | 2026-04-10 |
 | 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/1 | Planned | - |
-| 44. MCP Plugin Tool Bridge | v1.8 | 0/0 | Rework | - |
+| 44. MCP Plugin Tool Bridge | v1.8 | 0/1 | Planned | - |
 | 45. Test Suite | v1.8 | 0/0 | Partial | - |
 | 46. Bug Fixes | v1.8 | 0/1 | Ready | - |
 
@@ -262,7 +265,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 
 **Goal:** Fix platform-specific code that prevents Windows usage. Critical: `engine/shell.rs` hardcodes `sh -c` (needs `cmd /C` on Windows). Medium: `SettingsPage.tsx` shortcut only checks `metaKey` (needs `ctrlKey` fallback), `filesystem.rs` uses `/dev/null` (needs `NUL` on Windows). Low: several test files use Unix-specific paths/commands needing conditional compilation.
 **Requirements:** TBD
-**Plans:** 1/1 plans complete
+**Plans:** 0/1 plans executed
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
