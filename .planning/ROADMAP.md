@@ -164,8 +164,11 @@ Plans:
   1. Plugin skills appear in hub chat's system prompt automatically via prompt injection — zero code changes to HubChat.tsx when adding new plugins
   2. User asks hub chat to do something a plugin can handle, and the AI routes to the correct plugin skill
   3. Confirmation cards work generically for any plugin's destructive skills, not just wiki-specific entries
-**Plans**: TBD (previous plans partially reusable — dynamic prompt assembly is correct pattern, but hardcoded wiki entries need removal)
+**Plans**: 1 plan
 **UI hint**: yes
+
+Plans:
+- [ ] 43-01-PLAN.md — Fix serialization mismatches, dispatch bug, extract buildSystemPrompt, write tests
 
 ### Phase 44: MCP Plugin Tool Bridge (REWORK)
 **Goal**: MCP server dynamically loads tools from plugin manifests — any plugin's MCP tools appear in ListTools/CallTools without MCP source changes
@@ -248,7 +251,7 @@ Note: Phase 44 depends only on Phase 42, so it can be parallelized with Phase 43
 | 40. Testing MCP Server | v1.7 | 0/2 | Complete | 2026-04-06 |
 | 41. Plugin Infrastructure Evolution | v1.8 | 3/3 | Complete | 2026-04-07 |
 | 42. Knowledge Plugin Implementation | v1.8 | 0/1 | Planned | - |
-| 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/0 | Rework | - |
+| 43. Hub Chat Plugin Skill Dispatch | v1.8 | 0/1 | Planned | - |
 | 44. MCP Plugin Tool Bridge | v1.8 | 0/0 | Rework | - |
 | 45. Test Suite | v1.8 | 0/0 | Partial | - |
 | 46. Bug Fixes | v1.8 | 0/1 | Ready | - |
