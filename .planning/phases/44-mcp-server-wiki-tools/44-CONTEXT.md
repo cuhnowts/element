@@ -16,7 +16,7 @@ External agents (Claude Code) can query the wiki for read-only knowledge retriev
 ### Dynamic Tool Registration
 - **D-01:** Plugin-contributed MCP tools are loaded by reading plugin manifests at startup. MCP server restart required for changes.
 - **D-02:** Existing hardcoded tools stay as-is. Only plugin-contributed tools (like wiki) come from manifests. No migration of existing tools.
-- **D-03:** Handler code for plugin-contributed MCP tools lives in the plugin directory (e.g., `plugins/knowledge/mcp-handlers.ts`). MCP server dynamically imports the handler based on the path declared in the manifest.
+- **D-03:** *(Revised 2026-04-10 after Phase 42 rework)* For core plugins (no plugin.json on disk), handlers live in `mcp-server/src/tools/` and are registered in a built-in CORE_HANDLERS map. For user plugins, handlers live in the plugin directory and are dynamically imported based on the manifest's handler path.
 
 ### Query Response Shape
 - **D-04:** `wiki_query` scans `index.md` for relevant entries, then returns the full wiki articles for matches. Wiki articles ARE the summaries (compiled from raw sources) -- they are returned in full, not truncated or re-summarized.

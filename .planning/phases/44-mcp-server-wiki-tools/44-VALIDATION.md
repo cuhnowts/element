@@ -2,9 +2,10 @@
 phase: 44
 slug: mcp-server-wiki-tools
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-06
+updated: 2026-04-10
 ---
 
 # Phase 44 — Validation Strategy
@@ -38,27 +39,28 @@ created: 2026-04-06
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 44-01-01 | 01 | 1 | MCP-01 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-01-02 | 01 | 1 | MCP-01 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-01-03 | 01 | 1 | MCP-01 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-02-01 | 02 | 1 | MCP-02 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-02-02 | 02 | 1 | MCP-02 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-02-03 | 02 | 1 | MCP-02 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-03-01 | 03 | 1 | SC-3 | unit | `cd mcp-server && npx vitest run src/__tests__/plugin-loader.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-03-02 | 03 | 1 | SC-3 | unit | `cd mcp-server && npx vitest run src/__tests__/plugin-loader.test.ts -x` | ❌ W0 | ⬜ pending |
-| 44-03-03 | 03 | 1 | SC-3 | unit | `cd mcp-server && npx vitest run src/__tests__/plugin-loader.test.ts -x` | ❌ W0 | ⬜ pending |
+| 44-01-T1 | 01 | 1 | MCP-01, MCP-02 | unit | `cd mcp-server && npx vitest run src/__tests__/plugin-tools.test.ts -x` | Created by task | ⬜ pending |
+| 44-01-T1 | 01 | 1 | MCP-01 | unit | `cd mcp-server && npx vitest run src/__tests__/wiki-tools.test.ts -x` | ✅ EXISTS (9 tests) | ✅ green |
+| 44-01-T2 | 01 | 1 | MCP-01, MCP-02 | integration | `cd mcp-server && npx vitest run --reporter=verbose` | ✅ EXISTS | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
 ---
 
-## Wave 0 Requirements
+## Existing Test Coverage (from prior execution, validated)
 
-- [ ] `mcp-server/src/__tests__/wiki-tools.test.ts` — stubs for MCP-01, MCP-02 (wiki_query + wiki_ingest)
-- [ ] `mcp-server/src/__tests__/plugin-loader.test.ts` — stubs for SC-3 (dynamic registration)
-- [ ] Update `tool-registry.test.ts` — currently expects exactly 23 tools; needs update for dynamic tools
+- `mcp-server/src/__tests__/wiki-tools.test.ts` — 9 passing tests covering:
+  - MCP-01: wiki_query returns matching articles, handles no-match, handles missing .knowledge/
+  - MCP-02: wiki_ingest validates paths, writes queue file, returns acknowledgment
+- `mcp-server/src/__tests__/tool-registry.test.ts` — hardcoded tool count + namespace safety
 
-*Existing infrastructure covers framework setup.*
+---
+
+## New Tests (created during execution)
+
+- `mcp-server/src/__tests__/plugin-tools.test.ts` — DB-based discovery + dispatch:
+  - loadPluginToolsFromDb: empty table, enabled rows, disabled rows, JSON parsing
+  - dispatchPluginTool: core handler routing, unknown tool error
 
 ---
 
@@ -66,17 +68,17 @@ created: 2026-04-06
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| esbuild preserves dynamic imports in bundled output | SC-3 | Build output inspection | Run `cd mcp-server && node build.ts`, inspect `dist/index.js` for intact `import()` calls with variable paths |
+| esbuild preserves dynamic imports in bundled output | SC-3 | Build output inspection | Run `cd mcp-server && node build.ts`, inspect `dist/index.js` for intact `import()` calls |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 satisfied (wiki-tools.test.ts exists with 9 tests, plugin-tools.test.ts created by Task 1)
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready
