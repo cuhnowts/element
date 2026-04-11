@@ -89,8 +89,11 @@ export function useTerminal(
       : null;
 
     // Try spawning with cwd, fall back to home directory if it fails (e.g. dir was deleted)
+    const isWindows = navigator.platform.toLowerCase().includes("win");
+    const shell = isWindows ? "powershell.exe" : "/bin/zsh";
+    const shellArgs = isWindows ? ["-NoLogo"] : ["-l"];
     const spawnWithCwd = (dir: string) =>
-      spawn("/bin/zsh", ["-l"], { cols: term.cols, rows: term.rows, cwd: dir });
+      spawn(shell, shellArgs, { cols: term.cols, rows: term.rows, cwd: dir });
 
     try {
       let pty: ReturnType<typeof spawn>;

@@ -89,7 +89,7 @@ impl FilesystemPlugin {
                     let metadata = entry.metadata().await.unwrap_or_else(|_| {
                         std::fs::metadata(entry.path()).unwrap_or_else(|_| {
                             // Fallback: shouldn't happen but handle gracefully
-                            std::fs::metadata("/dev/null").unwrap()
+                            std::fs::metadata(if cfg!(target_os = "windows") { "NUL" } else { "/dev/null" }).unwrap()
                         })
                     });
                     entries.push(FsEntry {

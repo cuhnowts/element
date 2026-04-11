@@ -15,8 +15,15 @@ pub async fn execute_shell(
 ) -> Result<Document, EngineError> {
     let timeout = timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS);
 
-    let mut cmd = Command::new("sh");
-    cmd.arg("-c").arg(command);
+    let mut cmd = if cfg!(target_os = "windows") {
+        let mut c = Command::new("cmd");
+        c.arg("/C").arg(command);
+        c
+    } else {
+        let mut c = Command::new("sh");
+        c.arg("-c").arg(command);
+        c
+    };
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
 
